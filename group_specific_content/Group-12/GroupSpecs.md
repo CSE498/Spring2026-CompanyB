@@ -154,4 +154,64 @@ List of other groups’ C++ classes to possibly would need to coordinate with:
 - Assert
 - StateGridPosition
 
+
+---
+
+
+**Class:** TagManager (Landon Cosby)
+
+## 1) Class Description
+
+An indexing service that tracks relationships between tags and objects, tags being string type labels, objects identified using a unique ID. Its main goal is to make tag-based lookups fast and easy, including multi-tag searches. 
+
+## 2) Similar Standard Library Classes
+
+-`std::unordered_map`
+Will store the tag as the key and the value as the unique ID of the objects with the tags.
+-`std::unordered_set`
+Set of unique IDs that will be used with unordered map
+-`std::vector`
+Used to return unique ID’s for several functions
+
+
+## 3) Key Functions
+
+ObjectID = type used to store id.
+
+- `void addTag(ObjectID id, const std::string& tag);`
+- `void removeTag(ObjectID id, const std::string& tag);`
+- `bool hasTag(ObjectID, const std::string& tag) const;`
+- `void removeObject(ObjectID id);`
+- `std::vector<ObjectID> withTag(const std::string& tag) const;`
+- `std::vector<ObjectID> withIncluded(vector<const std::string&> includeTags) const;`
+- `std::vector<ObjectID> withIncludedExcluded(vector<const std::string& includeTags, excludeTags) const;`
+
+## 4) Error Conditions
+
+- Empty tag passed in
+**Programmer error (assert)**
+  
+- Invalid ObjectID
+**Programmer error (assert)**
+  
+- Memory allocation failure when inserting into maps/sets
+**Recoverable (exceptions)**
+  
+- Querying a tag that doen not exist
+**User error (return empty vector)**
+
+## 5) Expected Challenges
+
+It may become difficult if Nick and I do not plan together thoroughly before we begin and as we work on our classes. Avoiding the bug of index saying object has a tag while AnnotationSet says that it does not. Balancing simplicity with performance.
+
+## 6) Coordination with Other Groups
+
+List of other groups’ C++ classes to possibly would need to coordinate with:
+
+- AnnotationSet
+- DataMap
+- BehaviorTree
+- ActionMap
+
+
 ---
