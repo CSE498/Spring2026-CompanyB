@@ -167,10 +167,15 @@ An indexing service that tracks relationships between tags and objects, tags bei
 ## 2) Similar Standard Library Classes
 
 -`std::unordered_map`
+
 Will store the tag as the key and the value as the unique ID of the objects with the tags.
+
 -`std::unordered_set`
+
 Set of unique IDs that will be used with unordered map
+
 -`std::vector`
+
 Used to return unique ID’s for several functions
 
 
@@ -215,3 +220,4 @@ List of other groups’ C++ classes to possibly would need to coordinate with:
 
 
 ---
+
