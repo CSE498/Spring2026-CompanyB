@@ -1,6 +1,10 @@
 # Local files
 /.vscode/
 
+# Build system outputs
+/output/
+/build/
+
 # Prerequisites
 *.d
 
@@ -42,3 +46,6 @@
 
 # debug information files
 *.dwo
+
+# MacOS metadata
+.DS_Store

@@ -1,0 +1,63 @@
+name: Deployment
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release tag (format: vX.X.X)"
+        required: true
+        type: string
+
+jobs:
+  # Validate the version tag supplied to the workflow
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate tag format
+        run: |
+          if [[ ! "${{ inputs.tag }}" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Error: Tag must be in format vX.X.X (e.g., v1.0.0)"
+            exit 1
+          fi
+          echo "Tag ${{ inputs.tag }} is valid"
+
+  build:
+    runs-on: ubuntu-latest
+    needs: validate
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build
+        run: make build
+
+      # Upload the artifacts for the release job
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-output
+          path: output/
+
+  release:
+    runs-on: ubuntu-latest
+    needs: build
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      # Download the build artifacts to create the release
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: build-output
+          path: output/
+
+      # https://github.com/softprops/action-gh-release
+      # Automatically creates releases
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ inputs.tag }}
+          name: Release ${{ inputs.tag }}
+          files: output/*
+          generate_release_notes: true
