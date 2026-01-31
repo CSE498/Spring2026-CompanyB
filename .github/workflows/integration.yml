@@ -1,0 +1,42 @@
+name: Integration
+
+on:
+  # Run on all PRs to main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  format:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Formatting Checks
+        run: find . -type f \( -name "*.cpp" -o -name "*.hpp" -o -name "*.c" -o -name "*.h" \) | xargs clang-format --style="Google" -n -Werror --verbose
+
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Enables build caching by using a container-based builder that runs on BuildKit
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          driver: docker-container
+
+      # Speeds up workflow run times
+      - name: Build and cache Docker image
+        uses: docker/bake-action@v6
+        with:
+          files: docker-compose.yml
+          targets: test
+          load: true
+          # Use Github Actions cache and export maximum cache layers possible
+          set: |
+            *.cache-from=type=gha
+            *.cache-to=type=gha,mode=max
+
+      - name: Run Tests
+        run: make test

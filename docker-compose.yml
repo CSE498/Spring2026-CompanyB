@@ -1,0 +1,62 @@
+services:
+  # Build only: outputs to ./output directory
+  build:
+    build:
+      context: .
+      args:
+        SDL_VERSION: 2
+    volumes:
+      - ./source:/app/source:ro
+      - ./output:/app/output
+      - ./scripts/docker-entrypoint.sh:/app/docker-entrypoint.sh:ro
+    environment:
+      - SDL_VERSION=2
+      - BUILD_OUTPUT=html
+    command: build
+
+  # Build and run tests
+  test:
+    build:
+      context: .
+      args:
+        SDL_VERSION: 2
+    volumes:
+      - ./source:/app/source:ro
+      - ./tests:/app/tests:ro
+      - ./scripts/docker-entrypoint.sh:/app/docker-entrypoint.sh:ro
+    command: test
+
+  # Build and serve with emrun web server
+  serve:
+    build:
+      context: .
+      args:
+        SDL_VERSION: 2
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./source:/app/source:ro
+      - ./output:/app/output
+      - ./scripts/docker-entrypoint.sh:/app/docker-entrypoint.sh:ro
+    environment:
+      - SDL_VERSION=2
+      - BUILD_OUTPUT=html
+      - SERVE_PORT=8080
+    command: serve
+
+  # Interactive development shell
+  dev:
+    build:
+      context: .
+      args:
+        SDL_VERSION: 2
+    stdin_open: true
+    tty: true
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./source:/app/source
+      - ./output:/app/output
+      - ./scripts/docker-entrypoint.sh:/app/docker-entrypoint.sh:ro
+    working_dir: /app
+    command: shell
