@@ -279,3 +279,68 @@ List of other groups’ C++ classes to possibly would need to coordinate with:
 - DataFileManager
 - Assert
 - BehaviorTree
+
+
+---
+
+
+**Class:** ExpressionParser (Lewi Anamo)
+
+## 1) Class Description
+
+The `ExpressionParser` takes a string (e.g., `"x * 2 + y"`) and compile it into a reusable function object. This function object will accept a data container—such as a `std::map<std::string, double>` or a `std::vector<double>`—as an argument, retrieve the necessary values based on the variables identified in the string, and return the calculated result.
+
+## 2) Similar Standard Library Classes
+
+- **`std::function<double(const Container&)>`**: needed for storing and returning the "compiled" expression as a callable object.
+- **`std::map` / `std::unordered_map**`: used as the primary lookup method for variable names to values.
+- **`std::string_view`**: useful for efficient parsing of the input string without unnecessary allocations.
+
+## 3) Key Functions
+
+- `std::function<double(const std::map<std::string, double>&)> Parse(std::string_view expression);`
+- interface that converts a string into a callable function.
+
+- `void Tokenize(std::string_view expression);`
+- utility to break the string into operands, operators, and variables.
+
+- `double Evaluate(const std::map<std::string, double>& context);`
+- performs the actual calculation and the returns the function object.
+
+- `void SetOperatorPrecedence(char op, int level);`
+- to define how different operators (like `+`, `*`, `^`) interact.
+
+- `bool Validate(std::string_view expression);`
+- checks if the string is actually a valid math expression before you try to compile it.
+
+## 4) Error Conditions
+
+- **Mismatched Parentheses**: The input string has an opening bracket without a closing one.
+- **User Error**
+
+- **Missing Variable in Container**: The expression calls for "x", but the map provided to the function object does not contain "x".
+- **Recoverable Error**
+
+- **Division by Zero**: The expression evaluates to a division by zero.
+- **User Error / Recoverable Error**
+
+- **Invalid Token**: The string contains symbols that aren't numbers, variables, or operators (e.g., `"5 $ 3"`).
+- **User Error**
+
+- **Null Interface**: Passing a null or empty string to the `Parse` function.
+- **Programmer Error**
+
+## 5) Expected Challenges
+
+- **Recursive Parsing vs. stack-based algorithm**: Deciding between building an Abstract Syntax Tree (AST) or using a stack-based algorithm to handle operator precedence.
+- **Template Metaprogramming**: If the class needs to support _any_ container type (vector, map, custom struct), I will need to use templates to handle that.
+- **Performance**: Minimizing the overhead of string lookups during the evaluation phase so the resulting function object is fast.
+
+## 6) Coordination with Other Groups
+
+- **DataFileManager**
+- **Assert**
+- **OutputManager**
+
+
+---
