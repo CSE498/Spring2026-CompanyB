@@ -342,5 +342,12 @@ The `ExpressionParser` takes a string (e.g., `"x * 2 + y"`) and compile it into 
 - **Assert**
 - **OutputManager**
 
+# Vision 
+
+The vision for the main module is to support a world-based simulation populated by swarming agents that interact within a shared environment. These agents could represent people, cars, and buses moving throughout a campus, dynamically navigating traffic patterns and
+responding to environmental conditions such as congestion or the presence of a simulated virus. The project aims to explore how local agent behaviors can lead to emergent system-level patterns, particularly in scenarios involving movement, avoidance, and interaction.
+At this stage, the project is still in the planning phase, and the overall structure, behaviors, and level of complexity have not yet been finalized.
+
 
 ---
+
