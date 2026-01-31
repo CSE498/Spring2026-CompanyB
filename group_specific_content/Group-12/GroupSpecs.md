@@ -1,4 +1,4 @@
-# Group 12: Scripted Agents
+# Group 12: Swarming Agents
 
 ---
 
@@ -221,3 +221,61 @@ List of other groups’ C++ classes to possibly would need to coordinate with:
 
 ---
 
+**Class:** DataMap (Cindy Huang)
+
+## 1) Class Description
+
+`DataMap` stores data in key-value pairs. It maps an `std::string` key to a value of any C++ type. It also ensures type safety when retrieving the data.
+
+- **Set** stores a value with a name.
+- **Get\<T>** returns the stored value, but only if its type matches `T`.
+
+## 2) Similar Standard Library Classes
+
+The following standard library classes should be familiar with or used to inform the functionality of development:
+
+- **`std::unordered_map<Key, Value>`**
+  - This is the data structure we are attempting to replace.
+
+- **`std::string`**
+  - This what the type of the key for each key-value entry in `DataMap` will be.
+
+- **`std::pair`**
+  - This could possibly be used to connect the key and value together as a pair.
+
+## 3) Key Functions
+
+Key functions to be implemented are:
+
+- `void Set(const std::string& key, T value)`
+- `T* Get(const std::string& key);`
+- `size_t Size() const;`
+- `void Clear();`
+- `void Remove(const std::string& key);`
+- `bool Contains(const std::string& key);`
+
+
+## 4) Error Conditions
+
+Error conditions to consider when implementing DataMap include:
+
+- Missing key (`Get<T>("health")` when `"health"` is not present.)
+**User error (return error message)**
+
+- Wrong type at retreival
+**User error (return error message)**
+
+- Running out of memory during insertion.
+**Recoverable error**
+
+## 5) Expected Challenges
+
+There may be challenges with performace; there may be very large objects stored in an entry's value. And since there can be any type for the values, there is no way to check if entries are garbage / make sense. For example, you could do Set("health", "Hello, world!"). I suspect DataMap will have to work with other classes to prevent this situation.
+
+## 6) Coordination with Other Groups
+
+List of other groups’ C++ classes to possibly would need to coordinate with:
+
+- DataFileManager
+- Assert
+- BehaviorTree
