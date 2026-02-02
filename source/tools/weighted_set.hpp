@@ -3,7 +3,12 @@
 #include <utility>
 
 namespace cse498 {
-
+/*
+  Forgot to mention this in earlier commit
+  But the boilerplate setup (constructors, clear() and copy_tree(), assign and move operators,
+  basic getters [namely size(), empty(), total_weight()], and basic member variables) 
+  was written by Claude Code with (so far moderate) modification from me.
+*/
 template <typename T>
 class WeightedSet {
  private:
