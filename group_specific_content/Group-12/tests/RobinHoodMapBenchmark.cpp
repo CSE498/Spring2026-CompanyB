@@ -17,7 +17,7 @@
 
 template<typename Func>
 double timeIt(Func&& func) {
-    auto start = ch::high_resolution_clock::now();
+    auto start = std::chrono::high_resolution_clock::now();
     func();
     auto end = std::chrono::high_resolution_clock::now();
     return std::chrono::duration<double, std::milli>(end - start).count();
