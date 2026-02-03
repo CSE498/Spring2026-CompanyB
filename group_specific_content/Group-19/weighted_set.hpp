@@ -1,7 +1,6 @@
 #pragma once
 #include <cstddef>
 #include <expected>
-#include <print>
 #include <random>
 #include <unordered_map>
 #include <utility>
@@ -104,7 +103,6 @@ class WeightedSet {
       Node* node_ptr = new Node(element_ptr, weight);
       this->element_to_node_[*element_ptr] = node_ptr;
       this->root_ = new Node(element_ptr, weight);
-      std::print("{}", this->root_->weight);
       return true;
     }
 
