@@ -113,10 +113,12 @@ class WeightedSet {
       if (current_node->left == nullptr) {
         current_node->left = node_ptr;
         node_ptr->parent = current_node->left;
+        // TODO: rebalance and update parents
         return true;
       } else if (current_node->right == nullptr) {
         current_node->right = node_ptr;
         node_ptr->parent = current_node->right;
+        // TODO: rebalance and update parents
         return true;
       } else if (current_node->left->subtree_weight <
                  current_node->right->subtree_weight) {
@@ -127,6 +129,8 @@ class WeightedSet {
     }
     return false;
   }
+
+  // TODO: function to remove element
 
   std::optional<T> getElementAt(double index) {
     Node* current_node = this->root_;
