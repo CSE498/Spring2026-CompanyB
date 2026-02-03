@@ -33,7 +33,11 @@ class WeightedSet {
     Node* parent;
 
     Node(const T& val, double w, Node* par = nullptr)
-        : value_ptr(&val),
+        {
+          Node(new T(val), w, par);
+        }
+    Node(T* val_ptr, double w, Node* par = nullptr)
+        : value_ptr(val_ptr),
           weight(w),
           subtree_weight(w),
           left(nullptr),
@@ -45,7 +49,7 @@ class WeightedSet {
   size_t size_;
   // TODO: replace this with custom random class once we have that
   std::random_device rd{};
-  std::mt19937 rng{rd};
+  std::mt19937 rng{rd()};
 
   std::unordered_map<T, Node*> element_to_node_;
 
@@ -106,7 +110,7 @@ class WeightedSet {
     }
     T* element_ptr = new T{element};
     Node* node_ptr = new Node(element_ptr, weight);
-    this->element_to_node_.insert(*element_ptr, node_ptr);
+    this->element_to_node_[*element_ptr] = node_ptr;
     Node* current_node = this->root_;
     while (current_node != nullptr) {
       current_node->subtree_weight += weight;
