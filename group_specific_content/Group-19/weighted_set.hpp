@@ -32,9 +32,6 @@ class WeightedSet {
     Node* right = nullptr;
     Node* parent;
 
-    Node(const T& val, double w, Node* par = nullptr) {
-      Node(new T(val), w, par);
-    }
     Node(T* val_ptr, double w, Node* par = nullptr)
         : value_ptr(val_ptr),
           weight(w),
