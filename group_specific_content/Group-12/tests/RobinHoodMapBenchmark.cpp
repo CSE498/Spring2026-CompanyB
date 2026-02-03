@@ -15,21 +15,17 @@
 #include "../RobinHoodMap.hpp"
 #include "../RobinHoodMap.cpp"
 
-using namespace std::chrono;
-
-// Returns elapsed time in milliseconds
 template<typename Func>
 double timeIt(Func&& func) {
-    auto start = high_resolution_clock::now();
+    auto start = ch::high_resolution_clock::now();
     func();
-    auto end = high_resolution_clock::now();
-    return duration<double, std::milli>(end - start).count();
+    auto end = std::chrono::high_resolution_clock::now();
+    return std::chrono::duration<double, std::milli>(end - start).count();
 }
 
 void runBenchmark(int numElements) {
     std::cout << "\n=== Benchmark with " << numElements << " elements ===\n\n";
     
-    // Generate random keys
     std::random_device rd;
     std::mt19937 gen(rd());
     std::uniform_int_distribution<int> dist(1, numElements * 10);
@@ -42,7 +38,6 @@ void runBenchmark(int numElements) {
     RobinHoodMap<int, int> rhMap;
     std::unordered_map<int, int> stdMap;
     
-    // Insert benchmark
     double rhInsert = timeIt([&]() {
         for (int k : keys) {
             rhMap.insert(k, k);
@@ -61,9 +56,8 @@ void runBenchmark(int numElements) {
     std::cout << "  std::unordered_map: " << std::setw(8) << stdInsert << " ms\n";
     std::cout << "  Ratio (std/RH):   " << std::setw(10) << stdInsert / rhInsert << "x\n\n";
     
-    // Lookup benchmark (run multiple iterations to get measurable time)
     const int lookupIterations = 10;
-    volatile int sink = 0;  // Volatile prevents optimization
+    volatile int sink = 0; 
     
     double rhLookup = timeIt([&]() {
         for (int i = 0; i < lookupIterations; ++i) {
@@ -88,10 +82,9 @@ void runBenchmark(int numElements) {
     std::cout << "  std::unordered_map: " << std::setw(8) << stdLookup << " ms\n";
     std::cout << "  Ratio (std/RH):   " << std::setw(10) << stdLookup / rhLookup << "x\n\n";
     
-    // Failed lookup benchmark (keys that don't exist)
     std::vector<int> missingKeys(numElements);
     for (int& k : missingKeys) {
-        k = dist(gen) + numElements * 100;  // Likely not in map
+        k = dist(gen) + numElements * 100;
     }
     
     double rhMiss = timeIt([&]() {
