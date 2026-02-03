@@ -1,6 +1,7 @@
 #pragma once
 #include <cstddef>
 #include <expected>
+#include <print>
 #include <random>
 #include <unordered_map>
 #include <utility>
@@ -32,10 +33,9 @@ class WeightedSet {
     Node* right = nullptr;
     Node* parent;
 
-    Node(const T& val, double w, Node* par = nullptr)
-        {
-          Node(new T(val), w, par);
-        }
+    Node(const T& val, double w, Node* par = nullptr) {
+      Node(new T(val), w, par);
+    }
     Node(T* val_ptr, double w, Node* par = nullptr)
         : value_ptr(val_ptr),
           weight(w),
@@ -99,8 +99,12 @@ class WeightedSet {
     if (weight <= 0) {
       return false;
     }
-    if (this->root_ == nullptr) {
-      this->root_ = new Node(element, weight);
+    if (root_ == nullptr) {
+      T* element_ptr = new T{element};
+      Node* node_ptr = new Node(element_ptr, weight);
+      this->element_to_node_[*element_ptr] = node_ptr;
+      this->root_ = new Node(element_ptr, weight);
+      std::print("{}", this->root_->weight);
       return true;
     }
 
