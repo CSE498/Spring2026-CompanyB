@@ -1,6 +1,7 @@
 #pragma once
 #include <cstddef>
 #include <expected>
+#include <random>
 #include <unordered_map>
 #include <utility>
 
@@ -34,6 +35,8 @@ class WeightedSet {
 
   Node* root_;
   size_t size_;
+  std::random_device rd{};
+  std::mt19937 rng{rd};
 
   std::unordered_map<T, Node*> element_to_node_;
 
@@ -136,6 +139,14 @@ class WeightedSet {
       }
     }
     return std::nullopt;
+  }
+
+  std::optional<T> getRandomElement() {
+    if (this->root_ == nullptr) {
+      return std::nullopt;
+    }
+    auto random_real = std::uniform_real_distribution<double>(0, this->root_->subtree_weight);
+    return getElementAt(random_real(rng));
   }
 
   ~WeightedSet() { clear(root_); }
