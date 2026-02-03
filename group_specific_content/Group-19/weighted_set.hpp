@@ -13,7 +13,15 @@ namespace cse498 {
   basic member variables) was written by Claude Code with (so far moderate)
   modification from me.
 */
+// T = arbitrary value type; should be hashable I guess since there's an
+// unordered_map in here
 template <typename T>
+/*
+  The idea of WeightedSet: can add elements with a "weight", then randomly
+  select them with probability proportional to the weight. E.g. if it contains
+  one element of weight 1 and one of weight 2, the first will be selected with
+  1/3 probability and the second with 2/3 probability.
+*/
 class WeightedSet {
  private:
   struct Node {
@@ -35,6 +43,7 @@ class WeightedSet {
 
   Node* root_;
   size_t size_;
+  // TODO: replace this with custom random class once we have that
   std::random_device rd{};
   std::mt19937 rng{rd};
 
@@ -104,11 +113,11 @@ class WeightedSet {
       if (current_node->left == nullptr) {
         current_node->left = node_ptr;
         node_ptr->parent = current_node->left;
-        break;
+        return true;
       } else if (current_node->right == nullptr) {
         current_node->right = node_ptr;
         node_ptr->parent = current_node->right;
-        break;
+        return true;
       } else if (current_node->left->subtree_weight <
                  current_node->right->subtree_weight) {
         current_node = current_node->left;
@@ -116,7 +125,7 @@ class WeightedSet {
         current_node = current_node->right;
       }
     }
-    return true;
+    return false;
   }
 
   std::optional<T> getElementAt(double index) {
@@ -145,7 +154,8 @@ class WeightedSet {
     if (this->root_ == nullptr) {
       return std::nullopt;
     }
-    auto random_real = std::uniform_real_distribution<double>(0, this->root_->subtree_weight);
+    auto random_real =
+        std::uniform_real_distribution<double>(0, this->root_->subtree_weight);
     return getElementAt(random_real(rng));
   }
 
