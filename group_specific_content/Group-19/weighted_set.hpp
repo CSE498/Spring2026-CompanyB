@@ -1,5 +1,6 @@
 #pragma once
 #include <cstddef>
+#include <expected>
 #include <unordered_map>
 #include <utility>
 
@@ -79,6 +80,9 @@ class WeightedSet {
   }
 
   bool insert(T element, double weight) {
+    if (weight <= 0) {
+      return false;
+    }
     if (this->root_ == nullptr) {
       this->root_ = new Node(element, weight);
       return true;
@@ -110,6 +114,28 @@ class WeightedSet {
       }
     }
     return true;
+  }
+
+  std::optional<T> getElementAt(double index) {
+    Node* current_node = this->root_;
+    double total = this->root_->subtree_weight;
+    if (index < 0 || index > total) {
+      return std::nullopt;
+    }
+    double lower_bound;
+    double upper_bound;
+    while (current_node != nullptr) {
+      lower_bound = current_node->left ? current_node->left->subtree_weight : 0;
+      upper_bound = lower_bound + current_node->weight;
+      if (index < lower_bound) {
+        current_node = current_node->left;
+      } else if (index >= upper_bound && upper_bound != total) {
+        current_node = current_node->right;
+      } else {
+        return std::make_optional(*(current_node->value_ptr));
+      }
+    }
+    return std::nullopt;
   }
 
   ~WeightedSet() { clear(root_); }
