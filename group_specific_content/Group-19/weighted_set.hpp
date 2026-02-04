@@ -234,7 +234,10 @@ class WeightedSet {
     element_to_node_.erase(element);
     return std::make_optional(removed_value);
   }
-  ~WeightedSet() { clear(root_); }
+  ~WeightedSet() { 
+    clear(root_);
+    element_to_node_.clear();
+   }
 
   size_t size() const { return size_; }
   bool empty() const { return size_ == 0; }
