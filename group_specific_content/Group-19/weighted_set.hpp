@@ -67,13 +67,19 @@ class WeightedSet {
     return node;
   }
 
+  double left_subtree_weight(Node* node) {
+    return node->left ? node->left->subtree_weight : 0.0;
+  }
+
+  double right_subtree_weight(Node* node) {
+    return node->right ? node->right->subtree_weight : 0.0;
+  }
+
   void fix_weights_and_rebalance(Node* node_ptr) {
     while (node_ptr != nullptr) {
       // TODO: rotate if doing so would make the tree better weight-balanced
       node_ptr->subtree_weight =
-          node_ptr->weight +
-          (node_ptr->left != nullptr ? node_ptr->left->subtree_weight : 0) +
-          (node_ptr->right != nullptr ? node_ptr->right->subtree_weight : 0);
+          node_ptr->weight + left_subtree_weight(node_ptr) + right_subtree_weight(node_ptr);
       node_ptr = node_ptr->parent;
     }
   }
