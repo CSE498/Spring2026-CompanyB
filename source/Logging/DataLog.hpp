@@ -1,26 +1,91 @@
 /**
- * 
- * @brief 
+ * This file serves as the center of data aggregation and storage
+ * for the Data Analytics group. 
+ * @brief An internal class to collect, organize, analyze and store 
+ * real-time data. 
  * @note Status: INITIAL DESIGN
  **/
 
 #pragma once
 
+#include <vector>
+#include <string>
+#include <cstddef>
 #include "nlohmann/json.hpp"
 
 namespace cse498 {
+    class Timer;
 
     class DataLog {
         private:
+            /// @brief Reference to the global Timer for timestamp generation
+            Timer& mTimer;
+            
+            /// @brief Vector storing all log entries as JSON objects
+            std::vector<nlohmann::json> mEntries;
+            
+            /// @brief Running sum for efficient mean calculation
+            double mRunningSum = 0.0;
+            
+            /// @brief Minimum recorded value from entry data
+            double mMinValue = 0.0;
+            
+            /// @brief Maximum recorded value from entry data
+            double mMaxValue = 0.0;
+            
+            /// @brief Total count of entries with "value" field
+            size_t mCount = 0;
+            
+            /// @brief Flag to track if any value entries have been logged
+            bool mHasData = false;
+            
         public:
-            DataLog() = default;
+            /// @brief Constructor that takes Timer reference for global timestamp access
+            /// @param timer Reference to global Timer instance
+            explicit DataLog(Timer& timer);
+            
+            /// @brief Destructor
             ~DataLog() = default;
+            
+            /// @brief Copy constructor (disabled)
+            DataLog(const DataLog&) = delete;
+            
+            /// @brief Assignment operator (disabled)
+            DataLog& operator=(const DataLog&) = delete;
 
-            /// @brief 
-            /// @param entry
-            void AddEntry(const nlohmann::json& entry);
-            // From Scotty: I made this function accept a JSON object but if you want to make a LogEvent struct I'm good with that
-            // I just didn't know what fields that struct would have right now
+            /// @brief Adds a log entry from a JSON object
+            /// @param data JSON object with required fields:
+            ///             agentId (string), actionType (string), 
+            ///             duration (double), summary (string)
+            /// @note Timestamp is automatically added from Timer.GetGlobalTime()
+            void AddEntry(const nlohmann::json& data);
+            
+            /// @brief Returns the mean of all action durations
+            /// @return Mean duration, or 0.0 if no entries exist
+            double GetMean() const;
+            
+            /// @brief Returns the median of all action durations
+            /// @return Median duration, or 0.0 if no entries exist
+            double GetMedian() const;
+            
+            /// @brief Returns the minimum action duration
+            /// @return Minimum duration, or 0.0 if no entries exist
+            double GetMin() const;
+            
+            /// @brief Returns the maximum action duration
+            /// @return Maximum duration, or 0.0 if no entries exist
+            double GetMax() const;
+            
+            /// @brief Returns the total number of logged actions
+            /// @return Count of entries
+            size_t GetCount() const;
+            
+            /// @brief Gets all log entries
+            /// @return Const reference to the entries vector
+            const std::vector<nlohmann::json>& GetEntries() const;
+            
+            /// @brief Clears all stored data and resets internal statistics
+            void Reset();
     };
 
 }
