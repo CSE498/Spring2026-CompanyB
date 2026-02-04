@@ -242,6 +242,9 @@ class WeightedSet {
   size_t size() const { return size_; }
   bool empty() const { return size_ == 0; }
   double total_weight() const { return root_ ? root_->subtree_weight : 0.0; }
+  bool contains(const T& element) {
+    return element_to_node_.find(element) != element_to_node_.end();
+  }
 
   // (Claude-written) visualization: prints ASCII tree to ostream (default: cout)
   void debug_print(std::ostream& os = std::cout) const {

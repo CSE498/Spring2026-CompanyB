@@ -64,6 +64,13 @@ int main() {
   std::cout << "Inserted a(1.0), b(2.0), c(3.0)" << std::endl;
   std::cout << "total_weight(): " << ws2.total_weight() << " (expected 6.0)"
             << std::endl;
+  std::cout << "size(): " << ws2.size() << " (expected 3)" << std::endl;
+  std::cout << "contains(\"b\"): "
+            << (ws2.contains("b") ? "true" : "false") << " (expected true)"
+            << std::endl;
+  std::cout << "contains(\"d\"): "
+            << (ws2.contains("d") ? "true" : "false") << " (expected false)"
+            << std::endl;
 
   // Test 7: getElementAt boundary conditions
   std::cout << "\n--- Test 7: getElementAt boundary conditions ---"
