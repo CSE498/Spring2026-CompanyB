@@ -65,6 +65,17 @@ class WeightedSet {
     return node;
   }
 
+  void fix_weights_and_rebalance(Node* node_ptr) {
+    while (node_ptr != nullptr) {
+      // TODO: rotate if doing so would make the tree better weight-balanced
+      node_ptr->subtree_weight =
+          node_ptr->weight +
+          (node_ptr->left != nullptr ? node_ptr->left->subtree_weight : 0) +
+          (node_ptr->right != nullptr ? node_ptr->right->subtree_weight : 0);
+      node_ptr = node_ptr->parent;
+    }
+  }
+
  public:
   WeightedSet() : root_(nullptr), size_(0) {}
 
@@ -104,24 +115,24 @@ class WeightedSet {
     }
 
     if (this->element_to_node_.find(element) != element_to_node_.end()) {
-      this->element_to_node_.at(element)->weight = weight;
-      // TODO: rebalance and update parents
+      auto node_ptr = this->element_to_node_.at(element);
+      node_ptr->weight = weight;
+      fix_weights_and_rebalance(node_ptr);
     }
     T* element_ptr = new T{element};
     Node* node_ptr = new Node(element_ptr, weight);
     this->element_to_node_[*element_ptr] = node_ptr;
     Node* current_node = this->root_;
     while (current_node != nullptr) {
-      current_node->subtree_weight += weight;
       if (current_node->left == nullptr) {
         current_node->left = node_ptr;
         node_ptr->parent = current_node->left;
-        // TODO: rebalance and update parents
+        fix_weights_and_rebalance(current_node);
         return true;
       } else if (current_node->right == nullptr) {
         current_node->right = node_ptr;
         node_ptr->parent = current_node->right;
-        // TODO: rebalance and update parents
+        fix_weights_and_rebalance(current_node);
         return true;
       } else if (current_node->left->subtree_weight <
                  current_node->right->subtree_weight) {
