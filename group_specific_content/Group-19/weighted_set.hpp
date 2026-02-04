@@ -78,13 +78,15 @@ class WeightedSet {
   void fix_weights_and_rebalance(Node* node_ptr) {
     while (node_ptr != nullptr) {
       // TODO: rotate if doing so would make the tree better weight-balanced
-      node_ptr->subtree_weight =
-          node_ptr->weight + left_subtree_weight(node_ptr) + right_subtree_weight(node_ptr);
+      node_ptr->subtree_weight = node_ptr->weight +
+                                 left_subtree_weight(node_ptr) +
+                                 right_subtree_weight(node_ptr);
       node_ptr = node_ptr->parent;
     }
   }
 
-  // (Claude-written) helper for debug_print: recursively builds tree visualization
+  // (Claude-written) helper for debug_print: recursively builds tree
+  // visualization
   void debug_print_node(std::ostream& os, Node* node, const std::string& prefix,
                         bool is_left, bool is_root) const {
     if (!node) return;
@@ -99,7 +101,8 @@ class WeightedSet {
     os << "[" << *(node->value_ptr) << " w=" << node->weight
        << " sw=" << node->subtree_weight << "]" << std::endl;
 
-    std::string child_prefix = prefix + (is_root ? "" : (is_left ? "│   " : "    "));
+    std::string child_prefix =
+        prefix + (is_root ? "" : (is_left ? "│   " : "    "));
 
     if (node->left || node->right) {
       debug_print_node(os, node->left, child_prefix, true, false);
@@ -240,10 +243,10 @@ class WeightedSet {
     element_to_node_.erase(element);
     return std::make_optional(removed_value);
   }
-  ~WeightedSet() { 
+  ~WeightedSet() {
     clear(root_);
     element_to_node_.clear();
-   }
+  }
 
   size_t size() const { return size_; }
   bool empty() const { return size_ == 0; }
@@ -252,7 +255,8 @@ class WeightedSet {
     return element_to_node_.find(element) != element_to_node_.end();
   }
 
-  // (Claude-written) visualization: prints ASCII tree to ostream (default: cout)
+  // (Claude-written) visualization: prints ASCII tree to ostream (default:
+  // cout)
   void debug_print(std::ostream& os = std::cout) const {
     if (!root_) {
       os << "(empty tree)" << std::endl;
