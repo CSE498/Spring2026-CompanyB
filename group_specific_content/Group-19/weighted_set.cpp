@@ -136,5 +136,26 @@ int main() {
   std::cout << ws_int.debug_string();
 
   std::cout << "\n=== Tests Complete ===" << std::endl;
+
+  // Test 11: Remove element
+  std::cout << "\n--- Test 11: Remove element ---" << std::endl;
+  cse498::WeightedSet<std::string> ws3;
+  ws3.insert("x", 1.0);
+  ws3.insert("y", 2.0);
+  ws3.insert("z", 3.0);
+  std::cout << "Before removal:" << std::endl;
+  ws3.debug_print();
+  auto removed = ws3.remove("y");
+  std::cout << "Removed element: "
+            << (removed.has_value() ? removed.value() : "nullopt") << " (expected y)"
+            << std::endl;
+  std::cout << "After removal:" << std::endl;
+  ws3.debug_print();
+  removed = ws3.remove("x");
+  std::cout << "Removed element: "
+            << (removed.has_value() ? removed.value() : "nullopt") << " (expected x)"
+            << std::endl;
+  std::cout << "After removal:" << std::endl;
+  ws3.debug_print();
   return 0;
 }

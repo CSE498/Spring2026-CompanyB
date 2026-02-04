@@ -101,6 +101,19 @@ class WeightedSet {
     }
   }
 
+  void replace_deleted_node(Node* to_delete, Node* replacement) {
+    if (to_delete->parent == nullptr) {
+      this->root_ = replacement;
+    } else if (to_delete == to_delete->parent->left) {
+      to_delete->parent->left = replacement;
+    } else {
+      to_delete->parent->right = replacement;
+    }
+    if (replacement != nullptr) {
+      replacement->parent = to_delete->parent;
+    }
+  }
+
  public:
   WeightedSet() : root_(nullptr), size_(0) {}
 
@@ -135,7 +148,7 @@ class WeightedSet {
       T* element_ptr = new T{element};
       Node* node_ptr = new Node(element_ptr, weight);
       this->element_to_node_[*element_ptr] = node_ptr;
-      this->root_ = new Node(element_ptr, weight);
+      this->root_ = node_ptr;
       return true;
     }
 
@@ -169,8 +182,6 @@ class WeightedSet {
     return false;
   }
 
-  // TODO: function to remove element
-
   std::optional<T> getElementAt(double index) {
     Node* current_node = this->root_;
     double total = this->root_->subtree_weight;
@@ -202,6 +213,27 @@ class WeightedSet {
     return getElementAt(random_real(rng));
   }
 
+  std::optional<T> remove(const T& element) {
+    if (this->element_to_node_.find(element) == element_to_node_.end()) {
+      return std::nullopt;
+    }
+    Node* node_ptr = this->element_to_node_.at(element);
+    T removed_value = *(node_ptr->value_ptr);
+
+    if (node_ptr->left == nullptr && node_ptr->right == nullptr) {
+      replace_deleted_node(node_ptr, nullptr);
+    } else if (node_ptr->left == nullptr) {
+      replace_deleted_node(node_ptr, node_ptr->right);
+    } else if (node_ptr->right == nullptr) {
+      replace_deleted_node(node_ptr, node_ptr->left);
+    } else {
+      // TODO: handle case where both children exist
+    }
+    fix_weights_and_rebalance(node_ptr->parent);
+    delete node_ptr;
+    element_to_node_.erase(element);
+    return std::make_optional(removed_value);
+  }
   ~WeightedSet() { clear(root_); }
 
   size_t size() const { return size_; }
