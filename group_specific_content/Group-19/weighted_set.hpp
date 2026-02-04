@@ -1,7 +1,9 @@
 #pragma once
 #include <cstddef>
 #include <expected>
+#include <iostream>
 #include <random>
+#include <sstream>
 #include <unordered_map>
 #include <utility>
 
@@ -76,6 +78,29 @@ class WeightedSet {
     }
   }
 
+  // (Claude-written) helper for debug_print: recursively builds tree visualization
+  void debug_print_node(std::ostream& os, Node* node, const std::string& prefix,
+                        bool is_left, bool is_root) const {
+    if (!node) return;
+
+    os << prefix;
+    if (is_root) {
+      os << "";
+    } else {
+      os << (is_left ? "├── L: " : "└── R: ");
+    }
+
+    os << "[" << *(node->value_ptr) << " w=" << node->weight
+       << " sw=" << node->subtree_weight << "]" << std::endl;
+
+    std::string child_prefix = prefix + (is_root ? "" : (is_left ? "│   " : "    "));
+
+    if (node->left || node->right) {
+      debug_print_node(os, node->left, child_prefix, true, false);
+      debug_print_node(os, node->right, child_prefix, false, false);
+    }
+  }
+
  public:
   WeightedSet() : root_(nullptr), size_(0) {}
 
@@ -126,12 +151,12 @@ class WeightedSet {
     while (current_node != nullptr) {
       if (current_node->left == nullptr) {
         current_node->left = node_ptr;
-        node_ptr->parent = current_node->left;
+        node_ptr->parent = current_node;
         fix_weights_and_rebalance(current_node);
         return true;
       } else if (current_node->right == nullptr) {
         current_node->right = node_ptr;
-        node_ptr->parent = current_node->right;
+        node_ptr->parent = current_node;
         fix_weights_and_rebalance(current_node);
         return true;
       } else if (current_node->left->subtree_weight <
@@ -182,6 +207,22 @@ class WeightedSet {
   size_t size() const { return size_; }
   bool empty() const { return size_ == 0; }
   double total_weight() const { return root_ ? root_->subtree_weight : 0.0; }
+
+  // (Claude-written) visualization: prints ASCII tree to ostream (default: cout)
+  void debug_print(std::ostream& os = std::cout) const {
+    if (!root_) {
+      os << "(empty tree)" << std::endl;
+      return;
+    }
+    debug_print_node(os, root_, "", false, true);
+  }
+
+  // (Claude-written): return tree as string instead of printing
+  std::string debug_string() const {
+    std::ostringstream oss;
+    debug_print(oss);
+    return oss.str();
+  }
 };
 
 }  // namespace cse498

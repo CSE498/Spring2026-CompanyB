@@ -112,6 +112,29 @@ int main() {
   std::cout << "total_weight(): " << ws_int.total_weight() << " (expected 10.0)"
             << std::endl;
 
+  // Test 10: Debug print visualization
+  std::cout << "\n--- Test 10: debug_print() visualization ---" << std::endl;
+  std::cout << "Empty tree:" << std::endl;
+  cse498::WeightedSet<std::string> ws_empty;
+  ws_empty.debug_print();
+
+  std::cout << "\nTree with a(1), b(2), c(3):" << std::endl;
+  ws2.debug_print();
+
+  std::cout << "\nLarger tree with more elements:" << std::endl;
+  cse498::WeightedSet<int> ws_big;
+  ws_big.insert(10, 1.0);
+  ws_big.insert(20, 2.0);
+  ws_big.insert(30, 3.0);
+  ws_big.insert(40, 4.0);
+  ws_big.insert(50, 5.0);
+  ws_big.insert(60, 6.0);
+  ws_big.insert(70, 7.0);
+  ws_big.debug_print();
+
+  std::cout << "\ndebug_string() returns: " << std::endl;
+  std::cout << ws_int.debug_string();
+
   std::cout << "\n=== Tests Complete ===" << std::endl;
   return 0;
 }
