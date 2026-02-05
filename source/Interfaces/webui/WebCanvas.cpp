@@ -1,4 +1,11 @@
 /**
+ * @file WebCanvas.cpp
+ * @brief C++ API for the DOM Canvas Element
+ * @author Maksim Savich
+ * @date 2026-2-2
+ **/
+
+/**
  * Canvas API Sources:
  * https://developer.mozilla.org/en-US/docs/Web/API/Canvas_API
  * https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D
@@ -8,52 +15,48 @@
 
 #include <emscripten.h>
 #include <emscripten/html5.h>
+#include <emscripten/val.h>
+#include <math.h>
 
 #include <cassert>
+
+using emscripten::val;
 
 namespace cse498 {
 
 WebCanvas::WebCanvas(int width, int height, const std::string& id)
     : width(width), height(height), id(id) {
-  EM_ASM(
-      {
-        var canvasId = UTF8ToString($0);
-        var canvas = document.getElementById(canvasId);
-        if (!canvas) {
-          canvas = document.createElement('canvas');
-          canvas.id = canvasId;
-          document.body.appendChild(canvas);
-        }
-      },
-      id.c_str());
+  val document = val::global("document");
+  val existing = document.call<val>("getElementById", id);
+
+  assert((existing.isNull() || existing.isUndefined()) &&
+         "Canvas with this ID already exists in the DOM");
+
+  canvas_element = document.call<val>("createElement", std::string("canvas"));
+  canvas_element.set("id", id);
+  document["body"].call<void>("appendChild", canvas_element);
+
   Resize(width, height);
 }
 
+WebCanvas::~WebCanvas() {
+  if (!canvas_element.isNull() && !canvas_element.isUndefined()) {
+    canvas_element.call<void>("remove");
+  }
+}
+
 void WebCanvas::Resize(int new_width, int new_height) {
-  assert(
-      new_width > 0 &&
-      "Canvas width must be positive");  // Assert with message method:
-                                         // https://stackoverflow.com/a/3692961
+  assert(new_width > 0 && "Canvas width must be positive");
   assert(new_height > 0 && "Canvas height must be positive");
   width = new_width;
   height = new_height;
-  EM_ASM(
-      {
-        var canvas = document.getElementById(UTF8ToString($0));
-        canvas.width = $1;
-        canvas.height = $2;
-      },
-      id.c_str(), width, height);
+  canvas_element.set("width", width);
+  canvas_element.set("height", height);
 }
 
 void WebCanvas::Clear() {
-  EM_ASM(
-      {
-        var canvas = document.getElementById(UTF8ToString($0));
-        var ctx = canvas.getContext('2d');
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-      },
-      id.c_str());
+  val ctx = canvas_element.call<val>("getContext", std::string("2d"));
+  ctx.call<void>("clearRect", 0, 0, width, height);
 }
 
 void WebCanvas::SetBackgroundColor(std::tuple<int, int, int> rgb) {
@@ -62,110 +65,84 @@ void WebCanvas::SetBackgroundColor(std::tuple<int, int, int> rgb) {
   assert(g >= 0 && g <= 255 && "Green value must be 0-255");
   assert(b >= 0 && b <= 255 && "Blue value must be 0-255");
   background_color = rgb;
-  EM_ASM(
-      {
-        var canvas = document.getElementById(UTF8ToString($0));
-        canvas.style.backgroundColor = 'rgb(' + $1 + ',' + $2 + ',' + $3 + ')';
-      },
-      id.c_str(), r, g, b);
+  std::string color = "rgb(" + std::to_string(r) + "," + std::to_string(g) +
+                      "," + std::to_string(b) + ")";
+  canvas_element["style"].set("backgroundColor", color);
 }
 
 void WebCanvas::DrawLine(std::pair<double, double> x,
                          std::pair<double, double> y) {
-  EM_ASM(
-      {
-        var canvas = document.getElementById(UTF8ToString($0));
-        var ctx = canvas.getContext('2d');
-        ctx.beginPath();
-        ctx.moveTo($1, $2);
-        ctx.lineTo($3, $4);
-        ctx.stroke();
-      },
-      id.c_str(), x.first, x.second, y.first, y.second);
+  val ctx = canvas_element.call<val>("getContext", std::string("2d"));
+  ctx.call<void>("beginPath");
+  ctx.call<void>("moveTo", x.first, x.second);
+  ctx.call<void>("lineTo", y.first, y.second);
+  ctx.call<void>("stroke");
 }
 
 void WebCanvas::DrawRect(double x, double y, double w, double h, bool filled) {
   assert(w >= 0 && "Rectangle width must be non-negative");
   assert(h >= 0 && "Rectangle height must be non-negative");
-  EM_ASM(
-      {
-        var canvas = document.getElementById(UTF8ToString($0));
-        var ctx = canvas.getContext('2d');
-        if ($5) {
-          ctx.fillRect($1, $2, $3, $4);
-        } else {
-          ctx.strokeRect($1, $2, $3, $4);
-        }
-      },
-      id.c_str(), x, y, w, h, filled);
+  val ctx = canvas_element.call<val>("getContext", std::string("2d"));
+  if (filled) {
+    ctx.call<void>("fillRect", x, y, w, h);
+  } else {
+    ctx.call<void>("strokeRect", x, y, w, h);
+  }
 }
 
 void WebCanvas::DrawCircle(double x, double y, double radius, bool filled) {
   assert(radius >= 0 && "Circle radius must be non-negative");
-  EM_ASM(
-      {
-        var canvas = document.getElementById(UTF8ToString($0));
-        var ctx = canvas.getContext('2d');
-        ctx.beginPath();
-        ctx.arc($1, $2, $3, 0, 2 * Math.PI);
-        if ($4) {
-          ctx.fill();
-        } else {
-          ctx.stroke();
-        }
-      },
-      id.c_str(), x, y, radius, filled);
+  val ctx = canvas_element.call<val>("getContext", std::string("2d"));
+  ctx.call<void>("beginPath");
+  ctx.call<void>("arc", x, y, radius, 0, 2 * M_PI);
+  if (filled) {
+    ctx.call<void>("fill");
+  } else {
+    ctx.call<void>("stroke");
+  }
 }
 
 void WebCanvas::DrawPolygon(
     const std::vector<std::pair<double, double>>& points, bool filled) {
   assert(points.size() >= 3 && "Polygon must have at least 3 points");
-  EM_ASM(
-      {
-        var canvas = document.getElementById(UTF8ToString($0));
-        var ctx = canvas.getContext('2d');
-        var numPoints = $1;
-        var dataPtr = $2;
-        ctx.beginPath();
-        ctx.moveTo(HEAPF64[dataPtr / 8], HEAPF64[dataPtr / 8 + 1]);
-        for (var i = 1; i < numPoints; i++) {
-          ctx.lineTo(HEAPF64[dataPtr / 8 + i * 2],
-                     HEAPF64[dataPtr / 8 + i * 2 + 1]);
-        }
-        ctx.closePath();
-        if ($3) {
-          ctx.fill();
-        } else {
-          ctx.stroke();
-        }
-      },
-      id.c_str(), static_cast<int>(points.size()), points.data(), filled);
+
+  val ctx = canvas_element.call<val>("getContext", std::string("2d"));
+  ctx.call<void>("beginPath");
+  ctx.call<void>("moveTo", points[0].first, points[0].second);
+
+  for (size_t i = 1; i < points.size(); ++i) {
+    ctx.call<void>("lineTo", points[i].first, points[i].second);
+  }
+
+  ctx.call<void>("closePath");
+
+  if (filled) {
+    ctx.call<void>("fill");
+  } else {
+    ctx.call<void>("stroke");
+  }
 }
 
 void WebCanvas::DrawText(const std::string& text, double x, double y) {
-  EM_ASM(
-      {
-        var canvas = document.getElementById(UTF8ToString($0));
-        var ctx = canvas.getContext('2d');
-        ctx.fillText(UTF8ToString($1), $2, $3);
-      },
-      id.c_str(), text.c_str(), x, y);
+  val ctx = canvas_element.call<val>("getContext", std::string("2d"));
+  ctx.call<void>("fillText", text, x, y);
 }
 
 void WebCanvas::LoadImage(const std::string& path) {
-  EM_ASM(
-      {
-        if (!window._imageCache) window._imageCache = {};
-        var src = UTF8ToString($0);
-        if (!window._imageCache[src]) {
-          var img = new Image();
-          img.src = src;
-          window._imageCache[src] = img;
-        }
-      },
-      path.c_str());
+  val window = val::global("window");
+  if (window["_imageCache"].isUndefined()) {
+    window.set("_imageCache", val::object());
+  }
+  val cache = window["_imageCache"];
+  if (cache[path].isUndefined()) {
+    val Image = val::global("Image");
+    val img = Image.new_();
+    img.set("src", path);
+    cache.set(path, img);
+  }
 }
 
+// Still requires the macro. So I am keeping this function the same.
 void WebCanvas::DrawImage(const std::string& path, double x, double y, double w,
                           double h) {
   EM_ASM(
@@ -181,7 +158,9 @@ void WebCanvas::DrawImage(const std::string& path, double x, double y, double w,
           img = img || new Image();
           img.src = src;
           window._imageCache[src] = img;
-          img.onload = function() { ctx.drawImage(img, $2, $3, $4, $5); };
+          img.onload = function() {
+            ctx.drawImage(img, $2, $3, $4, $5);
+          };
         }
       },
       id.c_str(), path.c_str(), x, y, w, h);
@@ -193,13 +172,10 @@ void WebCanvas::SetPenColor(std::tuple<int, int, int> rgb) {
   assert(g >= 0 && g <= 255 && "Green value must be 0-255");
   assert(b >= 0 && b <= 255 && "Blue value must be 0-255");
   pen_color = rgb;
-  EM_ASM(
-      {
-        var canvas = document.getElementById(UTF8ToString($0));
-        var ctx = canvas.getContext('2d');
-        ctx.strokeStyle = 'rgb(' + $1 + ',' + $2 + ',' + $3 + ')';
-      },
-      id.c_str(), r, g, b);
+  val ctx = canvas_element.call<val>("getContext", std::string("2d"));
+  std::string color = "rgb(" + std::to_string(r) + "," + std::to_string(g) +
+                      "," + std::to_string(b) + ")";
+  ctx.set("strokeStyle", color);
 }
 
 void WebCanvas::SetFillColor(std::tuple<int, int, int> rgb) {
@@ -208,93 +184,55 @@ void WebCanvas::SetFillColor(std::tuple<int, int, int> rgb) {
   assert(g >= 0 && g <= 255 && "Green value must be 0-255");
   assert(b >= 0 && b <= 255 && "Blue value must be 0-255");
   fill_color = rgb;
-  EM_ASM(
-      {
-        var canvas = document.getElementById(UTF8ToString($0));
-        var ctx = canvas.getContext('2d');
-        ctx.fillStyle = 'rgb(' + $1 + ',' + $2 + ',' + $3 + ')';
-      },
-      id.c_str(), r, g, b);
+  val ctx = canvas_element.call<val>("getContext", std::string("2d"));
+  std::string color = "rgb(" + std::to_string(r) + "," + std::to_string(g) +
+                      "," + std::to_string(b) + ")";
+  ctx.set("fillStyle", color);
 }
 
 void WebCanvas::SetLineWidth(double w) {
   assert(w >= 0 && "Line width must be non-negative");
   line_width = w;
-  EM_ASM(
-      {
-        var canvas = document.getElementById(UTF8ToString($0));
-        var ctx = canvas.getContext('2d');
-        ctx.lineWidth = $1;
-      },
-      id.c_str(), line_width);
+  val ctx = canvas_element.call<val>("getContext", std::string("2d"));
+  ctx.set("lineWidth", line_width);
 }
 
 void WebCanvas::SetFont(const std::string& new_font) {
   font = new_font;
-  EM_ASM(
-      {
-        var canvas = document.getElementById(UTF8ToString($0));
-        var ctx = canvas.getContext('2d');
-        ctx.font = UTF8ToString($1);
-      },
-      id.c_str(), font.c_str());
+  val ctx = canvas_element.call<val>("getContext", std::string("2d"));
+  ctx.set("font", font);
 }
 
 void WebCanvas::SetAlpha(double new_alpha) {
   assert(new_alpha >= 0.0 && new_alpha <= 1.0 &&
          "Alpha must be between 0 and 1");
   alpha = new_alpha;
-  EM_ASM(
-      {
-        var canvas = document.getElementById(UTF8ToString($0));
-        var ctx = canvas.getContext('2d');
-        ctx.globalAlpha = $1;
-      },
-      id.c_str(), alpha);
+  val ctx = canvas_element.call<val>("getContext", std::string("2d"));
+  ctx.set("globalAlpha", alpha);
 }
 
 void WebCanvas::Translate(std::pair<double, double> point) {
   location = point;
-  EM_ASM(
-      {
-        var canvas = document.getElementById(UTF8ToString($0));
-        var ctx = canvas.getContext('2d');
-        ctx.translate($1, $2);
-      },
-      id.c_str(), point.first, point.second);
+  val ctx = canvas_element.call<val>("getContext", std::string("2d"));
+  ctx.call<void>("translate", point.first, point.second);
 }
 
 void WebCanvas::Rotate(double angle, bool clockwise) {
   double directed_angle = clockwise ? angle : -angle;
-  EM_ASM(
-      {
-        var canvas = document.getElementById(UTF8ToString($0));
-        var ctx = canvas.getContext('2d');
-        ctx.rotate($1);
-      },
-      id.c_str(), directed_angle);
+  val ctx = canvas_element.call<val>("getContext", std::string("2d"));
+  ctx.call<void>("rotate", directed_angle);
 }
 
 void WebCanvas::Scale(double x, double y) {
-  EM_ASM(
-      {
-        var canvas = document.getElementById(UTF8ToString($0));
-        var ctx = canvas.getContext('2d');
-        ctx.scale($1, $2);
-      },
-      id.c_str(), x, y);
+  val ctx = canvas_element.call<val>("getContext", std::string("2d"));
+  ctx.call<void>("scale", x, y);
 }
 
 void WebCanvas::Save() {
   saved_states.push_back(
       {pen_color, fill_color, alpha, line_width, font, location});
-  EM_ASM(
-      {
-        var canvas = document.getElementById(UTF8ToString($0));
-        var ctx = canvas.getContext('2d');
-        ctx.save();
-      },
-      id.c_str());
+  val ctx = canvas_element.call<val>("getContext", std::string("2d"));
+  ctx.call<void>("save");
 }
 
 void WebCanvas::Restore() {
@@ -307,13 +245,8 @@ void WebCanvas::Restore() {
   line_width = state.line_width;
   font = state.font;
   location = state.location;
-  EM_ASM(
-      {
-        var canvas = document.getElementById(UTF8ToString($0));
-        var ctx = canvas.getContext('2d');
-        ctx.restore();
-      },
-      id.c_str());
+  val ctx = canvas_element.call<val>("getContext", std::string("2d"));
+  ctx.call<void>("restore");
 }
 
 int WebCanvas::GetWidth() const { return width; }
