@@ -11,7 +11,6 @@
 #include <vector>
 #include <expected>
 
-// forward declaration for testing RobinHoodMap
 class RobinHoodMapTest;
 
 /**
@@ -70,7 +69,7 @@ class RobinHoodMap {
     size_t probeCount = 0;
 
     while (mTable[index].filled) {
-      if (mTable[index].key == key) {
+      if (mTable[index].hash == hash && mTable[index].key == key) {
         mTable[index].value = std::move(value);
         return;
       }
@@ -165,23 +164,25 @@ class RobinHoodMap {
    */
   std::expected<V, std::string> at(const K& key) const {
     const size_t mask = mTable.size() - 1;
-    size_t hash = mHasher(key);
-    size_t index = hash & mask;
+    const size_t hash = mHasher(key);
+    const size_t homeIndex = hash & mask;
+    size_t index = homeIndex;
     size_t probeCount = 0;
 
     for (;;) {
-      if (!mTable[index].filled) {
+      const Entry& entry = mTable[index];
+      
+      if (!entry.filled) {
         return std::unexpected("Key not found");
       }
 
-      if (mTable[index].hash == hash && mTable[index].key == key) {
-        return mTable[index].value;
+      size_t entryProbeCount = (index - (entry.hash & mask) + mTable.size()) & mask;
+      if (entryProbeCount < probeCount) {
+        return std::unexpected("Key not found");
       }
 
-      size_t currentProbeCount = (index - (mTable[index].hash & mask) + mTable.size()) & mask;
-
-      if (currentProbeCount < probeCount) {
-        return std::unexpected("Key not found");
+      if (entry.hash == hash && entry.key == key) {
+        return entry.value;
       }
 
       ++probeCount;
