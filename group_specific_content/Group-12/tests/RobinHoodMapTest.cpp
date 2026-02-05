@@ -848,3 +848,132 @@ TEST_CASE("InsertWithHash hash preserved after resize", "[insertWithHash]") {
     REQUIRE(value.has_value());
     REQUIRE(value.value() == 100);
 }
+
+// ============================================================================
+// BENCHMARKS
+// ============================================================================
+
+#include <chrono>
+#include <random>
+#include <unordered_map>
+#include <iostream>
+
+TEST_CASE("Benchmark", "[benchmark]") {
+    const int N = 100000;
+    std::vector<int> randomKeys(N);
+    std::mt19937 gen(42);
+    std::uniform_int_distribution<> dist(0, N * 10);
+    for (int i = 0; i < N; ++i) {
+        randomKeys[i] = dist(gen);
+    }
+
+    std::cout << "\n=== RobinHoodMap vs std::unordered_map ===\n\n";
+
+    // Sequential Insert
+    {
+        auto start = std::chrono::high_resolution_clock::now();
+        RobinHoodMap<int, int> map;
+        for (int i = 0; i < N; ++i) map.insert(i, i);
+        auto end = std::chrono::high_resolution_clock::now();
+        double rh = std::chrono::duration<double, std::milli>(end - start).count();
+
+        start = std::chrono::high_resolution_clock::now();
+        std::unordered_map<int, int> umap;
+        for (int i = 0; i < N; ++i) umap[i] = i;
+        end = std::chrono::high_resolution_clock::now();
+        double um = std::chrono::duration<double, std::milli>(end - start).count();
+
+        std::cout << "Sequential Insert:  RH=" << rh << "ms  UM=" << um << "ms\n";
+    }
+
+    // Random Insert
+    {
+        auto start = std::chrono::high_resolution_clock::now();
+        RobinHoodMap<int, int> map;
+        for (int key : randomKeys) map.insert(key, key);
+        auto end = std::chrono::high_resolution_clock::now();
+        double rh = std::chrono::duration<double, std::milli>(end - start).count();
+
+        start = std::chrono::high_resolution_clock::now();
+        std::unordered_map<int, int> umap;
+        for (int key : randomKeys) umap[key] = key;
+        end = std::chrono::high_resolution_clock::now();
+        double um = std::chrono::duration<double, std::milli>(end - start).count();
+
+        std::cout << "Random Insert:      RH=" << rh << "ms  UM=" << um << "ms\n";
+    }
+
+    // Lookup Hit
+    {
+        RobinHoodMap<int, int> map;
+        std::unordered_map<int, int> umap;
+        for (int i = 0; i < N; ++i) { map.insert(i, i); umap[i] = i; }
+
+        volatile int sink = 0;
+        auto start = std::chrono::high_resolution_clock::now();
+        for (int i = 0; i < N; ++i) {
+            auto r = map.at(i);
+            if (r) sink = *r;
+        }
+        auto end = std::chrono::high_resolution_clock::now();
+        double rh = std::chrono::duration<double, std::milli>(end - start).count();
+
+        start = std::chrono::high_resolution_clock::now();
+        for (int i = 0; i < N; ++i) {
+            auto it = umap.find(i);
+            if (it != umap.end()) sink = it->second;
+        }
+        end = std::chrono::high_resolution_clock::now();
+        double um = std::chrono::duration<double, std::milli>(end - start).count();
+
+        std::cout << "Lookup Hit:         RH=" << rh << "ms  UM=" << um << "ms\n";
+    }
+
+    // Lookup Miss
+    {
+        RobinHoodMap<int, int> map;
+        std::unordered_map<int, int> umap;
+        for (int i = 0; i < N; ++i) { map.insert(i * 2, i); umap[i * 2] = i; }
+
+        volatile int sink = 0;
+        auto start = std::chrono::high_resolution_clock::now();
+        for (int i = 0; i < N; ++i) {
+            auto r = map.at(i * 2 + 1);
+            if (r) sink = *r;
+        }
+        auto end = std::chrono::high_resolution_clock::now();
+        double rh = std::chrono::duration<double, std::milli>(end - start).count();
+
+        start = std::chrono::high_resolution_clock::now();
+        for (int i = 0; i < N; ++i) {
+            auto it = umap.find(i * 2 + 1);
+            if (it != umap.end()) sink = it->second;
+        }
+        end = std::chrono::high_resolution_clock::now();
+        double um = std::chrono::duration<double, std::milli>(end - start).count();
+
+        std::cout << "Lookup Miss:        RH=" << rh << "ms  UM=" << um << "ms\n";
+    }
+
+    // Remove
+    {
+        auto start = std::chrono::high_resolution_clock::now();
+        RobinHoodMap<int, int> map;
+        for (int i = 0; i < N; ++i) map.insert(i, i);
+        for (int i = 0; i < N; ++i) map.remove(i);
+        auto end = std::chrono::high_resolution_clock::now();
+        double rh = std::chrono::duration<double, std::milli>(end - start).count();
+
+        start = std::chrono::high_resolution_clock::now();
+        std::unordered_map<int, int> umap;
+        for (int i = 0; i < N; ++i) umap[i] = i;
+        for (int i = 0; i < N; ++i) umap.erase(i);
+        end = std::chrono::high_resolution_clock::now();
+        double um = std::chrono::duration<double, std::milli>(end - start).count();
+
+        std::cout << "Insert+Remove:      RH=" << rh << "ms  UM=" << um << "ms\n";
+    }
+
+    std::cout << "\n";
+    REQUIRE(true);
+}
