@@ -1,5 +1,5 @@
 CXX = g++
-CXXFLAGS = -std=c++20 -Wall -Wextra -I..
+CXXFLAGS = -std=c++23 -Wall -Wextra -I..
 LDFLAGS = -lgtest -lgtest_main -pthread
 
 CXXFLAGS += -I/opt/homebrew/include
@@ -13,8 +13,8 @@ SRC = RobinHoodMapTest.cpp
 all: $(TARGET)
 	./$(TARGET)
 
-$(TARGET): $(SRC) ../RobinHoodMap.hpp ../RobinHoodMap.cpp
-	$(CXX) $(CXXFLAGS) -o $@ $(SRC) $(LDFLAGS)
+$(TARGET): $(SRC) ../RobinHoodMap.hpp
+	$(CXX) $(CXXFLAGS) -o $@ $< $(LDFLAGS)
 
 test: $(TARGET)
 	./$(TARGET)

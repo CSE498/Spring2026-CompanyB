@@ -24,7 +24,6 @@
 #include <climits>
 
 #include "../RobinHoodMap.hpp"
-#include "../RobinHoodMap.cpp"
 
 // helper class to be able to acess private functions and members
 class RobinHoodMapTest {
@@ -87,18 +86,18 @@ TEST_CASE("Insert duplicate key updates value", "[insert]") {
     map.insert(1, 999);
     REQUIRE(map.size() == 1u);
     
-    auto [found, value] = map.at(1);
-    REQUIRE(found);
-    REQUIRE(value == 999);
+    auto value = map.at(1);
+    REQUIRE(value.has_value());
+    REQUIRE(value.value() == 999);
 }
 
 TEST_CASE("Insert string keys and values", "[insert]") {
     RobinHoodMap<std::string, std::string> map;
     map.insert("hello", "world");
     
-    auto [found, value] = map.at("hello");
-    REQUIRE(found);
-    REQUIRE(value == "world");
+    auto value = map.at("hello");
+    REQUIRE(value.has_value());
+    REQUIRE(value.value() == "world");
 }
 
 TEST_CASE("Insert negative and zero keys", "[insert]") {
@@ -107,10 +106,12 @@ TEST_CASE("Insert negative and zero keys", "[insert]") {
     map.insert(0, 200);
     REQUIRE(map.size() == 2u);
     
-    auto [f1, v1] = map.at(-1);
-    auto [f2, v2] = map.at(0);
-    REQUIRE(f1);
-    REQUIRE(f2);
+    auto value1 = map.at(-1);
+    auto value2 = map.at(0);
+    REQUIRE(value1.has_value());
+    REQUIRE(value1.value() == 100);
+    REQUIRE(value2.has_value());
+    REQUIRE(value2.value() == 200);
 }
 
 // at
@@ -119,18 +120,18 @@ TEST_CASE("At existing and nonexistent keys", "[at]") {
     RobinHoodMap<int, int> map;
     map.insert(1, 100);
     
-    auto [found1, value1] = map.at(1);
-    REQUIRE(found1);
-    REQUIRE(value1 == 100);
+    auto value1 = map.at(1);
+    REQUIRE(value1.has_value());
+    REQUIRE(value1.value() == 100);
     
-    auto [found2, value2] = map.at(999);
-    REQUIRE_FALSE(found2);
+    auto value2 = map.at(999);
+    REQUIRE_FALSE(value2.has_value());
 }
 
 TEST_CASE("At empty map", "[at]") {
     RobinHoodMap<int, int> map;
-    auto [found, value] = map.at(1);
-    REQUIRE_FALSE(found);
+    auto value = map.at(1);
+    REQUIRE_FALSE(value.has_value());
 }
 
 // operator[]
@@ -139,12 +140,12 @@ TEST_CASE("Subscript operator behaves like at", "[operator[]]") {
     RobinHoodMap<int, int> map;
     map.insert(5, 500);
     
-    auto [found1, value1] = map[5];
-    REQUIRE(found1);
-    REQUIRE(value1 == 500);
+    auto value1 = map[5];
+    REQUIRE(value1.has_value());
+    REQUIRE(value1.value() == 500);
     
-    auto [found2, value2] = map[999];
-    REQUIRE_FALSE(found2);
+    auto value2 = map[999];
+    REQUIRE_FALSE(value2.has_value());
 }
 
 // remove
@@ -156,8 +157,9 @@ TEST_CASE("Remove existing key", "[remove]") {
     map.remove(1);
     
     REQUIRE(map.size() == 1u);
-    auto [found, value] = map.at(1);
-    REQUIRE_FALSE(found);
+    auto value = map.at(1);
+    REQUIRE_FALSE(value.has_value());
+
 }
 
 TEST_CASE("Remove nonexistent key does nothing", "[remove]") {
@@ -179,9 +181,9 @@ TEST_CASE("Remove then reinsert", "[remove]") {
     map.remove(1);
     map.insert(1, 999);
     
-    auto [found, value] = map.at(1);
-    REQUIRE(found);
-    REQUIRE(value == 999);
+    auto value = map.at(1);
+    REQUIRE(value.has_value());
+    REQUIRE(value.value() == 999);
 }
 
 // assignment operator
@@ -198,8 +200,9 @@ TEST_CASE("Assignment operator creates independent copy", "[assignment]") {
     
     // Modify original, copy should be unchanged
     map1.insert(1, 999);
-    auto [found, value] = map2.at(1);
-    REQUIRE(value == 100);
+    auto value = map2.at(1);
+    REQUIRE(value.has_value());
+    REQUIRE(value.value() == 100);
 }
 
 // resizing (private)
@@ -221,22 +224,22 @@ TEST_CASE("Resize preserves elements", "[resize]") {
     RobinHoodMapTest::callResize(map);
     
     REQUIRE(map.size() == 2u);
-    auto [f1, v1] = map.at(1);
-    auto [f2, v2] = map.at(2);
-    REQUIRE(f1);
-    REQUIRE(f2);
+    auto value1 = map.at(1);
+    auto value2 = map.at(2);
+    REQUIRE(value1.has_value());
+    REQUIRE(value2.has_value());
 }
 
 // finding first element (private)
 
 TEST_CASE("Find first element empty and non-empty", "[find-first]") {
     RobinHoodMap<int, int> map;
-    auto [worked1, key1] = RobinHoodMapTest::callFindFirstElement(map);
-    REQUIRE_FALSE(worked1);
+    auto key1 = RobinHoodMapTest::callFindFirstElement(map);
+    REQUIRE_FALSE(key1.has_value());
     
     map.insert(42, 100);
-    auto [worked2, key2] = RobinHoodMapTest::callFindFirstElement(map);
-    REQUIRE(worked2);
+    auto key2 = RobinHoodMapTest::callFindFirstElement(map);
+    REQUIRE(key2.has_value());
 }
 
 // internal state
@@ -267,9 +270,9 @@ TEST_CASE("Stress test many insertions", "[stress]") {
     }
     REQUIRE(map.size() == 1000u);
     
-    auto [found, value] = map.at(500);
-    REQUIRE(found);
-    REQUIRE(value == 5000);
+    auto value = map.at(500);
+    REQUIRE(value.has_value());
+    REQUIRE(value.value() == 5000);
 }
 
 TEST_CASE("Stress test insert and remove", "[stress]") {
@@ -284,10 +287,11 @@ TEST_CASE("Stress test insert and remove", "[stress]") {
     
     REQUIRE(map.size() == 50u);
     
-    auto [found1, v1] = map.at(25);
-    auto [found2, v2] = map.at(75);
-    REQUIRE_FALSE(found1);
-    REQUIRE(found2);
+    auto value1 = map.at(25);
+    auto value2 = map.at(75);
+    REQUIRE_FALSE(value1.has_value());
+    REQUIRE(value2.has_value());
+    REQUIRE(value2.value() == 75);
 }
 
 // Collision Handling
@@ -300,13 +304,16 @@ TEST_CASE("Collisions colliding keys work", "[collisions]") {
     
     REQUIRE(map.size() == 3u);
     
-    auto [f0, v0] = map.at(0);
-    auto [f8, v8] = map.at(8);
-    auto [f16, v16] = map.at(16);
+    auto value0 = map.at(0);
+    auto value8 = map.at(8);
+    auto value16 = map.at(16);
     
-    REQUIRE(f0);
-    REQUIRE(f8);
-    REQUIRE(f16);
+    REQUIRE(value0.has_value());
+    REQUIRE(value8.has_value());
+    REQUIRE(value16.has_value());
+    REQUIRE(value0.value() == 100);
+    REQUIRE(value8.value() == 200);
+    REQUIRE(value16.value() == 300);
 }
 
 TEST_CASE("Collisions remove middle colliding key", "[collisions]") {
@@ -317,13 +324,16 @@ TEST_CASE("Collisions remove middle colliding key", "[collisions]") {
     
     map.remove(8);
     
-    auto [f0, v0] = map.at(0);
-    auto [f8, v8] = map.at(8);
-    auto [f16, v16] = map.at(16);
+    auto value0 = map.at(0);
+    auto value8 = map.at(8);
+    auto value16 = map.at(16);
     
-    REQUIRE(f0);
-    REQUIRE_FALSE(f8);
-    REQUIRE(f16);
+    REQUIRE(map.size() == 2u);
+    REQUIRE(value0.has_value());
+    REQUIRE_FALSE(value8.has_value());
+    REQUIRE(value16.has_value());
+    REQUIRE(value0.value() == 100);
+    REQUIRE(value16.value() == 300);
 }
 
 TEST_CASE("Collisions remove first colliding key", "[collisions]") {
@@ -334,13 +344,16 @@ TEST_CASE("Collisions remove first colliding key", "[collisions]") {
     
     map.remove(0);
     
-    auto [f0, v0] = map.at(0);
-    auto [f8, v8] = map.at(8);
-    auto [f16, v16] = map.at(16);
+    auto value0 = map.at(0);
+    auto value8 = map.at(8);
+    auto value16 = map.at(16);
     
-    REQUIRE_FALSE(f0);
-    REQUIRE(f8);
-    REQUIRE(f16);
+    REQUIRE(map.size() == 2u);
+    REQUIRE_FALSE(value0.has_value());
+    REQUIRE(value8.has_value());
+    REQUIRE(value16.has_value());
+    REQUIRE(value8.value() == 200);
+    REQUIRE(value16.value() == 300);
 }
 
 TEST_CASE("Collisions remove last colliding key", "[collisions]") {
@@ -351,13 +364,15 @@ TEST_CASE("Collisions remove last colliding key", "[collisions]") {
     
     map.remove(16);
     
-    auto [f0, v0] = map.at(0);
-    auto [f8, v8] = map.at(8);
-    auto [f16, v16] = map.at(16);
+    auto value0 = map.at(0);
+    auto value8 = map.at(8);
+    auto value16 = map.at(16);
     
-    REQUIRE(f0);
-    REQUIRE(f8);
-    REQUIRE_FALSE(f16);
+    REQUIRE(value0.has_value());
+    REQUIRE(value8.has_value());
+    REQUIRE_FALSE(value16.has_value());
+    REQUIRE(value0.value() == 100);
+    REQUIRE(value8.value() == 200);
 }
 
 TEST_CASE("Collisions many colliding keys", "[collisions]") {
@@ -370,9 +385,9 @@ TEST_CASE("Collisions many colliding keys", "[collisions]") {
     REQUIRE(map.size() == 50u);
     
     for (int i = 0; i < 50; ++i) {
-        auto [found, value] = map.at(i * 8);
-        REQUIRE(found);
-        REQUIRE(value == i);
+        auto value = map.at(i * 8);
+        REQUIRE(value.has_value());
+        REQUIRE(value.value() == i);
     }
 }
 
@@ -383,22 +398,22 @@ TEST_CASE("Boundary values int min/max", "[boundary]") {
     map.insert(INT_MAX, 100);
     map.insert(INT_MIN, 200);
     
-    auto [f1, v1] = map.at(INT_MAX);
-    auto [f2, v2] = map.at(INT_MIN);
+    auto value1 = map.at(INT_MAX);
+    auto value2 = map.at(INT_MIN);
     
-    REQUIRE(f1);
-    REQUIRE(f2);
-    REQUIRE(v1 == 100);
-    REQUIRE(v2 == 200);
+    REQUIRE(value1.has_value());
+    REQUIRE(value2.has_value());
+    REQUIRE(value1.value() == 100);
+    REQUIRE(value2.value() == 200);
 }
 
 TEST_CASE("Boundary values size_t max", "[boundary]") {
     RobinHoodMap<size_t, int> map;
     map.insert(SIZE_MAX, 42);
     
-    auto [found, value] = map.at(SIZE_MAX);
-    REQUIRE(found);
-    REQUIRE(value == 42);
+    auto value = map.at(SIZE_MAX);
+    REQUIRE(value.has_value());
+    REQUIRE(value.value() == 42);
 }
 
 // String Edge Cases
@@ -408,11 +423,13 @@ TEST_CASE("String keys empty and long strings", "[string]") {
     map.insert("", 1);
     map.insert(std::string(1000, 'x'), 2);
     
-    auto [f1, v1] = map.at("");
-    auto [f2, v2] = map.at(std::string(1000, 'x'));
+    auto value1 = map.at("");
+    auto value2 = map.at(std::string(1000, 'x'));
     
-    REQUIRE(f1);
-    REQUIRE(f2);
+    REQUIRE(value1.has_value());
+    REQUIRE(value2.has_value());
+    REQUIRE(value1.value() == 1);
+    REQUIRE(value2.value() == 2);
 }
 
 TEST_CASE("String keys case sensitive", "[string]") {
@@ -422,10 +439,10 @@ TEST_CASE("String keys case sensitive", "[string]") {
     
     REQUIRE(map.size() == 2u);
     
-    auto [f1, v1] = map.at("test");
-    auto [f2, v2] = map.at("TEST");
-    REQUIRE(v1 == 1);
-    REQUIRE(v2 == 2);
+    auto value1 = map.at("test");
+    auto value2 = map.at("TEST");
+    REQUIRE(value1.value() == 1);
+    REQUIRE(value2.value() == 2);
 }
 
 TEST_CASE("String keys similar strings", "[string]") {
@@ -438,13 +455,13 @@ TEST_CASE("String keys similar strings", "[string]") {
     
     REQUIRE(map.size() == 5u);
     
-    auto [f1, v1] = map.at("a");
-    auto [f2, v2] = map.at("aa");
-    auto [f3, v3] = map.at("ab");
+    auto value1 = map.at("a");
+    auto value2 = map.at("aa");
+    auto value3 = map.at("ab");
     
-    REQUIRE(v1 == 1);
-    REQUIRE(v2 == 2);
-    REQUIRE(v3 == 4);
+    REQUIRE(value1.value() == 1);
+    REQUIRE(value2.value() == 2);
+    REQUIRE(value3.value() == 4);
 }
 
 TEST_CASE("String keys whitespace keys", "[string]") {
@@ -507,8 +524,8 @@ TEST_CASE("Repeated ops insert same key many times", "[repeated]") {
     }
     
     REQUIRE(map.size() == 1u);
-    auto [found, value] = map.at(42);
-    REQUIRE(value == 99);
+    auto value = map.at(42);
+    REQUIRE(value.value() == 99);
 }
 
 TEST_CASE("Repeated ops remove same key many times", "[repeated]") {
@@ -549,9 +566,9 @@ TEST_CASE("Type variations char key", "[types]") {
     
     REQUIRE(map.size() == 26u);
     
-    auto [found, value] = map.at('m');
-    REQUIRE(found);
-    REQUIRE(value == 12);
+    auto value = map.at('m');
+    REQUIRE(value.has_value());
+    REQUIRE(value.value() == 12);
 }
 
 TEST_CASE("Type variations bool key", "[types]") {
@@ -561,10 +578,10 @@ TEST_CASE("Type variations bool key", "[types]") {
     
     REQUIRE(map.size() == 2u);
     
-    auto [f1, v1] = map.at(true);
-    auto [f2, v2] = map.at(false);
-    REQUIRE(v1 == "yes");
-    REQUIRE(v2 == "no");
+    auto value1 = map.at(true);
+    auto value2 = map.at(false);
+    REQUIRE(value1.value() == "yes");
+    REQUIRE(value2.value() == "no");
 }
 
 TEST_CASE("Type variations double value", "[types]") {
@@ -572,11 +589,11 @@ TEST_CASE("Type variations double value", "[types]") {
     map.insert(1, 3.14159);
     map.insert(2, 2.71828);
     
-    auto [f1, v1] = map.at(1);
-    auto [f2, v2] = map.at(2);
+    auto value1 = map.at(1);
+    auto value2 = map.at(2);
     
-    REQUIRE(v1 == Approx(3.14159));
-    REQUIRE(v2 == Approx(2.71828));
+    REQUIRE(value1.value() == Approx(3.14159));
+    REQUIRE(value2.value() == Approx(2.71828));
 }
 
 // Resize Behavior
@@ -592,9 +609,9 @@ TEST_CASE("Resize behavior auto resize preserves data", "[resize]") {
     REQUIRE(RobinHoodMapTest::getTableSize(map) > initialTableSize);
     
     for (int i = 0; i < 1000; ++i) {
-        auto [found, value] = map.at(i);
-        REQUIRE(found);
-        REQUIRE(value == i * 2);
+        auto value = map.at(i);
+        REQUIRE(value.has_value());
+        REQUIRE(value.value() == i * 2);
     }
 }
 
@@ -608,10 +625,10 @@ TEST_CASE("Resize behavior multiple manual resizes", "[resize]") {
     RobinHoodMapTest::callResize(map);
     
     REQUIRE(map.size() == 2u);
-    auto [f1, v1] = map.at(1);
-    auto [f2, v2] = map.at(2);
-    REQUIRE(f1);
-    REQUIRE(f2);
+    auto value1 = map.at(1);
+    auto value2 = map.at(2);
+    REQUIRE(value1.has_value());
+    REQUIRE(value2.has_value());
 }
 
 // Assignment Edge Cases
@@ -651,13 +668,14 @@ TEST_CASE("Backshift removal triggers backshift", "[backshift]") {
     map.remove(8);
     map.remove(16);
     
-    auto [f0, v0] = map.at(0);
-    auto [f24, v24] = map.at(24);
+    auto value0 = map.at(0);
+    auto value24 = map.at(24);
     
-    REQUIRE(f0);
-    REQUIRE(f24);
-    REQUIRE(v0 == 100);
-    REQUIRE(v24 == 400);
+    REQUIRE(map.size() == 2u);
+    REQUIRE(value0.has_value());
+    REQUIRE(value24.has_value());
+    REQUIRE(value0.value() == 100);
+    REQUIRE(value24.value() == 400);
 }
 
 // Hash Stored Optimization Verification
@@ -674,16 +692,16 @@ TEST_CASE("Hash optimization stored hash works correctly", "[hash]") {
     map.insert(key2, 2);
     map.insert(key3, 3);
     
-    auto [f1, v1] = map.at(key1);
-    auto [f2, v2] = map.at(key2);
-    auto [f3, v3] = map.at(key3);
+    auto value1 = map.at(key1);
+    auto value2 = map.at(key2);
+    auto value3 = map.at(key3);
     
-    REQUIRE(f1);
-    REQUIRE(f2);
-    REQUIRE(f3);
-    REQUIRE(v1 == 1);
-    REQUIRE(v2 == 2);
-    REQUIRE(v3 == 3);
+    REQUIRE(value1.has_value());
+    REQUIRE(value2.has_value());
+    REQUIRE(value3.has_value());
+    REQUIRE(value1.value() == 1);
+    REQUIRE(value2.value() == 2);
+    REQUIRE(value3.value() == 3);
 }
 
 // _insertWithHash Tests (private method)
@@ -696,9 +714,9 @@ TEST_CASE("InsertWithHash basic insert", "[insertWithHash]") {
     RobinHoodMapTest::callInsertWithHash(map, 42, 100, hash);
     
     REQUIRE(map.size() == 1u);
-    auto [found, value] = map.at(42);
-    REQUIRE(found);
-    REQUIRE(value == 100);
+    auto value = map.at(42);
+    REQUIRE(value.has_value());
+    REQUIRE(value.value() == 100);
 }
 
 TEST_CASE("InsertWithHash preserves provided hash", "[insertWithHash]") {
@@ -737,9 +755,9 @@ TEST_CASE("InsertWithHash multiple inserts", "[insertWithHash]") {
     REQUIRE(map.size() == 10u);
     
     for (int i = 0; i < 10; ++i) {
-        auto [found, value] = map.at(i);
-        REQUIRE(found);
-        REQUIRE(value == i * 100);
+        auto value = map.at(i);
+        REQUIRE(value.has_value());
+        REQUIRE(value.value() == i * 100);
     }
 }
 
@@ -752,8 +770,9 @@ TEST_CASE("InsertWithHash duplicate key updates", "[insertWithHash]") {
     RobinHoodMapTest::callInsertWithHash(map, 5, 999, hash);
     
     REQUIRE(map.size() == 1u);
-    auto [found, value] = map.at(5);
-    REQUIRE(value == 999);
+    auto value = map.at(5);
+    REQUIRE(value.has_value());
+    REQUIRE(value.value() == 999);
 }
 
 TEST_CASE("InsertWithHash handles collisions", "[insertWithHash]") {
@@ -770,13 +789,16 @@ TEST_CASE("InsertWithHash handles collisions", "[insertWithHash]") {
     
     REQUIRE(map.size() == 3u);
     
-    auto [f0, v0] = map.at(0);
-    auto [f8, v8] = map.at(8);
-    auto [f16, v16] = map.at(16);
+    auto value0 = map.at(0);
+    auto value8 = map.at(8);
+    auto value16 = map.at(16);
     
-    REQUIRE(f0);
-    REQUIRE(f8);
-    REQUIRE(f16);
+    REQUIRE(value0.has_value());
+    REQUIRE(value8.has_value());
+    REQUIRE(value16.has_value());
+    REQUIRE(value0.value() == 100);
+    REQUIRE(value8.value() == 200);
+    REQUIRE(value16.value() == 300);
 }
 
 TEST_CASE("InsertWithHash works with strings", "[insertWithHash]") {
@@ -787,9 +809,9 @@ TEST_CASE("InsertWithHash works with strings", "[insertWithHash]") {
     size_t hash = hasher(key);
     RobinHoodMapTest::callInsertWithHash(map, key, 42, hash);
     
-    auto [found, value] = map.at("test_key");
-    REQUIRE(found);
-    REQUIRE(value == 42);
+    auto value = map.at("test_key");
+    REQUIRE(value.has_value());
+    REQUIRE(value.value() == 42);
 }
 
 TEST_CASE("InsertWithHash used by resize correctly", "[insertWithHash]") {
@@ -805,9 +827,9 @@ TEST_CASE("InsertWithHash used by resize correctly", "[insertWithHash]") {
     
     // Verify all elements still accessible with correct values
     for (int i = 0; i < 5; ++i) {
-        auto [found, value] = map.at(i);
-        REQUIRE(found);
-        REQUIRE(value == i * 10);
+        auto value = map.at(i);
+        REQUIRE(value.has_value());
+        REQUIRE(value.value() == i * 10);
     }
 }
 
@@ -822,7 +844,7 @@ TEST_CASE("InsertWithHash hash preserved after resize", "[insertWithHash]") {
     RobinHoodMapTest::callResize(map);
     
     // Element should still be findable (hash was preserved during resize)
-    auto [found, value] = map.at(key);
-    REQUIRE(found);
-    REQUIRE(value == 100);
+    auto value = map.at(key);
+    REQUIRE(value.has_value());
+    REQUIRE(value.value() == 100);
 }
