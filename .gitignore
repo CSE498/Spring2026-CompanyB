@@ -47,5 +47,4 @@
 # debug information files
 *.dwo
 
-# MacOS metadata
-.DS_Store
+**/.DS_Store

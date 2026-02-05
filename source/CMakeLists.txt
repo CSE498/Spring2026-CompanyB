@@ -95,5 +95,6 @@ else()
         -sMAXIMUM_MEMORY=1gb
         -sEXPORTED_RUNTIME_METHODS=ccall,cwrap
         --emrun
+        -lembind
     )
 endif()
