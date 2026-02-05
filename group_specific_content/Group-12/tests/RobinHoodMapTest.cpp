@@ -1,6 +1,6 @@
 /**
  * @file RobinHoodMapTest.cpp
- * @brief Test suite for RobinHoodMap using Google Test.
+ * @brief Test suite for RobinHoodMap.
  * @author John Stouffer
  * @date 2026-2-2
  */
@@ -18,7 +18,8 @@
  * @author Claude Opus 4.5
  */
 
-#include <gtest/gtest.h>
+#define CATCH_CONFIG_MAIN
+#include "../../../third-party/Catch/single_include/catch2/catch.hpp"
 #include <string>
 #include <climits>
 
@@ -58,134 +59,134 @@ public:
 
 // constructor
 
-TEST(Constructor, CreatesEmptyMap) {
+TEST_CASE("Constructor creates empty map", "[constructor]") {
     RobinHoodMap<int, int> map;
-    EXPECT_EQ(map.size(), 0u);
+    REQUIRE(map.size() == 0u);
 }
 
-TEST(Constructor, WorksWithStringTypes) {
+TEST_CASE("Constructor works with string types", "[constructor]") {
     RobinHoodMap<std::string, std::string> map;
-    EXPECT_EQ(map.size(), 0u);
+    REQUIRE(map.size() == 0u);
 }
 
 // insert
 
-TEST(Insert, SingleAndMultipleElements) {
+TEST_CASE("Insert single and multiple elements", "[insert]") {
     RobinHoodMap<int, int> map;
     map.insert(1, 100);
-    EXPECT_EQ(map.size(), 1u);
+    REQUIRE(map.size() == 1u);
     
     map.insert(2, 200);
     map.insert(3, 300);
-    EXPECT_EQ(map.size(), 3u);
+    REQUIRE(map.size() == 3u);
 }
 
-TEST(Insert, DuplicateKeyUpdatesValue) {
+TEST_CASE("Insert duplicate key updates value", "[insert]") {
     RobinHoodMap<int, int> map;
     map.insert(1, 100);
     map.insert(1, 999);
-    EXPECT_EQ(map.size(), 1u);
+    REQUIRE(map.size() == 1u);
     
     auto [found, value] = map.at(1);
-    EXPECT_TRUE(found);
-    EXPECT_EQ(value, 999);
+    REQUIRE(found);
+    REQUIRE(value == 999);
 }
 
-TEST(Insert, StringKeysAndValues) {
+TEST_CASE("Insert string keys and values", "[insert]") {
     RobinHoodMap<std::string, std::string> map;
     map.insert("hello", "world");
     
     auto [found, value] = map.at("hello");
-    EXPECT_TRUE(found);
-    EXPECT_EQ(value, "world");
+    REQUIRE(found);
+    REQUIRE(value == "world");
 }
 
-TEST(Insert, NegativeAndZeroKeys) {
+TEST_CASE("Insert negative and zero keys", "[insert]") {
     RobinHoodMap<int, int> map;
     map.insert(-1, 100);
     map.insert(0, 200);
-    EXPECT_EQ(map.size(), 2u);
+    REQUIRE(map.size() == 2u);
     
     auto [f1, v1] = map.at(-1);
     auto [f2, v2] = map.at(0);
-    EXPECT_TRUE(f1);
-    EXPECT_TRUE(f2);
+    REQUIRE(f1);
+    REQUIRE(f2);
 }
 
 // at
 
-TEST(At, ExistingAndNonexistentKeys) {
+TEST_CASE("At existing and nonexistent keys", "[at]") {
     RobinHoodMap<int, int> map;
     map.insert(1, 100);
     
     auto [found1, value1] = map.at(1);
-    EXPECT_TRUE(found1);
-    EXPECT_EQ(value1, 100);
+    REQUIRE(found1);
+    REQUIRE(value1 == 100);
     
     auto [found2, value2] = map.at(999);
-    EXPECT_FALSE(found2);
+    REQUIRE_FALSE(found2);
 }
 
-TEST(At, EmptyMap) {
+TEST_CASE("At empty map", "[at]") {
     RobinHoodMap<int, int> map;
     auto [found, value] = map.at(1);
-    EXPECT_FALSE(found);
+    REQUIRE_FALSE(found);
 }
 
 // operator[]
 
-TEST(SubscriptOperator, BehavesLikeAt) {
+TEST_CASE("Subscript operator behaves like at", "[operator[]]") {
     RobinHoodMap<int, int> map;
     map.insert(5, 500);
     
     auto [found1, value1] = map[5];
-    EXPECT_TRUE(found1);
-    EXPECT_EQ(value1, 500);
+    REQUIRE(found1);
+    REQUIRE(value1 == 500);
     
     auto [found2, value2] = map[999];
-    EXPECT_FALSE(found2);
+    REQUIRE_FALSE(found2);
 }
 
 // remove
 
-TEST(Remove, ExistingKey) {
+TEST_CASE("Remove existing key", "[remove]") {
     RobinHoodMap<int, int> map;
     map.insert(1, 100);
     map.insert(2, 200);
     map.remove(1);
     
-    EXPECT_EQ(map.size(), 1u);
+    REQUIRE(map.size() == 1u);
     auto [found, value] = map.at(1);
-    EXPECT_FALSE(found);
+    REQUIRE_FALSE(found);
 }
 
-TEST(Remove, NonexistentKeyDoesNothing) {
+TEST_CASE("Remove nonexistent key does nothing", "[remove]") {
     RobinHoodMap<int, int> map;
     map.insert(1, 100);
     map.remove(999);
-    EXPECT_EQ(map.size(), 1u);
+    REQUIRE(map.size() == 1u);
 }
 
-TEST(Remove, FromEmptyMap) {
+TEST_CASE("Remove from empty map", "[remove]") {
     RobinHoodMap<int, int> map;
     map.remove(1);
-    EXPECT_EQ(map.size(), 0u);
+    REQUIRE(map.size() == 0u);
 }
 
-TEST(Remove, ThenReinsert) {
+TEST_CASE("Remove then reinsert", "[remove]") {
     RobinHoodMap<int, int> map;
     map.insert(1, 100);
     map.remove(1);
     map.insert(1, 999);
     
     auto [found, value] = map.at(1);
-    EXPECT_TRUE(found);
-    EXPECT_EQ(value, 999);
+    REQUIRE(found);
+    REQUIRE(value == 999);
 }
 
 // assignment operator
 
-TEST(AssignmentOperator, CreatesIndependentCopy) {
+TEST_CASE("Assignment operator creates independent copy", "[assignment]") {
     RobinHoodMap<int, int> map1;
     map1.insert(1, 100);
     map1.insert(2, 200);
@@ -193,63 +194,63 @@ TEST(AssignmentOperator, CreatesIndependentCopy) {
     RobinHoodMap<int, int> map2;
     map2 = map1;
     
-    EXPECT_EQ(map2.size(), 2u);
+    REQUIRE(map2.size() == 2u);
     
     // Modify original, copy should be unchanged
     map1.insert(1, 999);
     auto [found, value] = map2.at(1);
-    EXPECT_EQ(value, 100);
+    REQUIRE(value == 100);
 }
 
 // resizing (private)
 
-TEST(Resize, DoublesTableSize) {
+TEST_CASE("Resize doubles table size", "[resize]") {
     RobinHoodMap<int, int> map;
     size_t initialSize = RobinHoodMapTest::getTableSize(map);
     
     RobinHoodMapTest::callResize(map);
     
-    EXPECT_EQ(RobinHoodMapTest::getTableSize(map), initialSize * 2);
+    REQUIRE(RobinHoodMapTest::getTableSize(map) == initialSize * 2);
 }
 
-TEST(Resize, PreservesElements) {
+TEST_CASE("Resize preserves elements", "[resize]") {
     RobinHoodMap<int, int> map;
     map.insert(1, 100);
     map.insert(2, 200);
     
     RobinHoodMapTest::callResize(map);
     
-    EXPECT_EQ(map.size(), 2u);
+    REQUIRE(map.size() == 2u);
     auto [f1, v1] = map.at(1);
     auto [f2, v2] = map.at(2);
-    EXPECT_TRUE(f1);
-    EXPECT_TRUE(f2);
+    REQUIRE(f1);
+    REQUIRE(f2);
 }
 
 // finding first element (private)
 
-TEST(FindFirstElement, EmptyAndNonEmpty) {
+TEST_CASE("Find first element empty and non-empty", "[find-first]") {
     RobinHoodMap<int, int> map;
     auto [worked1, key1] = RobinHoodMapTest::callFindFirstElement(map);
-    EXPECT_FALSE(worked1);
+    REQUIRE_FALSE(worked1);
     
     map.insert(42, 100);
     auto [worked2, key2] = RobinHoodMapTest::callFindFirstElement(map);
-    EXPECT_TRUE(worked2);
+    REQUIRE(worked2);
 }
 
 // internal state
 
-TEST(InternalState, InitialTableSize) {
+TEST_CASE("Internal state initial table size", "[internal]") {
     RobinHoodMap<int, int> map;
-    EXPECT_EQ(RobinHoodMapTest::getTableSize(map), 8u);
+    REQUIRE(RobinHoodMapTest::getTableSize(map) == 8u);
 }
 
-TEST(InternalState, SizeConsistency) {
+TEST_CASE("Internal state size consistency", "[internal]") {
     RobinHoodMap<int, int> map;
     map.insert(1, 100);
     map.insert(2, 200);
-    EXPECT_EQ(RobinHoodMapTest::getInternalSize(map), map.size());
+    REQUIRE(RobinHoodMapTest::getInternalSize(map) == map.size());
 }
 
 // ============================================================================
@@ -258,20 +259,20 @@ TEST(InternalState, SizeConsistency) {
 
 // Stress Tests
 
-TEST(StressTest, ManyInsertions) {
+TEST_CASE("Stress test many insertions", "[stress]") {
     RobinHoodMap<int, int> map;
     
     for (int i = 0; i < 1000; ++i) {
         map.insert(i, i * 10);
     }
-    EXPECT_EQ(map.size(), 1000u);
+    REQUIRE(map.size() == 1000u);
     
     auto [found, value] = map.at(500);
-    EXPECT_TRUE(found);
-    EXPECT_EQ(value, 5000);
+    REQUIRE(found);
+    REQUIRE(value == 5000);
 }
 
-TEST(StressTest, InsertAndRemove) {
+TEST_CASE("Stress test insert and remove", "[stress]") {
     RobinHoodMap<int, int> map;
     
     for (int i = 0; i < 100; ++i) {
@@ -281,34 +282,34 @@ TEST(StressTest, InsertAndRemove) {
         map.remove(i);
     }
     
-    EXPECT_EQ(map.size(), 50u);
+    REQUIRE(map.size() == 50u);
     
     auto [found1, v1] = map.at(25);
     auto [found2, v2] = map.at(75);
-    EXPECT_FALSE(found1);
-    EXPECT_TRUE(found2);
+    REQUIRE_FALSE(found1);
+    REQUIRE(found2);
 }
 
 // Collision Handling
 
-TEST(Collisions, CollidingKeysWork) {
+TEST_CASE("Collisions colliding keys work", "[collisions]") {
     RobinHoodMap<int, int> map;
     map.insert(0, 100);
     map.insert(8, 200);
     map.insert(16, 300);
     
-    EXPECT_EQ(map.size(), 3u);
+    REQUIRE(map.size() == 3u);
     
     auto [f0, v0] = map.at(0);
     auto [f8, v8] = map.at(8);
     auto [f16, v16] = map.at(16);
     
-    EXPECT_TRUE(f0);
-    EXPECT_TRUE(f8);
-    EXPECT_TRUE(f16);
+    REQUIRE(f0);
+    REQUIRE(f8);
+    REQUIRE(f16);
 }
 
-TEST(Collisions, RemoveMiddleCollidingKey) {
+TEST_CASE("Collisions remove middle colliding key", "[collisions]") {
     RobinHoodMap<int, int> map;
     map.insert(0, 100);
     map.insert(8, 200);
@@ -320,12 +321,12 @@ TEST(Collisions, RemoveMiddleCollidingKey) {
     auto [f8, v8] = map.at(8);
     auto [f16, v16] = map.at(16);
     
-    EXPECT_TRUE(f0);
-    EXPECT_FALSE(f8);
-    EXPECT_TRUE(f16);
+    REQUIRE(f0);
+    REQUIRE_FALSE(f8);
+    REQUIRE(f16);
 }
 
-TEST(Collisions, RemoveFirstCollidingKey) {
+TEST_CASE("Collisions remove first colliding key", "[collisions]") {
     RobinHoodMap<int, int> map;
     map.insert(0, 100);
     map.insert(8, 200);
@@ -337,12 +338,12 @@ TEST(Collisions, RemoveFirstCollidingKey) {
     auto [f8, v8] = map.at(8);
     auto [f16, v16] = map.at(16);
     
-    EXPECT_FALSE(f0);
-    EXPECT_TRUE(f8);
-    EXPECT_TRUE(f16);
+    REQUIRE_FALSE(f0);
+    REQUIRE(f8);
+    REQUIRE(f16);
 }
 
-TEST(Collisions, RemoveLastCollidingKey) {
+TEST_CASE("Collisions remove last colliding key", "[collisions]") {
     RobinHoodMap<int, int> map;
     map.insert(0, 100);
     map.insert(8, 200);
@@ -354,30 +355,30 @@ TEST(Collisions, RemoveLastCollidingKey) {
     auto [f8, v8] = map.at(8);
     auto [f16, v16] = map.at(16);
     
-    EXPECT_TRUE(f0);
-    EXPECT_TRUE(f8);
-    EXPECT_FALSE(f16);
+    REQUIRE(f0);
+    REQUIRE(f8);
+    REQUIRE_FALSE(f16);
 }
 
-TEST(Collisions, ManyCollidingKeys) {
+TEST_CASE("Collisions many colliding keys", "[collisions]") {
     RobinHoodMap<int, int> map;
     
     for (int i = 0; i < 50; ++i) {
         map.insert(i * 8, i);
     }
     
-    EXPECT_EQ(map.size(), 50u);
+    REQUIRE(map.size() == 50u);
     
     for (int i = 0; i < 50; ++i) {
         auto [found, value] = map.at(i * 8);
-        EXPECT_TRUE(found);
-        EXPECT_EQ(value, i);
+        REQUIRE(found);
+        REQUIRE(value == i);
     }
 }
 
 // Boundary Values
 
-TEST(BoundaryValues, IntMinMax) {
+TEST_CASE("Boundary values int min/max", "[boundary]") {
     RobinHoodMap<int, int> map;
     map.insert(INT_MAX, 100);
     map.insert(INT_MIN, 200);
@@ -385,24 +386,24 @@ TEST(BoundaryValues, IntMinMax) {
     auto [f1, v1] = map.at(INT_MAX);
     auto [f2, v2] = map.at(INT_MIN);
     
-    EXPECT_TRUE(f1);
-    EXPECT_TRUE(f2);
-    EXPECT_EQ(v1, 100);
-    EXPECT_EQ(v2, 200);
+    REQUIRE(f1);
+    REQUIRE(f2);
+    REQUIRE(v1 == 100);
+    REQUIRE(v2 == 200);
 }
 
-TEST(BoundaryValues, SizeTMax) {
+TEST_CASE("Boundary values size_t max", "[boundary]") {
     RobinHoodMap<size_t, int> map;
     map.insert(SIZE_MAX, 42);
     
     auto [found, value] = map.at(SIZE_MAX);
-    EXPECT_TRUE(found);
-    EXPECT_EQ(value, 42);
+    REQUIRE(found);
+    REQUIRE(value == 42);
 }
 
 // String Edge Cases
 
-TEST(StringKeys, EmptyAndLongStrings) {
+TEST_CASE("String keys empty and long strings", "[string]") {
     RobinHoodMap<std::string, int> map;
     map.insert("", 1);
     map.insert(std::string(1000, 'x'), 2);
@@ -410,24 +411,24 @@ TEST(StringKeys, EmptyAndLongStrings) {
     auto [f1, v1] = map.at("");
     auto [f2, v2] = map.at(std::string(1000, 'x'));
     
-    EXPECT_TRUE(f1);
-    EXPECT_TRUE(f2);
+    REQUIRE(f1);
+    REQUIRE(f2);
 }
 
-TEST(StringKeys, CaseSensitive) {
+TEST_CASE("String keys case sensitive", "[string]") {
     RobinHoodMap<std::string, int> map;
     map.insert("test", 1);
     map.insert("TEST", 2);
     
-    EXPECT_EQ(map.size(), 2u);
+    REQUIRE(map.size() == 2u);
     
     auto [f1, v1] = map.at("test");
     auto [f2, v2] = map.at("TEST");
-    EXPECT_EQ(v1, 1);
-    EXPECT_EQ(v2, 2);
+    REQUIRE(v1 == 1);
+    REQUIRE(v2 == 2);
 }
 
-TEST(StringKeys, SimilarStrings) {
+TEST_CASE("String keys similar strings", "[string]") {
     RobinHoodMap<std::string, int> map;
     map.insert("a", 1);
     map.insert("aa", 2);
@@ -435,30 +436,30 @@ TEST(StringKeys, SimilarStrings) {
     map.insert("ab", 4);
     map.insert("ba", 5);
     
-    EXPECT_EQ(map.size(), 5u);
+    REQUIRE(map.size() == 5u);
     
     auto [f1, v1] = map.at("a");
     auto [f2, v2] = map.at("aa");
     auto [f3, v3] = map.at("ab");
     
-    EXPECT_EQ(v1, 1);
-    EXPECT_EQ(v2, 2);
-    EXPECT_EQ(v3, 4);
+    REQUIRE(v1 == 1);
+    REQUIRE(v2 == 2);
+    REQUIRE(v3 == 4);
 }
 
-TEST(StringKeys, WhitespaceKeys) {
+TEST_CASE("String keys whitespace keys", "[string]") {
     RobinHoodMap<std::string, int> map;
     map.insert(" ", 1);
     map.insert("  ", 2);
     map.insert("\t", 3);
     map.insert("\n", 4);
     
-    EXPECT_EQ(map.size(), 4u);
+    REQUIRE(map.size() == 4u);
 }
 
 // Iterator Tests
 
-TEST(Iterator, BasicIteration) {
+TEST_CASE("Iterator basic iteration", "[iterator]") {
     RobinHoodMap<int, int> map;
     map.insert(1, 100);
     map.insert(2, 200);
@@ -469,10 +470,10 @@ TEST(Iterator, BasicIteration) {
         ++count;
     }
     
-    EXPECT_EQ(count, 3);
+    REQUIRE(count == 3);
 }
 
-TEST(Iterator, EmptyMapIteration) {
+TEST_CASE("Iterator empty map iteration", "[iterator]") {
     RobinHoodMap<int, int> map;
     
     int count = 0;
@@ -480,10 +481,10 @@ TEST(Iterator, EmptyMapIteration) {
         ++count;
     }
     
-    EXPECT_EQ(count, 0);
+    REQUIRE(count == 0);
 }
 
-TEST(Iterator, RangeBasedFor) {
+TEST_CASE("Iterator range based for", "[iterator]") {
     RobinHoodMap<int, int> map;
     map.insert(1, 100);
     map.insert(2, 200);
@@ -493,24 +494,24 @@ TEST(Iterator, RangeBasedFor) {
         sum += entry.value;
     }
     
-    EXPECT_EQ(sum, 300);
+    REQUIRE(sum == 300);
 }
 
 // Repeated Operations
 
-TEST(RepeatedOps, InsertSameKeyManyTimes) {
+TEST_CASE("Repeated ops insert same key many times", "[repeated]") {
     RobinHoodMap<int, int> map;
     
     for (int i = 0; i < 100; ++i) {
         map.insert(42, i);
     }
     
-    EXPECT_EQ(map.size(), 1u);
+    REQUIRE(map.size() == 1u);
     auto [found, value] = map.at(42);
-    EXPECT_EQ(value, 99);
+    REQUIRE(value == 99);
 }
 
-TEST(RepeatedOps, RemoveSameKeyManyTimes) {
+TEST_CASE("Repeated ops remove same key many times", "[repeated]") {
     RobinHoodMap<int, int> map;
     map.insert(1, 100);
     
@@ -518,55 +519,55 @@ TEST(RepeatedOps, RemoveSameKeyManyTimes) {
         map.remove(1);
     }
     
-    EXPECT_EQ(map.size(), 0u);
+    REQUIRE(map.size() == 0u);
 }
 
-TEST(RepeatedOps, InsertRemoveCycle) {
+TEST_CASE("Repeated ops insert remove cycle", "[repeated]") {
     RobinHoodMap<int, int> map;
     
     for (int cycle = 0; cycle < 10; ++cycle) {
         for (int i = 0; i < 50; ++i) {
             map.insert(i, i + cycle);
         }
-        EXPECT_EQ(map.size(), 50u);
+        REQUIRE(map.size() == 50u);
         
         for (int i = 0; i < 50; ++i) {
             map.remove(i);
         }
-        EXPECT_EQ(map.size(), 0u);
+        REQUIRE(map.size() == 0u);
     }
 }
 
 // Type Variations
 
-TEST(TypeVariations, CharKey) {
+TEST_CASE("Type variations char key", "[types]") {
     RobinHoodMap<char, int> map;
     
     for (char c = 'a'; c <= 'z'; ++c) {
         map.insert(c, c - 'a');
     }
     
-    EXPECT_EQ(map.size(), 26u);
+    REQUIRE(map.size() == 26u);
     
     auto [found, value] = map.at('m');
-    EXPECT_TRUE(found);
-    EXPECT_EQ(value, 12);
+    REQUIRE(found);
+    REQUIRE(value == 12);
 }
 
-TEST(TypeVariations, BoolKey) {
+TEST_CASE("Type variations bool key", "[types]") {
     RobinHoodMap<bool, std::string> map;
     map.insert(true, "yes");
     map.insert(false, "no");
     
-    EXPECT_EQ(map.size(), 2u);
+    REQUIRE(map.size() == 2u);
     
     auto [f1, v1] = map.at(true);
     auto [f2, v2] = map.at(false);
-    EXPECT_EQ(v1, "yes");
-    EXPECT_EQ(v2, "no");
+    REQUIRE(v1 == "yes");
+    REQUIRE(v2 == "no");
 }
 
-TEST(TypeVariations, DoubleValue) {
+TEST_CASE("Type variations double value", "[types]") {
     RobinHoodMap<int, double> map;
     map.insert(1, 3.14159);
     map.insert(2, 2.71828);
@@ -574,13 +575,13 @@ TEST(TypeVariations, DoubleValue) {
     auto [f1, v1] = map.at(1);
     auto [f2, v2] = map.at(2);
     
-    EXPECT_NEAR(v1, 3.14159, 0.00001);
-    EXPECT_NEAR(v2, 2.71828, 0.00001);
+    REQUIRE(v1 == Approx(3.14159));
+    REQUIRE(v2 == Approx(2.71828));
 }
 
 // Resize Behavior
 
-TEST(ResizeBehavior, AutoResizePreservesData) {
+TEST_CASE("Resize behavior auto resize preserves data", "[resize]") {
     RobinHoodMap<int, int> map;
     size_t initialTableSize = RobinHoodMapTest::getTableSize(map);
     
@@ -588,16 +589,16 @@ TEST(ResizeBehavior, AutoResizePreservesData) {
         map.insert(i, i * 2);
     }
     
-    EXPECT_GT(RobinHoodMapTest::getTableSize(map), initialTableSize);
+    REQUIRE(RobinHoodMapTest::getTableSize(map) > initialTableSize);
     
     for (int i = 0; i < 1000; ++i) {
         auto [found, value] = map.at(i);
-        EXPECT_TRUE(found);
-        EXPECT_EQ(value, i * 2);
+        REQUIRE(found);
+        REQUIRE(value == i * 2);
     }
 }
 
-TEST(ResizeBehavior, MultipleManualResizes) {
+TEST_CASE("Resize behavior multiple manual resizes", "[resize]") {
     RobinHoodMap<int, int> map;
     map.insert(1, 100);
     map.insert(2, 200);
@@ -606,16 +607,16 @@ TEST(ResizeBehavior, MultipleManualResizes) {
     RobinHoodMapTest::callResize(map);
     RobinHoodMapTest::callResize(map);
     
-    EXPECT_EQ(map.size(), 2u);
+    REQUIRE(map.size() == 2u);
     auto [f1, v1] = map.at(1);
     auto [f2, v2] = map.at(2);
-    EXPECT_TRUE(f1);
-    EXPECT_TRUE(f2);
+    REQUIRE(f1);
+    REQUIRE(f2);
 }
 
 // Assignment Edge Cases
 
-TEST(Assignment, AssignEmptyToFull) {
+TEST_CASE("Assignment assign empty to full", "[assignment]") {
     RobinHoodMap<int, int> map1;
     map1.insert(1, 100);
     map1.insert(2, 200);
@@ -623,10 +624,10 @@ TEST(Assignment, AssignEmptyToFull) {
     RobinHoodMap<int, int> emptyMap;
     map1 = emptyMap;
     
-    EXPECT_EQ(map1.size(), 0u);
+    REQUIRE(map1.size() == 0u);
 }
 
-TEST(Assignment, AssignFullToEmpty) {
+TEST_CASE("Assignment assign full to empty", "[assignment]") {
     RobinHoodMap<int, int> emptyMap;
     
     RobinHoodMap<int, int> fullMap;
@@ -634,12 +635,12 @@ TEST(Assignment, AssignFullToEmpty) {
     
     emptyMap = fullMap;
     
-    EXPECT_EQ(emptyMap.size(), 1u);
+    REQUIRE(emptyMap.size() == 1u);
 }
 
 // Backshift Verification (Robin Hood specific)
 
-TEST(Backshift, RemovalTriggersBackshift) {
+TEST_CASE("Backshift removal triggers backshift", "[backshift]") {
     RobinHoodMap<int, int> map;
     
     map.insert(0, 100);
@@ -653,15 +654,15 @@ TEST(Backshift, RemovalTriggersBackshift) {
     auto [f0, v0] = map.at(0);
     auto [f24, v24] = map.at(24);
     
-    EXPECT_TRUE(f0);
-    EXPECT_TRUE(f24);
-    EXPECT_EQ(v0, 100);
-    EXPECT_EQ(v24, 400);
+    REQUIRE(f0);
+    REQUIRE(f24);
+    REQUIRE(v0 == 100);
+    REQUIRE(v24 == 400);
 }
 
 // Hash Stored Optimization Verification
 
-TEST(HashOptimization, StoredHashWorksCorrectly) {
+TEST_CASE("Hash optimization stored hash works correctly", "[hash]") {
     RobinHoodMap<std::string, int> map;
     
     // Long strings where hash comparison saves time
@@ -677,30 +678,30 @@ TEST(HashOptimization, StoredHashWorksCorrectly) {
     auto [f2, v2] = map.at(key2);
     auto [f3, v3] = map.at(key3);
     
-    EXPECT_TRUE(f1);
-    EXPECT_TRUE(f2);
-    EXPECT_TRUE(f3);
-    EXPECT_EQ(v1, 1);
-    EXPECT_EQ(v2, 2);
-    EXPECT_EQ(v3, 3);
+    REQUIRE(f1);
+    REQUIRE(f2);
+    REQUIRE(f3);
+    REQUIRE(v1 == 1);
+    REQUIRE(v2 == 2);
+    REQUIRE(v3 == 3);
 }
 
 // _insertWithHash Tests (private method)
 
-TEST(InsertWithHash, BasicInsert) {
+TEST_CASE("InsertWithHash basic insert", "[insertWithHash]") {
     RobinHoodMap<int, int> map;
     std::hash<int> hasher;
     
     size_t hash = hasher(42);
     RobinHoodMapTest::callInsertWithHash(map, 42, 100, hash);
     
-    EXPECT_EQ(map.size(), 1u);
+    REQUIRE(map.size() == 1u);
     auto [found, value] = map.at(42);
-    EXPECT_TRUE(found);
-    EXPECT_EQ(value, 100);
+    REQUIRE(found);
+    REQUIRE(value == 100);
 }
 
-TEST(InsertWithHash, PreservesProvidedHash) {
+TEST_CASE("InsertWithHash preserves provided hash", "[insertWithHash]") {
     RobinHoodMap<int, int> map;
     std::hash<int> hasher;
     
@@ -717,10 +718,10 @@ TEST(InsertWithHash, PreservesProvidedHash) {
         index = (index + 1) & mask;
     }
     
-    EXPECT_EQ(RobinHoodMapTest::getStoredHash(map, index), expectedHash);
+    REQUIRE(RobinHoodMapTest::getStoredHash(map, index) == expectedHash);
 }
 
-TEST(InsertWithHash, MultipleInserts) {
+TEST_CASE("InsertWithHash multiple inserts", "[insertWithHash]") {
     RobinHoodMap<int, int> map;
     std::hash<int> hasher;
     
@@ -733,16 +734,16 @@ TEST(InsertWithHash, MultipleInserts) {
         RobinHoodMapTest::callInsertWithHash(map, i, i * 100, hasher(i));
     }
     
-    EXPECT_EQ(map.size(), 10u);
+    REQUIRE(map.size() == 10u);
     
     for (int i = 0; i < 10; ++i) {
         auto [found, value] = map.at(i);
-        EXPECT_TRUE(found);
-        EXPECT_EQ(value, i * 100);
+        REQUIRE(found);
+        REQUIRE(value == i * 100);
     }
 }
 
-TEST(InsertWithHash, DuplicateKeyUpdates) {
+TEST_CASE("InsertWithHash duplicate key updates", "[insertWithHash]") {
     RobinHoodMap<int, int> map;
     std::hash<int> hasher;
     
@@ -750,12 +751,12 @@ TEST(InsertWithHash, DuplicateKeyUpdates) {
     RobinHoodMapTest::callInsertWithHash(map, 5, 100, hash);
     RobinHoodMapTest::callInsertWithHash(map, 5, 999, hash);
     
-    EXPECT_EQ(map.size(), 1u);
+    REQUIRE(map.size() == 1u);
     auto [found, value] = map.at(5);
-    EXPECT_EQ(value, 999);
+    REQUIRE(value == 999);
 }
 
-TEST(InsertWithHash, HandlesCollisions) {
+TEST_CASE("InsertWithHash handles collisions", "[insertWithHash]") {
     RobinHoodMap<int, int> map;
     std::hash<int> hasher;
     
@@ -767,18 +768,18 @@ TEST(InsertWithHash, HandlesCollisions) {
     RobinHoodMapTest::callInsertWithHash(map, 8, 200, hasher(8));
     RobinHoodMapTest::callInsertWithHash(map, 16, 300, hasher(16));
     
-    EXPECT_EQ(map.size(), 3u);
+    REQUIRE(map.size() == 3u);
     
     auto [f0, v0] = map.at(0);
     auto [f8, v8] = map.at(8);
     auto [f16, v16] = map.at(16);
     
-    EXPECT_TRUE(f0);
-    EXPECT_TRUE(f8);
-    EXPECT_TRUE(f16);
+    REQUIRE(f0);
+    REQUIRE(f8);
+    REQUIRE(f16);
 }
 
-TEST(InsertWithHash, WorksWithStrings) {
+TEST_CASE("InsertWithHash works with strings", "[insertWithHash]") {
     RobinHoodMap<std::string, int> map;
     std::hash<std::string> hasher;
     
@@ -787,11 +788,11 @@ TEST(InsertWithHash, WorksWithStrings) {
     RobinHoodMapTest::callInsertWithHash(map, key, 42, hash);
     
     auto [found, value] = map.at("test_key");
-    EXPECT_TRUE(found);
-    EXPECT_EQ(value, 42);
+    REQUIRE(found);
+    REQUIRE(value == 42);
 }
 
-TEST(InsertWithHash, UsedByResizeCorrectly) {
+TEST_CASE("InsertWithHash used by resize correctly", "[insertWithHash]") {
     RobinHoodMap<int, int> map;
     
     // Insert elements
@@ -805,12 +806,12 @@ TEST(InsertWithHash, UsedByResizeCorrectly) {
     // Verify all elements still accessible with correct values
     for (int i = 0; i < 5; ++i) {
         auto [found, value] = map.at(i);
-        EXPECT_TRUE(found);
-        EXPECT_EQ(value, i * 10);
+        REQUIRE(found);
+        REQUIRE(value == i * 10);
     }
 }
 
-TEST(InsertWithHash, HashPreservedAfterResize) {
+TEST_CASE("InsertWithHash hash preserved after resize", "[insertWithHash]") {
     RobinHoodMap<int, int> map;
     
     int key = 42;
@@ -822,6 +823,6 @@ TEST(InsertWithHash, HashPreservedAfterResize) {
     
     // Element should still be findable (hash was preserved during resize)
     auto [found, value] = map.at(key);
-    EXPECT_TRUE(found);
-    EXPECT_EQ(value, 100);
+    REQUIRE(found);
+    REQUIRE(value == 100);
 }

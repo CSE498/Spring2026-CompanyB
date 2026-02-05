@@ -10,8 +10,4 @@ g++ -std=c++20 -Wall -Wextra -I.. \
 
 ./RobinHoodMapTest "$@"
 
-g++ -std=c++20 -O2 -I.. -o RobinHoodMapBenchmark \
-    RobinHoodMapBenchmark.cpp
-./RobinHoodMapBenchmark "$@"
-
-rm RobinHoodMapTest RobinHoodMapBenchmark
+rm RobinHoodMapTest
