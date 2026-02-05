@@ -1,6 +1,10 @@
 # Local files
 /.vscode/
 
+# Build system outputs
+/output/
+/build/
+
 # Prerequisites
 *.d
 
