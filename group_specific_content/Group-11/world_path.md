@@ -16,22 +16,68 @@ The main goal is to use **C++23 Ranges** for geometric calculations (like path l
 We plan to implement the following:
 
 #### Core Modification
-* `void AddPoint(const Point& p);` — Adds a point to the path.
-* `void Clear();` — Resets everything.
-* `bool Empty() const;` — Check if path has points.
+- `void AddPoint(const Point& p);`  
+  **Input:** A valid `Point` (finite coordinates).
+  **Behavior:** Appends point to the path.  
+  **Assert:** Coordinates must not be NaN/Inf.
+
+- `void Clear();`  
+  **Behavior:** Removes all stored points.
+
+- `bool Empty() const;`  
+  **Returns:** `true` if no points exist.
+
+- `void PopBack();`  
+  **Behavior:** Removes last point.  
+  **Assert:** Path must not be empty.
+
+- `void Reserve(size_t n);`  
+  **Behavior:** Pre-allocates memory for performance when generating paths.
 
 #### Accessors & Views
-* `const Point& At(size_t index) const;` — Safe access to a point.
-* `auto GetSegments() const;` — **(C++23)** Returns a `std::views::adjacent` view. This way, other classes (like Physics) can iterate over the "lines" of the path directly without us maintaining a separate list of edges.
+- `size_t Size() const;`  
+  **Returns:** Number of stored points.
+
+- `const Point& At(size_t index) const;`  
+  **Input:** Valid index.  
+  **Returns:** Reference to that point.  
+  **Throws:** `std::out_of_range` if invalid.
+
+- `const Point& Front() const;`  
+  **Assert:** Path not empty.  
+  **Returns:** First point.
+
+- `const Point& Back() const;`  
+  **Assert:** Path not empty.  
+  **Returns:** Last point.
+
+- `auto GetSegments() const;`  
+  **Returns:** A `std::views::adjacent<2>` view of consecutive point pairs.
+
+---
 
 #### Geometry / Metrics
-* `double TotalLength() const;` — Sums the distance of all segments.
-* `std::optional<double> SegmentLength(size_t index) const;` — Returns the length if the index is valid, or `std::nullopt` if not.
-* `bool SelfIntersects() const;` — Checks if the path crosses itself.
-* `BoundingBox Bounds() const;` — Returns the min/max X and Y.
+- `double TotalLength() const;`  
+  **Returns:** Sum of all segment distances.  
+  **Edge Case:** Returns `0.0` if fewer than 2 points.
 
-#### Serialization
-* `void LogPath() const;` — Uses **`std::print`** to dump the path to the console for debugging.
+- `std::optional<double> SegmentLength(size_t index) const;`  
+  **Returns:** Length of segment `index → index+1`.  
+  **Returns:** `std::nullopt` if invalid.
+
+- `bool SelfIntersects() const;`  
+  **Returns:** Whether any non-adjacent segments intersect.  
+  (Full implementation may be added later.)
+
+- `bool IsValid() const;`  
+  **Returns:** True if all stored points are finite.
+
+---
+
+#### Serialization / Debug
+- `void LogPath() const;`  
+  **Behavior:** Prints all stored points using `std::print`.
+---
 
 ### 4) Error Conditions
 
