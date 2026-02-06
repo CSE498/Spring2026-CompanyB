@@ -19,8 +19,8 @@ namespace cse498 {
     class DataLog {
         private:
             /// @brief Reference to the global Timer for timestamp generation
-            Timer& mTimer;
-            
+            // Timer& mTimer; //CONFLICT: Cannot be used with static GlobalClock
+
             /// @brief Vector storing all log entries as JSON objects
             std::vector<nlohmann::json> mEntries;
             
@@ -42,7 +42,8 @@ namespace cse498 {
         public:
             /// @brief Constructor that takes Timer reference for global timestamp access
             /// @param timer Reference to global Timer instance
-            explicit DataLog(Timer& timer);
+            // explicit DataLog(Timer& timer); //CONFLICT: Cannot be used with static GlobalClock
+            DataLog() = default; // Using default constructor instead
             
             /// @brief Destructor
             ~DataLog() = default;

@@ -1,44 +1,40 @@
 /**
  * @file Timer.hpp
- * @brief Global timer for tracking simulation time.
- * @note Status: INITIAL DESIGN
+ * @brief A tool to make precise timing measurements.
+ * @note Status: IN PROGRESS
  **/
 
 #pragma once
 
-#include <cstdint>
+#include <string>
 
 namespace cse498 {
 
-    class Timer {
-        private:
-            /// @brief Global time counter in ticks/milliseconds
-            uint64_t mGlobalTime = 0;
-            
-        public:
-            /// @brief Default constructor
-            Timer() = default;
-            
-            /// @brief Destructor
-            ~Timer() = default;
-            
-            /// @brief Copy constructor (disabled)
-            Timer(const Timer&) = delete;
-            
-            /// @brief Assignment operator (disabled)
-            Timer& operator=(const Timer&) = delete;
-            
-            /// @brief Get current global time
-            /// @return Global time as integer (ticks/milliseconds)
-            uint64_t GetGlobalTime() const;
-            
-            /// @brief Advance global time by specified amount
-            /// @param deltaTime Amount to increment time by
-            void Tick(uint64_t deltaTime);
-            // from divya: not sure if we need this for now. i just thought of while writing the class. 
-            
-            /// @brief Reset global time to zero
-            void Reset();
-    };
+class Timer {
+public:
+    Timer(const std::string& name);
+
+    void Start();
+    void Stop();
+    void Pause();
+    void Resume();
+    void Reset();
+
+    double GetTotalTime() const;
+    double GetTimeInSeconds() const;
+    double GetTimeInMinutes() const;
+    double GetTimeInHours() const;
+
+    const std::string& GetName() const;
+
+private:
+    std::string name;
+    double startTime;
+    double endTime;
+    double accumulatedTime;
+    bool isRunning;
+    bool isPaused;
+    double pauseTime;
+};
 
 }
