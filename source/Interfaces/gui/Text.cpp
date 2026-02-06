@@ -3,7 +3,7 @@
 namespace cse498 {
 
 // constructor 
-Text::Text(string content, string font, string color, int size, bool bold, bool underline, bool italics, bool glowing, bool uppercase){
+Text::Text(string content, string font, string color, int size, bool bold, bool underline, bool italics, bool uppercase){
     mContent = content;
 
     mFont = font;
@@ -12,7 +12,6 @@ Text::Text(string content, string font, string color, int size, bool bold, bool 
     mBold = bold;
     mUnderline = underline;
     mItalics = italics;
-    mGlowing = glowing;
     mUppercase = uppercase;
 }
 
@@ -25,7 +24,6 @@ int Text::GetSize(){ return mSize; }
 bool Text::GetBold(){ return mBold; } 
 bool Text::GetUnderline(){ return mUnderline; } 
 bool Text::GetItalics(){ return mItalics; } 
-bool Text::GetGlowing(){ return mGlowing; } 
 bool Text::GetUppercase(){ return mUppercase; } 
 
 // setters
@@ -37,7 +35,6 @@ void Text::SetSize(int size){ mSize = size; }
 void Text::SetBold(bool bold){ mBold = bold; } 
 void Text::SetUnderline(bool underline){ mUnderline = underline; } 
 void Text::SetItalics(bool italics){ mItalics = italics; } 
-void Text::SetGlowing(bool glowing){ mGlowing = glowing; } 
 void Text::SetUppercase(bool uppercase){ mUppercase = uppercase; } 
 
 }

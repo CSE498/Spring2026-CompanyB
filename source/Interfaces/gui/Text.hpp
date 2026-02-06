@@ -19,13 +19,12 @@ private:
     bool mBold;
     bool mUnderline;
     bool mItalics;
-    bool mGlowing;
     bool mUppercase;
 
 public:
 
     // constructor
-    Text(string content, string font, string color, int size, bool bold, bool underline, bool italics, bool glowing, bool uppercase);
+    Text(string content, string font, string color, int size, bool bold, bool underline, bool italics, bool uppercase);
 
     // getters
     string GetContent();
@@ -36,7 +35,6 @@ public:
     bool GetBold();
     bool GetUnderline();
     bool GetItalics();
-    bool GetGlowing();
     bool GetUppercase();
 
     // setters 
@@ -48,7 +46,6 @@ public:
     void SetBold(bool bold);
     void SetUnderline(bool underline);
     void SetItalics(bool italics);
-    void SetGlowing(bool glowing);
     void SetUppercase(bool uppercase);
 
 };
