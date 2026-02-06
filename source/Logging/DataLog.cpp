@@ -1,5 +1,5 @@
 #include "DataLog.hpp"
-#include "GlobalClock.hpp" // Use GlobalClock for timestamps
+#include "GlobalClock.hpp" // Use GlobalClock for Global Time
 #include <algorithm>
 #include <cmath>
 
