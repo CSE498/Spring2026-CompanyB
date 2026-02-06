@@ -1,0 +1,7 @@
+/**
+ * This file serves as the center of data aggregation and storage
+ * for the Data Analytics group. 
+ * @brief An internal class to collect, organize, analyze and store 
+ * real-time data. 
+ * @note Status: INITIAL DESIGN
+ **/
