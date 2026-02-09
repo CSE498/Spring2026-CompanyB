@@ -29,33 +29,33 @@ public:
 
     ImageGrid(size_t width, size_t height, ImageManager& imageManager)
         : mWidth(width), mHeight(height), mImageManager(imageManager) {
-        imageIds.resize(width * height); // initialize with empty image IDs
+        mImageIds.resize(width * height); // initialize with empty image IDs
     }
 
     // set the image for a specific cell in the grid
     void SetTile(size_t x, size_t y, const std::string& imageId) {
-        if (x < width && y < height) {
-            imageIds[y * width + x] = imageId;
+        if (x < mWidth && y < mHeight) {
+            mImageIds[y * mWidth + x] = imageId;
         }
     }
 
     // get the image ID for a specific cell in the grid
     // return empty string if out of bounds
     std::string GetTile(size_t x, size_t y) const {
-        if (x < width && y < height) {
-            return imageIds[y * width + x];
+        if (x < mWidth && y < mHeight) {
+            return mImageIds[y * mWidth + x];
         }
         return "";
     }
 
     // get the width of the grid
     size_t GetWidth() const {
-        return width;
+        return mWidth;
     }
 
     // get the height of the grid
     size_t GetHeight() const {
-        return height;
+        return mHeight;
     }
 
     // clear the grid
