@@ -29,6 +29,9 @@ TEST_CASE("WeightedSet Insert and Contains", "[weighted_set]") {
     REQUIRE_FALSE(ws.Contains(0));
 
     REQUIRE(ws.total_weight() == 6.0);
+
+    ws.Insert(1, 2.0);
+    REQUIRE(ws.total_weight() == 7.0);
   }
 
   SECTION("bad insertions") {

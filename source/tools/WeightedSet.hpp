@@ -225,6 +225,7 @@ class WeightedSet {
       auto node_ptr = this->element_to_node_.at(element);
       node_ptr->weight = weight;
       FixWeightsAndRebalance(node_ptr);
+      return true;
     }
     T* element_ptr = new T{element};
     Node* node_ptr = new Node(element_ptr, weight);
