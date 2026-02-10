@@ -52,9 +52,11 @@ class WeightedSet {
   // TODO: replace this with custom random class once we have that
   std::random_device rd{};
   std::mt19937 rng{rd()};
-
+  // Keys are elements stored in the WeightedSet; values are the nodes in the tree representing that element.
   std::unordered_map<T, Node*> element_to_node_;
-
+  // Deletes the whole tree starting at a given node.
+  // Note: not sufficient to delete the WeightedSet; you also need to get rid of the 
+  // unordered_map and the values stored within it.
   void clear(Node* node) {
     if (!node) return;
     clear(node->left);
@@ -78,7 +80,9 @@ class WeightedSet {
   double right_subtree_weight(Node* node) {
     return node->right ? node->right->subtree_weight : 0.0;
   }
-
+  // Ensures that a given node and all its ancestors have their total subtree weight recorded correctly.
+  // Generally you pass in the lowest node that had its subtree change during an insertion or deletion: then
+  // it and all of its ancestors may also have had their subtree weights change as a result.
   void fix_weights_and_rebalance(Node* node_ptr) {
     while (node_ptr != nullptr) {
       // TODO: rotate if doing so would make the tree better weight-balanced
@@ -130,7 +134,8 @@ class WeightedSet {
       replacement->parent = to_delete->parent;
     }
   }
-
+  // Searches for a child of the given node which is a leaf (such a child exists in any tree, as long as the given
+  // node has at least one child).
   Node* find_leaf(Node* current) {
     if (current->left == nullptr && current->right == nullptr) {
       return current;
@@ -198,7 +203,12 @@ class WeightedSet {
     }
     return *this;
   }
-
+  // Insert an element into the tree with a given weight. Returns whether the insertion is successful.
+  // If the element is already there, we simply update its weight.
+  // When inserting a new element, we (recursively) put it in the subtree which currently has the lightest weight, to keep the tree
+  // weight-balanced (which should theoretically improve the speed of the getRandomElement function).
+  // The insertion fails if the weight is invalid (it must be positive) or if the function somehow fails
+  // to find a place to insert the element.
   bool insert(T element, double weight) {
     if (weight <= 0) {
       return false;
@@ -221,6 +231,7 @@ class WeightedSet {
     this->element_to_node_[*element_ptr] = node_ptr;
     Node* current_node = this->root_;
     while (current_node != nullptr) {
+      // if a node has less than 2 children, we can just insert it in one of the empty spaces.
       if (current_node->left == nullptr) {
         current_node->left = node_ptr;
         node_ptr->parent = current_node;
@@ -231,6 +242,7 @@ class WeightedSet {
         node_ptr->parent = current_node;
         fix_weights_and_rebalance(current_node);
         return true;
+      // if a node does have 2 children, we insert it in the lighter of the two subtrees.
       } else if (current_node->left->subtree_weight <
                  current_node->right->subtree_weight) {
         current_node = current_node->left;
@@ -291,9 +303,12 @@ class WeightedSet {
       to_rebalance = node_ptr->left;
       replace_deleted_node_with_child(node_ptr, node_ptr->left);
     } else {
-      Node* leaf = find_leaf(node_ptr->left);
-      to_rebalance = is_direct_child(node_ptr, leaf) ? leaf : leaf->parent;
-      replace_deleted_node_with_leaf(node_ptr, leaf);
+      Node* replacement = find_leaf(node_ptr->left);
+      // a subtle point: if the replacement node is a direct child of the node being replaced,
+      // then the lowest node affected by the change will be the replacement, and the replacement's parent will be gone soon. 
+      // Otherwise, the lowest affected node is the replacement's parent, which lost a child but is still in the tree.
+      to_rebalance = is_direct_child(node_ptr, replacement) ? replacement : replacement->parent;
+      replace_deleted_node_with_leaf(node_ptr, replacement);
     }
     fix_weights_and_rebalance(to_rebalance);
     delete node_ptr;
