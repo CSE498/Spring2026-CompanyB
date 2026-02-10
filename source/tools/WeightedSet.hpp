@@ -61,6 +61,7 @@ class WeightedSet {
     if (!node) return;
     Clear(node->left);
     Clear(node->right);
+    delete node->value_ptr;
     delete node;
   }
 
@@ -312,6 +313,7 @@ class WeightedSet {
       ReplaceDeletedNodeWithLeaf(node_ptr, replacement);
     }
     FixWeightsAndRebalance(to_rebalance);
+    delete node_ptr->value_ptr;
     delete node_ptr;
     element_to_node_.erase(element);
     return std::make_optional(removed_value);
