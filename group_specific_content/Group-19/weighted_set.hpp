@@ -26,12 +26,17 @@ template <typename T>
 */
 class WeightedSet {
  private:
+  // A node in the binary-tree structure used in WeightedSet.
   struct Node {
+    // Pointer to the value "contained" in the node. 
+    // Note on the implementation: the value itself is owned and stored in the unordered_map used
+    // in WeightedSet--we need to have the values as keys in the unordered_map so we can use it for membership checking,
+    // and once we've stored the value there, it would be a waste to duplicate it in the node.
     T* value_ptr;
     double weight;          // this element's weight (nonnegative)
     double subtree_weight;  // total weight of subtree rooted at this node
-    Node* left = nullptr;
-    Node* right = nullptr;
+    Node* left = nullptr; // left child
+    Node* right = nullptr; // right child
     Node* parent;
 
     Node(T* val_ptr, double w, Node* par = nullptr)
@@ -44,7 +49,6 @@ class WeightedSet {
   };
 
   Node* root_;
-  size_t size_;
   // TODO: replace this with custom random class once we have that
   std::random_device rd{};
   std::mt19937 rng{rd()};
@@ -173,16 +177,15 @@ class WeightedSet {
   }
 
  public:
-  WeightedSet() : root_(nullptr), size_(0) {}
+  WeightedSet() : root_(nullptr) {}
 
   WeightedSet(const WeightedSet& other)
-      : root_(copy_tree(other.root_, nullptr)), size_(other.size_) {}
+      : root_(copy_tree(other.root_, nullptr)) {}
 
   WeightedSet& operator=(const WeightedSet& other) {
     if (this != &other) {
       clear(root_);
       root_ = copy_tree(other.root_, nullptr);
-      size_ = other.size_;
     }
     return *this;
   }
@@ -191,9 +194,7 @@ class WeightedSet {
     if (this != &other) {
       clear(root_);
       root_ = other.root_;
-      size_ = other.size_;
       other.root_ = nullptr;
-      other.size_ = 0;
     }
     return *this;
   }
@@ -304,8 +305,8 @@ class WeightedSet {
     element_to_node_.clear();
   }
 
-  size_t size() const { return size_; }
-  bool empty() const { return size_ == 0; }
+  size_t size() const { return element_to_node_.size(); }
+  bool empty() const { return size() == 0; }
   double total_weight() const { return root_ ? root_->subtree_weight : 0.0; }
   bool contains(const T& element) {
     return element_to_node_.find(element) != element_to_node_.end();
