@@ -3,7 +3,7 @@
 #include <set>
 #include <vector>
 
-#include "weighted_set.hpp"
+#include "WeightedSet.hpp"
 
 TEST_CASE("WeightedSet insert and contains", "[weighted_set]") {
   cse498::WeightedSet<int> ws;
