@@ -10,7 +10,7 @@
 namespace cse498 {
 /*
   Forgot to mention this in earlier commit
-  But the boilerplate setup (constructors, clear() and copy_tree(), assign and
+  But the boilerplate setup (constructors, Clear() and CopyTree(), assign and
   move operators, basic getters [namely size(), empty(), total_weight()], and
   basic member variables) was written by Claude Code with (so far moderate)
   modification from me.
@@ -50,52 +50,52 @@ class WeightedSet {
 
   Node* root_;
   // TODO: replace this with custom random class once we have that
-  std::random_device rd{};
-  std::mt19937 rng{rd()};
+  std::random_device rd_{};
+  std::mt19937 rng_{rd_()};
   // Keys are elements stored in the WeightedSet; values are the nodes in the tree representing that element.
   std::unordered_map<T, Node*> element_to_node_;
   // Deletes the whole tree starting at a given node.
   // Note: not sufficient to delete the WeightedSet; you also need to get rid of the 
   // unordered_map and the values stored within it.
-  void clear(Node* node) {
+  void Clear(Node* node) {
     if (!node) return;
-    clear(node->left);
-    clear(node->right);
+    Clear(node->left);
+    Clear(node->right);
     delete node;
   }
 
-  Node* copy_tree(const Node* src, Node* parent) {
+  Node* CopyTree(const Node* src, Node* parent) {
     if (!src) return nullptr;
     Node* node = new Node(src->value, src->weight, parent);
     node->subtree_weight = src->subtree_weight;
-    node->left = copy_tree(src->left, node);
-    node->right = copy_tree(src->right, node);
+    node->left = CopyTree(src->left, node);
+    node->right = CopyTree(src->right, node);
     return node;
   }
 
-  double left_subtree_weight(Node* node) {
+  double LeftSubtreeWeight(Node* node) {
     return node->left ? node->left->subtree_weight : 0.0;
   }
 
-  double right_subtree_weight(Node* node) {
+  double RightSubtreeWeight(Node* node) {
     return node->right ? node->right->subtree_weight : 0.0;
   }
   // Ensures that a given node and all its ancestors have their total subtree weight recorded correctly.
   // Generally you pass in the lowest node that had its subtree change during an insertion or deletion: then
   // it and all of its ancestors may also have had their subtree weights change as a result.
-  void fix_weights_and_rebalance(Node* node_ptr) {
+  void FixWeightsAndRebalance(Node* node_ptr) {
     while (node_ptr != nullptr) {
       // TODO: rotate if doing so would make the tree better weight-balanced
       node_ptr->subtree_weight = node_ptr->weight +
-                                 left_subtree_weight(node_ptr) +
-                                 right_subtree_weight(node_ptr);
+                                 LeftSubtreeWeight(node_ptr) +
+                                 RightSubtreeWeight(node_ptr);
       node_ptr = node_ptr->parent;
     }
   }
 
-  // (Claude-written) helper for debug_print: recursively builds tree
+  // (Claude-written) helper for DebugPrint: recursively builds tree
   // visualization
-  void debug_print_node(std::ostream& os, Node* node, const std::string& prefix,
+  void DebugPrintNode(std::ostream& os, Node* node, const std::string& prefix,
                         bool is_left, bool is_root) const {
     if (!node) return;
 
@@ -113,16 +113,16 @@ class WeightedSet {
         prefix + (is_root ? "" : (is_left ? "│   " : "    "));
 
     if (node->left || node->right) {
-      debug_print_node(os, node->left, child_prefix, true, false);
-      debug_print_node(os, node->right, child_prefix, false, false);
+      DebugPrintNode(os, node->left, child_prefix, true, false);
+      DebugPrintNode(os, node->right, child_prefix, false, false);
     }
   }
 
-  bool is_direct_child(Node* parent, Node* child) {
+  bool IsDirectChild(Node* parent, Node* child) {
     return (parent->left == child) || (parent->right == child);
   }
 
-  void replace_deleted_node_with_child(Node* to_delete, Node* replacement) {
+  void ReplaceDeletedNodeWithChild(Node* to_delete, Node* replacement) {
     if (to_delete->parent == nullptr) {
       this->root_ = replacement;
     } else if (to_delete == to_delete->parent->left) {
@@ -136,14 +136,14 @@ class WeightedSet {
   }
   // Searches for a child of the given node which is a leaf (such a child exists in any tree, as long as the given
   // node has at least one child).
-  Node* find_leaf(Node* current) {
+  Node* FindLeaf(Node* current) {
     if (current->left == nullptr && current->right == nullptr) {
       return current;
     }
     if (current->left != nullptr) {
-      return find_leaf(current->left);
+      return FindLeaf(current->left);
     } else {
-      return find_leaf(current->right);
+      return FindLeaf(current->right);
     }
   }
   //we take a leaf node and swap it in for the node to be deleted.
@@ -151,7 +151,7 @@ class WeightedSet {
   //then we need to rebalance starting at the previous parent of the leaf (if that isn't the deleted node)
   //or starting at the moved leaf (if the leaf was a child of the deleted node).
 
-  void replace_deleted_node_with_leaf(Node* to_delete, Node* leaf) {
+  void ReplaceDeletedNodeWithLeaf(Node* to_delete, Node* leaf) {
     if (to_delete->parent == nullptr) {
       this->root_ = leaf;
     } else if (to_delete == to_delete->parent->left) {
@@ -185,19 +185,19 @@ class WeightedSet {
   WeightedSet() : root_(nullptr) {}
 
   WeightedSet(const WeightedSet& other)
-      : root_(copy_tree(other.root_, nullptr)) {}
+      : root_(CopyTree(other.root_, nullptr)) {}
 
   WeightedSet& operator=(const WeightedSet& other) {
     if (this != &other) {
-      clear(root_);
-      root_ = copy_tree(other.root_, nullptr);
+      Clear(root_);
+      root_ = CopyTree(other.root_, nullptr);
     }
     return *this;
   }
 
   WeightedSet& operator=(WeightedSet&& other) noexcept {
     if (this != &other) {
-      clear(root_);
+      Clear(root_);
       root_ = other.root_;
       other.root_ = nullptr;
     }
@@ -206,10 +206,10 @@ class WeightedSet {
   // Insert an element into the tree with a given weight. Returns whether the insertion is successful.
   // If the element is already there, we simply update its weight.
   // When inserting a new element, we (recursively) put it in the subtree which currently has the lightest weight, to keep the tree
-  // weight-balanced (which should theoretically improve the speed of the getRandomElement function).
+  // weight-balanced (which should theoretically improve the speed of the GetRandomElement function).
   // The insertion fails if the weight is invalid (it must be positive) or if the function somehow fails
   // to find a place to insert the element.
-  bool insert(T element, double weight) {
+  bool Insert(T element, double weight) {
     if (weight <= 0) {
       return false;
     }
@@ -224,7 +224,7 @@ class WeightedSet {
     if (this->element_to_node_.find(element) != element_to_node_.end()) {
       auto node_ptr = this->element_to_node_.at(element);
       node_ptr->weight = weight;
-      fix_weights_and_rebalance(node_ptr);
+      FixWeightsAndRebalance(node_ptr);
     }
     T* element_ptr = new T{element};
     Node* node_ptr = new Node(element_ptr, weight);
@@ -235,12 +235,12 @@ class WeightedSet {
       if (current_node->left == nullptr) {
         current_node->left = node_ptr;
         node_ptr->parent = current_node;
-        fix_weights_and_rebalance(current_node);
+        FixWeightsAndRebalance(current_node);
         return true;
       } else if (current_node->right == nullptr) {
         current_node->right = node_ptr;
         node_ptr->parent = current_node;
-        fix_weights_and_rebalance(current_node);
+        FixWeightsAndRebalance(current_node);
         return true;
       // if a node does have 2 children, we insert it in the lighter of the two subtrees.
       } else if (current_node->left->subtree_weight <
@@ -253,7 +253,7 @@ class WeightedSet {
     return false;
   }
 
-  std::optional<T> getElementAt(double index) {
+  std::optional<T> GetElementAt(double index) {
     Node* current_node = this->root_;
     double total = this->root_->subtree_weight;
     if (index < 0 || index > total) {
@@ -277,16 +277,16 @@ class WeightedSet {
     return std::nullopt;
   }
 
-  std::optional<T> getRandomElement() {
+  std::optional<T> GetRandomElement() {
     if (this->root_ == nullptr) {
       return std::nullopt;
     }
     auto random_real =
         std::uniform_real_distribution<double>(0, this->root_->subtree_weight);
-    return getElementAt(random_real(rng));
+    return GetElementAt(random_real(rng_));
   }
 
-  std::optional<T> remove(const T& element) {
+  std::optional<T> Remove(const T& element) {
     if (this->element_to_node_.find(element) == element_to_node_.end()) {
       return std::nullopt;
     }
@@ -295,52 +295,52 @@ class WeightedSet {
 
     Node* to_rebalance = node_ptr->parent;
     if (node_ptr->left == nullptr && node_ptr->right == nullptr) {
-      replace_deleted_node_with_child(node_ptr, nullptr);
+      ReplaceDeletedNodeWithChild(node_ptr, nullptr);
     } else if (node_ptr->left == nullptr) {
       to_rebalance = node_ptr->right;
-      replace_deleted_node_with_child(node_ptr, node_ptr->right);
+      ReplaceDeletedNodeWithChild(node_ptr, node_ptr->right);
     } else if (node_ptr->right == nullptr) {
       to_rebalance = node_ptr->left;
-      replace_deleted_node_with_child(node_ptr, node_ptr->left);
+      ReplaceDeletedNodeWithChild(node_ptr, node_ptr->left);
     } else {
-      Node* replacement = find_leaf(node_ptr->left);
+      Node* replacement = FindLeaf(node_ptr->left);
       // a subtle point: if the replacement node is a direct child of the node being replaced,
       // then the lowest node affected by the change will be the replacement, and the replacement's parent will be gone soon. 
       // Otherwise, the lowest affected node is the replacement's parent, which lost a child but is still in the tree.
-      to_rebalance = is_direct_child(node_ptr, replacement) ? replacement : replacement->parent;
-      replace_deleted_node_with_leaf(node_ptr, replacement);
+      to_rebalance = IsDirectChild(node_ptr, replacement) ? replacement : replacement->parent;
+      ReplaceDeletedNodeWithLeaf(node_ptr, replacement);
     }
-    fix_weights_and_rebalance(to_rebalance);
+    FixWeightsAndRebalance(to_rebalance);
     delete node_ptr;
     element_to_node_.erase(element);
     return std::make_optional(removed_value);
   }
   ~WeightedSet() {
-    clear(root_);
+    Clear(root_);
     element_to_node_.clear();
   }
 
   size_t size() const { return element_to_node_.size(); }
   bool empty() const { return size() == 0; }
   double total_weight() const { return root_ ? root_->subtree_weight : 0.0; }
-  bool contains(const T& element) {
+  bool Contains(const T& element) {
     return element_to_node_.find(element) != element_to_node_.end();
   }
 
   // (Claude-written) visualization: prints ASCII tree to ostream (default:
   // cout)
-  void debug_print(std::ostream& os = std::cout) const {
+  void DebugPrint(std::ostream& os = std::cout) const {
     if (!root_) {
       os << "(empty tree)" << std::endl;
       return;
     }
-    debug_print_node(os, root_, "", false, true);
+    DebugPrintNode(os, root_, "", false, true);
   }
 
   // (Claude-written): return tree as string instead of printing
-  std::string debug_string() const {
+  std::string DebugString() const {
     std::ostringstream oss;
-    debug_print(oss);
+    DebugPrint(oss);
     return oss.str();
   }
 };
