@@ -110,7 +110,11 @@ class WeightedSet {
     }
   }
 
-  void replace_deleted_node(Node* to_delete, Node* replacement) {
+  bool is_direct_child(Node* parent, Node* child) {
+    return (parent->left == child) || (parent->right == child);
+  }
+
+  void replace_deleted_node_with_child(Node* to_delete, Node* replacement) {
     if (to_delete->parent == nullptr) {
       this->root_ = replacement;
     } else if (to_delete == to_delete->parent->left) {
@@ -120,6 +124,51 @@ class WeightedSet {
     }
     if (replacement != nullptr) {
       replacement->parent = to_delete->parent;
+    }
+  }
+
+  Node* find_leaf(Node* current) {
+    if (current->left == nullptr && current->right == nullptr) {
+      return current;
+    }
+    if (current->left != nullptr) {
+      return find_leaf(current->left);
+    } else {
+      return find_leaf(current->right);
+    }
+  }
+  //we take a leaf node and swap it in for the node to be deleted.
+  //the leaf's left, right, and parent should become the left, right, and parent of the deleted node.
+  //then we need to rebalance starting at the previous parent of the leaf (if that isn't the deleted node)
+  //or starting at the moved leaf (if the leaf was a child of the deleted node).
+
+  void replace_deleted_node_with_leaf(Node* to_delete, Node* leaf) {
+    if (to_delete->parent == nullptr) {
+      this->root_ = leaf;
+    } else if (to_delete == to_delete->parent->left) {
+      to_delete->parent->left = leaf;
+    } else {
+      to_delete->parent->right = leaf;
+    }
+    if (leaf != nullptr) {
+      if (leaf->parent->left == leaf) {
+        leaf->parent->left = nullptr;
+      } else {
+        leaf->parent->right = nullptr;
+      }
+    }
+    leaf->parent = to_delete->parent;
+    if (leaf != to_delete->left) {
+      leaf->left = to_delete->left;
+    }
+    if (leaf != to_delete->right) {
+      leaf->right = to_delete->right;
+    }
+    if (leaf->left != nullptr) {
+      leaf->left->parent = leaf;
+    }
+    if (leaf->right != nullptr) {
+      leaf->right->parent = leaf;
     }
   }
 
@@ -197,14 +246,16 @@ class WeightedSet {
     if (index < 0 || index > total) {
       return std::nullopt;
     }
-    double lower_bound;
-    double upper_bound;
+    double lower_bound = 0;
+    double upper_bound = this->root_->subtree_weight;
     while (current_node != nullptr) {
-      lower_bound = current_node->left ? current_node->left->subtree_weight : 0;
-      upper_bound = lower_bound + current_node->weight;
-      if (index < lower_bound) {
+      double current_node_interval_lower = lower_bound + (current_node->left ? current_node->left->subtree_weight : 0);
+      double current_node_interval_upper = current_node_interval_lower + current_node->weight;
+      if (index < current_node_interval_lower) {
+        upper_bound = current_node_interval_lower;
         current_node = current_node->left;
-      } else if (index >= upper_bound && upper_bound != total) {
+      } else if (index >= current_node_interval_upper && current_node_interval_upper != upper_bound) {
+        lower_bound = current_node_interval_upper;
         current_node = current_node->right;
       } else {
         return std::make_optional(*(current_node->value_ptr));
@@ -229,16 +280,21 @@ class WeightedSet {
     Node* node_ptr = this->element_to_node_.at(element);
     T removed_value = *(node_ptr->value_ptr);
 
+    Node* to_rebalance = node_ptr->parent;
     if (node_ptr->left == nullptr && node_ptr->right == nullptr) {
-      replace_deleted_node(node_ptr, nullptr);
+      replace_deleted_node_with_child(node_ptr, nullptr);
     } else if (node_ptr->left == nullptr) {
-      replace_deleted_node(node_ptr, node_ptr->right);
+      to_rebalance = node_ptr->right;
+      replace_deleted_node_with_child(node_ptr, node_ptr->right);
     } else if (node_ptr->right == nullptr) {
-      replace_deleted_node(node_ptr, node_ptr->left);
+      to_rebalance = node_ptr->left;
+      replace_deleted_node_with_child(node_ptr, node_ptr->left);
     } else {
-      // TODO: handle case where both children exist
+      Node* leaf = find_leaf(node_ptr->left);
+      to_rebalance = is_direct_child(node_ptr, leaf) ? leaf : leaf->parent;
+      replace_deleted_node_with_leaf(node_ptr, leaf);
     }
-    fix_weights_and_rebalance(node_ptr->parent);
+    fix_weights_and_rebalance(to_rebalance);
     delete node_ptr;
     element_to_node_.erase(element);
     return std::make_optional(removed_value);
