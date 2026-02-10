@@ -1,9 +1,9 @@
-#include <catch2/catch_test_macros.hpp>
+#include "../../third-party/Catch/single_include/catch2/catch.hpp"
 #include <expected>
 #include <set>
 #include <vector>
 
-#include "WeightedSet.hpp"
+#include "../../source/tools/WeightedSet.hpp"
 
 TEST_CASE("WeightedSet Insert and Contains", "[weighted_set]") {
   cse498::WeightedSet<int> ws;
