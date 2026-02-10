@@ -1,0 +1,13 @@
+prefix=C:\\Qt\\6.10.2\\mingw_64
+exec_prefix=${prefix}
+bindir=${prefix}/bin
+libexecdir=${prefix}/bin
+libdir=${prefix}/lib
+includedir=${prefix}/include
+
+Name: Qt6 Quick3DParticleEffects
+Description: Qt Quick3DParticleEffects module
+Version: 6.10.2
+Libs: -L${libdir} -lQt6Quick3DParticleEffects
+Cflags:  -DQT_QUICK3DPARTICLEEFFECTS_LIB
+Requires: Qt6Core Qt6Gui Qt6Qml Qt6Quick Qt6Quick3DRuntimeRender Qt6Quick3DAssetImport Qt6Quick3D Qt6Quick3DParticles

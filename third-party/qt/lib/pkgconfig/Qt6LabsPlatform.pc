@@ -1,0 +1,12 @@
+prefix=C:\\Qt\\6.10.2\\mingw_64
+exec_prefix=${prefix}
+bindir=${prefix}/bin
+libexecdir=${prefix}/bin
+libdir=${prefix}/lib
+includedir=${prefix}/include
+
+Name: Qt6 LabsPlatform
+Description: Qt LabsPlatform module
+Version: 6.10.2
+Libs: -L${libdir} -lQt6LabsPlatform
+Cflags: -I${includedir}/QtLabsPlatform -I${includedir} -DQT_LABSPLATFORM_LIB

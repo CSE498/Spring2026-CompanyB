@@ -1,0 +1,13 @@
+prefix=C:\\Qt\\6.10.2\\mingw_64
+exec_prefix=${prefix}
+bindir=${prefix}/bin
+libexecdir=${prefix}/bin
+libdir=${prefix}/lib
+includedir=${prefix}/include
+
+Name: Qt6 Quick3DUtils
+Description: Qt Quick3DUtils module
+Version: 6.10.2
+Libs: -L${libdir} -lQt6Quick3DUtils
+Cflags: -I${includedir}/QtQuick3DUtils -I${includedir} -DQT_QUICK3DUTILS_LIB
+Requires: Qt6Core Qt6Gui
