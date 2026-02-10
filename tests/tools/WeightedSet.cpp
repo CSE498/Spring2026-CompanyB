@@ -1,9 +1,10 @@
-#include "../../third-party/Catch/single_include/catch2/catch.hpp"
+#include "../../source/tools/WeightedSet.hpp"
+
 #include <expected>
 #include <set>
 #include <vector>
 
-#include "../../source/tools/WeightedSet.hpp"
+#include "../../third-party/Catch/single_include/catch2/catch.hpp"
 
 TEST_CASE("WeightedSet Insert and Contains", "[weighted_set]") {
   cse498::WeightedSet<int> ws;
@@ -192,11 +193,11 @@ TEST_CASE("WeightedSet deletion", "[weighted_set]") {
         if (i == j) continue;
         SECTION("Removing element " + std::to_string(i) + ", then element " +
                 std::to_string(j)) {
-          auto result1 = ws.Remove(i);
-          auto result2 = ws.Remove(j);
+          ws.Remove(i);
+          auto result = ws.Remove(j);
 
-          REQUIRE(result2.has_value());
-          REQUIRE(result2.value() == j);
+          REQUIRE(result.has_value());
+          REQUIRE(result.value() == j);
           REQUIRE(ws.total_weight() == 8.0);
           REQUIRE(!ws.Contains(i));
           REQUIRE(!ws.Contains(j));
