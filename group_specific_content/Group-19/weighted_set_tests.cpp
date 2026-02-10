@@ -162,4 +162,51 @@ TEST_CASE("WeightedSet deletion", "[weighted_set]") {
       }
     }
   }
+
+  for (int i = 0; i < 10; ++i) {
+    ws.insert(i, 1.0);
+  }
+  // the real point of this test/set of tests is to try removing elements at
+  // different places on the tree--elements at the root, not at the root but
+  // with 2 children, with only 1 child, and so on.
+  SECTION("many elements, removing only one per test") {
+    for (int i = 0; i < 10; ++i) {
+      SECTION("just remove element " + std::to_string(i)) {
+        auto result = ws.remove(i);
+        REQUIRE(result.has_value());
+        REQUIRE(result.value() == i);
+        REQUIRE(ws.total_weight() == 9.0);
+        REQUIRE(!ws.contains(i));
+        for (int j = 0; j < 10; ++j) {
+          if (j != i) {
+            REQUIRE(ws.contains(j));
+          }
+        }
+      }
+    }
+  }
+
+  SECTION("many elements, removing two per test") {
+    for (int i = 0; i < 10; ++i) {
+      for (int j = 0; j < 10; ++j) {
+        if (i == j) continue;
+        SECTION("Removing element " + std::to_string(i) + ", then element " +
+                std::to_string(j)) {
+          auto result1 = ws.remove(i);
+          auto result2 = ws.remove(j);
+
+          REQUIRE(result2.has_value());
+          REQUIRE(result2.value() == j);
+          REQUIRE(ws.total_weight() == 8.0);
+          REQUIRE(!ws.contains(i));
+          REQUIRE(!ws.contains(j));
+          for (int k = 0; k < 10; ++k) {
+            if (k != i && k != j) {
+              REQUIRE(ws.contains(k));
+            }
+          }
+        }
+      }
+    }
+  }
 }
