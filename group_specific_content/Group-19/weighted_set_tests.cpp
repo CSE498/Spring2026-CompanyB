@@ -1,6 +1,7 @@
 #include <catch2/catch_test_macros.hpp>
 #include <expected>
 #include <set>
+#include <vector>
 
 #include "weighted_set.hpp"
 
@@ -117,6 +118,48 @@ TEST_CASE("WeightedSet indexing", "[weighted_set]") {
       REQUIRE(!elements_seen.contains(el));
       REQUIRE(ws.getElementAt(i + 0.5).value() == el);
       elements_seen.insert(el);
+    }
+  }
+}
+
+TEST_CASE("WeightedSet deletion", "[weighted_set]") {
+  cse498::WeightedSet<int> ws;
+
+  SECTION("single element") {
+    ws.insert(1, 1.0);
+    REQUIRE(ws.contains(1));
+    REQUIRE(ws.total_weight() == 1);
+
+    auto result = ws.remove(1);
+    REQUIRE(result.has_value());
+    REQUIRE(result.value() == 1);
+    REQUIRE(!ws.contains(1));
+    REQUIRE(ws.total_weight() == 0);
+  }
+
+  SECTION("three elements") {
+    ws.insert(1, 1.0);
+    ws.insert(2, 2.0);
+    ws.insert(3, 3.0);
+
+    REQUIRE(ws.total_weight() == 6);
+    std::vector<std::vector<int>> removal_orders = {
+        {1, 2, 3}, {1, 3, 2}, {2, 1, 3}, {2, 3, 1}, {3, 1, 2}, {3, 2, 1}};
+    for (std::vector<int> elements_to_remove : removal_orders) {
+      SECTION("try removing elements in order " +
+              std::to_string(elements_to_remove[0]) +
+              std::to_string(elements_to_remove[1]) +
+              std::to_string(elements_to_remove[2])) {
+        double target_weight = 6.0;
+        for (int to_remove : elements_to_remove) {
+          auto result = ws.remove(to_remove);
+          REQUIRE(result.has_value());
+          REQUIRE(result.value() == to_remove);
+          REQUIRE(!ws.contains(to_remove));
+          target_weight -= to_remove;
+          REQUIRE(ws.total_weight() == target_weight);
+        }
+      }
     }
   }
 }
