@@ -104,7 +104,6 @@ public:
     void clear();
 
     // access items / look them up
-    std::optional<ItemId> findId(const std::string& key) const;
     Item* getItem(ItemId id);
     const Item* getItem(ItemId id) const;
     Item* getItem(const std::string& key);
@@ -125,7 +124,6 @@ public:
     void setItemVisible(const std::string& key, bool visible);
 
     // select / navigate functions
-    std::optional<ItemId> selectedId() const;
     bool select(ItemId id);
     bool select(const std::string& key);
     bool selectNext();
@@ -158,7 +156,6 @@ private:
     bool isVisible(const Item& item) const;
     bool isEnabled(const Item& item) const;
     bool isSelectable(const Item& item) const;
-    std::optional<std::size_t> indexOf(ItemId id) const;
     void normalizeSelection();
     ItemId nextId();
 
@@ -168,8 +165,6 @@ private:
     bool m_ignoreDisabledActivation{true};
     std::vector<Item> m_items;
     std::unordered_map<std::string, ItemId> m_keyToId;
-    std::optional<ItemId> m_selected;
-    std::optional<ItemId> m_hovered;
     ItemId m_nextId{1};
 };
 
