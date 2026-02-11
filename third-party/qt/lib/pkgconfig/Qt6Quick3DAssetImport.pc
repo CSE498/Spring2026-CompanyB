@@ -1,0 +1,13 @@
+prefix=C:\\Qt\\6.10.2\\mingw_64
+exec_prefix=${prefix}
+bindir=${prefix}/bin
+libexecdir=${prefix}/bin
+libdir=${prefix}/lib
+includedir=${prefix}/include
+
+Name: Qt6 Quick3DAssetImport
+Description: Qt Quick3DAssetImport module
+Version: 6.10.2
+Libs: -L${libdir} -lQt6Quick3DAssetImport
+Cflags: -I${includedir}/QtQuick3DAssetImport -I${includedir} -DQT_QUICK3DASSETIMPORT_LIB
+Requires: Qt6Core Qt6Gui Qt6Qml Qt6Quick3DUtils

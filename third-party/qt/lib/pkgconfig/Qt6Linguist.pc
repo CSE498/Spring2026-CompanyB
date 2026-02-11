@@ -1,0 +1,11 @@
+prefix=C:\\Qt\\6.10.2\\mingw_64
+exec_prefix=${prefix}
+bindir=${prefix}/bin
+libexecdir=${prefix}/bin
+libdir=${prefix}/lib
+includedir=${prefix}/include
+
+Name: Qt6 Linguist
+Description: Qt Linguist module
+Version: 6.10.2
+Cflags:  -DQT_LINGUIST_LIB
