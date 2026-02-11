@@ -32,14 +32,14 @@ class WeightedSet {
     // Note on the implementation: the value itself is owned and stored in the unordered_map used
     // in WeightedSet--we need to have the values as keys in the unordered_map so we can use it for membership checking,
     // and once we've stored the value there, it would be a waste to duplicate it in the node.
-    T* value_ptr;
+    const T* value_ptr;
     double weight;          // this element's weight (nonnegative)
     double subtree_weight;  // total weight of subtree rooted at this node
     Node* left = nullptr; // left child
     Node* right = nullptr; // right child
     Node* parent;
 
-    Node(T* val_ptr, double w, Node* par = nullptr)
+    Node(const T* val_ptr, double w, Node* par = nullptr)
         : value_ptr(val_ptr),
           weight(w),
           subtree_weight(w),
@@ -61,7 +61,6 @@ class WeightedSet {
     if (!node) return;
     Clear(node->left);
     Clear(node->right);
-    delete node->value_ptr;
     delete node;
   }
 
@@ -214,13 +213,6 @@ class WeightedSet {
     if (weight <= 0) {
       return false;
     }
-    if (root_ == nullptr) {
-      T* element_ptr = new T{element};
-      Node* node_ptr = new Node(element_ptr, weight);
-      this->element_to_node_[*element_ptr] = node_ptr;
-      this->root_ = node_ptr;
-      return true;
-    }
 
     if (this->element_to_node_.find(element) != element_to_node_.end()) {
       auto node_ptr = this->element_to_node_.at(element);
@@ -228,9 +220,18 @@ class WeightedSet {
       FixWeightsAndRebalance(node_ptr);
       return true;
     }
-    T* element_ptr = new T{element};
+    // note: this code, to obtain a pointer to the T element stored in the map,
+    // was modified from a snippet by Claude. It replaces an older version that created two copies of the element,
+    // one stored in the map and one pointed to by the node's value_ptr
+    auto [iter, inserted] = element_to_node_.insert({element, nullptr});
+    const T* element_ptr = &(iter->first);
     Node* node_ptr = new Node(element_ptr, weight);
-    this->element_to_node_[*element_ptr] = node_ptr;
+    iter->second = node_ptr;
+
+    if (root_ == nullptr) {
+      this->root_ = node_ptr;
+      return true;
+    }
     Node* current_node = this->root_;
     while (current_node != nullptr) {
       // if a node has less than 2 children, we can just insert it in one of the empty spaces.
@@ -313,7 +314,6 @@ class WeightedSet {
       ReplaceDeletedNodeWithLeaf(node_ptr, replacement);
     }
     FixWeightsAndRebalance(to_rebalance);
-    delete node_ptr->value_ptr;
     delete node_ptr;
     element_to_node_.erase(element);
     return std::make_optional(removed_value);
