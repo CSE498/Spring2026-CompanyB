@@ -66,7 +66,11 @@ class WeightedSet {
 
   Node* CopyTree(const Node* src, Node* parent) {
     if (!src) return nullptr;
-    Node* node = new Node(src->value, src->weight, parent);
+    auto element = *(src->value_ptr);
+    auto [iter, inserted] = element_to_node_.insert({element, nullptr});
+    const T* element_ptr = &(iter->first);
+    Node* node = new Node(element_ptr, src->weight, parent);
+    iter->second = node;
     node->subtree_weight = src->subtree_weight;
     node->left = CopyTree(src->left, node);
     node->right = CopyTree(src->right, node);
@@ -190,6 +194,7 @@ class WeightedSet {
   WeightedSet& operator=(const WeightedSet& other) {
     if (this != &other) {
       Clear(root_);
+      element_to_node_.clear();
       root_ = CopyTree(other.root_, nullptr);
     }
     return *this;
@@ -199,6 +204,8 @@ class WeightedSet {
     if (this != &other) {
       Clear(root_);
       root_ = other.root_;
+      other->Clear();
+
       other.root_ = nullptr;
     }
     return *this;

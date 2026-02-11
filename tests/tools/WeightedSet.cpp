@@ -47,6 +47,27 @@ TEST_CASE("WeightedSet Insert and Contains", "[weighted_set]") {
   }
 }
 
+TEST_CASE("WeightedSet assignment", "[weighted_set]") {
+  cse498::WeightedSet<int> ws1;
+  ws1.Insert(1, 1.0);
+  ws1.Insert(2, 2.0);
+  ws1.Insert(3, 3.0);
+
+  cse498::WeightedSet<int> ws2;
+  ws2.Insert(4, 4.0);
+  ws2.Insert(5, 5.0);
+  ws2.Insert(6, 6.0);
+
+  ws2 = ws1;
+  REQUIRE(ws2.total_weight() == 6.0);
+  REQUIRE(ws2.Contains(1));
+  REQUIRE(ws2.Contains(2));
+  REQUIRE(ws2.Contains(3));
+  REQUIRE(!ws2.Contains(4));
+  REQUIRE(!ws2.Contains(5));
+  REQUIRE(!ws2.Contains(6));
+}
+
 TEST_CASE("WeightedSet indexing", "[weighted_set]") {
   cse498::WeightedSet<int> ws;
 
