@@ -319,9 +319,9 @@ TEST_CASE("Scheduler: Template Instantiation with Different ID Types", "[schedul
 }
 
 
-// Phase 4 Tests: Dynamic Weight Adjustment
+// Tests: Dynamic Weight Adjustment
 
-TEST_CASE("Scheduler: Auto-adjustment Enable/Disable", "[scheduler][phase4]") {
+TEST_CASE("Scheduler: Auto-adjustment Enable/Disable", "[scheduler]") {
   Scheduler<size_t> scheduler;
   
   SECTION("Auto-adjustment disabled by default") {
@@ -340,7 +340,7 @@ TEST_CASE("Scheduler: Auto-adjustment Enable/Disable", "[scheduler][phase4]") {
   }
 }
 
-TEST_CASE("Scheduler: Auto-adjustment Configuration", "[scheduler][phase4]") {
+TEST_CASE("Scheduler: Auto-adjustment Configuration", "[scheduler]") {
   Scheduler<size_t> scheduler;
   
   SECTION("Default configuration values") {
@@ -386,7 +386,7 @@ TEST_CASE("Scheduler: Auto-adjustment Configuration", "[scheduler][phase4]") {
   }
 }
 
-TEST_CASE("Scheduler: Manual Weight Setting", "[scheduler][phase4]") {
+TEST_CASE("Scheduler: Manual Weight Setting", "[scheduler]") {
   Scheduler<size_t> scheduler;
   scheduler.AddProcess(1, 10.0);
   
@@ -412,7 +412,7 @@ TEST_CASE("Scheduler: Manual Weight Setting", "[scheduler][phase4]") {
   }
 }
 
-TEST_CASE("Scheduler: Wait Cycle Tracking", "[scheduler][phase4]") {
+TEST_CASE("Scheduler: Wait Cycle Tracking", "[scheduler]") {
   Scheduler<size_t> scheduler;
   scheduler.AddProcess(1, 10.0);
   scheduler.AddProcess(2, 1.0);
@@ -439,7 +439,7 @@ TEST_CASE("Scheduler: Wait Cycle Tracking", "[scheduler][phase4]") {
   }
 }
 
-TEST_CASE("Scheduler: Dynamic Weight Adjustment", "[scheduler][phase4]") {
+TEST_CASE("Scheduler: Dynamic Weight Adjustment", "[scheduler]") {
   Scheduler<size_t> scheduler;
   scheduler.AddProcess(1, 10.0);
   scheduler.AddProcess(2, 5.0);
@@ -465,7 +465,7 @@ TEST_CASE("Scheduler: Dynamic Weight Adjustment", "[scheduler][phase4]") {
   }
 }
 
-TEST_CASE("Scheduler: Starvation Prevention", "[scheduler][phase4]") {
+TEST_CASE("Scheduler: Starvation Prevention", "[scheduler]") {
   Scheduler<size_t> scheduler;
   scheduler.AddProcess(1, 100.0);
   scheduler.AddProcess(2, 1.0);
@@ -489,7 +489,7 @@ TEST_CASE("Scheduler: Starvation Prevention", "[scheduler][phase4]") {
   }
 }
 
-TEST_CASE("Scheduler: Scheduling Cycle Counter", "[scheduler][phase4]") {
+TEST_CASE("Scheduler: Scheduling Cycle Counter", "[scheduler]") {
   Scheduler<size_t> scheduler;
   scheduler.AddProcess(1, 5.0);
   
@@ -506,7 +506,7 @@ TEST_CASE("Scheduler: Scheduling Cycle Counter", "[scheduler][phase4]") {
   }
 }
 
-TEST_CASE("Scheduler: Reset Dynamic Weights", "[scheduler][phase4]") {
+TEST_CASE("Scheduler: Reset Dynamic Weights", "[scheduler]") {
   Scheduler<size_t> scheduler;
   scheduler.AddProcess(1, 10.0);
   scheduler.AddProcess(2, 5.0);
@@ -544,9 +544,9 @@ TEST_CASE("Scheduler: Reset Dynamic Weights", "[scheduler][phase4]") {
 }
 
 
-// Phase 5 Tests: Failure Handling & Recovery
+// Tests: Failure Handling & Recovery
 
-TEST_CASE("Scheduler: Failure Handling Enable/Disable", "[scheduler][phase5]") {
+TEST_CASE("Scheduler: Failure Handling Enable/Disable", "[scheduler]") {
   Scheduler<size_t> scheduler;
   
   SECTION("Failure handling disabled by default") {
@@ -565,7 +565,7 @@ TEST_CASE("Scheduler: Failure Handling Enable/Disable", "[scheduler][phase5]") {
   }
 }
 
-TEST_CASE("Scheduler: Process Enable/Disable", "[scheduler][phase5]") {
+TEST_CASE("Scheduler: Process Enable/Disable", "[scheduler]") {
   Scheduler<size_t> scheduler;
   scheduler.AddProcess(1, 10.0);
   
@@ -603,7 +603,7 @@ TEST_CASE("Scheduler: Process Enable/Disable", "[scheduler][phase5]") {
   }
 }
 
-TEST_CASE("Scheduler: Failure Tracking", "[scheduler][phase5]") {
+TEST_CASE("Scheduler: Failure Tracking", "[scheduler]") {
   Scheduler<size_t> scheduler;
   scheduler.AddProcess(1, 10.0);
   scheduler.EnableFailureHandling(true);
@@ -683,7 +683,7 @@ TEST_CASE("Scheduler: Failure Tracking", "[scheduler][phase5]") {
   }
 }
 
-TEST_CASE("Scheduler: Exponential Backoff", "[scheduler][phase5]") {
+TEST_CASE("Scheduler: Exponential Backoff", "[scheduler]") {
   Scheduler<size_t> scheduler;
   scheduler.AddProcess(1, 10.0);
   scheduler.EnableFailureHandling(true);
@@ -718,7 +718,7 @@ TEST_CASE("Scheduler: Exponential Backoff", "[scheduler][phase5]") {
   }
 }
 
-TEST_CASE("Scheduler: Max Backoff Cap", "[scheduler][phase5]") {
+TEST_CASE("Scheduler: Max Backoff Cap", "[scheduler]") {
   Scheduler<size_t> scheduler;
   scheduler.AddProcess(1, 10.0);
   scheduler.EnableFailureHandling(true);
@@ -737,7 +737,7 @@ TEST_CASE("Scheduler: Max Backoff Cap", "[scheduler][phase5]") {
   }
 }
 
-TEST_CASE("Scheduler: Auto-disable After Max Failures", "[scheduler][phase5]") {
+TEST_CASE("Scheduler: Auto-disable After Max Failures", "[scheduler]") {
   Scheduler<size_t> scheduler;
   scheduler.AddProcess(1, 10.0);
   scheduler.AddProcess(2, 10.0);
@@ -771,7 +771,7 @@ TEST_CASE("Scheduler: Auto-disable After Max Failures", "[scheduler][phase5]") {
   }
 }
 
-TEST_CASE("Scheduler: Recovery After Successes", "[scheduler][phase5]") {
+TEST_CASE("Scheduler: Recovery After Successes", "[scheduler]") {
   Scheduler<size_t> scheduler;
   scheduler.AddProcess(1, 10.0);
   scheduler.EnableFailureHandling(true);
@@ -799,7 +799,7 @@ TEST_CASE("Scheduler: Recovery After Successes", "[scheduler][phase5]") {
   }
 }
 
-TEST_CASE("Scheduler: Failure Configuration", "[scheduler][phase5]") {
+TEST_CASE("Scheduler: Failure Configuration", "[scheduler]") {
   Scheduler<size_t> scheduler;
   
   SECTION("Default configuration values") {
@@ -842,7 +842,7 @@ TEST_CASE("Scheduler: Failure Configuration", "[scheduler][phase5]") {
   }
 }
 
-TEST_CASE("Scheduler: Process Count Queries", "[scheduler][phase5]") {
+TEST_CASE("Scheduler: Process Count Queries", "[scheduler]") {
   Scheduler<size_t> scheduler;
   scheduler.AddProcess(1, 10.0);
   scheduler.AddProcess(2, 10.0);
@@ -876,7 +876,7 @@ TEST_CASE("Scheduler: Process Count Queries", "[scheduler][phase5]") {
   }
 }
 
-TEST_CASE("Scheduler: Failure Handling Integration", "[scheduler][phase5]") {
+TEST_CASE("Scheduler: Failure Handling Integration", "[scheduler]") {
   Scheduler<size_t> scheduler;
   scheduler.AddProcess(1, 10.0);
   scheduler.AddProcess(2, 5.0);
