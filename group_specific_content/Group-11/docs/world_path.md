@@ -16,82 +16,105 @@ The main goal is to use **C++23 Ranges** for geometric calculations (like path l
 We plan to implement the following:
 
 #### Core Modification
-- `void AddPoint(const Point& p);`  
+- `void addPoint(const Point& p);`  
   **Input:** A valid `Point` (finite coordinates).
   **Behavior:** Appends point to the path.  
   **Assert:** Coordinates must not be NaN/Inf.
 
-- `void Clear();`  
+- `void clear();`  
   **Behavior:** Removes all stored points.
 
-- `bool Empty() const;`  
+- `bool empty() const;`  
   **Returns:** `true` if no points exist.
 
-- `void PopBack();`  
+- `bool popBack();`  
   **Behavior:** Removes last point.  
-  **Assert:** Path must not be empty.
+  **Returns:** `false` if already empty.
 
-- `void Reserve(size_t n);`  
+- `void reserve(size_t n);`  
   **Behavior:** Pre-allocates memory for performance when generating paths.
 
 #### Accessors & Views
-- `size_t Size() const;`  
+- `size_t size() const;`  
   **Returns:** Number of stored points.
 
-- `const Point& At(size_t index) const;`  
-  **Input:** Valid index.  
+- `Point& operator[](size_t index);` / `const Point& operator[](size_t index) const;`  
+  **Behavior:** Unchecked access (like `std::vector`).
+
+- `Point& at(size_t index);` / `const Point& at(size_t index) const;`  
   **Returns:** Reference to that point.  
   **Throws:** `std::out_of_range` if invalid.
 
-- `const Point& Front() const;`  
+- `Point& front();` / `const Point& front() const;`  
   **Assert:** Path not empty.  
   **Returns:** First point.
 
-- `const Point& Back() const;`  
+- `Point& back();` / `const Point& back() const;`  
   **Assert:** Path not empty.  
   **Returns:** Last point.
 
-- `auto GetSegments() const;`  
-  **Returns:** A `std::views::adjacent<2>` view of consecutive point pairs.
+- `std::span<const Point> pointsView() const;`  
+  **Returns:** Zero-copy view of the stored points.
+
+- `auto begin()/end()` (const + non-const)  
+  **Behavior:** Standard iteration over points.
+
+- `auto segments() const;`  
+  **Returns:** A `std::views::pairwise` view of consecutive point pairs.
 
 ---
 
 #### Geometry / Metrics
-- `double TotalLength() const;`  
+- `double totalLength() const;`  
   **Returns:** Sum of all segment distances.  
   **Edge Case:** Returns `0.0` if fewer than 2 points.
 
-- `std::optional<double> SegmentLength(size_t index) const;`  
+- `std::optional<double> segmentLength(size_t index) const;`  
   **Returns:** Length of segment `index → index+1`.  
   **Returns:** `std::nullopt` if invalid.
 
-- `bool SelfIntersects() const;`  
-  **Returns:** Whether any non-adjacent segments intersect.  
-  (Full implementation may be added later.)
+- `std::pair<Point, Point> furthestPair() const;`  
+  **Returns:** The two points with maximum distance (O(N²)).  
+  **Assert:** Path must contain at least 2 points.
 
-- `bool IsValid() const;`  
+- `bool isClosed(double eps = 1e-9) const;`  
+  **Returns:** True if first and last points are the same within epsilon.
+
+- `Point pointAtDistance(double target) const;`  
+  **Returns:** The interpolated point at a distance along the path.  
+  **Assert:** Path must not be empty.
+
+- `bool selfIntersects() const;`  
+  **Returns:** Whether any non-adjacent segments intersect (O(N²)).  
+  **Note:** Closed paths (last == first) do not count the closing segment as self-intersection.
+
+- `bool isValid() const;`  
   **Returns:** True if all stored points are finite.
+
+#### Composition
+- `void append(const WorldPath& other);`  
+  **Behavior:** Appends another path to the end of this one.
+
+- `WorldPath reversed() const;`  
+  **Returns:** A new path with points in reverse order.
 
 ---
 
-#### Serialization / Debug
-- `void LogPath() const;`  
-  **Behavior:** Prints all stored points using `std::print`.
 ---
 
 ### 4) Error Conditions
 
 #### (1) Programmer Error — Assert
 * Accessing an index that doesn't exist.
-* Calling `Front()` or `Back()` on an empty path.
-* Passing `NaN` coordinates to `AddPoint`.
+* Calling `front()` or `back()` on an empty path.
+* Passing `NaN` coordinates to `addPoint`.
 
 #### (2) Recoverable Error — Exceptions / Optional
 * **File Loading:** If we implement `LoadFromFile` and it fails, we'll throw a `std::runtime_error` because the program shouldn't keep going if it can't load the file.
-* **Invalid Queries:** `SegmentLength(i)` on the last point returns `std::nullopt`, so the caller can deal with it.
+* **Invalid Queries:** `segmentLength(i)` on the last point returns `std::nullopt`, so the caller can deal with it.
 
 #### (3) User-Level / Soft Errors — Return Condition
-* `TotalLength()` on an empty path just returns `0.0`.
+* `totalLength()` on an empty path just returns `0.0`.
 * Asking for the "Next Point" when an agent is already at the end returns a status flag saying it's done.
 
 ### 5) Expected Challenges
