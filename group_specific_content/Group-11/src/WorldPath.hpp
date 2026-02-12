@@ -1,12 +1,15 @@
-
 // WorldPath is a list of ordered points representing an agent's path.
-
 #pragma once
 
+#include <algorithm>
+#include <cassert>
 #include <cmath>
 #include <cstddef>
 #include <optional>
-#include <print>
+#include <ranges>
+#include <span>
+#include <stdexcept>
+#include <utility>
 #include <vector>
 
 #include "Math/Point.hpp"
@@ -17,79 +20,174 @@ class WorldPath {
 private:
     std::vector<Point> points;
 
-    static bool isValidPoint(const Point& p) noexcept {
+    // TODO: replace with Point utilities once Group 13 provides them
+    static bool isValidPoint(const Point& p) {
         return std::isfinite(p.x) && std::isfinite(p.y);
     }
 
-    static double distance(const Point& a, const Point& b) noexcept {
-        const double dx = b.x - a.x;
-        const double dy = b.y - a.y;
+    static double dist(const Point& a, const Point& b) {
+        double dx = b.x - a.x;
+        double dy = b.y - a.y;
         return std::sqrt(dx * dx + dy * dy);
     }
 
+    static bool nearlyEq(double a, double b, double eps = 1e-9) {
+        return std::abs(a - b) <= eps;
+    }
+
+    static bool samePoint(const Point& a, const Point& b, double eps = 1e-9) {
+        return nearlyEq(a.x, b.x, eps) && nearlyEq(a.y, b.y, eps);
+    }
+
+    static int orient(const Point& a, const Point& b, const Point& c, double eps = 1e-9) {
+        double cross = (b.x - a.x) * (c.y - a.y)
+                     - (b.y - a.y) * (c.x - a.x);
+        if (nearlyEq(cross, 0.0, eps)) return 0;
+        return (cross > 0.0) ? 1 : -1;
+    }
+
+    static bool onSegment(const Point& seg_start, const Point& query,
+                          const Point& seg_end, double eps = 1e-9) {
+        return query.x >= std::min(seg_start.x, seg_end.x) - eps
+            && query.x <= std::max(seg_start.x, seg_end.x) + eps
+            && query.y >= std::min(seg_start.y, seg_end.y) - eps
+            && query.y <= std::max(seg_start.y, seg_end.y) + eps;
+    }
+
+    static bool segmentsIntersect(const Point& a1, const Point& a2,
+                                  const Point& b1, const Point& b2,
+                                  double eps = 1e-9) {
+        int d1 = orient(a1, a2, b1, eps);
+        int d2 = orient(a1, a2, b2, eps);
+        int d3 = orient(b1, b2, a1, eps);
+        int d4 = orient(b1, b2, a2, eps);
+        if (d1 != d2 && d3 != d4) return true;
+        if (d1 == 0 && onSegment(a1, b1, a2, eps)) return true;
+        if (d2 == 0 && onSegment(a1, b2, a2, eps)) return true;
+        if (d3 == 0 && onSegment(b1, a1, b2, eps)) return true;
+        if (d4 == 0 && onSegment(b1, a2, b2, eps)) return true;
+        return false;
+    }
+
 public:
-    void Reserve(std::size_t n) { points.reserve(n); }
-    void Clear() noexcept { points.clear(); }
+    auto begin() { return points.begin(); }
+    auto end() { return points.end(); }
+    auto begin() const { return points.begin(); }
+    auto end() const { return points.end(); }
 
-    [[nodiscard]] bool Empty() const noexcept { return points.empty(); }
-    [[nodiscard]] std::size_t Size() const noexcept { return points.size(); }
+    Point& operator[](std::size_t i) { return points[i]; }
+    const Point& operator[](std::size_t i) const { return points[i]; }
 
-    // Returns false if p has NaN/Inf coordinates.
-    [[nodiscard]] bool AddPoint(const Point& p) {
-        if (!isValidPoint(p)) return false;
+    Point& at(std::size_t i) {
+        if (i >= points.size()) throw std::out_of_range("WorldPath::at");
+        return points[i];
+    }
+
+    const Point& at(std::size_t i) const {
+        if (i >= points.size()) throw std::out_of_range("WorldPath::at");
+        return points[i];
+    }
+
+    Point& front() { assert(!points.empty()); return points.front(); }
+    const Point& front() const { assert(!points.empty()); return points.front(); }
+    Point& back() { assert(!points.empty()); return points.back(); }
+    const Point& back()  const { assert(!points.empty()); return points.back();  }
+
+    [[nodiscard]] bool empty() const { return points.empty(); }
+    std::size_t size() const { return points.size(); }
+    void reserve(std::size_t n) { points.reserve(n); }
+    void clear() { points.clear(); }
+
+    void addPoint(const Point& p) {
+        assert(isValidPoint(p));
         points.push_back(p);
-        return true;
     }
 
-    // Returns nullptr if index is out of range.
-    [[nodiscard]] const Point* Get(std::size_t index) const noexcept {
-        return index < points.size() ? &points[index] : nullptr;
-    }
-
-    // Returns false if already empty.
-    [[nodiscard]] bool PopBack() noexcept {
+    [[nodiscard]] bool popBack() {
         if (points.empty()) return false;
         points.pop_back();
         return true;
     }
 
-    // Returns nullptr if empty.
-    [[nodiscard]] const Point* Front() const noexcept {
-        return points.empty() ? nullptr : &points.front();
-    }
-    [[nodiscard]] const Point* Back() const noexcept {
-        return points.empty() ? nullptr : &points.back();
+    std::span<const Point> pointsView() const { return points; }
+    auto segments() const { return points | std::views::pairwise; }
+
+    bool isValid() const {
+        return std::ranges::all_of(points, isValidPoint);
     }
 
-    [[nodiscard]] const std::vector<Point>& Points() const noexcept { return points; }
+    double totalLength() const {
+        return std::ranges::fold_left(segments(), 0.0,
+            [](double acc, const auto& seg) {
+                return acc + dist(std::get<0>(seg), std::get<1>(seg));
+            });
+    }
 
-    [[nodiscard]] bool IsValid() const noexcept {
-        for (const auto& p : points) {
-            if (!isValidPoint(p)) return false;
+    std::optional<double> segmentLength(std::size_t i) const {
+        if (i + 1 >= points.size()) return std::nullopt;
+        return dist(points[i], points[i + 1]);
+    }
+
+    std::pair<Point, Point> furthestPair() const {
+        assert(points.size() >= 2);
+        std::size_t ai = 0;
+        std::size_t bi = 1;
+        double maxDist = dist(points[ai], points[bi]);
+        for (std::size_t i = 0; i < points.size(); ++i) {
+            for (std::size_t j = i + 1; j < points.size(); ++j) {
+                double d = dist(points[i], points[j]);
+                if (d > maxDist) {
+                    maxDist = d;
+                    ai = i;
+                    bi = j;
+                }
+            }
         }
-        return true;
+        return {points[ai], points[bi]};
     }
 
-    [[nodiscard]] double TotalLength() const noexcept {
-        double sum = 0.0;
-        for (std::size_t i = 1; i < points.size(); ++i) {
-            sum += distance(points[i - 1], points[i]);
+    bool isClosed(double eps = 1e-9) const {
+        return points.size() >= 2 && samePoint(points.front(), points.back(), eps);
+    }
+
+    void append(const WorldPath& other) {
+        points.insert(points.end(), other.points.begin(), other.points.end());
+    }
+
+    WorldPath reversed() const {
+        WorldPath rev;
+        rev.points.assign(points.rbegin(), points.rend());
+        return rev;
+    }
+
+    Point pointAtDistance(double target) const {
+        assert(!points.empty());
+        if (target <= 0.0) return points.front();
+        double traveled = 0.0;
+        for (auto [a, b] : segments()) {
+            double len = dist(a, b);
+            if (len > 0.0 && traveled + len >= target) {
+                double t = (target - traveled) / len;
+                return {a.x + t * (b.x - a.x), a.y + t * (b.y - a.y)};
+            }
+            traveled += len;
         }
-        return sum;
+        return points.back();
     }
 
-    // Returns the length between the point[index] and the next point.
-    // Returns nullopt if there is no "next point" (so index is the last point or out of range).
-    [[nodiscard]] std::optional<double> SegmentLength(std::size_t index) const noexcept {
-        if (index + 1 >= points.size()) return std::nullopt;
-        return distance(points[index], points[index + 1]);
-    }
-
-    [[nodiscard]] bool SelfIntersects() const noexcept { return false; }
-
-    void LogPath() const {
-        for (const auto& p : points) {
-            std::print("({}, {})\n", p.x, p.y);
+    bool selfIntersects() const {
+        const std::size_t n = points.size();
+        if (n < 4) return false;
+        constexpr double eps = 1e-9;
+        bool closed = samePoint(points.front(), points.back(), eps);
+        for (std::size_t i = 0; i + 1 < n; ++i) {
+            for (std::size_t j = i + 2; j + 1 < n; ++j) {
+                if (closed && i == 0 && j == n - 2) continue;
+                if (segmentsIntersect(points[i], points[i + 1],
+                                      points[j], points[j + 1], eps))
+                    return true;
+            }
         }
+        return false;
     }
 };
