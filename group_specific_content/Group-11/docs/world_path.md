@@ -8,9 +8,8 @@ The main goal is to use **C++23 Ranges** for geometric calculations (like path l
 
 ### 2) Similar Standard Library Classes
 * **`std::vector<Point>`**: This is what we'll use to actually store the points. We want contiguous memory for cache reasons.
-* **`std::views::adjacent` (C++23)**: We're using this to make path math easier. Instead of writing loops like `for(i=0; i<size-1; ++i)` to get line segments, `adjacent` gives us pairs of points directly. It's safer and cleaner.
+* **`std::views::pairwise` (C++23)**: We're using this to make path math easier. Instead of writing loops like `for(i=0; i<size-1; ++i)` to get line segments, `pairwise` gives us pairs of points directly. It's safer and cleaner.
 * **`std::optional` (C++17)**: We'll use this for functions that might fail (like asking for a segment length that doesn't exist) instead of throwing exceptions or returning magic numbers like `-1`.
-* **`std::print` (C++23)**: We're replacing `std::cout` with `std::print` because formatting is way easier.
 
 ### 3) Key Functions
 We plan to implement the following:
@@ -104,13 +103,14 @@ We plan to implement the following:
 
 ### 4) Error Conditions
 
-#### (1) Programmer Error — Assert
-* Accessing an index that doesn't exist.
+#### (1) Programmer Error — Assert / UB
 * Calling `front()` or `back()` on an empty path.
 * Passing `NaN` coordinates to `addPoint`.
+* `operator[]` is unchecked; invalid indices are undefined behavior.
 
 #### (2) Recoverable Error — Exceptions / Optional
 * **File Loading:** If we implement `LoadFromFile` and it fails, we'll throw a `std::runtime_error` because the program shouldn't keep going if it can't load the file.
+* **Invalid Index:** `at(i)` throws `std::out_of_range` when `i` is invalid.
 * **Invalid Queries:** `segmentLength(i)` on the last point returns `std::nullopt`, so the caller can deal with it.
 
 #### (3) User-Level / Soft Errors — Return Condition
@@ -120,7 +120,7 @@ We plan to implement the following:
 ### 5) Expected Challenges
 * **Floating Point Precision:** Checking if two lines intersect is tricky with `double` because of precision errors. We'll need an epsilon check or we'll get false positives everywhere.
 * **Performance:** Checking for self-intersections is slow (O(N²)). If paths get really long, we might need to optimize by only checking the most recent segments.
-* **Compiler Support:** We're assuming the environment supports C++23. If `std::print` or `views::adjacent` aren't working in the company compiler, we'll have to fall back to C++20 formatting and regular loops.
+* **Compiler Support:** We're assuming the environment supports C++23. If `views::pairwise` or other C++23 features aren't working in the company compiler, we'll have to fall back to C++20 equivalents and regular loops.
 
 ### 6) Coordination with Other Groups
 * **Group 13 (Math World):** We're using their `Point` struct. We need to make sure we agree on the coordinate system (Cartesian vs. Polar).
