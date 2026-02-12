@@ -68,6 +68,35 @@ TEST_CASE("WeightedSet assignment", "[weighted_set]") {
   REQUIRE(!ws2.Contains(6));
 }
 
+void AddStuffToReferencedSet(cse498::WeightedSet<int>& ws) {
+  ws.Insert(1, 1.0);
+  ws.Insert(2, 2.0);
+  ws.Insert(3, 3.0);
+}
+
+TEST_CASE("WeightedSet reference/copy constructor", "[weighted_set]") {
+  cse498::WeightedSet<int> ws;
+  AddStuffToReferencedSet(ws);
+  REQUIRE(ws.total_weight() == 6.0);
+  REQUIRE(ws.size() == 3);
+  REQUIRE(ws.Contains(1));
+  REQUIRE(ws.Contains(2));
+  REQUIRE(ws.Contains(3));
+
+  cse498::WeightedSet<int> ws2(ws);
+  REQUIRE(ws2.total_weight() == 6.0);
+  REQUIRE(ws2.size() == 3);
+  REQUIRE(ws2.Contains(1));
+  REQUIRE(ws2.Contains(2));
+  REQUIRE(ws2.Contains(3));
+
+  REQUIRE(ws.total_weight() == 6.0);
+  REQUIRE(ws.size() == 3);
+  REQUIRE(ws.Contains(1));
+  REQUIRE(ws.Contains(2));
+  REQUIRE(ws.Contains(3));
+} 
+
 TEST_CASE("WeightedSet indexing", "[weighted_set]") {
   cse498::WeightedSet<int> ws;
 

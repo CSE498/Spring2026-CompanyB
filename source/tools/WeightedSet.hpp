@@ -188,8 +188,10 @@ class WeightedSet {
  public:
   WeightedSet() : root_(nullptr) {}
 
-  WeightedSet(const WeightedSet& other)
-      : root_(CopyTree(other.root_, nullptr)) {}
+  WeightedSet(const WeightedSet& other) {
+    root_ = new Node(nullptr, 1.0);
+    root_ = CopyTree(other.root_, root_);
+  }
 
   WeightedSet& operator=(const WeightedSet& other) {
     if (this != &other) {
