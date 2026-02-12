@@ -17,17 +17,17 @@
 using Point = Math::Point;
 
 class WorldPath {
- private:
+private:
   std::vector<Point> points;
 
   // TODO: replace with Point utilities once Group 13 provides them
-  static bool isValidPoint(const Point& p) {
-    return std::isfinite(p.x) && std::isfinite(p.y);
+  static bool isValidPoint(const Point &p) {
+    return std::isfinite(p.x()) && std::isfinite(p.y());
   }
 
-  static double dist(const Point& a, const Point& b) {
-    double dx = b.x - a.x;
-    double dy = b.y - a.y;
+  static double dist(const Point &a, const Point &b) {
+    double dx = b.x() - a.x();
+    double dy = b.y() - a.y();
     return std::sqrt(dx * dx + dy * dy);
   }
 
@@ -35,34 +35,29 @@ class WorldPath {
     return std::abs(a - b) <= eps;
   }
 
-  static bool samePoint(const Point& a, const Point& b, double eps = 1e-9) {
-    return nearlyEq(a.x, b.x, eps) && nearlyEq(a.y, b.y, eps);
+  static bool samePoint(const Point &a, const Point &b, double eps = 1e-9) {
+    return nearlyEq(a.x(), b.x(), eps) && nearlyEq(a.y(), b.y(), eps);
   }
 
-  static int orient(const Point& a,
-                    const Point& b,
-                    const Point& c,
+  static int orient(const Point &a, const Point &b, const Point &c,
                     double eps = 1e-9) {
-    double cross = (b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x);
+    double cross =
+        (b.x() - a.x()) * (c.y() - a.y()) - (b.y() - a.y()) * (c.x() - a.x());
     if (nearlyEq(cross, 0.0, eps))
       return 0;
     return (cross > 0.0) ? 1 : -1;
   }
 
-  static bool onSegment(const Point& seg_start,
-                        const Point& query,
-                        const Point& seg_end,
-                        double eps = 1e-9) {
-    return query.x >= std::min(seg_start.x, seg_end.x) - eps &&
-           query.x <= std::max(seg_start.x, seg_end.x) + eps &&
-           query.y >= std::min(seg_start.y, seg_end.y) - eps &&
-           query.y <= std::max(seg_start.y, seg_end.y) + eps;
+  static bool onSegment(const Point &seg_start, const Point &query,
+                        const Point &seg_end, double eps = 1e-9) {
+    return query.x() >= std::min(seg_start.x(), seg_end.x()) - eps &&
+           query.x() <= std::max(seg_start.x(), seg_end.x()) + eps &&
+           query.y() >= std::min(seg_start.y(), seg_end.y()) - eps &&
+           query.y() <= std::max(seg_start.y(), seg_end.y()) + eps;
   }
 
-  static bool segmentsIntersect(const Point& a1,
-                                const Point& a2,
-                                const Point& b1,
-                                const Point& b2,
+  static bool segmentsIntersect(const Point &a1, const Point &a2,
+                                const Point &b1, const Point &b2,
                                 double eps = 1e-9) {
     int d1 = orient(a1, a2, b1, eps);
     int d2 = orient(a1, a2, b2, eps);
@@ -81,40 +76,40 @@ class WorldPath {
     return false;
   }
 
- public:
+public:
   auto begin() { return points.begin(); }
   auto end() { return points.end(); }
   auto begin() const { return points.begin(); }
   auto end() const { return points.end(); }
 
-  Point& operator[](std::size_t i) { return points[i]; }
-  const Point& operator[](std::size_t i) const { return points[i]; }
+  Point &operator[](std::size_t i) { return points[i]; }
+  const Point &operator[](std::size_t i) const { return points[i]; }
 
-  Point& at(std::size_t i) {
+  Point &at(std::size_t i) {
     if (i >= points.size())
       throw std::out_of_range("WorldPath::at");
     return points[i];
   }
 
-  const Point& at(std::size_t i) const {
+  const Point &at(std::size_t i) const {
     if (i >= points.size())
       throw std::out_of_range("WorldPath::at");
     return points[i];
   }
 
-  Point& front() {
+  Point &front() {
     assert(!points.empty());
     return points.front();
   }
-  const Point& front() const {
+  const Point &front() const {
     assert(!points.empty());
     return points.front();
   }
-  Point& back() {
+  Point &back() {
     assert(!points.empty());
     return points.back();
   }
-  const Point& back() const {
+  const Point &back() const {
     assert(!points.empty());
     return points.back();
   }
@@ -124,10 +119,7 @@ class WorldPath {
   void reserve(std::size_t n) { points.reserve(n); }
   void clear() { points.clear(); }
 
-  void addPoint(const Point& p) {
-    assert(isValidPoint(p));
-    points.push_back(p);
-  }
+  void addPoint(const Point &p) { points.push_back(p); }
 
   [[nodiscard]] bool popBack() {
     if (points.empty())
@@ -143,7 +135,7 @@ class WorldPath {
 
   double totalLength() const {
     return std::ranges::fold_left(
-        segments(), 0.0, [](double acc, const auto& seg) {
+        segments(), 0.0, [](double acc, const auto &seg) {
           return acc + dist(std::get<0>(seg), std::get<1>(seg));
         });
   }
@@ -176,7 +168,7 @@ class WorldPath {
     return points.size() >= 2 && samePoint(points.front(), points.back(), eps);
   }
 
-  void append(const WorldPath& other) {
+  void append(const WorldPath &other) {
     points.insert(points.end(), other.points.begin(), other.points.end());
   }
 
@@ -197,7 +189,7 @@ class WorldPath {
       double len = dist(a, b);
       if (len > 0.0 && traveled + len >= target) {
         double t = (target - traveled) / len;
-        return {a.x + t * (b.x - a.x), a.y + t * (b.y - a.y)};
+        return {a.x() + t * (b.x() - a.x()), a.y() + t * (b.y() - a.y())};
       }
       traveled += len;
     }
