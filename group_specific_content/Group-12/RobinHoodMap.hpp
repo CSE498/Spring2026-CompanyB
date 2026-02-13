@@ -100,6 +100,51 @@ class RobinHoodMap {
   ~RobinHoodMap() = default;
 
   /**
+   * Copy constructor.
+   * @param other The other RobinHoodMap to copy from.
+   */
+  RobinHoodMap(const RobinHoodMap& other)
+      : mTable(other.mTable), mSize(other.mSize), mHasher(other.mHasher) {}
+
+  /**
+   * Move constructor.
+   * @param other The other RobinHoodMap to move from.
+   */
+  RobinHoodMap(RobinHoodMap&& other) noexcept
+      : mTable(std::move(other.mTable)), mSize(other.mSize), mHasher(std::move(other.mHasher)) {
+    other.mSize = 0;
+  }
+
+  /**
+   * Copy assignment operator.
+   * @param other The other RobinHoodMap to copy from.
+   * @return Reference to this map.
+   */
+  RobinHoodMap& operator=(const RobinHoodMap& other) {
+    if (this != &other) {
+      mTable = other.mTable;
+      mSize = other.mSize;
+      mHasher = other.mHasher;
+    }
+    return *this;
+  }
+
+  /**
+   * Move assignment operator.
+   * @param other The other RobinHoodMap to move from.
+   * @return Reference to this map.
+   */
+  RobinHoodMap& operator=(RobinHoodMap&& other) noexcept {
+    if (this != &other) {
+      mTable = std::move(other.mTable);
+      mSize = other.mSize;
+      mHasher = std::move(other.mHasher);
+      other.mSize = 0;
+    }
+    return *this;
+  }
+
+  /**
    * Inserts a key-value pair into the map.
    * If the key already exists, its value is updated.
    * @param key The key to insert.
@@ -191,30 +236,140 @@ class RobinHoodMap {
   }
 
   /**
-   * Overloaded subscript operator to access values by key.
+   * Overloaded const subscript operator to access values by key.
    * Behaves the same as the at() method.
    * @param key The key to look up.
-   * @return ValueResult containing success flag and reference to value.
+   * @return Expected containing the value if found, or an error message.
    */
   std::expected<V, std::string> operator[](const K& key) const {
     return at(key);
   }
 
   /**
-   * Assignment operator to copy contents from another RobinHoodMap.
-   * @param other The other RobinHoodMap to copy from.
+   * Overloaded non-const subscript operator for insertion/update.
+   * If the key doesnt exist inserts it with a default-constructed value
+   * @param key The key to look up or insert.
+   * @return Reference to the value associated with the key.
    */
-  void operator=(const RobinHoodMap<K, V>& other) {
-    mTable = other.mTable;
-    mSize = other.mSize;
+  V& operator[](const K& key) {
+    const size_t mask = mTable.size() - 1;
+    const size_t hash = mHasher(key);
+    size_t index = hash & mask;
+    size_t probeCount = 0;
+
+    // First, check if key exists
+    size_t searchIndex = index;
+    size_t searchProbe = 0;
+    for (;;) {
+      Entry& entry = mTable[searchIndex];
+      
+      if (!entry.filled) {
+        break;
+      }
+
+      size_t entryProbeCount = (searchIndex - (entry.hash & mask) + mTable.size()) & mask;
+      if (entryProbeCount < searchProbe) {
+        break;
+      }
+
+      if (entry.hash == hash && entry.key == key) {
+        return entry.value;
+      }
+
+      ++searchProbe;
+      searchIndex = (searchIndex + 1) & mask;
+    }
+
+    insert(key, V{});
+    
+    index = hash & mask;
+    for (;;) {
+      Entry& entry = mTable[index];
+      if (entry.filled && entry.hash == hash && entry.key == key) {
+        return entry.value;
+      }
+      index = (index + 1) & mask;
+    }
+  }
+
+  /**
+   * Checks if the map contains a key.
+   * @param key The key to check for.
+   * @return true if the key exists, false otherwise.
+   */
+  bool contains(const K& key) const noexcept {
+    const size_t mask = mTable.size() - 1;
+    const size_t hash = mHasher(key);
+    size_t index = hash & mask;
+    size_t probeCount = 0;
+
+    for (;;) {
+      const Entry& entry = mTable[index];
+      
+      if (!entry.filled) {
+        return false;
+      }
+
+      size_t entryProbeCount = (index - (entry.hash & mask) + mTable.size()) & mask;
+      if (entryProbeCount < probeCount) {
+        return false;
+      }
+
+      if (entry.hash == hash && entry.key == key) {
+        return true;
+      }
+
+      ++probeCount;
+      index = (index + 1) & mask;
+    }
+  }
+
+  /**
+   * Removes all elements from the map.
+   */
+  void clear() noexcept {
+    mTable = std::vector<Entry>(8, Entry{});
+    mSize = 0;
+  }
+
+  /**
+   * Checks if the map is empty.
+   * @return true if the map has no elements, false otherwise.
+   */
+  bool empty() const noexcept {
+    return mSize == 0;
   }
 
   /**
    * Returns the number of elements in the map.
    * @return The size of the map.
    */
-  size_t size() const {
+  size_t size() const noexcept {
     return mSize;
+  }
+
+  /**
+   * Pre-allocates space for at least the specified number of elements.
+   * @param capacity The minimum capacity to reserve.
+   */
+  void reserve(size_t capacity) {
+    size_t targetSize = capacity * 2;
+    size_t newSize = 8;
+    while (newSize < targetSize) {
+      newSize *= 2;
+    }
+
+    if (newSize > mTable.size()) {
+      std::vector<Entry> oldTable = std::move(mTable);
+      mTable = std::vector<Entry>(newSize, Entry{});
+      mSize = 0;
+
+      for (auto& entry : oldTable) {
+        if (entry.filled) {
+          _insertWithHash(std::move(entry.key), std::move(entry.value), entry.hash);
+        }
+      }
+    }
   }
 
   /**
@@ -224,6 +379,8 @@ class RobinHoodMap {
    private:
     Entry* mEntry; //< Current entry pointer
     Entry* mEnd;   //< End entry pointer
+
+    friend class RobinHoodMap;
 
    public:
     /// Constructs an iterator pointing to a specific entry.
@@ -307,6 +464,116 @@ class RobinHoodMap {
   };
 
   /**
+   * Removes the element at the given iterator position.
+   * @param pos Iterator pointing to the element to remove.
+   * @return Iterator to the next element.
+   */
+  Iterator erase(Iterator pos) {
+    if (pos.mEntry->filled) {
+      remove(pos.mEntry->key);
+    }
+    // Advance to next filled entry
+    ++pos.mEntry;
+    while (pos.mEntry != pos.mEnd && !pos.mEntry->filled) {
+      ++pos.mEntry;
+    }
+    return pos;
+  }
+
+  /**
+   * Const Iterator class for RobinHoodMap entries.
+   */
+  class ConstIterator {
+   private:
+    const Entry* mEntry; //< Current entry pointer
+    const Entry* mEnd;   //< End entry pointer
+
+    friend class RobinHoodMap;
+
+   public:
+    /// Constructs a const iterator pointing to a specific entry.
+    /// @param ptr Pointer to the current entry.
+    /// @param end Pointer to the end entry.
+    explicit ConstIterator(const Entry* ptr, const Entry* end = nullptr)
+        : mEntry(ptr), mEnd(end) {}
+
+    /// Dereferences the iterator to access the current entry.
+    /// @return Const reference to the current entry.
+    const Entry& operator*() const { return *mEntry; }
+
+    /// Pre-increment operator to move to the next filled entry.
+    /// @return the updated iterator.
+    ConstIterator& operator++() {
+      ++mEntry;
+      while (mEntry != mEnd && !mEntry->filled) {
+        ++mEntry;
+      }
+      return *this;
+    }
+
+    /// Pre-decrement operator to move to the previous entry.
+    /// @return the updated iterator.
+    ConstIterator& operator--() {
+      --mEntry;
+      return *this;
+    }
+
+    /// Post-increment operator to move to the next filled entry.
+    /// @return the original iterator before increment.
+    ConstIterator operator++(int) {
+      ConstIterator temp = *this;
+      ++(*this);
+      return temp;
+    }
+
+    /// Post-decrement operator to move to the previous entry.
+    /// @return the original iterator before decrement.
+    ConstIterator operator--(int) {
+      ConstIterator temp = *this;
+      --(*this);
+      return temp;
+    }
+
+    /**
+     * Inequality operator to compare two iterators.
+     * @param other The other iterator to compare with.
+     * @return true if the iterators are not equal, false otherwise.
+     */
+    bool operator!=(const ConstIterator& other) const {
+      return mEntry != other.mEntry;
+    }
+
+    /**
+     * Equality operator to compare two iterators.
+     * @param other The other iterator to compare with.
+     * @return true if the iterators are equal, false otherwise.
+     */
+    bool operator==(const ConstIterator& other) const {
+      return mEntry == other.mEntry;
+    }
+
+    /**
+     * Addition operator to advance the iterator by an offset.
+     * @param offset The number of positions to advance.
+     * @return A new iterator advanced by the specified offset.
+     */
+    ConstIterator operator+(size_t offset) const {
+      return ConstIterator(mEntry + offset, mEnd);
+    }
+
+    /**
+     * Subtraction operator to move the iterator backward by an offset.
+     * @param offset The number of positions to move backward.
+     * @return A new iterator moved backward by the specified offset.
+     */
+    ConstIterator operator-(size_t offset) const {
+      return ConstIterator(mEntry - offset, mEnd);
+    }
+  };
+
+  using const_iterator = ConstIterator;
+
+  /**
    * Returns an iterator to the first filled entry in the map.
    * @return Iterator pointing to the first filled entry.
    */
@@ -325,6 +592,43 @@ class RobinHoodMap {
    */
   Iterator end() {
     return Iterator(&mTable[mTable.size()], &mTable[mTable.size()]);
+  }
+
+  /**
+   * Returns a const iterator to the first filled entry in the map.
+   * @return Const iterator pointing to the first filled entry.
+   */
+  ConstIterator begin() const {
+    for (size_t i = 0; i < mTable.size(); ++i) {
+      if (mTable[i].filled) {
+        return ConstIterator(&mTable[i], &mTable[mTable.size()]);
+      }
+    }
+    return end();
+  }
+
+  /**
+   * Returns a const iterator to one past the last entry in the map.
+   * @return Const iterator pointing to one past the last entry.
+   */
+  ConstIterator end() const {
+    return ConstIterator(&mTable[mTable.size()], &mTable[mTable.size()]);
+  }
+
+  /**
+   * Returns a const iterator to the first filled entry in the map.
+   * @return Const iterator pointing to the first filled entry.
+   */
+  ConstIterator cbegin() const {
+    return begin();
+  }
+
+  /**
+   * Returns a const iterator to one past the last entry in the map.
+   * @return Const iterator pointing to one past the last entry.
+   */
+  ConstIterator cend() const {
+    return end();
   }
 
   friend class RobinHoodMapTest;
