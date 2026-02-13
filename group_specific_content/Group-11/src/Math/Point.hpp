@@ -5,6 +5,8 @@
 #include <cstddef>
 #include <functional>
 
+#include <cmath>
+
 namespace Math {
 
 struct Point {

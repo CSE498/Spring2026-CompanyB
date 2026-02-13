@@ -13,8 +13,8 @@ TEST_CASE("WorldPath basic mutation", "[worldpath]") {
 
   REQUIRE_FALSE(path.empty());
   REQUIRE(path.size() == 2);
-  REQUIRE(path.front().x == Approx(0.0));
-  REQUIRE(path.back().y == Approx(4.0));
+  REQUIRE(path.front().x() == Approx(0.0));
+  REQUIRE(path.back().y() == Approx(4.0));
 }
 
 TEST_CASE("WorldPath segmentLength and totalLength", "[worldpath]") {
@@ -36,7 +36,7 @@ TEST_CASE("WorldPath furthestPair", "[worldpath]") {
   path.addPoint({0.0, 2.0});
 
   auto [a, b] = path.furthestPair();
-  double d = std::hypot(b.x - a.x, b.y - a.y);
+  double d = std::hypot(b.x() - a.x(), b.y() - a.y());
   REQUIRE(d == Approx(std::hypot(1.0, 2.0)));
 }
 
@@ -64,11 +64,11 @@ TEST_CASE("WorldPath append and reversed", "[worldpath]") {
 
   a.append(b);
   REQUIRE(a.size() == 4);
-  REQUIRE(a.back().x == Approx(3.0));
+  REQUIRE(a.back().x() == Approx(3.0));
 
   WorldPath r = a.reversed();
-  REQUIRE(r.front().x == Approx(3.0));
-  REQUIRE(r.back().x == Approx(0.0));
+  REQUIRE(r.front().x() == Approx(3.0));
+  REQUIRE(r.back().x() == Approx(0.0));
 }
 
 TEST_CASE("WorldPath pointAtDistance", "[worldpath]") {
@@ -76,10 +76,10 @@ TEST_CASE("WorldPath pointAtDistance", "[worldpath]") {
   path.addPoint({0.0, 0.0});
   path.addPoint({10.0, 0.0});
 
-  REQUIRE(path.pointAtDistance(-1.0).x == Approx(0.0));
-  REQUIRE(path.pointAtDistance(0.0).x == Approx(0.0));
-  REQUIRE(path.pointAtDistance(5.0).x == Approx(5.0));
-  REQUIRE(path.pointAtDistance(15.0).x == Approx(10.0));
+  REQUIRE(path.pointAtDistance(-1.0).x() == Approx(0.0));
+  REQUIRE(path.pointAtDistance(0.0).x() == Approx(0.0));
+  REQUIRE(path.pointAtDistance(5.0).x() == Approx(5.0));
+  REQUIRE(path.pointAtDistance(15.0).x() == Approx(10.0));
 }
 
 TEST_CASE("WorldPath selfIntersects", "[worldpath]") {
@@ -123,8 +123,8 @@ TEST_CASE("WorldPath pointAtDistance across segments", "[worldpath]") {
   path.addPoint({3.0, 4.0});
 
   auto p = path.pointAtDistance(4.0);
-  REQUIRE(p.x == Approx(3.0));
-  REQUIRE(p.y == Approx(1.0));
+  REQUIRE(p.x() == Approx(3.0));
+  REQUIRE(p.y() == Approx(1.0));
 }
 
 TEST_CASE("WorldPath pointsView provides contiguous view", "[worldpath]") {
@@ -134,15 +134,14 @@ TEST_CASE("WorldPath pointsView provides contiguous view", "[worldpath]") {
 
   auto view = path.pointsView();
   REQUIRE(view.size() == 2);
-  REQUIRE(view[0].x == Approx(1.0));
-  REQUIRE(view[1].y == Approx(4.0));
+  REQUIRE(view[0].x() == Approx(1.0));
+  REQUIRE(view[1].y() == Approx(4.0));
 }
 
 TEST_CASE("WorldPath isValid detects NaN", "[worldpath]") {
   WorldPath path;
   path.addPoint({0.0, 0.0});
-  path.addPoint({1.0, 1.0});
-  path[1].x = std::numeric_limits<double>::quiet_NaN();
+  path.addPoint({std::numeric_limits<double>::quiet_NaN(), 1.0});
 
   REQUIRE_FALSE(path.isValid());
 }
@@ -171,8 +170,8 @@ TEST_CASE("WorldPath furthestPair with two points", "[worldpath]") {
   path.addPoint({2.0, 0.0});
 
   auto [a, b] = path.furthestPair();
-  REQUIRE(a.x == Approx(-1.0));
-  REQUIRE(b.x == Approx(2.0));
+  REQUIRE(a.x() == Approx(-1.0));
+  REQUIRE(b.x() == Approx(2.0));
 }
 
 TEST_CASE("WorldPath at throws out_of_range", "[worldpath]") {
@@ -189,8 +188,8 @@ TEST_CASE("WorldPath pointAtDistance handles zero-length segments",
   path.addPoint({5.0, 0.0});
 
   auto p = path.pointAtDistance(2.0);
-  REQUIRE(p.x == Approx(2.0));
-  REQUIRE(p.y == Approx(0.0));
+  REQUIRE(p.x() == Approx(2.0));
+  REQUIRE(p.y() == Approx(0.0));
 }
 
 TEST_CASE("WorldPath append to empty", "[worldpath]") {
@@ -201,7 +200,7 @@ TEST_CASE("WorldPath append to empty", "[worldpath]") {
 
   a.append(b);
   REQUIRE(a.size() == 2);
-  REQUIRE(a.front().x == Approx(1.0));
+  REQUIRE(a.front().x() == Approx(1.0));
 }
 
 TEST_CASE("WorldPath reversed on single-point path", "[worldpath]") {
@@ -210,8 +209,8 @@ TEST_CASE("WorldPath reversed on single-point path", "[worldpath]") {
 
   WorldPath r = path.reversed();
   REQUIRE(r.size() == 1);
-  REQUIRE(r.front().x == Approx(7.0));
-  REQUIRE(r.front().y == Approx(-2.0));
+  REQUIRE(r.front().x() == Approx(7.0));
+  REQUIRE(r.front().y() == Approx(-2.0));
 }
 
 TEST_CASE("WorldPath segments yields correct pairs", "[worldpath]") {
@@ -223,11 +222,11 @@ TEST_CASE("WorldPath segments yields correct pairs", "[worldpath]") {
   auto segs = path.segments();
   auto it = segs.begin();
   REQUIRE(it != segs.end());
-  REQUIRE(std::get<0>(*it).x == Approx(0.0));
-  REQUIRE(std::get<1>(*it).x == Approx(1.0));
+  REQUIRE(std::get<0>(*it).x() == Approx(0.0));
+  REQUIRE(std::get<1>(*it).x() == Approx(1.0));
 
   ++it;
   REQUIRE(it != segs.end());
-  REQUIRE(std::get<0>(*it).y == Approx(0.0));
-  REQUIRE(std::get<1>(*it).y == Approx(2.0));
+  REQUIRE(std::get<0>(*it).y() == Approx(0.0));
+  REQUIRE(std::get<1>(*it).y() == Approx(2.0));
 }
