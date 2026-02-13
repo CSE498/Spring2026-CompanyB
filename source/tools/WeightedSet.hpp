@@ -285,8 +285,8 @@ class WeightedSet {
         return true;
         // if a node does have 2 children, we insert the new node in the lighter
         // of the two subtrees.
-      } else if (current_node->left->subtree_weight <
-                 current_node->right->subtree_weight) {
+      } else if (LeftSubtreeWeight(current_node) <
+                 RightSubtreeWeight(current_node)) {
         current_node = current_node->left;
       } else {
         current_node = current_node->right;
@@ -308,12 +308,12 @@ class WeightedSet {
   // for GetRandomElement to work properly.
   std::optional<T> GetElementAt(double index) {
     Node* current_node = this->root_;
-    double total = this->root_->subtree_weight;
+    double total = total_weight();
     if (index < 0 || index > total) {
       return std::nullopt;
     }
     double lower_bound = 0;
-    double upper_bound = this->root_->subtree_weight;
+    double upper_bound = total;
     while (current_node != nullptr) {
       // On the first iteration of this loop, we divide the whole interval [0,
       // total weight] into 3 subintervals: [0, left subtree weight), [left
@@ -325,7 +325,7 @@ class WeightedSet {
       // the same way. Same idea for the third interval and the right subtree.
       double current_node_interval_lower =
           lower_bound +
-          (current_node->left ? current_node->left->subtree_weight : 0);
+          LeftSubtreeWeight(current_node);
       double current_node_interval_upper =
           current_node_interval_lower + current_node->weight;
       if (index < current_node_interval_lower) {
@@ -347,7 +347,7 @@ class WeightedSet {
       return std::nullopt;
     }
     auto random_real =
-        std::uniform_real_distribution<double>(0, this->root_->subtree_weight);
+        std::uniform_real_distribution<double>(0, total_weight());
     return GetElementAt(random_real(rng_));
   }
 
