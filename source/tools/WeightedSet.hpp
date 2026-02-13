@@ -82,11 +82,11 @@ class WeightedSet {
     return node;
   }
 
-  double LeftSubtreeWeight(Node* node) {
+  double LeftSubtreeWeight(const Node* const node) const {
     return node->left ? node->left->subtree_weight : 0.0;
   }
 
-  double RightSubtreeWeight(Node* node) {
+  double RightSubtreeWeight(const Node* const node) const {
     return node->right ? node->right->subtree_weight : 0.0;
   }
   // Ensures that a given node and all its ancestors have their total subtree
@@ -128,7 +128,7 @@ class WeightedSet {
     }
   }
 
-  bool IsDirectChild(Node* parent, Node* child) {
+  bool IsDirectChild(const Node* const parent, const Node* const child) {
     return (parent->left == child) || (parent->right == child);
   }
 
@@ -146,7 +146,7 @@ class WeightedSet {
   }
   // Searches for a child of the given node which is a leaf (such a child exists
   // in any tree, as long as the given node has at least one child).
-  Node* FindLeaf(Node* current) {
+  Node* FindLeaf(Node* const current) const {
     if (current->left == nullptr && current->right == nullptr) {
       return current;
     }
@@ -247,7 +247,7 @@ class WeightedSet {
   // GetRandomElement function). The insertion fails if the weight is invalid
   // (it must be positive) or if the function somehow fails to find a place to
   // insert the element.
-  bool Insert(T element, double weight) {
+  bool Insert(const T element, const double weight) {
     if (weight <= 0) {
       return false;
     }
@@ -308,7 +308,7 @@ class WeightedSet {
   // inserting or deleting elements. The only guarantee is that the length of
   // the interval will be equal to the weight of the element--which is needed
   // for GetRandomElement to work properly.
-  std::optional<T> GetElementAt(double index) {
+  std::optional<T> GetElementAt(const double index) const {
     Node* current_node = this->root_;
     double total = total_weight();
     if (index < 0 || index > total) {
@@ -344,7 +344,7 @@ class WeightedSet {
     return std::nullopt;
   }
 
-  std::optional<T> GetRandomElement() {
+  std::optional<T> GetRandomElement() const {
     if (this->root_ == nullptr) {
       return std::nullopt;
     }
