@@ -44,7 +44,6 @@ void Timer::Resume() {
 }
 
 void Timer::Reset() {
-    name = "";
     startTime = 0.0;
     endTime = 0.0;
     accumulatedTime = 0.0;
