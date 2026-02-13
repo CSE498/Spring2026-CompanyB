@@ -24,7 +24,7 @@ bool AnnotationSet::hasTag(const tag& tag) const{
     return tags.find(tag) != tags.end();
 };
 
-const tag* AnnotationSet::GetTag(const tag& tag) const{
+const tag* AnnotationSet::getTag(const tag& tag) const{
     auto it = tags.find(tag);
     if(it != tags.end()){
         return &(*it);

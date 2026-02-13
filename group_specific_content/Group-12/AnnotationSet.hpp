@@ -58,7 +58,7 @@ class AnnotationSet{
         * @param tag The tag to be retrieved.
         * @return A pointer to the tag if found, nullptr otherwise.
         */
-        const tag* GetTag(const tag& tag) const; 
+        const tag* getTag(const tag& tag) const; 
         
         /*
         * @brief Retrieves all tags in the annotation set.
