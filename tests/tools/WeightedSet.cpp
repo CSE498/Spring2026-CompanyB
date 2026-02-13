@@ -63,9 +63,9 @@ TEST_CASE("WeightedSet assignment", "[weighted_set]") {
   REQUIRE(ws2.Contains(1));
   REQUIRE(ws2.Contains(2));
   REQUIRE(ws2.Contains(3));
-  REQUIRE(!ws2.Contains(4));
-  REQUIRE(!ws2.Contains(5));
-  REQUIRE(!ws2.Contains(6));
+  REQUIRE_FALSE(ws2.Contains(4));
+  REQUIRE_FALSE(ws2.Contains(5));
+  REQUIRE_FALSE(ws2.Contains(6));
 }
 
 void AddStuffToReferencedSet(cse498::WeightedSet<int>& ws) {
@@ -118,9 +118,9 @@ TEST_CASE("WeightedSet move") {
   REQUIRE(ws2.Contains(2));
   REQUIRE(ws2.Contains(3));
   REQUIRE(ws2.total_weight() == 6.0);
-  REQUIRE(!ws2.Contains(4));
-  REQUIRE(!ws2.Contains(5));
-  REQUIRE(!ws2.Contains(6));
+  REQUIRE_FALSE(ws2.Contains(4));
+  REQUIRE_FALSE(ws2.Contains(5));
+  REQUIRE_FALSE(ws2.Contains(6));
 }
 
 TEST_CASE("WeightedSet indexing", "[weighted_set]") {
@@ -195,7 +195,7 @@ TEST_CASE("WeightedSet indexing", "[weighted_set]") {
       REQUIRE(result.has_value());
       int el = result.value();
       REQUIRE((0 <= el && el < 10));
-      REQUIRE(!elements_seen.contains(el));
+      REQUIRE_FALSE(elements_seen.contains(el));
       REQUIRE(ws.GetElementAt(i + 0.5).value() == el);
       elements_seen.insert(el);
     }
@@ -213,7 +213,7 @@ TEST_CASE("WeightedSet deletion", "[weighted_set]") {
     auto result = ws.Remove(1);
     REQUIRE(result.has_value());
     REQUIRE(result.value() == 1);
-    REQUIRE(!ws.Contains(1));
+    REQUIRE_FALSE(ws.Contains(1));
     REQUIRE(ws.total_weight() == 0);
   }
 
@@ -235,7 +235,7 @@ TEST_CASE("WeightedSet deletion", "[weighted_set]") {
           auto result = ws.Remove(to_remove);
           REQUIRE(result.has_value());
           REQUIRE(result.value() == to_remove);
-          REQUIRE(!ws.Contains(to_remove));
+          REQUIRE_FALSE(ws.Contains(to_remove));
           target_weight -= to_remove;
           REQUIRE(ws.total_weight() == target_weight);
         }
@@ -256,7 +256,7 @@ TEST_CASE("WeightedSet deletion", "[weighted_set]") {
         REQUIRE(result.has_value());
         REQUIRE(result.value() == i);
         REQUIRE(ws.total_weight() == 9.0);
-        REQUIRE(!ws.Contains(i));
+        REQUIRE_FALSE(ws.Contains(i));
         for (int j = 0; j < 10; ++j) {
           if (j != i) {
             REQUIRE(ws.Contains(j));
@@ -278,8 +278,8 @@ TEST_CASE("WeightedSet deletion", "[weighted_set]") {
           REQUIRE(result.has_value());
           REQUIRE(result.value() == j);
           REQUIRE(ws.total_weight() == 8.0);
-          REQUIRE(!ws.Contains(i));
-          REQUIRE(!ws.Contains(j));
+          REQUIRE_FALSE(ws.Contains(i));
+          REQUIRE_FALSE(ws.Contains(j));
           for (int k = 0; k < 10; ++k) {
             if (k != i && k != j) {
               REQUIRE(ws.Contains(k));
