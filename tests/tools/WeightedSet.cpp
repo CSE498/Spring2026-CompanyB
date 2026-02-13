@@ -6,6 +6,13 @@
 
 #include "../../third-party/Catch/single_include/catch2/catch.hpp"
 
+void FillSetWithInts(cse498::WeightedSet<int>& ws, const int lower,
+                     const int upper, const bool differentWeights = false) {
+  for (int i = lower; i <= upper; ++i) {
+    ws.Insert(i, differentWeights ? static_cast<double>(i) : 1.0);
+  }
+}
+
 TEST_CASE("WeightedSet Insert and Contains", "[weighted_set]") {
   cse498::WeightedSet<int> ws;
 
@@ -49,14 +56,10 @@ TEST_CASE("WeightedSet Insert and Contains", "[weighted_set]") {
 
 TEST_CASE("WeightedSet assignment", "[weighted_set]") {
   cse498::WeightedSet<int> ws1;
-  ws1.Insert(1, 1.0);
-  ws1.Insert(2, 2.0);
-  ws1.Insert(3, 3.0);
+  FillSetWithInts(ws1, 1, 3, true);
 
   cse498::WeightedSet<int> ws2;
-  ws2.Insert(4, 4.0);
-  ws2.Insert(5, 5.0);
-  ws2.Insert(6, 6.0);
+  FillSetWithInts(ws2, 4, 6, true);
 
   ws2 = ws1;
   REQUIRE(ws2.total_weight() == 6.0);
@@ -68,20 +71,9 @@ TEST_CASE("WeightedSet assignment", "[weighted_set]") {
   REQUIRE_FALSE(ws2.Contains(6));
 }
 
-void AddStuffToReferencedSet(cse498::WeightedSet<int>& ws) {
-  ws.Insert(1, 1.0);
-  ws.Insert(2, 2.0);
-  ws.Insert(3, 3.0);
-}
-
-TEST_CASE("WeightedSet reference/copy constructor", "[weighted_set]") {
+TEST_CASE("WeightedSet copy constructor", "[weighted_set]") {
   cse498::WeightedSet<int> ws;
-  AddStuffToReferencedSet(ws);
-  REQUIRE(ws.total_weight() == 6.0);
-  REQUIRE(ws.size() == 3);
-  REQUIRE(ws.Contains(1));
-  REQUIRE(ws.Contains(2));
-  REQUIRE(ws.Contains(3));
+  FillSetWithInts(ws, 1, 3, true);
 
   cse498::WeightedSet<int> ws2(ws);
   REQUIRE(ws2.total_weight() == 6.0);
@@ -103,14 +95,10 @@ TEST_CASE("WeightedSet reference/copy constructor", "[weighted_set]") {
 
 TEST_CASE("WeightedSet move") {
   cse498::WeightedSet<int> ws{};
-  ws.Insert(1, 1.0);
-  ws.Insert(2, 2.0);
-  ws.Insert(3, 3.0);
+  FillSetWithInts(ws, 1, 3, true);
 
   cse498::WeightedSet<int> ws2{};
-  ws2.Insert(4, 4.0);
-  ws2.Insert(5, 5.0);
-  ws2.Insert(6, 6.0);
+  FillSetWithInts(ws2, 4, 6, true);
 
   ws2 = std::move(ws);
   REQUIRE(ws.empty());
@@ -185,9 +173,7 @@ TEST_CASE("WeightedSet indexing", "[weighted_set]") {
   }
 
   SECTION("handling many elements") {
-    for (int i = 0; i < 10; i++) {
-      ws.Insert(i, 1.0);
-    }
+    FillSetWithInts(ws, 0, 9);
     REQUIRE(ws.total_weight() == 10);
     std::set<int> elements_seen{};
     for (int i = 0; i < 10; i++) {
@@ -218,9 +204,7 @@ TEST_CASE("WeightedSet deletion", "[weighted_set]") {
   }
 
   SECTION("three elements") {
-    ws.Insert(1, 1.0);
-    ws.Insert(2, 2.0);
-    ws.Insert(3, 3.0);
+    FillSetWithInts(ws, 1, 3, true);
 
     REQUIRE(ws.total_weight() == 6);
     std::vector<std::vector<int>> removal_orders = {
@@ -243,10 +227,8 @@ TEST_CASE("WeightedSet deletion", "[weighted_set]") {
     }
   }
 
-  for (int i = 0; i < 10; ++i) {
-    ws.Insert(i, 1.0);
-  }
-  // the real point of this test/set of tests is to try removing elements at
+  FillSetWithInts(ws, 0, 9);
+  // the real point of this test and the next one is to try removing elements at
   // different places on the tree--elements at the root, not at the root but
   // with 2 children, with only 1 child, and so on.
   SECTION("many elements, removing only one per test") {
