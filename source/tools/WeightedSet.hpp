@@ -211,8 +211,10 @@ class WeightedSet {
   WeightedSet(const WeightedSet& other) {
     // Just a dummy node--in my experience, without doing this first, CopyTree
     // might cause a segfault
-    root_ = new Node(nullptr, 1.0);
+    auto temp = new Node(nullptr, 1.0);
+    root_ = temp;
     root_ = CopyTree(other.root_, root_);
+    delete temp;
   }
 
   WeightedSet& operator=(const WeightedSet& other) {
