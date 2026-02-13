@@ -95,6 +95,10 @@ TEST_CASE("WeightedSet reference/copy constructor", "[weighted_set]") {
   REQUIRE(ws.Contains(1));
   REQUIRE(ws.Contains(2));
   REQUIRE(ws.Contains(3));
+
+  cse498::WeightedSet<int> ws3{};
+  ws2 = ws3;
+  REQUIRE(ws2.empty());
 } 
 
 TEST_CASE("WeightedSet indexing", "[weighted_set]") {
