@@ -99,7 +99,7 @@ TEST_CASE("WeightedSet reference/copy constructor", "[weighted_set]") {
   cse498::WeightedSet<int> ws3{};
   ws2 = ws3;
   REQUIRE(ws2.empty());
-} 
+}
 
 TEST_CASE("WeightedSet move") {
   cse498::WeightedSet<int> ws{};

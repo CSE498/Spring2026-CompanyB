@@ -28,15 +28,17 @@ class WeightedSet {
  private:
   // A node in the binary-tree structure used in WeightedSet.
   struct Node {
-    // Pointer to the value "contained" in the node. 
-    // Note on the implementation: the value itself is owned and stored in the unordered_map used
-    // in WeightedSet--we need to have the values as keys in the unordered_map so we can use it for membership checking,
-    // and once we've stored the value there, it would be a waste to duplicate it in the node.
+    // Pointer to the value "contained" in the node.
+    // Note on the implementation: the value itself is owned and stored in the
+    // unordered_map used in WeightedSet--we need to have the values as keys in
+    // the unordered_map so we can use it for membership checking, and once
+    // we've stored the value there, it would be a waste to duplicate it in the
+    // node.
     const T* value_ptr;
     double weight;          // this element's weight (nonnegative)
     double subtree_weight;  // total weight of subtree rooted at this node
-    Node* left = nullptr; // left child
-    Node* right = nullptr; // right child
+    Node* left = nullptr;   // left child
+    Node* right = nullptr;  // right child
     Node* parent;
 
     Node(const T* val_ptr, double w, Node* par = nullptr)
@@ -52,11 +54,12 @@ class WeightedSet {
   // TODO: replace this with custom random class once we have that
   std::random_device rd_{};
   std::mt19937 rng_{rd_()};
-  // Keys are elements stored in the WeightedSet; values are the nodes in the tree representing that element.
+  // Keys are elements stored in the WeightedSet; values are the nodes in the
+  // tree representing that element.
   std::unordered_map<T, Node*> element_to_node_;
   // Deletes the whole tree starting at a given node.
-  // Note: not sufficient to delete the WeightedSet; you also need to get rid of the 
-  // unordered_map and the values stored within it.
+  // Note: not sufficient to delete the WeightedSet; you also need to get rid of
+  // the unordered_map and the values stored within it.
   void Clear(Node* node) {
     if (!node) return;
     Clear(node->left);
@@ -66,7 +69,7 @@ class WeightedSet {
 
   Node* CopyTree(const Node* src, Node* parent) {
     if (!src) return nullptr;
-    
+
     auto element = *(src->value_ptr);
     auto [iter, inserted] = element_to_node_.insert({element, nullptr});
     const T* element_ptr = &(iter->first);
@@ -86,9 +89,10 @@ class WeightedSet {
   double RightSubtreeWeight(Node* node) {
     return node->right ? node->right->subtree_weight : 0.0;
   }
-  // Ensures that a given node and all its ancestors have their total subtree weight recorded correctly.
-  // Generally you pass in the lowest node that had its subtree change during an insertion or deletion: then
-  // it and all of its ancestors may also have had their subtree weights change as a result.
+  // Ensures that a given node and all its ancestors have their total subtree
+  // weight recorded correctly. Generally you pass in the lowest node that had
+  // its subtree change during an insertion or deletion: then it and all of its
+  // ancestors may also have had their subtree weights change as a result.
   void FixWeightsAndRebalance(Node* node_ptr) {
     while (node_ptr != nullptr) {
       // TODO: rotate if doing so would make the tree better weight-balanced
@@ -102,7 +106,7 @@ class WeightedSet {
   // (Claude-written) helper for DebugPrint: recursively builds tree
   // visualization
   void DebugPrintNode(std::ostream& os, Node* node, const std::string& prefix,
-                        bool is_left, bool is_root) const {
+                      bool is_left, bool is_root) const {
     if (!node) return;
 
     os << prefix;
@@ -140,8 +144,8 @@ class WeightedSet {
       replacement->parent = to_delete->parent;
     }
   }
-  // Searches for a child of the given node which is a leaf (such a child exists in any tree, as long as the given
-  // node has at least one child).
+  // Searches for a child of the given node which is a leaf (such a child exists
+  // in any tree, as long as the given node has at least one child).
   Node* FindLeaf(Node* current) {
     if (current->left == nullptr && current->right == nullptr) {
       return current;
@@ -152,16 +156,19 @@ class WeightedSet {
       return FindLeaf(current->right);
     }
   }
-  //we take a leaf node and swap it in for the node to be deleted.
-  //the leaf's left, right, and parent should become the left, right, and parent of the deleted node.
-  //then we need to rebalance starting at the previous parent of the leaf (if that isn't the deleted node)
-  //or starting at the moved leaf (if the leaf was a child of the deleted node).
+  // we take a leaf node and swap it in for the node to be deleted.
+  // the leaf's left, right, and parent should become the left, right, and
+  // parent of the deleted node. then we need to rebalance starting at the
+  // previous parent of the leaf (if that isn't the deleted node) or starting at
+  // the moved leaf (if the leaf was a child of the deleted node).
 
   void ReplaceDeletedNodeWithLeaf(Node* to_delete, Node* leaf) {
-    // Commenting this more heavily than usual because otherwise it can be a bit unclear what's going on here, IMO
+    // Commenting this more heavily than usual because otherwise it can be a bit
+    // unclear what's going on here, IMO
 
-    // Make sure that the node to be deleted's parent has the replacement as its child
-    // (and that, if the root is being deleted, we make the replacement the root)
+    // Make sure that the node to be deleted's parent has the replacement as its
+    // child (and that, if the root is being deleted, we make the replacement
+    // the root)
     if (to_delete->parent == nullptr) {
       this->root_ = leaf;
     } else if (to_delete == to_delete->parent->left) {
@@ -179,15 +186,17 @@ class WeightedSet {
     }
     // Make sure that the replacement's new parent is the old node's parent
     leaf->parent = to_delete->parent;
-    // Transfer the children of the node to be deleted to be the leaf's new children--unless
-    // the leaf is one of those children (we don't want to create a circular dependency)
+    // Transfer the children of the node to be deleted to be the leaf's new
+    // children--unless the leaf is one of those children (we don't want to
+    // create a circular dependency)
     if (leaf != to_delete->left) {
       leaf->left = to_delete->left;
     }
     if (leaf != to_delete->right) {
       leaf->right = to_delete->right;
     }
-    // Now that we've set the leaf's children, make sure they have the leaf as their parent
+    // Now that we've set the leaf's children, make sure they have the leaf as
+    // their parent
     if (leaf->left != nullptr) {
       leaf->left->parent = leaf;
     }
@@ -200,7 +209,8 @@ class WeightedSet {
   WeightedSet() : root_(nullptr) {}
 
   WeightedSet(const WeightedSet& other) {
-    // Just a dummy node--in my experience, without doing this first, CopyTree might cause a segfault
+    // Just a dummy node--in my experience, without doing this first, CopyTree
+    // might cause a segfault
     root_ = new Node(nullptr, 1.0);
     root_ = CopyTree(other.root_, root_);
   }
@@ -219,7 +229,7 @@ class WeightedSet {
       Clear(root_);
       element_to_node_.clear();
       root_ = CopyTree(other.root_, nullptr);
-      
+
       Clear(other.root_);
       other.element_to_node_.clear();
 
@@ -227,12 +237,14 @@ class WeightedSet {
     }
     return *this;
   }
-  // Insert an element into the tree with a given weight. Returns whether the insertion is successful.
-  // If the element is already there, we simply update its weight.
-  // When inserting a new element, we (recursively) put it in the subtree which currently has the lightest weight, to keep the tree
-  // weight-balanced (which should theoretically improve the speed of the GetRandomElement function).
-  // The insertion fails if the weight is invalid (it must be positive) or if the function somehow fails
-  // to find a place to insert the element.
+  // Insert an element into the tree with a given weight. Returns whether the
+  // insertion is successful. If the element is already there, we simply update
+  // its weight. When inserting a new element, we (recursively) put it in the
+  // subtree which currently has the lightest weight, to keep the tree
+  // weight-balanced (which should theoretically improve the speed of the
+  // GetRandomElement function). The insertion fails if the weight is invalid
+  // (it must be positive) or if the function somehow fails to find a place to
+  // insert the element.
   bool Insert(T element, double weight) {
     if (weight <= 0) {
       return false;
@@ -245,8 +257,9 @@ class WeightedSet {
       return true;
     }
     // note: this code, to obtain a pointer to the T element stored in the map,
-    // was modified from a snippet by Claude. It replaces an older version that created two copies of the element,
-    // one stored in the map and one pointed to by the node's value_ptr
+    // was modified from a snippet by Claude. It replaces an older version that
+    // created two copies of the element, one stored in the map and one pointed
+    // to by the node's value_ptr
     auto [iter, inserted] = element_to_node_.insert({element, nullptr});
     const T* element_ptr = &(iter->first);
     Node* node_ptr = new Node(element_ptr, weight);
@@ -258,7 +271,8 @@ class WeightedSet {
     }
     Node* current_node = this->root_;
     while (current_node != nullptr) {
-      // if a node has less than 2 children, we can just insert the new node in one of the empty spaces.
+      // if a node has less than 2 children, we can just insert the new node in
+      // one of the empty spaces.
       if (current_node->left == nullptr) {
         current_node->left = node_ptr;
         node_ptr->parent = current_node;
@@ -269,7 +283,8 @@ class WeightedSet {
         node_ptr->parent = current_node;
         FixWeightsAndRebalance(current_node);
         return true;
-      // if a node does have 2 children, we insert the new node in the lighter of the two subtrees.
+        // if a node does have 2 children, we insert the new node in the lighter
+        // of the two subtrees.
       } else if (current_node->left->subtree_weight <
                  current_node->right->subtree_weight) {
         current_node = current_node->left;
@@ -279,14 +294,18 @@ class WeightedSet {
     }
     return false;
   }
-  // This function takes in an index in the range [0, total weight] and returns the element "at" that index.
-  // Each element has an interval associated to it, with length equal to that element's weight, such that, if you 
-  // give an index in that interval, you'll get back that element. E.g. if you have just 1 element of weight 1 and 
-  // another of weight 2, then (depending on the order in which they were inserted) either the weight-1 element has [0, 1)
-  // and the weight-2 has [1, 3] or the weight-1 has [2, 3] and the weight-2 has [0, 2). 
-  // Classes other than WeightedSet shouldn't worry, or need to worry, about the exact interval assigned to each element. 
-  // These intervals may change on inserting or deleting elements. The only guarantee is that the length of the interval 
-  // will be equal to the weight of the element--which is needed for GetRandomElement to work properly.
+  // This function takes in an index in the range [0, total weight] and returns
+  // the element "at" that index. Each element has an interval associated to it,
+  // with length equal to that element's weight, such that, if you give an index
+  // in that interval, you'll get back that element. E.g. if you have just 1
+  // element of weight 1 and another of weight 2, then (depending on the order
+  // in which they were inserted) either the weight-1 element has [0, 1) and the
+  // weight-2 has [1, 3] or the weight-1 has [2, 3] and the weight-2 has [0, 2).
+  // Classes other than WeightedSet shouldn't worry, or need to worry, about the
+  // exact interval assigned to each element. These intervals may change on
+  // inserting or deleting elements. The only guarantee is that the length of
+  // the interval will be equal to the weight of the element--which is needed
+  // for GetRandomElement to work properly.
   std::optional<T> GetElementAt(double index) {
     Node* current_node = this->root_;
     double total = this->root_->subtree_weight;
@@ -296,18 +315,24 @@ class WeightedSet {
     double lower_bound = 0;
     double upper_bound = this->root_->subtree_weight;
     while (current_node != nullptr) {
-      // On the first iteration of this loop, we divide the whole interval [0, total weight] into 3 subintervals:
-      // [0, left subtree weight), [left subtree weight, left subtree weight + root weight), and
-      // [left subtree weight + root weight, total weight].
-      // Note that the middle interval has length equal to the weight of the root.
-      // If the index is in the middle interval, we just return the root. If in the first interval: we enter the left subtree and
-      // continue from there, dividing up that interval in the same way. Same idea for the third interval and the right subtree.
-      double current_node_interval_lower = lower_bound + (current_node->left ? current_node->left->subtree_weight : 0);
-      double current_node_interval_upper = current_node_interval_lower + current_node->weight;
+      // On the first iteration of this loop, we divide the whole interval [0,
+      // total weight] into 3 subintervals: [0, left subtree weight), [left
+      // subtree weight, left subtree weight + root weight), and [left subtree
+      // weight + root weight, total weight]. Note that the middle interval has
+      // length equal to the weight of the root. If the index is in the middle
+      // interval, we just return the root. If in the first interval: we enter
+      // the left subtree and continue from there, dividing up that interval in
+      // the same way. Same idea for the third interval and the right subtree.
+      double current_node_interval_lower =
+          lower_bound +
+          (current_node->left ? current_node->left->subtree_weight : 0);
+      double current_node_interval_upper =
+          current_node_interval_lower + current_node->weight;
       if (index < current_node_interval_lower) {
         upper_bound = current_node_interval_lower;
         current_node = current_node->left;
-      } else if (index >= current_node_interval_upper && current_node_interval_upper != upper_bound) {
+      } else if (index >= current_node_interval_upper &&
+                 current_node_interval_upper != upper_bound) {
         lower_bound = current_node_interval_upper;
         current_node = current_node->right;
       } else {
@@ -344,10 +369,13 @@ class WeightedSet {
       ReplaceDeletedNodeWithChild(node_ptr, node_ptr->left);
     } else {
       Node* replacement = FindLeaf(node_ptr->left);
-      // a subtle point: if the replacement node is a direct child of the node being replaced,
-      // then the lowest node affected by the change will be the replacement, and the replacement's parent will be gone soon. 
-      // Otherwise, the lowest affected node is the replacement's parent, which lost a child but is still in the tree.
-      to_rebalance = IsDirectChild(node_ptr, replacement) ? replacement : replacement->parent;
+      // a subtle point: if the replacement node is a direct child of the node
+      // being replaced, then the lowest node affected by the change will be the
+      // replacement, and the replacement's parent will be gone soon. Otherwise,
+      // the lowest affected node is the replacement's parent, which lost a
+      // child but is still in the tree.
+      to_rebalance = IsDirectChild(node_ptr, replacement) ? replacement
+                                                          : replacement->parent;
       ReplaceDeletedNodeWithLeaf(node_ptr, replacement);
     }
     FixWeightsAndRebalance(to_rebalance);
