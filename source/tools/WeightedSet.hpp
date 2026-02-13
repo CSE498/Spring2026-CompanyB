@@ -217,8 +217,11 @@ class WeightedSet {
   WeightedSet& operator=(WeightedSet&& other) noexcept {
     if (this != &other) {
       Clear(root_);
-      root_ = other.root_;
-      other->Clear();
+      element_to_node_.clear();
+      root_ = CopyTree(other.root_, nullptr);
+      
+      Clear(other.root_);
+      other.element_to_node_.clear();
 
       other.root_ = nullptr;
     }
