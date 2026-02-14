@@ -128,7 +128,7 @@ class WeightedSet {
     }
   }
 
-  bool IsDirectChild(const Node* const parent, const Node* const child) {
+  bool IsDirectChild(const Node* const parent, const Node* const child) const {
     return (parent->left == child) || (parent->right == child);
   }
 
@@ -393,7 +393,7 @@ class WeightedSet {
   size_t size() const { return element_to_node_.size(); }
   bool empty() const { return size() == 0; }
   double total_weight() const { return root_ ? root_->subtree_weight : 0.0; }
-  bool Contains(const T& element) {
+  bool Contains(const T& element) const {
     return element_to_node_.find(element) != element_to_node_.end();
   }
 
