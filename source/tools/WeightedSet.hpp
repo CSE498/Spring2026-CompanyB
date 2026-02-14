@@ -212,6 +212,14 @@ class WeightedSet {
     root_ = CopyTree(other.root_, nullptr);
   }
 
+  WeightedSet(WeightedSet&& other) {
+    if (this != &other) {
+      root_ = other.root_;
+      other.root_ = nullptr;
+      element_to_node_ = std::move(other.element_to_node_);
+    }
+  }
+
   WeightedSet& operator=(const WeightedSet& other) {
     if (this != &other) {
       Clear(root_);

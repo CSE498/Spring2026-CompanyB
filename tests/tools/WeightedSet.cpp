@@ -95,7 +95,7 @@ TEST_CASE("WeightedSet copy constructor", "[weighted_set]") {
   REQUIRE(ws2.empty());
 }
 
-TEST_CASE("WeightedSet move") {
+TEST_CASE("WeightedSet move", "[weighted_set]") {
   cse498::WeightedSet<int> ws{};
   FillSetWithInts(ws, 1, 3, true);
 
@@ -111,6 +111,18 @@ TEST_CASE("WeightedSet move") {
   REQUIRE_FALSE(ws2.Contains(4));
   REQUIRE_FALSE(ws2.Contains(5));
   REQUIRE_FALSE(ws2.Contains(6));
+}
+
+TEST_CASE("WeightedSet move constructor", "[weighted_set]") {
+  cse498::WeightedSet<int> ws{};
+  FillSetWithInts(ws, 1, 3, true);
+
+  cse498::WeightedSet ws2(std::move(ws));
+  REQUIRE(ws.empty());
+  REQUIRE(ws2.Contains(1));
+  REQUIRE(ws2.Contains(2));
+  REQUIRE(ws2.Contains(3));
+  REQUIRE(ws2.total_weight() == 6.0);
 }
 
 TEST_CASE("WeightedSet indexing", "[weighted_set]") {
