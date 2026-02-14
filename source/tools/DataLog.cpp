@@ -1,24 +1,14 @@
 #include "DataLog.hpp"
-#include "GlobalClock.hpp" // Use GlobalClock for Global Time
+#include "GlobalClock.hpp"
 #include <algorithm>
 #include <cmath>
 
 namespace cse498 {
 
-    // CONFLICT: This constructor cannot be used because GlobalClock is now a static class,
-    // and we can no longer create a Timer/GlobalClock object to pass in.
-    // DataLog::DataLog(Timer& timer)
-    //     : mTimer(timer), mRunningSum(0.0), mMinValue(0.0), mMaxValue(0.0),
-    //       mCount(0), mHasData(false) {}
-
     void DataLog::AddEntry(const nlohmann::json& data) {
         // Create log entry with automatic timestamp
         nlohmann::json logEntry = data;
-
-        // CONFLICT: The mTimer member variable has been commented out.
-        // The timestamp is now fetched directly from the static GlobalClock.
-        // logEntry["timestamp"] = mTimer.GetGlobalTime();
-        logEntry["timestamp"] = GlobalClock::GetTime(); // FIX: Get time directly from static class
+        logEntry["timestamp"] = GlobalClock::GetTime();
         
         // Store the complete entry
         mEntries.push_back(logEntry);

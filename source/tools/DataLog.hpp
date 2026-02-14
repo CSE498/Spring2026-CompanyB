@@ -14,13 +14,8 @@
 #include "nlohmann/json.hpp"
 
 namespace cse498 {
-    class Timer;
-
     class DataLog {
         private:
-            /// @brief Reference to the global Timer for timestamp generation
-            // Timer& mTimer; //CONFLICT: Cannot be used with static GlobalClock
-
             /// @brief Vector storing all log entries as JSON objects
             std::vector<nlohmann::json> mEntries;
             
@@ -40,10 +35,8 @@ namespace cse498 {
             bool mHasData = false;
             
         public:
-            /// @brief Constructor that takes Timer reference for global timestamp access
-            /// @param timer Reference to global Timer instance
-            // explicit DataLog(Timer& timer); //CONFLICT: Cannot be used with static GlobalClock
-            DataLog() = default; // Using default constructor instead
+            /// @brief Constructor (default)
+            DataLog() = default;
             
             /// @brief Destructor
             ~DataLog() = default;
@@ -58,9 +51,8 @@ namespace cse498 {
             /// @param data JSON object with required fields:
             ///             agentId (string), actionType (string), 
             ///             duration (double), summary (string)
-            /// @note Timestamp is automatically added from Timer.GetGlobalTime()
+            /// @note Timestamp is automatically added from GlobalClock::GetTime()
             void AddEntry(const nlohmann::json& data);
-            
             /// @brief Returns the mean of all action durations
             /// @return Mean duration, or 0.0 if no entries exist
             double GetMean() const;
