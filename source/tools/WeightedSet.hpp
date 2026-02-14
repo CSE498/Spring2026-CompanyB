@@ -1,4 +1,5 @@
 #pragma once
+#include <cassert>
 #include <cstddef>
 #include <expected>
 #include <iostream>
@@ -163,6 +164,8 @@ class WeightedSet {
   // the moved leaf (if the leaf was a child of the deleted node).
 
   void ReplaceDeletedNodeWithLeaf(Node* to_delete, Node* leaf) {
+    assert(to_delete != nullptr);
+    assert(leaf != nullptr);
     // Commenting this more heavily than usual because otherwise it can be a bit
     // unclear what's going on here, IMO
 
@@ -177,12 +180,10 @@ class WeightedSet {
       to_delete->parent->right = leaf;
     }
     // Clear the leaf from being a child of its parent (since it's being moved)
-    if (leaf != nullptr) {
-      if (leaf->parent->left == leaf) {
-        leaf->parent->left = nullptr;
-      } else {
-        leaf->parent->right = nullptr;
-      }
+    if (leaf->parent->left == leaf) {
+      leaf->parent->left = nullptr;
+    } else {
+      leaf->parent->right = nullptr;
     }
     // Make sure that the replacement's new parent is the old node's parent
     leaf->parent = to_delete->parent;
