@@ -50,7 +50,7 @@ class WeightedSet {
           parent(par) {}
   };
 
-  Node* root_;
+  Node* root_ = nullptr;
   // TODO: replace this with custom random class once we have that
   std::random_device rd_{};
   mutable std::mt19937 rng_{rd_()};
@@ -209,12 +209,7 @@ class WeightedSet {
   WeightedSet() : root_(nullptr) {}
 
   WeightedSet(const WeightedSet& other) {
-    // Just a dummy node--in my experience, without doing this first, CopyTree
-    // might cause a segfault
-    auto temp = new Node(nullptr, 1.0);
-    root_ = temp;
-    root_ = CopyTree(other.root_, root_);
-    delete temp;
+    root_ = CopyTree(other.root_, nullptr);
   }
 
   WeightedSet& operator=(const WeightedSet& other) {
