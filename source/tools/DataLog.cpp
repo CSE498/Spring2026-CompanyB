@@ -5,6 +5,7 @@
 
 namespace cse498 {
 
+    // Took AI's assistance to help with the syntax of this function.
     void DataLog::AddEntry(const nlohmann::json& data) {
         // Create log entry with automatic timestamp
         nlohmann::json logEntry = data;
