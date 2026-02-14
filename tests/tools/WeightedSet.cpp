@@ -217,6 +217,17 @@ TEST_CASE("WeightedSet deletion", "[weighted_set]") {
     REQUIRE(ws.total_weight() == 0);
   }
 
+  SECTION("bad deletes") {
+    ws.Insert(1, 1.0);
+    auto result = ws.Remove(2);
+    REQUIRE(result == std::nullopt);
+
+    result = ws.Remove(1);
+    REQUIRE(result.value() == 1);
+    result = ws.Remove(1);
+    REQUIRE(result == std::nullopt);
+  }
+
   SECTION("three elements") {
     FillSetWithInts(ws, 1, 3, true);
 
