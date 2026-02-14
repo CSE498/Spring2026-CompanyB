@@ -248,7 +248,7 @@ TEST_CASE("WeightedSet deletion", "[weighted_set]") {
     REQUIRE(ws.total_weight() == 6);
     std::vector<std::vector<int>> removal_orders = {
         {1, 2, 3}, {1, 3, 2}, {2, 1, 3}, {2, 3, 1}, {3, 1, 2}, {3, 2, 1}};
-    for (std::vector<int> elements_to_remove : removal_orders) {
+    for (const auto & elements_to_remove : removal_orders) {
       SECTION("try removing elements in order " +
               std::to_string(elements_to_remove[0]) +
               std::to_string(elements_to_remove[1]) +
