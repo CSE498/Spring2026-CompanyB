@@ -241,9 +241,9 @@ class WeightedSet {
     if (weight <= 0) {
       return false;
     }
-
-    if (element_to_node_.find(element) != element_to_node_.end()) {
-      auto node_ptr = element_to_node_.at(element);
+    auto it = element_to_node_.find(element);
+    if (it != element_to_node_.end()) {
+      auto node_ptr = it->second;
       node_ptr->weight = weight;
       FixWeightsAndRebalance(node_ptr);
       return true;
@@ -344,10 +344,11 @@ class WeightedSet {
   }
 
   std::optional<T> Remove(const T& element) {
-    if (element_to_node_.find(element) == element_to_node_.end()) {
+    auto it = element_to_node_.find(element);
+    if (it == element_to_node_.end()) {
       return std::nullopt;
     }
-    Node* node_ptr = element_to_node_.at(element);
+    Node* node_ptr = it->second;
     T removed_value = *(node_ptr->value_ptr);
 
     Node* to_rebalance = node_ptr->parent;
