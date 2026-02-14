@@ -53,7 +53,7 @@ class WeightedSet {
   Node* root_;
   // TODO: replace this with custom random class once we have that
   std::random_device rd_{};
-  std::mt19937 rng_{rd_()};
+  mutable std::mt19937 rng_{rd_()};
   // Keys are elements stored in the WeightedSet; values are the nodes in the
   // tree representing that element.
   std::unordered_map<T, Node*> element_to_node_;

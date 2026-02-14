@@ -1,7 +1,9 @@
 #include "../../source/tools/WeightedSet.hpp"
 
+#include <cmath>
 #include <expected>
 #include <set>
+#include <unordered_map>
 #include <vector>
 
 #include "../../third-party/Catch/single_include/catch2/catch.hpp"
@@ -270,5 +272,45 @@ TEST_CASE("WeightedSet deletion", "[weighted_set]") {
         }
       }
     }
+  }
+}
+
+// Written by Claude
+TEST_CASE("WeightedSet random selection frequencies", "[weighted_set]") {
+  cse498::WeightedSet<int> ws;
+  // Elements 1..5 with weights 1..5; total weight = 15.
+  const int num_elements = 5;
+  FillSetWithInts(ws, 1, num_elements, true);
+
+  const double total_weight = ws.total_weight();
+  REQUIRE(total_weight == 15.0);
+
+  const int num_samples = 60000;
+  // Number of standard deviations to allow as tolerance. At 4 sigma the
+  // probability of a single element failing by chance is ~0.006%, and with
+  // 5 elements the overall chance of a spurious failure is still very low.
+  const double num_sigma = 4.0;
+
+  std::unordered_map<int, int> counts;
+  for (int i = 0; i < num_samples; ++i) {
+    auto result = ws.GetRandomElement();
+    REQUIRE(result.has_value());
+    ++counts[result.value()];
+  }
+
+  // Every element should have been selected at least once.
+  REQUIRE(counts.size() == static_cast<size_t>(num_elements));
+
+  for (int elem = 1; elem <= num_elements; ++elem) {
+    const double expected_prob = static_cast<double>(elem) / total_weight;
+    const double expected_count = num_samples * expected_prob;
+    const double std_dev =
+        std::sqrt(num_samples * expected_prob * (1.0 - expected_prob));
+    const double tolerance = num_sigma * std_dev;
+
+    INFO("element " << elem << ": count=" << counts[elem]
+                    << " expected=" << expected_count
+                    << " tolerance=" << tolerance);
+    REQUIRE(std::abs(counts[elem] - expected_count) <= tolerance);
   }
 }
