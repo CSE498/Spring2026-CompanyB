@@ -134,7 +134,7 @@ class WeightedSet {
 
   void ReplaceDeletedNodeWithChild(Node* to_delete, Node* replacement) {
     if (to_delete->parent == nullptr) {
-      this->root_ = replacement;
+      root_ = replacement;
     } else if (to_delete == to_delete->parent->left) {
       to_delete->parent->left = replacement;
     } else {
@@ -170,7 +170,7 @@ class WeightedSet {
     // child (and that, if the root is being deleted, we make the replacement
     // the root)
     if (to_delete->parent == nullptr) {
-      this->root_ = leaf;
+      root_ = leaf;
     } else if (to_delete == to_delete->parent->left) {
       to_delete->parent->left = leaf;
     } else {
@@ -242,8 +242,8 @@ class WeightedSet {
       return false;
     }
 
-    if (this->element_to_node_.find(element) != element_to_node_.end()) {
-      auto node_ptr = this->element_to_node_.at(element);
+    if (element_to_node_.find(element) != element_to_node_.end()) {
+      auto node_ptr = element_to_node_.at(element);
       node_ptr->weight = weight;
       FixWeightsAndRebalance(node_ptr);
       return true;
@@ -258,10 +258,10 @@ class WeightedSet {
     iter->second = node_ptr;
 
     if (root_ == nullptr) {
-      this->root_ = node_ptr;
+      root_ = node_ptr;
       return true;
     }
-    Node* current_node = this->root_;
+    Node* current_node = root_;
     while (current_node != nullptr) {
       // if a node has less than 2 children, we can just insert the new node in
       // one of the empty spaces.
@@ -299,7 +299,7 @@ class WeightedSet {
   // the interval will be equal to the weight of the element--which is needed
   // for GetRandomElement to work properly.
   std::optional<T> GetElementAt(const double index) const {
-    Node* current_node = this->root_;
+    Node* current_node = root_;
     double total = total_weight();
     if (index < 0 || index > total) {
       return std::nullopt;
@@ -335,7 +335,7 @@ class WeightedSet {
   }
 
   std::optional<T> GetRandomElement() const {
-    if (this->root_ == nullptr) {
+    if (root_ == nullptr) {
       return std::nullopt;
     }
     auto random_real =
@@ -344,10 +344,10 @@ class WeightedSet {
   }
 
   std::optional<T> Remove(const T& element) {
-    if (this->element_to_node_.find(element) == element_to_node_.end()) {
+    if (element_to_node_.find(element) == element_to_node_.end()) {
       return std::nullopt;
     }
-    Node* node_ptr = this->element_to_node_.at(element);
+    Node* node_ptr = element_to_node_.at(element);
     T removed_value = *(node_ptr->value_ptr);
 
     Node* to_rebalance = node_ptr->parent;
