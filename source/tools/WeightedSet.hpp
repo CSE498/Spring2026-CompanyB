@@ -237,7 +237,7 @@ class WeightedSet {
   // GetRandomElement function). The insertion fails if the weight is invalid
   // (it must be positive) or if the function somehow fails to find a place to
   // insert the element.
-  bool Insert(const T element, const double weight) {
+  bool Insert(const T& element, const double weight) {
     if (weight <= 0) {
       return false;
     }
