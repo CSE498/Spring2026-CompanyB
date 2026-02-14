@@ -231,6 +231,7 @@ class WeightedSet {
 
   WeightedSet& operator=(WeightedSet&& other) noexcept {
     if (this != &other) {
+      Clear(root_);
       root_ = other.root_;
       other.root_ = nullptr;
       element_to_node_ = std::move(other.element_to_node_);
