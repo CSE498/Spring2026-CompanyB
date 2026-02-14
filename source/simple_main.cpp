@@ -8,7 +8,7 @@
 #include "Agents/PacingAgent.hpp"
 #include "Interfaces/TrashInterface.hpp"
 #include "Worlds/MazeWorld.hpp"
-#include "Logging/ActionLog.hpp"
+#include "tools/ActionLog.hpp"
 
 using namespace cse498;
 
