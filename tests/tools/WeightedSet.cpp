@@ -128,6 +128,13 @@ TEST_CASE("WeightedSet move constructor", "[weighted_set]") {
 TEST_CASE("WeightedSet indexing", "[weighted_set]") {
   cse498::WeightedSet<int> ws;
 
+  SECTION("empty set") {
+    auto result = ws.GetElementAt(0);
+    REQUIRE(result == std::nullopt);
+    result = ws.GetElementAt(1);
+    REQUIRE(result == std::nullopt);
+  }
+
   SECTION("indexing with 1 and 2 elements, equal weights") {
     ws.Insert(1, 1.0);
     std::optional<int> result = ws.GetElementAt(0);
@@ -162,6 +169,13 @@ TEST_CASE("WeightedSet indexing", "[weighted_set]") {
     auto result_at_one_and_a_half = ws.GetElementAt(1.5);
     REQUIRE(result_at_zero.value() == result_at_half.value());
     REQUIRE(result_at_one.value() == result_at_one_and_a_half.value());
+
+    SECTION("bad indexes") {
+      result = ws.GetElementAt(-1);
+      REQUIRE(result == std::nullopt);
+      result = ws.GetElementAt(5);
+      REQUIRE(result == std::nullopt);
+    }
   }
 
   SECTION("indexing with 2 elements, unequal weights") {
