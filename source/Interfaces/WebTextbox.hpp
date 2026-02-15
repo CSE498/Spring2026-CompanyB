@@ -1,8 +1,12 @@
+/**
+* @file WebTextbox.hpp
+ * @brief C++ API for the DOM Text/Div Element
+ */
+
 #pragma once
 
 #include <emscripten/val.h>
 #include <string>
-#include <tuple>
 
 namespace cse498 {
 
@@ -10,7 +14,7 @@ namespace cse498 {
         std::string fontFamily = "Arial";
         int fontSize = 16;
         std::string color = "black";
-        std::string backgroundColor = "white";
+        std::string backgroundColor = "transparent";
         bool bold = false;
     };
 
@@ -19,26 +23,36 @@ namespace cse498 {
         std::string id;
         emscripten::val div_element = emscripten::val::null();
 
-        // ADD THIS: For headless testing support
+        // Headless testing support & Data limit
         std::string mock_text_content;
+        size_t max_length = 50000; // 50KB default limit to prevent DOM crashes
 
     public:
         WebTextbox(const std::string& id, const TextStyle& style = TextStyle());
 
-        // Delete copy constructors
+        // Prevent copying
         WebTextbox(const WebTextbox&) = delete;
         WebTextbox& operator=(const WebTextbox&) = delete;
 
         ~WebTextbox();
 
+        // Core Text Methods
         void SetText(const std::string& text);
         void AppendText(const std::string& text);
+        void Clear();
+
+        // UI & Styling Methods
         void SetStyle(const TextStyle& style);
+        void SetClass(const std::string& css_class);
+        void SetVisible(bool visible);
         void SetPosition(int x, int y);
         void SetSize(int width, int height);
 
-        // ADD THIS: The missing function!
+        // Configuration
+        void SetMaxLength(size_t length);
+
+        // Getters
         [[nodiscard]] std::string GetText() const;
     };
 
-} // namespace cse498
+}

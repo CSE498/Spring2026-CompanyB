@@ -1,3 +1,8 @@
+/**
+ * @file WebTextbox.cpp
+ * @brief Implementation of WebTextbox using Embind
+ */
+
 #include "WebTextbox.hpp"
 #include <cassert>
 #include <iostream>
@@ -11,8 +16,7 @@ WebTextbox::WebTextbox(const std::string& id, const TextStyle& style)
 {
     val global = val::global("globalThis");
     if (global["document"].isUndefined()) {
-        // Headless mode (Node.js) - Do nothing but save ID
-        return;
+        return; // Headless Mode
     }
 
     val document = val::global("document");
@@ -22,15 +26,13 @@ WebTextbox::WebTextbox(const std::string& id, const TextStyle& style)
     div_element = document.call<val>("createElement", std::string("div"));
     div_element.set("id", id);
 
-    // Default styles
     div_element["style"].set("position", "absolute");
     div_element["style"].set("border", "1px solid #ccc");
     div_element["style"].set("padding", "5px");
     div_element["style"].set("overflow", "auto");
-    div_element["style"].set("zIndex", "9999"); // Fix visibility
+    div_element["style"].set("zIndex", "9999");
 
     document["body"].call<void>("appendChild", div_element);
-
     SetStyle(style);
 }
 
@@ -43,36 +45,54 @@ WebTextbox::~WebTextbox() {
     }
 }
 
-void WebTextbox::SetText(const std::string& text) {
+    void WebTextbox::SetText(const std::string& text) {
+    // 1. Calculate the safe, trimmed text first
+    std::string safe_text = text.length() > max_length ? text.substr(text.length() - max_length) : text;
+
+    // 2. Apply it to either the mock (headless) or the real DOM
     val global = val::global("globalThis");
     if (global["document"].isUndefined()) {
-        mock_text_content = text; // Save for testing
+        mock_text_content = safe_text;
         return;
     }
-    div_element.set("innerText", text);
-}
 
-// ADD THIS FUNCTION
-std::string WebTextbox::GetText() const {
-    val global = val::global("globalThis");
-    if (global["document"].isUndefined()) {
-        return mock_text_content; // Return mock data
-    }
-
-    if (div_element.isNull() || div_element.isUndefined()) return "";
-    return div_element["innerText"].as<std::string>();
+    div_element.set("innerText", safe_text);
 }
 
 void WebTextbox::AppendText(const std::string& text) {
     val global = val::global("globalThis");
     if (global["document"].isUndefined()) {
-        mock_text_content += text; // Append mock data
+        mock_text_content += text;
+        if (mock_text_content.length() > max_length) {
+            mock_text_content = mock_text_content.substr(mock_text_content.length() - max_length);
+        }
         return;
     }
 
     std::string current = div_element["innerText"].as<std::string>();
-    div_element.set("innerText", current + text);
-    div_element.set("scrollTop", div_element["scrollHeight"]);
+    current += text;
+
+    // Prevent DOM memory overflow during long simulations
+    if (current.length() > max_length) {
+        current = current.substr(current.length() - max_length);
+    }
+
+    div_element.set("innerText", current);
+    div_element.set("scrollTop", div_element["scrollHeight"]); // Auto-scroll
+}
+
+void WebTextbox::Clear() {
+    SetText("");
+}
+
+std::string WebTextbox::GetText() const {
+    val global = val::global("globalThis");
+    if (global["document"].isUndefined()) {
+        return mock_text_content;
+    }
+
+    if (div_element.isNull() || div_element.isUndefined()) return "";
+    return div_element["innerText"].as<std::string>();
 }
 
 void WebTextbox::SetStyle(const TextStyle& style) {
@@ -85,6 +105,18 @@ void WebTextbox::SetStyle(const TextStyle& style) {
     css.set("color", style.color);
     css.set("backgroundColor", style.backgroundColor);
     css.set("fontWeight", style.bold ? "bold" : "normal");
+}
+
+void WebTextbox::SetClass(const std::string& css_class) {
+    val global = val::global("globalThis");
+    if (global["document"].isUndefined()) return;
+    div_element.set("className", css_class);
+}
+
+void WebTextbox::SetVisible(bool visible) {
+    val global = val::global("globalThis");
+    if (global["document"].isUndefined()) return;
+    div_element["style"].set("display", visible ? "block" : "none");
 }
 
 void WebTextbox::SetPosition(int x, int y) {
@@ -105,4 +137,8 @@ void WebTextbox::SetSize(int width, int height) {
     css.set("height", std::to_string(height) + "px");
 }
 
-} // namespace cse498
+void WebTextbox::SetMaxLength(size_t length) {
+    max_length = length;
+}
+
+}
