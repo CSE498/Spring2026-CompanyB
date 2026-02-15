@@ -1,7 +1,6 @@
 #pragma once
 #include <cassert>
 #include <cstddef>
-#include <expected>
 #include <iostream>
 #include <random>
 #include <sstream>
