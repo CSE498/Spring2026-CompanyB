@@ -21,6 +21,7 @@ TEST_CASE("WeightedSet Insert and Contains", "[weighted_set]") {
   SECTION("empty set") {
     REQUIRE(ws.empty());
     REQUIRE(ws.total_weight() == 0.0);
+    REQUIRE(ws.size() == 0);
   }
 
   SECTION("Insert and Contains") {
@@ -28,6 +29,7 @@ TEST_CASE("WeightedSet Insert and Contains", "[weighted_set]") {
     REQUIRE(ws.Contains(1));
     REQUIRE_FALSE(ws.Contains(2));
     REQUIRE(ws.total_weight() == 1.0);
+    REQUIRE(ws.size() == 1);
 
     ws.Insert(2, 2.0);
     ws.Insert(3, 3.0);
@@ -38,9 +40,11 @@ TEST_CASE("WeightedSet Insert and Contains", "[weighted_set]") {
     REQUIRE_FALSE(ws.Contains(0));
 
     REQUIRE(ws.total_weight() == 6.0);
+    REQUIRE(ws.size() == 3);
 
     ws.Insert(1, 2.0);
     REQUIRE(ws.total_weight() == 7.0);
+    REQUIRE(ws.size() == 3);
   }
 
   SECTION("bad insertions") {
@@ -53,6 +57,8 @@ TEST_CASE("WeightedSet Insert and Contains", "[weighted_set]") {
     REQUIRE_FALSE(success);
     REQUIRE_FALSE(ws.Contains(1));
     REQUIRE(ws.total_weight() == 0.0);
+
+    REQUIRE(ws.empty());
   }
 }
 
@@ -65,6 +71,7 @@ TEST_CASE("WeightedSet assignment", "[weighted_set]") {
 
   ws2 = ws1;
   REQUIRE(ws2.total_weight() == 6.0);
+  REQUIRE(ws2.size() == 3);
   REQUIRE(ws2.Contains(1));
   REQUIRE(ws2.Contains(2));
   REQUIRE(ws2.Contains(3));
@@ -107,7 +114,10 @@ TEST_CASE("WeightedSet move", "[weighted_set]") {
   REQUIRE(ws2.Contains(1));
   REQUIRE(ws2.Contains(2));
   REQUIRE(ws2.Contains(3));
+
   REQUIRE(ws2.total_weight() == 6.0);
+  REQUIRE(ws2.size() == 3);
+
   REQUIRE_FALSE(ws2.Contains(4));
   REQUIRE_FALSE(ws2.Contains(5));
   REQUIRE_FALSE(ws2.Contains(6));
@@ -123,6 +133,7 @@ TEST_CASE("WeightedSet move constructor", "[weighted_set]") {
   REQUIRE(ws2.Contains(2));
   REQUIRE(ws2.Contains(3));
   REQUIRE(ws2.total_weight() == 6.0);
+  REQUIRE(ws2.size() == 3);
 }
 
 TEST_CASE("WeightedSet indexing", "[weighted_set]") {
@@ -203,6 +214,7 @@ TEST_CASE("WeightedSet indexing", "[weighted_set]") {
   SECTION("handling many elements") {
     FillSetWithInts(ws, 0, 9);
     REQUIRE(ws.total_weight() == 10);
+    REQUIRE(ws.size() == 10);
     std::set<int> elements_seen{};
     for (int i = 0; i < 10; i++) {
       std::optional<int> result = ws.GetElementAt(i);
@@ -229,15 +241,18 @@ TEST_CASE("WeightedSet deletion", "[weighted_set]") {
     REQUIRE(result.value() == 1);
     REQUIRE_FALSE(ws.Contains(1));
     REQUIRE(ws.total_weight() == 0);
+    REQUIRE(ws.size() == 0);
   }
 
   SECTION("bad deletes") {
     ws.Insert(1, 1.0);
     auto result = ws.Remove(2);
     REQUIRE(result == std::nullopt);
+    REQUIRE(ws.size() == 1);
 
     result = ws.Remove(1);
     REQUIRE(result.value() == 1);
+    REQUIRE(ws.size() == 0);
     result = ws.Remove(1);
     REQUIRE(result == std::nullopt);
   }
@@ -254,13 +269,16 @@ TEST_CASE("WeightedSet deletion", "[weighted_set]") {
               std::to_string(elements_to_remove[1]) +
               std::to_string(elements_to_remove[2])) {
         double target_weight = 6.0;
+        size_t target_size = 3;
         for (int to_remove : elements_to_remove) {
           auto result = ws.Remove(to_remove);
           REQUIRE(result.has_value());
           REQUIRE(result.value() == to_remove);
           REQUIRE_FALSE(ws.Contains(to_remove));
           target_weight -= to_remove;
+          target_size--;
           REQUIRE(ws.total_weight() == target_weight);
+          REQUIRE(ws.size() == target_size);
         }
       }
     }
@@ -277,6 +295,7 @@ TEST_CASE("WeightedSet deletion", "[weighted_set]") {
         REQUIRE(result.has_value());
         REQUIRE(result.value() == i);
         REQUIRE(ws.total_weight() == 9.0);
+        REQUIRE(ws.size() == 9);
         REQUIRE_FALSE(ws.Contains(i));
         for (int j = 0; j < 10; ++j) {
           if (j != i) {
@@ -299,6 +318,7 @@ TEST_CASE("WeightedSet deletion", "[weighted_set]") {
           REQUIRE(result.has_value());
           REQUIRE(result.value() == j);
           REQUIRE(ws.total_weight() == 8.0);
+          REQUIRE(ws.size() == 8);
           REQUIRE_FALSE(ws.Contains(i));
           REQUIRE_FALSE(ws.Contains(j));
           for (int k = 0; k < 10; ++k) {
