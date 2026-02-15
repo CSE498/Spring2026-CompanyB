@@ -2,6 +2,7 @@
 #include <cassert>
 #include <cstddef>
 #include <iostream>
+#include <memory>
 #include <random>
 #include <sstream>
 #include <unordered_map>
@@ -9,11 +10,16 @@
 
 namespace cse498 {
 /*
-  Forgot to mention this in earlier commit
-  But the boilerplate setup (constructors, Clear() and CopyTree(), assign and
-  move operators, basic getters [namely size(), empty(), total_weight()], and
-  basic member variables) was written by Claude Code with (so far moderate)
-  modification from me.
+  The initial boilerplate setup (constructors, CopyTree(), assign and
+  move operators, basic getters (namely size(), empty(), total_weight()), and
+  basic member variables) was written by Claude Code. I then modified many of
+  those substantially as the design of the class changed; then they were further
+  modified as part of Claude's other major contribution to this file, namely
+  refactoring it to use std::unique_ptr for root_, left, and right. (As part of
+  that refactor, it made a few minor unrelated changes, e.g. changing some
+  spacing and using the default no-argument constructor.)
+
+  All other AI contributions are marked with a comment near them.
 */
 // T = arbitrary value type; should be hashable I guess since there's an
 // unordered_map in here
@@ -35,11 +41,11 @@ class WeightedSet {
     // we've stored the value there, it would be a waste to duplicate it in the
     // node.
     const T* value_ptr;
-    double weight;          // this element's weight (nonnegative)
-    double subtree_weight;  // total weight of subtree rooted at this node
-    Node* left = nullptr;   // left child
-    Node* right = nullptr;  // right child
-    Node* parent;
+    double weight;                // this element's weight (nonnegative)
+    double subtree_weight;        // total weight of subtree rooted at this node
+    std::unique_ptr<Node> left;   // left child (owning)
+    std::unique_ptr<Node> right;  // right child (owning)
+    Node* parent;                 // parent (non-owning)
 
     Node(const T* val_ptr, double w, Node* par = nullptr)
         : value_ptr(val_ptr),
@@ -50,35 +56,35 @@ class WeightedSet {
           parent(par) {}
   };
 
-  Node* root_ = nullptr;
+  std::unique_ptr<Node> root_;
   // TODO: replace this with custom random class once we have that
   std::random_device rd_{};
   mutable std::mt19937 rng_{rd_()};
-  // Keys are elements stored in the WeightedSet; values are the nodes in the
-  // tree representing that element.
+  // Keys are elements stored in the WeightedSet; values are non-owning
+  // pointers to the nodes in the tree representing that element.
   std::unordered_map<T, Node*> element_to_node_;
-  // Deletes the whole tree starting at a given node.
-  // Note: not sufficient to delete the WeightedSet; you also need to get rid of
-  // the unordered_map and the values stored within it.
-  void Clear(Node* node) {
-    if (!node) return;
-    Clear(node->left);
-    Clear(node->right);
-    delete node;
+
+  // Written by Claude as part of a refactor to use unique_ptr.
+  // Returns a reference to the unique_ptr that owns the given node,
+  // whether that's root_ or a parent's left/right child pointer.
+  std::unique_ptr<Node>& OwningPointer(Node* node) {
+    if (node->parent == nullptr) return root_;
+    if (node->parent->left.get() == node) return node->parent->left;
+    return node->parent->right;
   }
 
-  Node* CopyTree(const Node* src, Node* parent) {
+  std::unique_ptr<Node> CopyTree(const Node* src, Node* parent) {
     if (!src) return nullptr;
 
     auto element = *(src->value_ptr);
     auto [iter, inserted] = element_to_node_.insert({element, nullptr});
     const T* element_ptr = &(iter->first);
-    Node* node = new Node(element_ptr, src->weight, parent);
-    iter->second = node;
+    auto node = std::make_unique<Node>(element_ptr, src->weight, parent);
+    iter->second = node.get();
 
     node->subtree_weight = src->subtree_weight;
-    node->left = CopyTree(src->left, node);
-    node->right = CopyTree(src->right, node);
+    node->left = CopyTree(src->left.get(), node.get());
+    node->right = CopyTree(src->right.get(), node.get());
     return node;
   }
 
@@ -105,8 +111,9 @@ class WeightedSet {
 
   // (Claude-written) helper for DebugPrint: recursively builds tree
   // visualization
-  void DebugPrintNode(std::ostream& os, Node* node, const std::string& prefix,
-                      bool is_left, bool is_root) const {
+  void DebugPrintNode(std::ostream& os, const Node* node,
+                      const std::string& prefix, bool is_left,
+                      bool is_root) const {
     if (!node) return;
 
     os << prefix;
@@ -123,37 +130,37 @@ class WeightedSet {
         prefix + (is_root ? "" : (is_left ? "│   " : "    "));
 
     if (node->left || node->right) {
-      DebugPrintNode(os, node->left, child_prefix, true, false);
-      DebugPrintNode(os, node->right, child_prefix, false, false);
+      DebugPrintNode(os, node->left.get(), child_prefix, true, false);
+      DebugPrintNode(os, node->right.get(), child_prefix, false, false);
     }
   }
 
   bool IsDirectChild(const Node* const parent, const Node* const child) const {
-    return (parent->left == child) || (parent->right == child);
+    return (parent->left.get() == child) || (parent->right.get() == child);
   }
 
-  void ReplaceDeletedNodeWithChild(Node* to_delete, Node* replacement) {
-    if (to_delete->parent == nullptr) {
-      root_ = replacement;
-    } else if (to_delete == to_delete->parent->left) {
-      to_delete->parent->left = replacement;
-    } else {
-      to_delete->parent->right = replacement;
-    }
-    if (replacement != nullptr) {
+  // Replaces to_delete in the tree with replacement (a child already released
+  // from to_delete). Destroys to_delete via its owning unique_ptr.
+  void ReplaceDeletedNodeWithChild(Node* to_delete,
+                                   std::unique_ptr<Node> replacement) {
+    if (replacement) {
       replacement->parent = to_delete->parent;
     }
+    // Assigning to the owning pointer destroys to_delete; its children must
+    // already have been moved out so they aren't destroyed along with it.
+    OwningPointer(to_delete) = std::move(replacement);
   }
+
   // Searches for a child of the given node which is a leaf (such a child exists
   // in any tree, as long as the given node has at least one child).
   Node* FindLeaf(Node* const current) const {
-    if (current->left == nullptr && current->right == nullptr) {
+    if (!current->left && !current->right) {
       return current;
     }
-    if (current->left != nullptr) {
-      return FindLeaf(current->left);
+    if (current->left) {
+      return FindLeaf(current->left.get());
     } else {
-      return FindLeaf(current->right);
+      return FindLeaf(current->right.get());
     }
   }
   // we take a leaf node and swap it in for the node to be deleted.
@@ -168,72 +175,61 @@ class WeightedSet {
     // Commenting this more heavily than usual because otherwise it can be a bit
     // unclear what's going on here, IMO
 
-    // Make sure that the node to be deleted's parent has the replacement as its
-    // child (and that, if the root is being deleted, we make the replacement
-    // the root)
-    if (to_delete->parent == nullptr) {
-      root_ = leaf;
-    } else if (to_delete == to_delete->parent->left) {
-      to_delete->parent->left = leaf;
-    } else {
-      to_delete->parent->right = leaf;
+    // Also, note: this function was revised especially heavily by Claude as
+    // part of a refactor to use unique_ptr for "left", "right", and "root_"
+
+    // Step 1: Detach the leaf from its current parent's ownership
+    auto leaf_owned = std::move(OwningPointer(leaf));
+
+    // Step 2: Transfer children from the deleted node to the leaf.
+    // Skip if the leaf IS that child (to avoid a self-referencing loop).
+    if (leaf != to_delete->left.get()) {
+      leaf_owned->left = std::move(to_delete->left);
     }
-    // Clear the leaf from being a child of its parent (since it's being moved)
-    if (leaf->parent->left == leaf) {
-      leaf->parent->left = nullptr;
-    } else {
-      leaf->parent->right = nullptr;
+    if (leaf != to_delete->right.get()) {
+      leaf_owned->right = std::move(to_delete->right);
     }
-    // Make sure that the replacement's new parent is the old node's parent
-    leaf->parent = to_delete->parent;
-    // Transfer the children of the node to be deleted to be the leaf's new
-    // children--unless the leaf is one of those children (we don't want to
-    // create a circular dependency)
-    if (leaf != to_delete->left) {
-      leaf->left = to_delete->left;
+
+    // Step 3: Update parent pointers of the transferred children
+    if (leaf_owned->left) {
+      leaf_owned->left->parent = leaf_owned.get();
     }
-    if (leaf != to_delete->right) {
-      leaf->right = to_delete->right;
+    if (leaf_owned->right) {
+      leaf_owned->right->parent = leaf_owned.get();
     }
-    // Now that we've set the leaf's children, make sure they have the leaf as
-    // their parent
-    if (leaf->left != nullptr) {
-      leaf->left->parent = leaf;
-    }
-    if (leaf->right != nullptr) {
-      leaf->right->parent = leaf;
-    }
+
+    // Step 4: Update the leaf's parent to be the deleted node's parent
+    leaf_owned->parent = to_delete->parent;
+
+    // Step 5: Place the leaf into the deleted node's position in the tree.
+    // This assignment destroys to_delete via unique_ptr; its children have
+    // already been moved out above, so they survive.
+    OwningPointer(to_delete) = std::move(leaf_owned);
   }
 
  public:
-  WeightedSet() : root_(nullptr) {}
+  WeightedSet() = default;
 
   WeightedSet(const WeightedSet& other) {
-    root_ = CopyTree(other.root_, nullptr);
+    root_ = CopyTree(other.root_.get(), nullptr);
   }
 
-  WeightedSet(WeightedSet&& other) {
-    if (this != &other) {
-      root_ = other.root_;
-      other.root_ = nullptr;
-      element_to_node_ = std::move(other.element_to_node_);
-    }
-  }
+  WeightedSet(WeightedSet&& other) noexcept
+      : root_(std::move(other.root_)),
+        element_to_node_(std::move(other.element_to_node_)) {}
 
   WeightedSet& operator=(const WeightedSet& other) {
     if (this != &other) {
-      Clear(root_);
+      root_.reset();
       element_to_node_.clear();
-      root_ = CopyTree(other.root_, nullptr);
+      root_ = CopyTree(other.root_.get(), nullptr);
     }
     return *this;
   }
 
   WeightedSet& operator=(WeightedSet&& other) noexcept {
     if (this != &other) {
-      Clear(root_);
-      root_ = other.root_;
-      other.root_ = nullptr;
+      root_ = std::move(other.root_);
       element_to_node_ = std::move(other.element_to_node_);
     }
     return *this;
@@ -263,34 +259,35 @@ class WeightedSet {
     // to by the node's value_ptr
     auto [iter, inserted] = element_to_node_.insert({element, nullptr});
     const T* element_ptr = &(iter->first);
-    Node* node_ptr = new Node(element_ptr, weight);
-    iter->second = node_ptr;
+    auto node = std::make_unique<Node>(element_ptr, weight);
+    Node* node_raw = node.get();
+    iter->second = node_raw;
 
-    if (root_ == nullptr) {
-      root_ = node_ptr;
+    if (!root_) {
+      root_ = std::move(node);
       return true;
     }
-    Node* current_node = root_;
+    Node* current_node = root_.get();
     while (current_node != nullptr) {
       // if a node has less than 2 children, we can just insert the new node in
       // one of the empty spaces.
-      if (current_node->left == nullptr) {
-        current_node->left = node_ptr;
-        node_ptr->parent = current_node;
+      if (!current_node->left) {
+        node_raw->parent = current_node;
+        current_node->left = std::move(node);
         FixWeightsAndRebalance(current_node);
         return true;
-      } else if (current_node->right == nullptr) {
-        current_node->right = node_ptr;
-        node_ptr->parent = current_node;
+      } else if (!current_node->right) {
+        node_raw->parent = current_node;
+        current_node->right = std::move(node);
         FixWeightsAndRebalance(current_node);
         return true;
         // if a node does have 2 children, we insert the new node in the lighter
         // of the two subtrees.
       } else if (LeftSubtreeWeight(current_node) <
                  RightSubtreeWeight(current_node)) {
-        current_node = current_node->left;
+        current_node = current_node->left.get();
       } else {
-        current_node = current_node->right;
+        current_node = current_node->right.get();
       }
     }
     return false;
@@ -308,7 +305,7 @@ class WeightedSet {
   // the interval will be equal to the weight of the element--which is needed
   // for GetRandomElement to work properly.
   std::optional<T> GetElementAt(const double index) const {
-    Node* current_node = root_;
+    Node* current_node = root_.get();
     double total = total_weight();
     if (index < 0 || index > total) {
       return std::nullopt;
@@ -325,17 +322,16 @@ class WeightedSet {
       // the left subtree and continue from there, dividing up that interval in
       // the same way. Same idea for the third interval and the right subtree.
       double current_node_interval_lower =
-          lower_bound +
-          LeftSubtreeWeight(current_node);
+          lower_bound + LeftSubtreeWeight(current_node);
       double current_node_interval_upper =
           current_node_interval_lower + current_node->weight;
       if (index < current_node_interval_lower) {
         upper_bound = current_node_interval_lower;
-        current_node = current_node->left;
+        current_node = current_node->left.get();
       } else if (index >= current_node_interval_upper &&
                  current_node_interval_upper != upper_bound) {
         lower_bound = current_node_interval_upper;
-        current_node = current_node->right;
+        current_node = current_node->right.get();
       } else {
         return std::make_optional(*(current_node->value_ptr));
       }
@@ -344,7 +340,7 @@ class WeightedSet {
   }
 
   std::optional<T> GetRandomElement() const {
-    if (root_ == nullptr) {
+    if (!root_) {
       return std::nullopt;
     }
     auto random_real =
@@ -361,16 +357,18 @@ class WeightedSet {
     T removed_value = *(node_ptr->value_ptr);
 
     Node* to_rebalance = node_ptr->parent;
-    if (node_ptr->left == nullptr && node_ptr->right == nullptr) {
-      ReplaceDeletedNodeWithChild(node_ptr, nullptr);
-    } else if (node_ptr->left == nullptr) {
-      to_rebalance = node_ptr->right;
-      ReplaceDeletedNodeWithChild(node_ptr, node_ptr->right);
-    } else if (node_ptr->right == nullptr) {
-      to_rebalance = node_ptr->left;
-      ReplaceDeletedNodeWithChild(node_ptr, node_ptr->left);
+    if (!node_ptr->left && !node_ptr->right) {
+      // Leaf node: just remove it. This destroys node_ptr.
+      OwningPointer(node_ptr).reset();
+    } else if (!node_ptr->left) {
+      to_rebalance = node_ptr->right.get();
+      // Release the right child, then replace node_ptr with it.
+      ReplaceDeletedNodeWithChild(node_ptr, std::move(node_ptr->right));
+    } else if (!node_ptr->right) {
+      to_rebalance = node_ptr->left.get();
+      ReplaceDeletedNodeWithChild(node_ptr, std::move(node_ptr->left));
     } else {
-      Node* replacement = FindLeaf(node_ptr->left);
+      Node* replacement = FindLeaf(node_ptr->left.get());
       // a subtle point: if the replacement node is a direct child of the node
       // being replaced, then the lowest node affected by the change will be the
       // replacement, and the replacement's parent will be gone soon. Otherwise,
@@ -381,14 +379,13 @@ class WeightedSet {
       ReplaceDeletedNodeWithLeaf(node_ptr, replacement);
     }
     FixWeightsAndRebalance(to_rebalance);
-    delete node_ptr;
+    // node_ptr has already been destroyed by the unique_ptr operations above;
+    // just clean up the map entry.
     element_to_node_.erase(element);
     return std::make_optional(removed_value);
   }
-  ~WeightedSet() {
-    Clear(root_);
-    element_to_node_.clear();
-  }
+
+  ~WeightedSet() = default;
 
   size_t size() const { return element_to_node_.size(); }
   bool empty() const { return size() == 0; }
@@ -404,7 +401,7 @@ class WeightedSet {
       os << "(empty tree)" << std::endl;
       return;
     }
-    DebugPrintNode(os, root_, "", false, true);
+    DebugPrintNode(os, root_.get(), "", false, true);
   }
 
   // (Claude-written): return tree as string instead of printing
