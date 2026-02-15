@@ -48,7 +48,7 @@ TEST_CASE("Initialize Canvas", "[web_canvas]") {
 
     REQUIRE(canvas.GetWidth() == 500);
     REQUIRE(canvas.GetHeight() == 500);
-    REQUIRE(canvas.GetCanvasId() == "1");
+    REQUIRE(canvas.GetId() == "1");
 };
 
 TEST_CASE("DrawRect", "[web_canvas]") {

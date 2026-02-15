@@ -25,7 +25,7 @@ using emscripten::val;
 namespace cse498 {
 
 WebCanvas::WebCanvas(int width, int height, const std::string& id)
-    : width(width), height(height), id(id) {
+    : WebElement(id, true), width(width), height(height) {
   val document = val::global("document");
   val existing = document.call<val>("getElementById", id);
 
@@ -252,8 +252,6 @@ void WebCanvas::Restore() {
 int WebCanvas::GetWidth() const { return width; }
 
 int WebCanvas::GetHeight() const { return height; }
-
-std::string WebCanvas::GetCanvasId() const { return id; }
 
 // https://emscripten.org/docs/api_reference/html5.h.html#c.emscripten_request_animation_frame
 void WebCanvas::RequestAnimationFrame(std::function<void()> callback) {
