@@ -12,9 +12,8 @@
 namespace cse498
 {
 
-  WebLayout::WebLayout(std::string id)
+  WebLayout::WebLayout(std::string id) : WebElement(id)
   {
-    this->id = id;
     EM_ASM(
         {
           let layoutId = UTF8ToString($0);
@@ -33,7 +32,7 @@ namespace cse498
   WebLayout &WebLayout::AddChild(std::shared_ptr<WebElement> elem)
   {
     // Implementation to add child element to the layout
-    auto childId = elem->id;
+    auto childId = elem->GetId();
     EM_ASM(
         {
           let layoutId = UTF8ToString($0);
@@ -54,7 +53,7 @@ namespace cse498
   WebLayout &WebLayout::RemoveChild(std::shared_ptr<WebElement> elem)
   {
     // Implementation to remove child element from the layout
-    auto childId = elem->id;
+    auto childId = elem->GetId();
     EM_ASM(
         {
           let layoutId = UTF8ToString($0);
