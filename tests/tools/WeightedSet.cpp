@@ -18,46 +18,46 @@ TEST_CASE("WeightedSet Insert and Contains", "[weighted_set]") {
   cse498::WeightedSet<int> ws;
 
   SECTION("empty set") {
-    REQUIRE(ws.empty());
-    REQUIRE(ws.total_weight() == 0.0);
-    REQUIRE(ws.size() == 0);
+    CHECK(ws.empty());
+    CHECK(ws.total_weight() == 0.0);
+    CHECK(ws.size() == 0);
   }
 
   SECTION("Insert and Contains") {
     ws.Insert(1, 1.0);
-    REQUIRE(ws.Contains(1));
-    REQUIRE_FALSE(ws.Contains(2));
-    REQUIRE(ws.total_weight() == 1.0);
-    REQUIRE(ws.size() == 1);
+    CHECK(ws.Contains(1));
+    CHECK_FALSE(ws.Contains(2));
+    CHECK(ws.total_weight() == 1.0);
+    CHECK(ws.size() == 1);
 
     ws.Insert(2, 2.0);
     ws.Insert(3, 3.0);
-    REQUIRE(ws.Contains(1));
-    REQUIRE(ws.Contains(2));
-    REQUIRE(ws.Contains(3));
+    CHECK(ws.Contains(1));
+    CHECK(ws.Contains(2));
+    CHECK(ws.Contains(3));
 
-    REQUIRE_FALSE(ws.Contains(0));
+    CHECK_FALSE(ws.Contains(0));
 
-    REQUIRE(ws.total_weight() == 6.0);
-    REQUIRE(ws.size() == 3);
+    CHECK(ws.total_weight() == 6.0);
+    CHECK(ws.size() == 3);
 
     ws.Insert(1, 2.0);
-    REQUIRE(ws.total_weight() == 7.0);
-    REQUIRE(ws.size() == 3);
+    CHECK(ws.total_weight() == 7.0);
+    CHECK(ws.size() == 3);
   }
 
   SECTION("bad insertions") {
     bool success = ws.Insert(1, 0.0);
-    REQUIRE_FALSE(success);
-    REQUIRE_FALSE(ws.Contains(1));
-    REQUIRE(ws.total_weight() == 0.0);
+    CHECK_FALSE(success);
+    CHECK_FALSE(ws.Contains(1));
+    CHECK(ws.total_weight() == 0.0);
 
     success = ws.Insert(1, -1.0);
-    REQUIRE_FALSE(success);
-    REQUIRE_FALSE(ws.Contains(1));
-    REQUIRE(ws.total_weight() == 0.0);
+    CHECK_FALSE(success);
+    CHECK_FALSE(ws.Contains(1));
+    CHECK(ws.total_weight() == 0.0);
 
-    REQUIRE(ws.empty());
+    CHECK(ws.empty());
   }
 }
 
@@ -69,14 +69,14 @@ TEST_CASE("WeightedSet assignment", "[weighted_set]") {
   FillSetWithInts(ws2, 4, 6, true);
 
   ws2 = ws1;
-  REQUIRE(ws2.total_weight() == 6.0);
-  REQUIRE(ws2.size() == 3);
-  REQUIRE(ws2.Contains(1));
-  REQUIRE(ws2.Contains(2));
-  REQUIRE(ws2.Contains(3));
-  REQUIRE_FALSE(ws2.Contains(4));
-  REQUIRE_FALSE(ws2.Contains(5));
-  REQUIRE_FALSE(ws2.Contains(6));
+  CHECK(ws2.total_weight() == 6.0);
+  CHECK(ws2.size() == 3);
+  CHECK(ws2.Contains(1));
+  CHECK(ws2.Contains(2));
+  CHECK(ws2.Contains(3));
+  CHECK_FALSE(ws2.Contains(4));
+  CHECK_FALSE(ws2.Contains(5));
+  CHECK_FALSE(ws2.Contains(6));
 }
 
 TEST_CASE("WeightedSet copy constructor", "[weighted_set]") {
@@ -84,21 +84,21 @@ TEST_CASE("WeightedSet copy constructor", "[weighted_set]") {
   FillSetWithInts(ws, 1, 3, true);
 
   cse498::WeightedSet<int> ws2(ws);
-  REQUIRE(ws2.total_weight() == 6.0);
-  REQUIRE(ws2.size() == 3);
-  REQUIRE(ws2.Contains(1));
-  REQUIRE(ws2.Contains(2));
-  REQUIRE(ws2.Contains(3));
+  CHECK(ws2.total_weight() == 6.0);
+  CHECK(ws2.size() == 3);
+  CHECK(ws2.Contains(1));
+  CHECK(ws2.Contains(2));
+  CHECK(ws2.Contains(3));
 
-  REQUIRE(ws.total_weight() == 6.0);
-  REQUIRE(ws.size() == 3);
-  REQUIRE(ws.Contains(1));
-  REQUIRE(ws.Contains(2));
-  REQUIRE(ws.Contains(3));
+  CHECK(ws.total_weight() == 6.0);
+  CHECK(ws.size() == 3);
+  CHECK(ws.Contains(1));
+  CHECK(ws.Contains(2));
+  CHECK(ws.Contains(3));
 
   cse498::WeightedSet<int> ws3{};
   ws2 = ws3;
-  REQUIRE(ws2.empty());
+  CHECK(ws2.empty());
 }
 
 TEST_CASE("WeightedSet move", "[weighted_set]") {
@@ -109,17 +109,17 @@ TEST_CASE("WeightedSet move", "[weighted_set]") {
   FillSetWithInts(ws2, 4, 6, true);
 
   ws2 = std::move(ws);
-  REQUIRE(ws.empty());
-  REQUIRE(ws2.Contains(1));
-  REQUIRE(ws2.Contains(2));
-  REQUIRE(ws2.Contains(3));
+  CHECK(ws.empty());
+  CHECK(ws2.Contains(1));
+  CHECK(ws2.Contains(2));
+  CHECK(ws2.Contains(3));
 
-  REQUIRE(ws2.total_weight() == 6.0);
-  REQUIRE(ws2.size() == 3);
+  CHECK(ws2.total_weight() == 6.0);
+  CHECK(ws2.size() == 3);
 
-  REQUIRE_FALSE(ws2.Contains(4));
-  REQUIRE_FALSE(ws2.Contains(5));
-  REQUIRE_FALSE(ws2.Contains(6));
+  CHECK_FALSE(ws2.Contains(4));
+  CHECK_FALSE(ws2.Contains(5));
+  CHECK_FALSE(ws2.Contains(6));
 }
 
 TEST_CASE("WeightedSet move constructor", "[weighted_set]") {
@@ -127,12 +127,12 @@ TEST_CASE("WeightedSet move constructor", "[weighted_set]") {
   FillSetWithInts(ws, 1, 3, true);
 
   cse498::WeightedSet ws2(std::move(ws));
-  REQUIRE(ws.empty());
-  REQUIRE(ws2.Contains(1));
-  REQUIRE(ws2.Contains(2));
-  REQUIRE(ws2.Contains(3));
-  REQUIRE(ws2.total_weight() == 6.0);
-  REQUIRE(ws2.size() == 3);
+  CHECK(ws.empty());
+  CHECK(ws2.Contains(1));
+  CHECK(ws2.Contains(2));
+  CHECK(ws2.Contains(3));
+  CHECK(ws2.total_weight() == 6.0);
+  CHECK(ws2.size() == 3);
 }
 
 TEST_CASE("WeightedSet indexing", "[weighted_set]") {
@@ -140,51 +140,51 @@ TEST_CASE("WeightedSet indexing", "[weighted_set]") {
 
   SECTION("empty set") {
     auto result = ws.GetElementAt(0);
-    REQUIRE(result == std::nullopt);
+    CHECK(result == std::nullopt);
     result = ws.GetElementAt(1);
-    REQUIRE(result == std::nullopt);
+    CHECK(result == std::nullopt);
   }
 
   SECTION("indexing with 1 and 2 elements, equal weights") {
     ws.Insert(1, 1.0);
     std::optional<int> result = ws.GetElementAt(0);
-    REQUIRE(result.has_value());
-    REQUIRE(result.value() == 1);
+    CHECK(result.has_value());
+    CHECK(result.value() == 1);
 
     result = ws.GetElementAt(0.5);
-    REQUIRE(result.has_value());
-    REQUIRE(result.value() == 1);
+    CHECK(result.has_value());
+    CHECK(result.value() == 1);
 
     result = ws.GetElementAt(2);
-    REQUIRE_FALSE(result.has_value());
+    CHECK_FALSE(result.has_value());
 
     ws.Insert(2, 1.0);
     auto result_at_zero = ws.GetElementAt(0.0);
     auto result_at_one = ws.GetElementAt(1.0);
     auto result_at_two = ws.GetElementAt(2.0);
 
-    REQUIRE(result_at_zero.has_value());
-    REQUIRE(result_at_one.has_value());
-    REQUIRE(result_at_two.has_value());
+    CHECK(result_at_zero.has_value());
+    CHECK(result_at_one.has_value());
+    CHECK(result_at_two.has_value());
     // the point behind the following tests:
     // we could, in principle, end up with 1 having indexes in the range [0, 1)
     // and 2 having indexes in the range [1, 2]--or vice versa. The spec doesn't
     // specify, and the user shouldn't count on a particular one of those
     // possibilities being true. So we can test for one or the other happening
     // without requiring that a specific one happens.
-    REQUIRE(((result_at_zero.value() == 1 && result_at_one.value() == 2) ||
+    CHECK(((result_at_zero.value() == 1 && result_at_one.value() == 2) ||
              (result_at_zero.value() == 2 && result_at_one.value() == 1)));
 
     auto result_at_half = ws.GetElementAt(0.5);
     auto result_at_one_and_a_half = ws.GetElementAt(1.5);
-    REQUIRE(result_at_zero.value() == result_at_half.value());
-    REQUIRE(result_at_one.value() == result_at_one_and_a_half.value());
+    CHECK(result_at_zero.value() == result_at_half.value());
+    CHECK(result_at_one.value() == result_at_one_and_a_half.value());
 
     SECTION("bad indexes") {
       result = ws.GetElementAt(-1);
-      REQUIRE(result == std::nullopt);
+      CHECK(result == std::nullopt);
       result = ws.GetElementAt(5);
-      REQUIRE(result == std::nullopt);
+      CHECK(result == std::nullopt);
     }
   }
 
@@ -193,7 +193,7 @@ TEST_CASE("WeightedSet indexing", "[weighted_set]") {
 
     double index = 0;
     while (index <= 2) {
-      REQUIRE(ws.GetElementAt(index) == 1);
+      CHECK(ws.GetElementAt(index) == 1);
       index += 0.5;
     }
     ws.Insert(2, 1.0);
@@ -204,7 +204,7 @@ TEST_CASE("WeightedSet indexing", "[weighted_set]") {
     auto result_at_three = ws.GetElementAt(3);
     // two possibilities: 1 gets [0, 2) and 2 gets [2, 3]
     // or 2 gets [0, 1) and 1 gets [1, 3]
-    REQUIRE(((result_at_zero == 1 && result_at_one == 1 && result_at_two == 2 &&
+    CHECK(((result_at_zero == 1 && result_at_one == 1 && result_at_two == 2 &&
               result_at_three == 2) ||
              (result_at_zero == 2 && result_at_one == 1 && result_at_two == 1 &&
               result_at_three == 1)));
@@ -212,16 +212,16 @@ TEST_CASE("WeightedSet indexing", "[weighted_set]") {
 
   SECTION("handling many elements") {
     FillSetWithInts(ws, 0, 9);
-    REQUIRE(ws.total_weight() == 10);
-    REQUIRE(ws.size() == 10);
+    CHECK(ws.total_weight() == 10);
+    CHECK(ws.size() == 10);
     std::set<int> elements_seen{};
     for (int i = 0; i < 10; i++) {
       std::optional<int> result = ws.GetElementAt(i);
-      REQUIRE(result.has_value());
+      CHECK(result.has_value());
       int el = result.value();
-      REQUIRE((0 <= el && el < 10));
-      REQUIRE_FALSE(elements_seen.contains(el));
-      REQUIRE(ws.GetElementAt(i + 0.5).value() == el);
+      CHECK((0 <= el && el < 10));
+      CHECK_FALSE(elements_seen.contains(el));
+      CHECK(ws.GetElementAt(i + 0.5).value() == el);
       elements_seen.insert(el);
     }
   }
@@ -232,34 +232,34 @@ TEST_CASE("WeightedSet deletion", "[weighted_set]") {
 
   SECTION("single element") {
     ws.Insert(1, 1.0);
-    REQUIRE(ws.Contains(1));
-    REQUIRE(ws.total_weight() == 1);
+    CHECK(ws.Contains(1));
+    CHECK(ws.total_weight() == 1);
 
     auto result = ws.Remove(1);
-    REQUIRE(result.has_value());
-    REQUIRE(result.value() == 1);
-    REQUIRE_FALSE(ws.Contains(1));
-    REQUIRE(ws.total_weight() == 0);
-    REQUIRE(ws.size() == 0);
+    CHECK(result.has_value());
+    CHECK(result.value() == 1);
+    CHECK_FALSE(ws.Contains(1));
+    CHECK(ws.total_weight() == 0);
+    CHECK(ws.size() == 0);
   }
 
   SECTION("bad deletes") {
     ws.Insert(1, 1.0);
     auto result = ws.Remove(2);
-    REQUIRE(result == std::nullopt);
-    REQUIRE(ws.size() == 1);
+    CHECK(result == std::nullopt);
+    CHECK(ws.size() == 1);
 
     result = ws.Remove(1);
-    REQUIRE(result.value() == 1);
-    REQUIRE(ws.size() == 0);
+    CHECK(result.value() == 1);
+    CHECK(ws.size() == 0);
     result = ws.Remove(1);
-    REQUIRE(result == std::nullopt);
+    CHECK(result == std::nullopt);
   }
 
   SECTION("three elements") {
     FillSetWithInts(ws, 1, 3, true);
 
-    REQUIRE(ws.total_weight() == 6);
+    CHECK(ws.total_weight() == 6);
     std::vector<std::vector<int>> removal_orders = {
         {1, 2, 3}, {1, 3, 2}, {2, 1, 3}, {2, 3, 1}, {3, 1, 2}, {3, 2, 1}};
     for (const auto & elements_to_remove : removal_orders) {
@@ -271,13 +271,13 @@ TEST_CASE("WeightedSet deletion", "[weighted_set]") {
         size_t target_size = 3;
         for (int to_remove : elements_to_remove) {
           auto result = ws.Remove(to_remove);
-          REQUIRE(result.has_value());
-          REQUIRE(result.value() == to_remove);
-          REQUIRE_FALSE(ws.Contains(to_remove));
+          CHECK(result.has_value());
+          CHECK(result.value() == to_remove);
+          CHECK_FALSE(ws.Contains(to_remove));
           target_weight -= to_remove;
           target_size--;
-          REQUIRE(ws.total_weight() == target_weight);
-          REQUIRE(ws.size() == target_size);
+          CHECK(ws.total_weight() == target_weight);
+          CHECK(ws.size() == target_size);
         }
       }
     }
@@ -291,14 +291,14 @@ TEST_CASE("WeightedSet deletion", "[weighted_set]") {
     for (int i = 0; i < 10; ++i) {
       SECTION("just remove element " + std::to_string(i)) {
         auto result = ws.Remove(i);
-        REQUIRE(result.has_value());
-        REQUIRE(result.value() == i);
-        REQUIRE(ws.total_weight() == 9.0);
-        REQUIRE(ws.size() == 9);
-        REQUIRE_FALSE(ws.Contains(i));
+        CHECK(result.has_value());
+        CHECK(result.value() == i);
+        CHECK(ws.total_weight() == 9.0);
+        CHECK(ws.size() == 9);
+        CHECK_FALSE(ws.Contains(i));
         for (int j = 0; j < 10; ++j) {
           if (j != i) {
-            REQUIRE(ws.Contains(j));
+            CHECK(ws.Contains(j));
           }
         }
       }
@@ -314,15 +314,15 @@ TEST_CASE("WeightedSet deletion", "[weighted_set]") {
           ws.Remove(i);
           auto result = ws.Remove(j);
 
-          REQUIRE(result.has_value());
-          REQUIRE(result.value() == j);
-          REQUIRE(ws.total_weight() == 8.0);
-          REQUIRE(ws.size() == 8);
-          REQUIRE_FALSE(ws.Contains(i));
-          REQUIRE_FALSE(ws.Contains(j));
+          CHECK(result.has_value());
+          CHECK(result.value() == j);
+          CHECK(ws.total_weight() == 8.0);
+          CHECK(ws.size() == 8);
+          CHECK_FALSE(ws.Contains(i));
+          CHECK_FALSE(ws.Contains(j));
           for (int k = 0; k < 10; ++k) {
             if (k != i && k != j) {
-              REQUIRE(ws.Contains(k));
+              CHECK(ws.Contains(k));
             }
           }
         }
@@ -339,7 +339,7 @@ TEST_CASE("WeightedSet random selection frequencies", "[weighted_set]") {
   FillSetWithInts(ws, 1, num_elements, true);
 
   const double total_weight = ws.total_weight();
-  REQUIRE(total_weight == 15.0);
+  CHECK(total_weight == 15.0);
 
   const int num_samples = 60000;
   // Number of standard deviations to allow as tolerance. At 4 sigma the
@@ -350,12 +350,12 @@ TEST_CASE("WeightedSet random selection frequencies", "[weighted_set]") {
   std::unordered_map<int, int> counts;
   for (int i = 0; i < num_samples; ++i) {
     auto result = ws.GetRandomElement();
-    REQUIRE(result.has_value());
+    CHECK(result.has_value());
     ++counts[result.value()];
   }
 
   // Every element should have been selected at least once.
-  REQUIRE(counts.size() == static_cast<size_t>(num_elements));
+  CHECK(counts.size() == static_cast<size_t>(num_elements));
 
   for (int elem = 1; elem <= num_elements; ++elem) {
     const double expected_prob = static_cast<double>(elem) / total_weight;
@@ -367,6 +367,6 @@ TEST_CASE("WeightedSet random selection frequencies", "[weighted_set]") {
     INFO("element " << elem << ": count=" << counts[elem]
                     << " expected=" << expected_count
                     << " tolerance=" << tolerance);
-    REQUIRE(std::abs(counts[elem] - expected_count) <= tolerance);
+    CHECK(std::abs(counts[elem] - expected_count) <= tolerance);
   }
 }
