@@ -64,6 +64,11 @@ class WeightedSet {
   // pointers to the nodes in the tree representing that element.
   std::unordered_map<T, Node*> element_to_node_;
 
+  bool IsLeaf(Node* node) const {
+    assert(node != nullptr);
+    return node->left == nullptr && node->right == nullptr;
+  }
+
   // Written by Claude as part of a refactor to use unique_ptr.
   // Returns a reference to the unique_ptr that owns the given node,
   // whether that's root_ or a parent's left/right child pointer.
@@ -142,7 +147,7 @@ class WeightedSet {
   // Searches for a child of the given node which is a leaf (such a child exists
   // in any tree, as long as the given node has at least one child).
   Node* FindLeaf(Node* const current) const {
-    if (!current->left && !current->right) {
+    if (IsLeaf(current)) {
       return current;
     }
     if (current->left) {
@@ -158,6 +163,9 @@ class WeightedSet {
   void ReplaceDeletedNode(Node* to_delete, Node* replacement) {
     assert(to_delete != nullptr);
     assert(replacement != nullptr);
+    assert((to_delete->left && to_delete->right && IsLeaf(replacement)) ||
+           (to_delete->left.get() == replacement && to_delete->right == nullptr) ||
+           (to_delete->right.get() == replacement && to_delete->left == nullptr));
     // Commenting this more heavily than usual because otherwise it can be a bit
     // unclear what's going on here, IMO
 
