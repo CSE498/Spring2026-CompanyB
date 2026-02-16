@@ -154,8 +154,8 @@ namespace cse498 {
     /// @return true if forward movement is allowed, false otherwise
     [[nodiscard]] bool IsValidForwardMove(const StateGrid& grid) const {
       StateGridPosition new_pos = GetForwardPosition();
-      return grid.IsValidPosition(new_pos.CellX(), new_pos.CellY()) &&
-             !grid.IsBlocked(new_pos.CellX(), new_pos.CellY());
+      return grid.inBounds(static_cast<int>(new_pos.CellY()), 
+                           static_cast<int>(new_pos.CellX()));
     }
 
     /// @brief Check if a backward move is allowed without moving
@@ -163,8 +163,8 @@ namespace cse498 {
     /// @return true if backward movement is allowed, false otherwise
     [[nodiscard]] bool IsValidBackwardMove(const StateGrid& grid) const {
       StateGridPosition new_pos = GetBackwardPosition();
-      return grid.IsValidPosition(new_pos.CellX(), new_pos.CellY()) &&
-             !grid.IsBlocked(new_pos.CellX(), new_pos.CellY());
+      return grid.inBounds(static_cast<int>(new_pos.CellY()), 
+                           static_cast<int>(new_pos.CellX()));
     }
 
     // -- Distance Functions --
