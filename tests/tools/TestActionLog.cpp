@@ -2,18 +2,20 @@
 #include "../../source/tools/ActionLog.hpp"
 #include "../../source/tools/DataLog.hpp"
 #include "../../source/tools/GlobalClock.hpp"
+#include "../../source/tools/OutputManager.hpp"
 #include <nlohmann/json.hpp>
 
 using cse498::ActionLog;
 using cse498::DataLog;
 using cse498::LogEventStatus;
+using cse498::LogLevel;
 using nlohmann::json;
 
 // Helper to create a valid event
 json make_valid_event() {
     return json{
         {"event_type", "test_event"},
-        {"log_level", "INFO"},
+        {"log_level", LogLevel::Normal},
         {"details", json{{"key", "value"}}}
     };
 }
@@ -28,7 +30,7 @@ TEST_CASE("ActionLog logs valid events and updates DataLog", "[ActionLog]") {
     REQUIRE(dataLog.GetEntries().size() == 1);
     const auto& logged = dataLog.GetEntries()[0];
     REQUIRE(logged["event_type"] == "test_event");
-    REQUIRE(logged["log_level"] == "INFO");
+    REQUIRE(logged["log_level"] == LogLevel::Normal);
     REQUIRE(logged["details"]["key"] == "value");
 }
 
@@ -62,10 +64,14 @@ TEST_CASE("ActionLog rejects events with invalid field types or values", "[Actio
     auto event3 = make_valid_event();
     event3["event_type"] = "";
     REQUIRE(actionLog.LogEvent(event3) == LogEventStatus::FAILURE);
-    // Invalid log_level
+    // Invalid log_level: string instead of integer
     auto event4 = make_valid_event();
     event4["log_level"] = "NOTALEVEL";
     REQUIRE(actionLog.LogEvent(event4) == LogEventStatus::FAILURE);
+    // Invalid log_level: integer out of range
+    auto event4b = make_valid_event();
+    event4b["log_level"] = 999;
+    REQUIRE(actionLog.LogEvent(event4b) == LogEventStatus::FAILURE);
     // Details not an object
     auto event5 = make_valid_event();
     event5["details"] = "not an object";

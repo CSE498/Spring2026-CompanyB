@@ -1,7 +1,6 @@
 /**
- * This file is the interface for logging any events.
- * @brief API class for data logging.
- * @note Status: INITIAL DESIGN
+ * @file ActionLog.hpp
+ * @author Scott Haakenson
  **/
 
 #pragma once
@@ -10,12 +9,13 @@
 #include "DataLog.hpp"
 
 namespace cse498 {
+    /// @brief Status codes for logging events
     enum class LogEventStatus {
         SUCCESS,
         FAILURE
     };
 
-
+    /// @brief This file is the interface for logging any events.
     class ActionLog {
         private:
             /// @brief Reference to the DataLog instance where events will be recorded.
@@ -31,5 +31,4 @@ namespace cse498 {
             /// @return Success status of the logging operation.
             LogEventStatus LogEvent(const nlohmann::json& data);
     };
-
 }
