@@ -25,7 +25,7 @@ using emscripten::val;
 namespace cse498 {
 
 WebCanvas::WebCanvas(int width, int height, const std::string& id)
-    : width(width), height(height), id(id) {
+    : WebElement(id, true), width(width), height(height) {
   val document = val::global("document");
   val existing = document.call<val>("getElementById", id);
 
@@ -139,6 +139,18 @@ void WebCanvas::LoadImage(const std::string& path) {
     val img = Image.new_();
     img.set("src", path);
     cache.set(path, img);
+    EM_ASM(
+        {
+          var src = UTF8ToString($0);
+          var img = window._imageCache[src];
+          if (img) {
+            img.onerror = function() {
+              console.warn("Failed to load image: " + src);
+              delete window._imageCache[src];
+            };
+          }
+        },
+        path.c_str());
   }
 }
 
@@ -158,8 +170,10 @@ void WebCanvas::DrawImage(const std::string& path, double x, double y, double w,
           img = img || new Image();
           img.src = src;
           window._imageCache[src] = img;
-          img.onload = function() {
-            ctx.drawImage(img, $2, $3, $4, $5);
+          img.onload = function() { ctx.drawImage(img, $2, $3, $4, $5); };
+          img.onerror = function() {
+            console.warn("Failed to load image: " + src);
+            delete window._imageCache[src];
           };
         }
       },
@@ -252,8 +266,6 @@ void WebCanvas::Restore() {
 int WebCanvas::GetWidth() const { return width; }
 
 int WebCanvas::GetHeight() const { return height; }
-
-std::string WebCanvas::GetCanvasId() const { return id; }
 
 // https://emscripten.org/docs/api_reference/html5.h.html#c.emscripten_request_animation_frame
 void WebCanvas::RequestAnimationFrame(std::function<void()> callback) {

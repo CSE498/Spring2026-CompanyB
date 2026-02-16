@@ -15,6 +15,8 @@
 #include <utility>
 #include <vector>
 
+#include "WebElement.hpp"
+
 namespace cse498 {
 
 /**
@@ -27,7 +29,7 @@ namespace cse498 {
  * drawing shapes, text, and images, as well as controlling rendering state
  * (colors, transforms, etc.).
  **/
-class WebCanvas {
+class WebCanvas : public WebElement {
  private:
   /// A struct for storing the state of a canvas
   struct CanvasState {
@@ -44,9 +46,6 @@ class WebCanvas {
 
   /// Canvas height
   int height = 0;
-
-  /// Canvas ID
-  std::string id;
 
   /// Background color of the Canvas
   std::tuple<int, int, int> background_color{0, 0, 0};
@@ -253,12 +252,6 @@ class WebCanvas {
    * @return The canvas height.
    **/
   [[nodiscard]] int GetHeight() const;
-
-  /**
-   * @brief Get the DOM element ID of the canvas.
-   * @return The canvas ID string.
-   **/
-  [[nodiscard]] std::string GetCanvasId() const;
 
   /**
    * @brief Schedule a callback to run on the next browser repaint frame.
