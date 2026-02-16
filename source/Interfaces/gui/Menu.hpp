@@ -1,39 +1,32 @@
 // Menu header file
 // Group 21 GUI Interface
 
-/*
-* Usage:
-* - Build Menus dynamically (add, remove, enable, disable)
-* - Navigate with keyboard/mouse/controller through input events
-* - Trigger application actions (page navigation, toggle, debug commands)
-*/
-
-#ifndef MENU_HPP
-#define MENU_HPP
+#pragma once
 
 #include <cassert>
 #include <cstddef>
 #include <cstdint>
 #include <functional>
+#include <optional>
 #include <string>
 #include <unordered_map>
 #include <utility>
 #include <vector>
 
+namespace cse498 {
+
 class Menu {
 public:
     using ItemId = std::uint32_t;
 
-    // callback type for menu actions
+    // callbacks owned by menu items
     using Action = std::function<void()>;
 
-    // Predicate for dynamic enabled/visibility rules
+    // used for dynamic state rules (ex. visible)
     using Predicate = std::function<bool()>;
 
-    // navigation events
-    // translate keyboard mouse movements
     enum class NavEvent {
-        Up, // arrow up would be NavEvent::Up
+        Up,
         Down,
         Left,
         Right,
@@ -43,49 +36,42 @@ public:
         End
     };
 
-    // menu responds to input
     enum class InputResult {
-        Ignored, // if menu closed, ignore input
-        Heard // if menu open, selection made, result is heard
+        Ignored, // menu closed or event not used
+        Heard    // menu handled it
     };
 
-    // render item representation
-    struct RenderItem { // not the real stored menu item
-        ItemId id{};    // menu = logic, render = visuals
+    // gui version of item state
+    struct RenderItem {
+        ItemId id{};
         std::string label{};
         bool enabled{true};
         bool visible{true};
         bool selected{false};
-        //std::string tooltip{};
     };
 
-    // menu item representation
-    // items can be added at runtime
+    // storage for menu items
     struct Item {
         ItemId id{};
-        std::string key;       // programmer's side
-        std::string label;     // user's side
-        //std::string tooltip; // optional help text? can add later if needed, removed for now
+        std::string key;    // programmer sie
+        std::string label;  // user facing text
 
-        bool enabled{true};     // basic flags
+        bool enabled{true};
         bool visible{true};
-        bool selected{false}; // whether item is currently selected 
+        bool selected{false};
 
-        // runtime conditions?? (optional)
         Predicate enabledIf{};
         Predicate visibleIf{};
 
-        // callback
         Action onActivate{};
         Action onHover{};
         Action onSelected{};
     };
 
-    // creating menu
     Menu();
     explicit Menu(std::string title);
 
-    // manage items
+    // add or update by key
     ItemId addItem(std::string key,
                    std::string label,
                    Action onActivate,
@@ -95,23 +81,20 @@ public:
     bool removeItem(ItemId id);
     void clear();
 
-    // access items / look them up
+    // const overload for const methods like buildrendermodel
     Item* getItem(ItemId id);
     const Item* getItem(ItemId id) const;
     const std::vector<Item>& items() const;
 
-    // functions for dynamic options
     void setItemEnabled(ItemId id, bool enabled);
     void setItemVisible(ItemId id, bool visible);
     void setItemLabel(ItemId id, std::string label);
-    //void setItemTooltip(ItemId id, std::string tooltip);
     void setEnabledPredicate(ItemId id, Predicate pred);
     void setVisiblePredicate(ItemId id, Predicate pred);
     void setActivateAction(ItemId id, Action action);
     void setHoverAction(ItemId id, Action action);
     void setSelectedAction(ItemId id, Action action);
 
-    // select / navigate functions
     bool select(ItemId id);
     bool selectNext();
     bool selectPrevious();
@@ -119,17 +102,14 @@ public:
     bool selectLast();
     void hover(ItemId id);
 
-    // activate selections
     bool activateSelected();
     bool activate(ItemId id);
 
-    // input handling
     InputResult handleNav(NavEvent event);
 
-    // rendering items
+    // gui calls this
     std::vector<RenderItem> buildRenderModel() const;
 
-    // menu structure
     void setTitle(std::string title);
     const std::string& title() const;
     void setOpen(bool open);
@@ -138,20 +118,22 @@ public:
     bool ignoreDisabledActivation() const;
 
 private:
-    // helpers
+    static constexpr ItemId kFirstId = 1;
+
     bool isVisible(const Item& item) const;
     bool isEnabled(const Item& item) const;
     bool isSelectable(const Item& item) const;
     void normalizeSelection();
     ItemId nextId();
 
-    // data members
     std::string m_title;
     bool m_open{true};
     bool m_ignoreDisabledActivation{true};
     std::vector<Item> m_items;
     std::unordered_map<std::string, ItemId> m_keyToId;
-    ItemId m_nextId{1};
+    ItemId m_nextId{kFirstId};
 };
 
-#endif
+} 
+
+
