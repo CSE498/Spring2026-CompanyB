@@ -29,7 +29,13 @@ namespace cse498 {
     void ReplayDriver::SendInstructions(const nlohmann::json& eventData) {
         // This function would contain logic to send instructions to the world based on the event data.
         // For now, we will pretend to send it to the world
-
-        // world->getAgent(eventData.at("AgentID")).executeInstruction(eventData.at("Instruction"));
+        auto events = eventData.at("events");
+        for (const auto& event : events) {
+            // Here we would have logic to interpret the event and send instructions to the world.
+            event["type"];
+            event["agent_id"];
+            event["position"];
+            // world->getAgent(event.at("AgentID")).executeInstruction(event.at("Instruction"));
+        }
     }
 }
