@@ -66,6 +66,7 @@ if(BUILD_TESTS)
     target_link_options(tests PRIVATE
         -sNODERAWFS=1
         -sALLOW_MEMORY_GROWTH=1
+        -lembind
     )
 else()
     # Emscripten build

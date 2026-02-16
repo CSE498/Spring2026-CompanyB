@@ -139,6 +139,18 @@ void WebCanvas::LoadImage(const std::string& path) {
     val img = Image.new_();
     img.set("src", path);
     cache.set(path, img);
+    EM_ASM(
+        {
+          var src = UTF8ToString($0);
+          var img = window._imageCache[src];
+          if (img) {
+            img.onerror = function() {
+              console.warn("Failed to load image: " + src);
+              delete window._imageCache[src];
+            };
+          }
+        },
+        path.c_str());
   }
 }
 
@@ -158,8 +170,10 @@ void WebCanvas::DrawImage(const std::string& path, double x, double y, double w,
           img = img || new Image();
           img.src = src;
           window._imageCache[src] = img;
-          img.onload = function() {
-            ctx.drawImage(img, $2, $3, $4, $5);
+          img.onload = function() { ctx.drawImage(img, $2, $3, $4, $5); };
+          img.onerror = function() {
+            console.warn("Failed to load image: " + src);
+            delete window._imageCache[src];
           };
         }
       },
