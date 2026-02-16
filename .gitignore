@@ -47,3 +47,8 @@
 
 # JetBrains IDE
 .idea
+
+# Build
+/build/
+**/build/
+**/simple
