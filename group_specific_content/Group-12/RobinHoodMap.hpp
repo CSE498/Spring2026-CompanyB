@@ -464,23 +464,6 @@ class RobinHoodMap {
   };
 
   /**
-   * Removes the element at the given iterator position.
-   * @param pos Iterator pointing to the element to remove.
-   * @return Iterator to the next element.
-   */
-  Iterator erase(Iterator pos) {
-    if (pos.mEntry->filled) {
-      remove(pos.mEntry->key);
-    }
-    // Advance to next filled entry
-    ++pos.mEntry;
-    while (pos.mEntry != pos.mEnd && !pos.mEntry->filled) {
-      ++pos.mEntry;
-    }
-    return pos;
-  }
-
-  /**
    * Const Iterator class for RobinHoodMap entries.
    */
   class ConstIterator {
