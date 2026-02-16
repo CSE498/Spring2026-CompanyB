@@ -1,5 +1,7 @@
 #include "ImageManager.hpp"
 
+
+namespace cse498 {
 // Constructor
 ImageManager::ImageManager() {
     // Initialize empty image map
@@ -75,4 +77,5 @@ void ImageManager::Clear() {
         std::cout << mImages.size() << "Images cleared" << std::endl;
         mImages.clear();
     }
+}
 }

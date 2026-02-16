@@ -5,7 +5,7 @@
 #include <unordered_map>
 #include <stdexcept>
 
-
+namespace cse498 {
 class ImageManager {
     private:
         std::unordered_map<std::string, std::string> mImages;
@@ -29,3 +29,4 @@ class ImageManager {
         void Clear();
 };
 
+}
