@@ -29,5 +29,13 @@ $(TARGET_PARSER): ExpressionParserTest.cpp ../ExpressionParser.cpp ../Expression
 parser_test: $(TARGET_PARSER)
 	./$(TARGET_PARSER)
 
+test-static-assert:
+	@echo "Testing static_assert rejects non-default-constructible V..."
+	@if $(CXX) $(CXXFLAGS) -c RobinHoodMapAssertTest.cpp -o /dev/null 2>/dev/null; then \
+		echo "FAIL: Compilation should have failed"; exit 1; \
+	else \
+		echo "PASS: Compilation correctly rejected"; \
+	fi
+
 clean:
 	rm -f $(TARGET_MAP) $(TARGET_PARSER)

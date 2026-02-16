@@ -22,8 +22,44 @@
 #include "../../../third-party/Catch/single_include/catch2/catch.hpp"
 #include <string>
 #include <climits>
+#include <type_traits>
 
 #include "../RobinHoodMap.hpp"
+
+// ============================================================================
+// COMPILE-TIME ASSERTIONS
+// ============================================================================
+
+// Verify RobinHoodMap meets basic type requirements
+static_assert(std::is_default_constructible<RobinHoodMap<int, int>>::value,
+              "RobinHoodMap should be default constructible");
+
+static_assert(std::is_copy_constructible<RobinHoodMap<int, int>>::value,
+              "RobinHoodMap should be copy constructible");
+
+static_assert(std::is_copy_assignable<RobinHoodMap<int, int>>::value,
+              "RobinHoodMap should be copy assignable");
+
+static_assert(std::is_move_constructible<RobinHoodMap<int, int>>::value,
+              "RobinHoodMap should be move constructible");
+
+static_assert(std::is_move_assignable<RobinHoodMap<int, int>>::value,
+              "RobinHoodMap should be move assignable");
+
+static_assert(std::is_destructible<RobinHoodMap<int, int>>::value,
+              "RobinHoodMap should be destructible");
+
+static_assert(std::is_copy_constructible<RobinHoodMap<int, int>::Iterator>::value,
+              "Iterator should be copy constructible");
+
+static_assert(std::is_copy_assignable<RobinHoodMap<int, int>::Iterator>::value,
+              "Iterator should be copy assignable");
+
+static_assert(std::is_default_constructible<RobinHoodMap<std::string, double>>::value,
+              "RobinHoodMap should work with string keys and double values");
+
+static_assert(std::is_default_constructible<RobinHoodMap<char, std::string>>::value,
+              "RobinHoodMap should work with char keys and string values");
 
 // helper class to be able to acess private functions and members
 class RobinHoodMapTest {
@@ -136,15 +172,16 @@ TEST_CASE("At empty map", "[at]") {
 
 // operator[]
 
-TEST_CASE("Subscript operator behaves like at", "[operator[]]") {
+TEST_CASE("Const subscript operator behaves like at", "[operator[]]") {
     RobinHoodMap<int, int> map;
     map.insert(5, 500);
     
-    auto value1 = map[5];
+    const RobinHoodMap<int, int>& constMap = map;
+    auto value1 = constMap[5];
     REQUIRE(value1.has_value());
     REQUIRE(value1.value() == 500);
     
-    auto value2 = map[999];
+    auto value2 = constMap[999];
     REQUIRE_FALSE(value2.has_value());
 }
 
@@ -976,4 +1013,644 @@ TEST_CASE("Benchmark", "[benchmark]") {
 
     std::cout << "\n";
     REQUIRE(true);
+}
+
+// ============================================================================
+// NEW FEATURE TESTS
+// ============================================================================
+
+// clear() Tests
+
+TEST_CASE("Clear empty map", "[clear]") {
+    RobinHoodMap<int, int> map;
+    map.clear();
+    REQUIRE(map.size() == 0u);
+    REQUIRE(map.empty());
+}
+
+TEST_CASE("Clear map with elements", "[clear]") {
+    RobinHoodMap<int, int> map;
+    map.insert(1, 100);
+    map.insert(2, 200);
+    map.insert(3, 300);
+    REQUIRE(map.size() == 3u);
+    
+    map.clear();
+    
+    REQUIRE(map.size() == 0u);
+    REQUIRE(map.empty());
+    auto value = map.at(1);
+    REQUIRE_FALSE(value.has_value());
+}
+
+TEST_CASE("Clear then reinsert", "[clear]") {
+    RobinHoodMap<int, int> map;
+    map.insert(1, 100);
+    map.clear();
+    map.insert(1, 999);
+    
+    REQUIRE(map.size() == 1u);
+    auto value = map.at(1);
+    REQUIRE(value.has_value());
+    REQUIRE(value.value() == 999);
+}
+
+TEST_CASE("Clear multiple times", "[clear]") {
+    RobinHoodMap<int, int> map;
+    map.insert(1, 100);
+    map.clear();
+    map.clear();
+    map.clear();
+    REQUIRE(map.size() == 0u);
+    REQUIRE(map.empty());
+}
+
+// empty() Tests
+
+TEST_CASE("Empty on new map", "[empty]") {
+    RobinHoodMap<int, int> map;
+    REQUIRE(map.empty());
+}
+
+TEST_CASE("Empty after insert", "[empty]") {
+    RobinHoodMap<int, int> map;
+    REQUIRE(map.empty());
+    map.insert(1, 100);
+    REQUIRE_FALSE(map.empty());
+}
+
+TEST_CASE("Empty after remove", "[empty]") {
+    RobinHoodMap<int, int> map;
+    map.insert(1, 100);
+    REQUIRE_FALSE(map.empty());
+    map.remove(1);
+    REQUIRE(map.empty());
+}
+
+TEST_CASE("Empty with multiple elements", "[empty]") {
+    RobinHoodMap<int, int> map;
+    for (int i = 0; i < 10; ++i) {
+        map.insert(i, i * 10);
+    }
+    REQUIRE_FALSE(map.empty());
+    for (int i = 0; i < 10; ++i) {
+        map.remove(i);
+    }
+    REQUIRE(map.empty());
+}
+
+// contains() Tests
+
+TEST_CASE("Contains existing key", "[contains]") {
+    RobinHoodMap<int, int> map;
+    map.insert(1, 100);
+    REQUIRE(map.contains(1));
+}
+
+TEST_CASE("Contains nonexistent key", "[contains]") {
+    RobinHoodMap<int, int> map;
+    map.insert(1, 100);
+    REQUIRE_FALSE(map.contains(999));
+}
+
+TEST_CASE("Contains on empty map", "[contains]") {
+    RobinHoodMap<int, int> map;
+    REQUIRE_FALSE(map.contains(1));
+}
+
+TEST_CASE("Contains after remove", "[contains]") {
+    RobinHoodMap<int, int> map;
+    map.insert(1, 100);
+    REQUIRE(map.contains(1));
+    map.remove(1);
+    REQUIRE_FALSE(map.contains(1));
+}
+
+TEST_CASE("Contains with string keys", "[contains]") {
+    RobinHoodMap<std::string, int> map;
+    map.insert("hello", 1);
+    map.insert("world", 2);
+    REQUIRE(map.contains("hello"));
+    REQUIRE(map.contains("world"));
+    REQUIRE_FALSE(map.contains("test"));
+}
+
+TEST_CASE("Contains with colliding keys", "[contains]") {
+    RobinHoodMap<int, int> map;
+    map.insert(0, 100);
+    map.insert(8, 200);
+    map.insert(16, 300);
+    REQUIRE(map.contains(0));
+    REQUIRE(map.contains(8));
+    REQUIRE(map.contains(16));
+    REQUIRE_FALSE(map.contains(24));
+}
+
+// Copy Constructor Tests
+
+TEST_CASE("Copy constructor creates independent copy", "[copy-constructor]") {
+    RobinHoodMap<int, int> map1;
+    map1.insert(1, 100);
+    map1.insert(2, 200);
+    
+    RobinHoodMap<int, int> map2(map1);
+    
+    REQUIRE(map2.size() == 2u);
+    REQUIRE(map2.at(1).value() == 100);
+    REQUIRE(map2.at(2).value() == 200);
+    
+    // Modify original
+    map1.insert(3, 300);
+    REQUIRE(map1.size() == 3u);
+    REQUIRE(map2.size() == 2u);
+}
+
+TEST_CASE("Copy constructor with empty map", "[copy-constructor]") {
+    RobinHoodMap<int, int> map1;
+    RobinHoodMap<int, int> map2(map1);
+    REQUIRE(map2.empty());
+    REQUIRE(map2.size() == 0u);
+}
+
+TEST_CASE("Copy constructor preserves all elements", "[copy-constructor]") {
+    RobinHoodMap<std::string, int> map1;
+    for (int i = 0; i < 50; ++i) {
+        map1.insert("key" + std::to_string(i), i);
+    }
+    
+    RobinHoodMap<std::string, int> map2(map1);
+    
+    REQUIRE(map2.size() == 50u);
+    for (int i = 0; i < 50; ++i) {
+        REQUIRE(map2.contains("key" + std::to_string(i)));
+        REQUIRE(map2.at("key" + std::to_string(i)).value() == i);
+    }
+}
+
+// Move Constructor Tests
+
+TEST_CASE("Move constructor transfers ownership", "[move-constructor]") {
+    RobinHoodMap<int, int> map1;
+    map1.insert(1, 100);
+    map1.insert(2, 200);
+    
+    RobinHoodMap<int, int> map2(std::move(map1));
+    
+    REQUIRE(map2.size() == 2u);
+    REQUIRE(map2.at(1).value() == 100);
+    REQUIRE(map2.at(2).value() == 200);
+    REQUIRE(map1.size() == 0u);
+}
+
+TEST_CASE("Move constructor with empty map", "[move-constructor]") {
+    RobinHoodMap<int, int> map1;
+    RobinHoodMap<int, int> map2(std::move(map1));
+    REQUIRE(map2.empty());
+}
+
+TEST_CASE("Move constructor with many elements", "[move-constructor]") {
+    RobinHoodMap<int, int> map1;
+    for (int i = 0; i < 100; ++i) {
+        map1.insert(i, i * 10);
+    }
+    
+    RobinHoodMap<int, int> map2(std::move(map1));
+    
+    REQUIRE(map2.size() == 100u);
+    REQUIRE(map1.size() == 0u);
+    for (int i = 0; i < 100; ++i) {
+        REQUIRE(map2.at(i).value() == i * 10);
+    }
+}
+
+// Move Assignment Tests
+
+TEST_CASE("Move assignment transfers ownership", "[move-assignment]") {
+    RobinHoodMap<int, int> map1;
+    map1.insert(1, 100);
+    map1.insert(2, 200);
+    
+    RobinHoodMap<int, int> map2;
+    map2.insert(99, 999);
+    
+    map2 = std::move(map1);
+    
+    REQUIRE(map2.size() == 2u);
+    REQUIRE(map2.at(1).value() == 100);
+    REQUIRE(map2.at(2).value() == 200);
+    REQUIRE_FALSE(map2.contains(99));
+    REQUIRE(map1.size() == 0u);
+}
+
+TEST_CASE("Move assignment self-assignment", "[move-assignment]") {
+    RobinHoodMap<int, int> map;
+    map.insert(1, 100);
+    map = std::move(map);
+    REQUIRE(map.size() == 1u);
+}
+
+TEST_CASE("Move assignment to empty map", "[move-assignment]") {
+    RobinHoodMap<int, int> map1;
+    map1.insert(1, 100);
+    
+    RobinHoodMap<int, int> map2;
+    map2 = std::move(map1);
+    
+    REQUIRE(map2.size() == 1u);
+    REQUIRE(map1.size() == 0u);
+}
+
+
+// reserve() Tests
+
+TEST_CASE("Reserve increases capacity", "[reserve]") {
+    RobinHoodMap<int, int> map;
+    size_t initialSize = RobinHoodMapTest::getTableSize(map);
+    
+    map.reserve(100);
+    
+    REQUIRE(RobinHoodMapTest::getTableSize(map) > initialSize);
+}
+
+TEST_CASE("Reserve preserves existing elements", "[reserve]") {
+    RobinHoodMap<int, int> map;
+    map.insert(1, 100);
+    map.insert(2, 200);
+    map.insert(3, 300);
+    
+    map.reserve(100);
+    
+    REQUIRE(map.size() == 3u);
+    REQUIRE(map.at(1).value() == 100);
+    REQUIRE(map.at(2).value() == 200);
+    REQUIRE(map.at(3).value() == 300);
+}
+
+TEST_CASE("Reserve with smaller capacity does nothing", "[reserve]") {
+    RobinHoodMap<int, int> map;
+    for (int i = 0; i < 50; ++i) {
+        map.insert(i, i * 10);
+    }
+    size_t tableSize = RobinHoodMapTest::getTableSize(map);
+    
+    map.reserve(5);
+    
+    REQUIRE(RobinHoodMapTest::getTableSize(map) == tableSize);
+}
+
+TEST_CASE("Reserve on empty map", "[reserve]") {
+    RobinHoodMap<int, int> map;
+    map.reserve(100);
+    REQUIRE(map.empty());
+    REQUIRE(RobinHoodMapTest::getTableSize(map) >= 200);
+}
+
+TEST_CASE("Reserve prevents automatic resizes", "[reserve]") {
+    RobinHoodMap<int, int> map;
+    map.reserve(100);
+    size_t tableSize = RobinHoodMapTest::getTableSize(map);
+    
+    for (int i = 0; i < 50; ++i) {
+        map.insert(i, i * 10);
+    }
+    
+    REQUIRE(RobinHoodMapTest::getTableSize(map) == tableSize);
+}
+
+// Non-const operator[] Tests
+
+TEST_CASE("Non-const operator[] inserts default value", "[operator[]-nonconst]") {
+    RobinHoodMap<int, int> map;
+    int& value = map[1];
+    value = 100;
+    
+    REQUIRE(map.size() == 1u);
+    REQUIRE(map.at(1).value() == 100);
+}
+
+TEST_CASE("Non-const operator[] returns existing value", "[operator[]-nonconst]") {
+    RobinHoodMap<int, int> map;
+    map.insert(1, 100);
+    
+    int& value = map[1];
+    REQUIRE(value == 100);
+    
+    value = 999;
+    REQUIRE(map.at(1).value() == 999);
+}
+
+TEST_CASE("Non-const operator[] with string values", "[operator[]-nonconst]") {
+    RobinHoodMap<std::string, std::string> map;
+    map["hello"] = "world";
+    
+    REQUIRE(map.size() == 1u);
+    REQUIRE(map.at("hello").value() == "world");
+}
+
+TEST_CASE("Non-const operator[] modifies in place", "[operator[]-nonconst]") {
+    RobinHoodMap<int, int> map;
+    map[1] = 100;
+    map[1] = 200;
+    map[1] = 300;
+    
+    REQUIRE(map.size() == 1u);
+    REQUIRE(map.at(1).value() == 300);
+}
+
+TEST_CASE("Non-const operator[] multiple keys", "[operator[]-nonconst]") {
+    RobinHoodMap<int, int> map;
+    map[1] = 100;
+    map[2] = 200;
+    map[3] = 300;
+    
+    REQUIRE(map.size() == 3u);
+    REQUIRE(map[1] == 100);
+    REQUIRE(map[2] == 200);
+    REQUIRE(map[3] == 300);
+}
+
+// Const Iterator Tests
+
+TEST_CASE("Const iterator basic iteration", "[const-iterator]") {
+    RobinHoodMap<int, int> map;
+    map.insert(1, 100);
+    map.insert(2, 200);
+    map.insert(3, 300);
+    
+    const auto& constMap = map;
+    int count = 0;
+    for (auto it = constMap.begin(); it != constMap.end(); ++it) {
+        ++count;
+    }
+    
+    REQUIRE(count == 3);
+}
+
+TEST_CASE("Const iterator with cbegin/cend", "[const-iterator]") {
+    RobinHoodMap<int, int> map;
+    map.insert(1, 100);
+    map.insert(2, 200);
+    
+    int count = 0;
+    for (auto it = map.cbegin(); it != map.cend(); ++it) {
+        ++count;
+    }
+    
+    REQUIRE(count == 2);
+}
+
+TEST_CASE("Const iterator on empty map", "[const-iterator]") {
+    RobinHoodMap<int, int> map;
+    const auto& constMap = map;
+    
+    int count = 0;
+    for (auto it = constMap.begin(); it != constMap.end(); ++it) {
+        ++count;
+    }
+    
+    REQUIRE(count == 0);
+}
+
+TEST_CASE("Const iterator range-based for", "[const-iterator]") {
+    RobinHoodMap<int, int> map;
+    map.insert(1, 100);
+    map.insert(2, 200);
+    map.insert(3, 300);
+    
+    const auto& constMap = map;
+    int sum = 0;
+    for (const auto& entry : constMap) {
+        sum += entry.value;
+    }
+    
+    REQUIRE(sum == 600);
+}
+
+TEST_CASE("Const iterator with cbegin on const map", "[const-iterator]") {
+    RobinHoodMap<std::string, int> map;
+    map.insert("a", 1);
+    map.insert("b", 2);
+    map.insert("c", 3);
+    
+    const auto& constMap = map;
+    int count = 0;
+    for (auto it = constMap.cbegin(); it != constMap.cend(); ++it) {
+        count++;
+    }
+    
+    REQUIRE(count == 3);
+}
+
+TEST_CASE("Const iterator post-increment", "[const-iterator]") {
+    RobinHoodMap<int, int> map;
+    map.insert(1, 100);
+    map.insert(2, 200);
+    
+    const auto& constMap = map;
+    auto it = constMap.begin();
+    auto old_it = it++;
+    
+    REQUIRE(old_it != it);
+}
+
+// Combined Feature Tests
+
+TEST_CASE("Combined: reserve, insert, contains", "[combined]") {
+    RobinHoodMap<int, int> map;
+    map.reserve(50);
+    
+    for (int i = 0; i < 20; ++i) {
+        map.insert(i, i * 10);
+    }
+    
+    REQUIRE(map.size() == 20u);
+    
+    for (int i = 0; i < 20; ++i) {
+        REQUIRE(map.contains(i));
+    }
+    REQUIRE_FALSE(map.contains(100));
+}
+
+TEST_CASE("Combined: copy, modify, compare", "[combined]") {
+    RobinHoodMap<int, int> map1;
+    map1[1] = 100;
+    map1[2] = 200;
+    
+    RobinHoodMap<int, int> map2(map1);
+    
+    map1[3] = 300;
+    map2[4] = 400;
+    
+    REQUIRE(map1.contains(1));
+    REQUIRE(map1.contains(2));
+    REQUIRE(map1.contains(3));
+    REQUIRE_FALSE(map1.contains(4));
+    
+    REQUIRE(map2.contains(1));
+    REQUIRE(map2.contains(2));
+    REQUIRE_FALSE(map2.contains(3));
+    REQUIRE(map2.contains(4));
+}
+
+TEST_CASE("Combined: clear, empty, reserve", "[combined]") {
+    RobinHoodMap<int, int> map;
+    map.reserve(100);
+    
+    for (int i = 0; i < 50; ++i) {
+        map[i] = i * 10;
+    }
+    
+    REQUIRE_FALSE(map.empty());
+    REQUIRE(map.size() == 50u);
+    
+    map.clear();
+    
+    REQUIRE(map.empty());
+    REQUIRE(map.size() == 0u);
+    
+    // Can still use map after clear
+    map[1] = 100;
+    REQUIRE(map.contains(1));
+}
+
+TEST_CASE("Combined: move and contains", "[combined]") {
+    RobinHoodMap<std::string, int> map1;
+    map1.insert("a", 1);
+    map1.insert("b", 2);
+    map1.insert("c", 3);
+    
+    RobinHoodMap<std::string, int> map2(std::move(map1));
+    
+    REQUIRE(map2.contains("a"));
+    REQUIRE(map2.contains("b"));
+    REQUIRE(map2.contains("c"));
+    REQUIRE(map1.empty());
+}
+
+// Testing latest changes
+
+TEST_CASE("Iterator dereference on valid entry does not assert", "[iterator-assert]") {
+    RobinHoodMap<int, int> map;
+    map.insert(1, 100);
+    map.insert(2, 200);
+    
+    auto it = map.begin();
+    auto& entry = *it;
+    REQUIRE(entry.filled);
+    REQUIRE((entry.key == 1 || entry.key == 2));
+}
+
+TEST_CASE("Iterator begin equals end on empty map", "[iterator-assert]") {
+    RobinHoodMap<int, int> map;
+    REQUIRE(map.begin() == map.end());
+}
+
+TEST_CASE("Iterator dereference after increment stays valid", "[iterator-assert]") {
+    RobinHoodMap<int, int> map;
+    map.insert(10, 1);
+    map.insert(20, 2);
+    map.insert(30, 3);
+    
+    int count = 0;
+    for (auto it = map.begin(); it != map.end(); ++it) {
+        REQUIRE((*it).filled);
+        ++count;
+    }
+    REQUIRE(count == 3);
+}
+
+TEST_CASE("Iterator pre-decrement skips unfilled entries", "[iterator-decrement]") {
+    RobinHoodMap<int, int> map;
+    map.insert(1, 100);
+    map.insert(2, 200);
+    map.insert(3, 300);
+    
+    std::vector<int> forwardKeys;
+    for (auto it = map.begin(); it != map.end(); ++it) {
+        forwardKeys.push_back((*it).key);
+    }
+    
+    auto it = map.begin();
+    auto lastIt = it;
+    while (it != map.end()) {
+        lastIt = it;
+        ++it;
+    }
+    
+    std::vector<int> reverseKeys;
+    reverseKeys.push_back((*lastIt).key);
+    
+    --lastIt;
+    if ((*lastIt).filled) {
+        reverseKeys.push_back((*lastIt).key);
+    }
+    
+    for (auto& k : reverseKeys) {
+        REQUIRE((k == 1 || k == 2 || k == 3));
+    }
+}
+
+TEST_CASE("Iterator post-decrement returns old position", "[iterator-decrement]") {
+    RobinHoodMap<int, int> map;
+    map.insert(1, 100);
+    map.insert(2, 200);
+    
+    auto it = map.begin();
+    auto first = it;
+    ++it;
+    
+    auto old = it--;
+    REQUIRE((*old).filled);
+    REQUIRE((*it).filled);
+    REQUIRE(it == first);
+}
+
+TEST_CASE("Iterator decrement visits only filled entries", "[iterator-decrement]") {
+    RobinHoodMap<int, int> map;
+
+    for (int i = 0; i < 20; ++i) {
+        map.insert(i, i * 10);
+    }
+
+    for (int i = 0; i < 20; i += 2) {
+        map.remove(i);
+    }
+    REQUIRE(map.size() == 10u);
+    
+    std::vector<int> forwardKeys;
+    for (auto it = map.begin(); it != map.end(); ++it) {
+        REQUIRE((*it).filled);
+        forwardKeys.push_back((*it).key);
+    }
+    REQUIRE(forwardKeys.size() == 10u);
+    
+    auto it = map.begin();
+    auto lastIt = it;
+    while (it != map.end()) {
+        lastIt = it;
+        ++it;
+    }
+    
+    std::vector<int> backwardKeys;
+    backwardKeys.push_back((*lastIt).key);
+    for (size_t i = 1; i < forwardKeys.size(); ++i) {
+        --lastIt;
+        REQUIRE((*lastIt).filled); 
+        backwardKeys.push_back((*lastIt).key);
+    }
+    
+    std::reverse(backwardKeys.begin(), backwardKeys.end());
+    REQUIRE(forwardKeys == backwardKeys);
+}
+
+TEST_CASE("Iterator decrement on single element map", "[iterator-decrement]") {
+    RobinHoodMap<int, int> map;
+    map.insert(42, 999);
+    
+    auto it = map.begin();
+    REQUIRE((*it).key == 42);
+    REQUIRE((*it).value == 999);
+    
+    ++it;
+    REQUIRE(it == map.end());
 }
