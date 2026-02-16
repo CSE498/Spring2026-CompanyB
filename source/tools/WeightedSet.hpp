@@ -139,18 +139,6 @@ class WeightedSet {
     return (parent->left.get() == child) || (parent->right.get() == child);
   }
 
-  // Replaces to_delete in the tree with replacement (a child already released
-  // from to_delete). Destroys to_delete via its owning unique_ptr.
-  void ReplaceDeletedNodeWithChild(Node* to_delete,
-                                   std::unique_ptr<Node> replacement) {
-    if (replacement) {
-      replacement->parent = to_delete->parent;
-    }
-    // Assigning to the owning pointer destroys to_delete; its children must
-    // already have been moved out so they aren't destroyed along with it.
-    OwningPointer(to_delete) = std::move(replacement);
-  }
-
   // Searches for a child of the given node which is a leaf (such a child exists
   // in any tree, as long as the given node has at least one child).
   Node* FindLeaf(Node* const current) const {
@@ -163,48 +151,46 @@ class WeightedSet {
       return FindLeaf(current->right.get());
     }
   }
-  // we take a leaf node and swap it in for the node to be deleted.
-  // the leaf's left, right, and parent should become the left, right, and
-  // parent of the deleted node. then we need to rebalance starting at the
-  // previous parent of the leaf (if that isn't the deleted node) or starting at
-  // the moved leaf (if the leaf was a child of the deleted node).
-
-  void ReplaceDeletedNodeWithLeaf(Node* to_delete, Node* leaf) {
+  
+  // Helper function for "Remove". Given a node to_delete, swap in "replacement",
+  // which is a direct child (in the case where to_delete has 1 child) and/or a leaf
+  // (in the case where to_delete has 2 children).
+  void ReplaceDeletedNode(Node* to_delete, Node* replacement) {
     assert(to_delete != nullptr);
-    assert(leaf != nullptr);
+    assert(replacement != nullptr);
     // Commenting this more heavily than usual because otherwise it can be a bit
     // unclear what's going on here, IMO
 
     // Also, note: this function was revised especially heavily by Claude as
     // part of a refactor to use unique_ptr for "left", "right", and "root_"
 
-    // Step 1: Detach the leaf from its current parent's ownership
-    auto leaf_owned = std::move(OwningPointer(leaf));
+    // Step 1: Detach the replacement from its current parent's ownership
+    auto replacement_owned = std::move(OwningPointer(replacement));
 
-    // Step 2: Transfer children from the deleted node to the leaf.
-    // Skip if the leaf IS that child (to avoid a self-referencing loop).
-    if (leaf != to_delete->left.get()) {
-      leaf_owned->left = std::move(to_delete->left);
+    // Step 2: Transfer children from the deleted node to the replacement.
+    // Skip if the replacement IS that child (to avoid a self-referencing loop).
+    if (to_delete->left && replacement != to_delete->left.get()) {
+      replacement_owned->left = std::move(to_delete->left);
     }
-    if (leaf != to_delete->right.get()) {
-      leaf_owned->right = std::move(to_delete->right);
+    if (to_delete->right && replacement != to_delete->right.get()) {
+      replacement_owned->right = std::move(to_delete->right);
     }
 
     // Step 3: Update parent pointers of the transferred children
-    if (leaf_owned->left) {
-      leaf_owned->left->parent = leaf_owned.get();
+    if (replacement_owned->left) {
+      replacement_owned->left->parent = replacement_owned.get();
     }
-    if (leaf_owned->right) {
-      leaf_owned->right->parent = leaf_owned.get();
+    if (replacement_owned->right) {
+      replacement_owned->right->parent = replacement_owned.get();
     }
 
-    // Step 4: Update the leaf's parent to be the deleted node's parent
-    leaf_owned->parent = to_delete->parent;
+    // Step 4: Update the replacement's parent to be the deleted node's parent
+    replacement_owned->parent = to_delete->parent;
 
-    // Step 5: Place the leaf into the deleted node's position in the tree.
+    // Step 5: Place the replacement into the deleted node's position in the tree.
     // This assignment destroys to_delete via unique_ptr; its children have
     // already been moved out above, so they survive.
-    OwningPointer(to_delete) = std::move(leaf_owned);
+    OwningPointer(to_delete) = std::move(replacement_owned);
   }
 
  public:
@@ -364,11 +350,10 @@ class WeightedSet {
       OwningPointer(node_ptr).reset();
     } else if (!node_ptr->left) {
       to_rebalance = node_ptr->right.get();
-      // Release the right child, then replace node_ptr with it.
-      ReplaceDeletedNodeWithChild(node_ptr, std::move(node_ptr->right));
+      ReplaceDeletedNode(node_ptr, node_ptr->right.get());
     } else if (!node_ptr->right) {
       to_rebalance = node_ptr->left.get();
-      ReplaceDeletedNodeWithChild(node_ptr, std::move(node_ptr->left));
+      ReplaceDeletedNode(node_ptr, node_ptr->left.get());
     } else {
       Node* replacement = FindLeaf(node_ptr->left.get());
       // a subtle point: if the replacement node is a direct child of the node
@@ -378,7 +363,7 @@ class WeightedSet {
       // child but is still in the tree.
       to_rebalance = IsDirectChild(node_ptr, replacement) ? replacement
                                                           : replacement->parent;
-      ReplaceDeletedNodeWithLeaf(node_ptr, replacement);
+      ReplaceDeletedNode(node_ptr, replacement);
     }
     FixWeightsAndRebalance(to_rebalance);
     // node_ptr has already been destroyed by the unique_ptr operations above;
