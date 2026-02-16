@@ -73,7 +73,7 @@ namespace cse498
             for (size_t x = 0; x < grid.GetWidth(); ++x)
             {
 
-                size_t cell_id = grid(x, y);
+                size_t cell_id = grid[x, y];
 
                 auto it = mTilePixmaps.find(cell_id);
                 if (it != mTilePixmaps.end())
