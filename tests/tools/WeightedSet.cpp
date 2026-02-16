@@ -173,7 +173,7 @@ TEST_CASE("WeightedSet indexing", "[weighted_set]") {
     // possibilities being true. So we can test for one or the other happening
     // without requiring that a specific one happens.
     CHECK(((result_at_zero.value() == 1 && result_at_one.value() == 2) ||
-             (result_at_zero.value() == 2 && result_at_one.value() == 1)));
+           (result_at_zero.value() == 2 && result_at_one.value() == 1)));
 
     auto result_at_half = ws.GetElementAt(0.5);
     auto result_at_one_and_a_half = ws.GetElementAt(1.5);
@@ -205,9 +205,9 @@ TEST_CASE("WeightedSet indexing", "[weighted_set]") {
     // two possibilities: 1 gets [0, 2) and 2 gets [2, 3]
     // or 2 gets [0, 1) and 1 gets [1, 3]
     CHECK(((result_at_zero == 1 && result_at_one == 1 && result_at_two == 2 &&
-              result_at_three == 2) ||
-             (result_at_zero == 2 && result_at_one == 1 && result_at_two == 1 &&
-              result_at_three == 1)));
+            result_at_three == 2) ||
+           (result_at_zero == 2 && result_at_one == 1 && result_at_two == 1 &&
+            result_at_three == 1)));
   }
 
   SECTION("handling many elements") {
@@ -262,7 +262,7 @@ TEST_CASE("WeightedSet deletion", "[weighted_set]") {
     CHECK(ws.total_weight() == 6);
     std::vector<std::vector<int>> removal_orders = {
         {1, 2, 3}, {1, 3, 2}, {2, 1, 3}, {2, 3, 1}, {3, 1, 2}, {3, 2, 1}};
-    for (const auto & elements_to_remove : removal_orders) {
+    for (const auto& elements_to_remove : removal_orders) {
       SECTION("try removing elements in order " +
               std::to_string(elements_to_remove[0]) +
               std::to_string(elements_to_remove[1]) +
@@ -364,9 +364,8 @@ TEST_CASE("WeightedSet random selection frequencies", "[weighted_set]") {
         std::sqrt(num_samples * expected_prob * (1.0 - expected_prob));
     const double tolerance = num_sigma * std_dev;
 
-    INFO("element " << elem << ": count=" << counts[elem]
-                    << " expected=" << expected_count
-                    << " tolerance=" << tolerance);
+    INFO("element " << elem << ": count=" << counts[elem] << " expected="
+                    << expected_count << " tolerance=" << tolerance);
     CHECK(std::abs(counts[elem] - expected_count) <= tolerance);
   }
 }
