@@ -1,34 +1,36 @@
 /**
  * @file GlobalClock.hpp
- * @brief Global clock for tracking simulation time.
- * @note Status: INITIAL DESIGN
+ * @author Abdulrahman Alanazi
  **/
 
 #pragma once
 
 #include <cstdint>
 
+/* Class Description:
+ *  Global clock for tracking simulation time.
+ *  It is a static utility class and cannot be instantiated.
+ *  It can be used by calling the static methods directly, e.g. GlobalClock::GetTime() or GlobalClock::Tick().
+ */
 namespace cse498 {
 
 class GlobalClock {
 public:
-    /// @brief GlobalClock is a static utility class and cannot be instantiated.
+    // GlobalClock is a static utility class and cannot be instantiated
     GlobalClock() = delete;
 
-    /// @brief Get current global time in ticks.
-    /// @return Global time as a 64-bit unsigned integer.
+    // Get current global time in ticks
     static uint64_t GetTime();
 
-    /// @brief Advance global time by a specified amount.
-    /// @param deltaTime Amount to increment time by (in ticks).
+    // Advance global time by a specified amount
     static void Tick(uint64_t deltaTime = 1);
 
-    /// @brief Reset global time to zero.
+    // Reset global time to zero
     static void Reset();
 
 private:
-    /// @brief The global time counter in ticks.
+    // The current global time
     static uint64_t mGlobalTime;
 };
 
-} // namespace cse498
+}
