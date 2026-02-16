@@ -28,6 +28,11 @@ struct Token {
     std::string value;
 };
 
+class ExpressionException : public std::runtime_error {
+public:
+    ExpressionException(const std::string& msg) : std::runtime_error(msg) {}
+};
+
 class ExpressionParser {
 private:
     std::string expression = "";
@@ -38,7 +43,13 @@ private:
     int getPrecedence(const std::string& op) const;
 public:
     ExpressionParser() = default;
-    explicit ExpressionParser(const std::string& expr) : expression(expr) {}
+    explicit ExpressionParser(const std::string& expr) : expression(expr) {
+        try {
+            this->tokenize();
+        } catch (const ExpressionException& e) {
+            throw ExpressionException("Tokenization failed: " + std::string(e.what()));
+        }
+    }
 
     std::string getRawExpression() const {
         return expression;
@@ -46,10 +57,19 @@ public:
 
     void setRawExpression(const std::string& expr) {
         expression = expr;
+        try {
+            this->tokenize();
+        } catch (const ExpressionException& e) {
+            throw ExpressionException("Tokenization failed: " + std::string(e.what()));
+        }
+    }
+
+    bool isValid() const {
+        return this->validateExpr(); 
     }
 
     std::vector<Token> getTokens() const {
-            return tokens;
+        return tokens;
     }
 
     std::string getTokenAsString() const {
@@ -71,10 +91,4 @@ public:
     }
 
     std::function<double(const std::vector<double>&, const std::map<std::string, double>&)> parse();
-};
-
-
-class ExpressionException : public std::runtime_error {
-public:
-    ExpressionException(const std::string& msg) : std::runtime_error(msg) {}
 };

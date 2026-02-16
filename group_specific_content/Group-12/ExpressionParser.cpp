@@ -24,11 +24,6 @@ int ExpressionParser::getPrecedence(const std::string& op) const {
 }
 
 std::function<double(const std::vector<double>&, const std::map<std::string, double>&)> ExpressionParser::parse() {
-    try {
-        this->tokenize();
-    } catch (const ExpressionException& e) {
-        throw ExpressionException("Tokenization failed: " + std::string(e.what()));
-    }
 
     if (!validateExpr()) {
         throw ExpressionException("Invalid expression: " + expression);
@@ -254,12 +249,16 @@ bool ExpressionParser::validateExpr() const {
 void ExpressionParser::tokenize() {
     tokens.clear();
 
-    int i = 0;
+    unsigned i = 0;
 
     while (i < expression.size()) {
         char c = expression[i];
 
-        if (std::isalpha(c)) {
+        if (std::isspace(c)) {
+            ++i;
+            continue;
+
+        } else if (std::isalpha(c)) {
             std::string var = "";
             var += c;
 
