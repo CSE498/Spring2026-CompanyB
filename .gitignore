@@ -46,4 +46,4 @@
 **/.DS_Store
 
 # JetBrains IDE
-.idea
+.ideabuild/

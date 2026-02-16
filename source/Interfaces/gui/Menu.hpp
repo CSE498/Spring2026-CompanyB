@@ -15,7 +15,6 @@
 #include <cstddef>
 #include <cstdint>
 #include <functional>
-#include <optional>
 #include <string>
 #include <unordered_map>
 #include <utility>
@@ -57,7 +56,7 @@ public:
         bool enabled{true};
         bool visible{true};
         bool selected{false};
-        std::string tooltip{};
+        //std::string tooltip{};
     };
 
     // menu item representation
@@ -66,10 +65,11 @@ public:
         ItemId id{};
         std::string key;       // programmer's side
         std::string label;     // user's side
-        std::string tooltip;    // optional help text?
+        //std::string tooltip; // optional help text? can add later if needed, removed for now
 
         bool enabled{true};     // basic flags
         bool visible{true};
+        bool selected{false}; // whether item is currently selected 
 
         // runtime conditions?? (optional)
         Predicate enabledIf{};
@@ -92,40 +92,27 @@ public:
                    bool enabled = true,
                    bool visible = true);
 
-    ItemId addItem(std::string key,
-                   std::string label,
-                   std::string tooltip,
-                   Action onActivate,
-                   bool enabled = true,
-                   bool visible = true);
-
     bool removeItem(ItemId id);
-    bool removeItem(const std::string& key);
     void clear();
 
     // access items / look them up
     Item* getItem(ItemId id);
     const Item* getItem(ItemId id) const;
-    Item* getItem(const std::string& key);
-    const Item* getItem(const std::string& key) const;
     const std::vector<Item>& items() const;
 
     // functions for dynamic options
     void setItemEnabled(ItemId id, bool enabled);
     void setItemVisible(ItemId id, bool visible);
     void setItemLabel(ItemId id, std::string label);
-    void setItemTooltip(ItemId id, std::string tooltip);
+    //void setItemTooltip(ItemId id, std::string tooltip);
     void setEnabledPredicate(ItemId id, Predicate pred);
     void setVisiblePredicate(ItemId id, Predicate pred);
     void setActivateAction(ItemId id, Action action);
     void setHoverAction(ItemId id, Action action);
     void setSelectedAction(ItemId id, Action action);
-    void setItemEnabled(const std::string& key, bool enabled);
-    void setItemVisible(const std::string& key, bool visible);
 
     // select / navigate functions
     bool select(ItemId id);
-    bool select(const std::string& key);
     bool selectNext();
     bool selectPrevious();
     bool selectFirst();
@@ -135,7 +122,6 @@ public:
     // activate selections
     bool activateSelected();
     bool activate(ItemId id);
-    bool activate(const std::string& key);
 
     // input handling
     InputResult handleNav(NavEvent event);
