@@ -8,9 +8,11 @@ TEST_CASE("ReplayDriver can read and replay events from a JSON file", "[ReplayDr
     // Create a sample JSON file with event data
     nlohmann::json sampleEventData = {
         {"events", {
-            {"type", "agent_added"},
-            {"agent_id", 1},
-            {"position", {0, 0}}
+            {
+                {"type", "agent_added"},
+                {"agent_id", 1},
+                {"position", {0, 0}}
+            }
         }}
     };
 
