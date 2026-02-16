@@ -11,6 +11,7 @@
  *  Global clock for tracking simulation time.
  *  It is a static utility class and cannot be instantiated.
  *  It can be used by calling the static methods directly, e.g. GlobalClock::GetTime() or GlobalClock::Tick().
+ *  Citation: Used AI responsibly and actively in building the class below.
  */
 namespace cse498 {
 

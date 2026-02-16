@@ -18,10 +18,18 @@ namespace cse498 {
             return false;
         }
 
+        SendInstructions(eventData);
+
         // Here we would add logic to process the eventData and replay the events.
         // For now, we will just print the loaded JSON data.
-        std::cout << "Loaded event data: " << eventData.dump(4) << std::endl;
+        // std::cout << "Loaded event data: " << eventData.dump(4) << std::endl;
 
         return true;
+    }
+    void ReplayDriver::SendInstructions(const nlohmann::json& eventData) {
+        // This function would contain logic to send instructions to the world based on the event data.
+        // For now, we will pretend to send it to the world
+
+        // world->getAgent(eventData.at("AgentID")).executeInstruction(eventData.at("Instruction"));
     }
 }

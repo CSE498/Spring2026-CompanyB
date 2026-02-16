@@ -12,21 +12,18 @@
  *  A tool to make precise timing measurements. It should be told when to start and stop,
  *  but also be giving a name for the timing,
  *  it can track multiple different times and compare them as needed.
- *  It can also pause and resume the timing measurements if nedded.
+ *  It can also pause and resume the timing measurements if needed.
+ *  Citation: Used AI responsibly and actively in building the class below.
  */
 namespace cse498 {
-
 class Timer {
 public:
     // Initialize the object with a name
     Timer(const std::string& name);
-
     // Start the stopwatch for the object
     void Start();
-
     // Stop the stopwatch for the object
     void Stop();
-
     // Pause the stopwatch for the object
     void Pause();
     // Resume the stopwatch for the object
