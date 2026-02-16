@@ -11,7 +11,7 @@
 namespace cse498 {
     class ReplayDriver {
         private:
-            // need a pointer to the world object to instuct addtions and deletions of agents from world
+            //world* world; need a pointer to the world object to instuct addtions and deletions of agents from world
         public:
             /// @brief Basic constructor for the ReplayDriver.
             ReplayDriver() = default;
@@ -21,5 +21,6 @@ namespace cse498 {
             /// @param filePath Path to the JSON file containing logged events.
             /// @return Success status of the replay operation.
             bool ReplayFromFile(const std::string& filePath);
+            void SendInstructions(const nlohmann::json& eventData);
     };
 }
