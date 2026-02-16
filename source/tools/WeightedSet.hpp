@@ -12,12 +12,11 @@ namespace cse498 {
 /*
   The initial boilerplate setup (constructors, CopyTree(), assign and
   move operators, basic getters (namely size(), empty(), total_weight()), and
-  basic member variables) was written by Claude Code. I then modified many of
-  those substantially as the design of the class changed; then they were further
-  modified as part of Claude's other major contribution to this file, namely
-  refactoring it to use std::unique_ptr for root_, left, and right. (As part of
-  that refactor, it made a few minor unrelated changes, e.g. changing some
-  spacing and using the default no-argument constructor.)
+  basic member variables) was written by Claude Code. I then modified many of those
+  substantially as the design of the class changed; then they were further modified
+  as part of Claude's other major contribution to this file, namely refactoring it to use
+  std::unique_ptr for root_, left, and right. (As part of that refactor, it made a few minor
+  unrelated changes, e.g. changing some spacing and using the default no-argument constructor.)
 
   All other AI contributions are marked with a comment near them.
 */
@@ -347,7 +346,9 @@ class WeightedSet {
         std::uniform_real_distribution<double>(0, total_weight());
     return GetElementAt(random_real(rng_));
   }
-
+  // Removes the given element from the set. Returns the element (if it was
+  // removed successfully) or nullopt (if the element isn't in the set or the 
+  // removal otherwise failed).
   std::optional<T> Remove(const T& element) {
     auto it = element_to_node_.find(element);
     if (it == element_to_node_.end()) {
