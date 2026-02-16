@@ -1526,3 +1526,131 @@ TEST_CASE("Combined: move and contains", "[combined]") {
     REQUIRE(map2.contains("c"));
     REQUIRE(map1.empty());
 }
+
+// Testing latest changes
+
+TEST_CASE("Iterator dereference on valid entry does not assert", "[iterator-assert]") {
+    RobinHoodMap<int, int> map;
+    map.insert(1, 100);
+    map.insert(2, 200);
+    
+    auto it = map.begin();
+    auto& entry = *it;
+    REQUIRE(entry.filled);
+    REQUIRE((entry.key == 1 || entry.key == 2));
+}
+
+TEST_CASE("Iterator begin equals end on empty map", "[iterator-assert]") {
+    RobinHoodMap<int, int> map;
+    REQUIRE(map.begin() == map.end());
+}
+
+TEST_CASE("Iterator dereference after increment stays valid", "[iterator-assert]") {
+    RobinHoodMap<int, int> map;
+    map.insert(10, 1);
+    map.insert(20, 2);
+    map.insert(30, 3);
+    
+    int count = 0;
+    for (auto it = map.begin(); it != map.end(); ++it) {
+        REQUIRE((*it).filled);
+        ++count;
+    }
+    REQUIRE(count == 3);
+}
+
+TEST_CASE("Iterator pre-decrement skips unfilled entries", "[iterator-decrement]") {
+    RobinHoodMap<int, int> map;
+    map.insert(1, 100);
+    map.insert(2, 200);
+    map.insert(3, 300);
+    
+    std::vector<int> forwardKeys;
+    for (auto it = map.begin(); it != map.end(); ++it) {
+        forwardKeys.push_back((*it).key);
+    }
+    
+    auto it = map.begin();
+    auto lastIt = it;
+    while (it != map.end()) {
+        lastIt = it;
+        ++it;
+    }
+    
+    std::vector<int> reverseKeys;
+    reverseKeys.push_back((*lastIt).key);
+    
+    --lastIt;
+    if ((*lastIt).filled) {
+        reverseKeys.push_back((*lastIt).key);
+    }
+    
+    for (auto& k : reverseKeys) {
+        REQUIRE((k == 1 || k == 2 || k == 3));
+    }
+}
+
+TEST_CASE("Iterator post-decrement returns old position", "[iterator-decrement]") {
+    RobinHoodMap<int, int> map;
+    map.insert(1, 100);
+    map.insert(2, 200);
+    
+    auto it = map.begin();
+    auto first = it;
+    ++it;
+    
+    auto old = it--;
+    REQUIRE((*old).filled);
+    REQUIRE((*it).filled);
+    REQUIRE(it == first);
+}
+
+TEST_CASE("Iterator decrement visits only filled entries", "[iterator-decrement]") {
+    RobinHoodMap<int, int> map;
+
+    for (int i = 0; i < 20; ++i) {
+        map.insert(i, i * 10);
+    }
+
+    for (int i = 0; i < 20; i += 2) {
+        map.remove(i);
+    }
+    REQUIRE(map.size() == 10u);
+    
+    std::vector<int> forwardKeys;
+    for (auto it = map.begin(); it != map.end(); ++it) {
+        REQUIRE((*it).filled);
+        forwardKeys.push_back((*it).key);
+    }
+    REQUIRE(forwardKeys.size() == 10u);
+    
+    auto it = map.begin();
+    auto lastIt = it;
+    while (it != map.end()) {
+        lastIt = it;
+        ++it;
+    }
+    
+    std::vector<int> backwardKeys;
+    backwardKeys.push_back((*lastIt).key);
+    for (size_t i = 1; i < forwardKeys.size(); ++i) {
+        --lastIt;
+        REQUIRE((*lastIt).filled); 
+        backwardKeys.push_back((*lastIt).key);
+    }
+    
+    std::reverse(backwardKeys.begin(), backwardKeys.end());
+    REQUIRE(forwardKeys == backwardKeys);
+}
+
+TEST_CASE("Iterator decrement on single element map", "[iterator-decrement]") {
+    RobinHoodMap<int, int> map;
+    map.insert(42, 999);
+    
+    auto it = map.begin();
+    REQUIRE((*it).key == 42);
+    REQUIRE((*it).value == 999);
+    
+    ++it;
+    REQUIRE(it == map.end());
+}

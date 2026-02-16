@@ -10,6 +10,7 @@
 #include <functional>
 #include <vector>
 #include <expected>
+#include <cassert>
 
 class RobinHoodMapTest;
 
@@ -18,6 +19,10 @@ class RobinHoodMapTest;
  */
 template <typename K, typename V>
 class RobinHoodMap {
+
+  static_assert(std::is_default_constructible_v<K>,
+    "RobinHoodMap requires K to be default-constructible (used by operator[])");
+
  private:
   struct Entry {
     K key;                 //< The key used to access the entry
@@ -391,7 +396,11 @@ class RobinHoodMap {
 
     /// Dereferences the iterator to access the current entry.
     /// @return Reference to the current entry.
-    Entry& operator*() { return *mEntry; }
+    Entry& operator*() { 
+      assert(mEntry != mEnd && "Dereferencing end iterator");
+      assert(mEntry->filled && "Dereferencing an empty slot");
+      return *mEntry; 
+    }
 
     /// Pre-increment operator to move to the next filled entry.
     /// @return the updated iterator.
@@ -407,6 +416,9 @@ class RobinHoodMap {
     /// @return the updated iterator.
     Iterator& operator--() {
       --mEntry;
+      while (mEntry != mEnd && !mEntry->filled) {
+        --mEntry;
+      }
       return *this;
     }
 
