@@ -1,8 +1,9 @@
 #pragma once 
 
-#include <iostream>
-#include <string>
-using std::string;
+#include "../../../third-party/qt/include/QtCore/QString"
+#include "../../../third-party/qt/include/QtGui/QFont"
+#include "../../../third-party/qt/include/QtGui/QColor"
+#include "../../../third-party/qt/include/QtWidgets/QGraphicsScene"
 
 namespace cse498 {
 
@@ -11,11 +12,10 @@ class Text {
 private:
 
     // member variables 
-    string mContent;
-
-    string mFont;
-    string mColor;
-    int mSize;
+    QString mContent;
+    QFont mFont;
+    QColor mColor;
+    float mSize;
     bool mBold;
     bool mUnderline;
     bool mItalics;
@@ -23,30 +23,31 @@ private:
 
 public:
 
-    // constructor
-    Text(string content, string font, string color, int size, bool bold, bool underline, bool italics, bool uppercase);
+    // ----------------------------------constructor---------------------------------------- //
+    Text(QString content, QString font, QString color, float size, bool bold, bool underline, bool italics, bool uppercase);
 
-    // getters
-    string GetContent();
-
-    string GetFont();
-    string GetColor();
-    int GetSize();
+    // ------------------------------------getters------------------------------------------ //
+    QString GetContent();
+    QFont GetFont();
+    QColor GetColor();
+    float GetSize();
     bool GetBold();
     bool GetUnderline();
     bool GetItalics();
     bool GetUppercase();
 
-    // setters 
-    void SetContent(string content);
-
-    void SetFont(string font);
-    void SetColor(string color);
-    void SetSize(int size);
+    // ------------------------------------setters------------------------------------------ //
+    void SetContent(QString content);
+    void SetFont(QString font);
+    void SetColor(QString color);
+    void SetSize(float size);
     void SetBold(bool bold);
     void SetUnderline(bool underline);
     void SetItalics(bool italics);
     void SetUppercase(bool uppercase);
+
+    // ------------------------------------display------------------------------------------ //
+    void displayText(QGraphicsScene& scene);
 
 };
 
