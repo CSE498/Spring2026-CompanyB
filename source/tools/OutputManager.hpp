@@ -28,6 +28,7 @@ enum class LogLevel {
 
 /// @brief Formats and persists simulation log data and programmer log messages.
 class OutputManager {
+
  private:
   /// @brief Current path of the JSON log file to be written.
   std::string mOutputFilePath;
@@ -39,7 +40,7 @@ class OutputManager {
   std::ofstream mOutputStream;
 
   /// @brief In-memory JSON that accumulates simulation outputs and insights.
-  nlohmann::json mBufferedLog;
+  nlohmann::json mBufferedLog = nlohmann::json::object();
 
   /// @brief Ensures the output file is open for writing; no-op if path empty or
   /// already open.

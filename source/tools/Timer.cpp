@@ -88,4 +88,4 @@ double Timer::GetTimeInHours() const { return GetTimeInMinutes() / 60.0; }
 
 const std::string &Timer::GetName() const { return name; }
 
-}  // namespace cse498
+}
