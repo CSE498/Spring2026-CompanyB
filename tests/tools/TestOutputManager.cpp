@@ -20,7 +20,7 @@ TEST_CASE("OutputManager sets log level and output file", "[OutputManager]") {
 
 TEST_CASE("OutputManager logs messages according to verbosity", "[OutputManager]") {
 	OutputManager manager;
-	manager.SetLogLevel(LogLevel::Silent);
+	manager.SetLogLevel(LogLevel::Normal);
 	manager.SetOutputFile("test_output.json");
 	manager.LogMessage(LogLevel::Verbose, "Should not appear");
 	manager.LogMessage(LogLevel::Normal, "Should appear");
@@ -41,12 +41,12 @@ TEST_CASE("OutputManager silent mode disables logging", "[OutputManager]") {
 	OutputManager manager;
 	manager.SetLogLevel(LogLevel::Silent);
 	manager.SetOutputFile("test_output.json");
-	manager.LogMessage(LogLevel::Debug, "Should not log");
+	manager.LogMessage(LogLevel::Normal, "Should not log");
 	manager.WriteSimulationOutput(DataLog());
 	std::ifstream in("test_output.json");
-	std::string content;
-	std::getline(in, content);
-	REQUIRE(content.empty() || content.find("messages") == std::string::npos);
+	std::string content((std::istreambuf_iterator<char>(in)), std::istreambuf_iterator<char>());
+	// In silent mode, no messages should be present in the output file
+	REQUIRE(content.find("messages") == std::string::npos);
 	in.close();
 	std::remove("test_output.json");
 }
