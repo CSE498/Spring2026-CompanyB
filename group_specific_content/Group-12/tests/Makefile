@@ -1,23 +1,33 @@
 CXX = g++
 CXXFLAGS = -std=c++23 -Wall -Wextra -I..
-LDFLAGS = -pthread
+LDFLAGS_GTEST = -lgtest -lgtest_main -pthread
+
+CATCH_FLAGS = -I../../../third-party/Catch/single_include
 
 CXXFLAGS += -I/opt/homebrew/include
-LDFLAGS += -L/opt/homebrew/lib
+LDFLAGS_GTEST += -L/opt/homebrew/lib
 
-TARGET = RobinHoodMapTest
-SRC = RobinHoodMapTest.cpp
+TARGET_MAP = RobinHoodMapTest
+TARGET_PARSER = ExpressionParserTest
 
-.PHONY: all test test-static-assert clean
+.PHONY: all test clean parser_test map_test
 
-all: $(TARGET)
-	./$(TARGET)
+# Build both by default
+all: $(TARGET_MAP) $(TARGET_PARSER)
 
-$(TARGET): $(SRC) ../RobinHoodMap.hpp
-	$(CXX) $(CXXFLAGS) -o $@ $< $(LDFLAGS)
+# Build and run tests for RobinHoodMap
+$(TARGET_MAP): RobinHoodMapTest.cpp ../RobinHoodMap.hpp
+	$(CXX) $(CXXFLAGS) -o $@ RobinHoodMapTest.cpp $(LDFLAGS_GTEST)
 
-test: $(TARGET) test-static-assert
-	./$(TARGET)
+map_test: $(TARGET_MAP)
+	./$(TARGET_MAP)
+
+# Build and run tests for ExpressionParser
+$(TARGET_PARSER): ExpressionParserTest.cpp ../ExpressionParser.cpp ../ExpressionParser.hpp
+	$(CXX) $(CXXFLAGS) $(CATCH_FLAGS) -o $@ ExpressionParserTest.cpp ../ExpressionParser.cpp
+
+parser_test: $(TARGET_PARSER)
+	./$(TARGET_PARSER)
 
 test-static-assert:
 	@echo "Testing static_assert rejects non-default-constructible V..."
@@ -28,4 +38,4 @@ test-static-assert:
 	fi
 
 clean:
-	rm -f $(TARGET)
+	rm -f $(TARGET_MAP) $(TARGET_PARSER)

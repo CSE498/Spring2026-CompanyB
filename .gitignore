@@ -44,3 +44,6 @@
 *.dwo
 
 **/.DS_Store
+
+# JetBrains IDE
+.idea
