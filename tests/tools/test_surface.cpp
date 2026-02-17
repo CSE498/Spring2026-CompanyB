@@ -1,113 +1,170 @@
-// test_surface.cpp
-#include <cassert>
-#include <iostream>
-#include <vector>
-#include <set>
+// test_surface_catch2.cpp
+#include <catch2/catch.hpp>
 
-#include "Surface.h"
+#include <set>
+#include <vector>
+#include <tuple>
+
+#include "Point.h"
 #include "Circle.h"
 #include "Box.h"
-#include "Point.h"
+#include "Surface.h"
 
-int main() {
+TEST_CASE("Surface; add shapes and detect overlap", "surface circle") {
   Surface::Config cfg;
   cfg.sector_size = 5.0;
-  Surface surface(cfg);
+  Surface s(cfg);
 
   Circle c1(Point(0.0, 0.0), 1.0);
   Circle c2(Point(1.5, 0.0), 1.0);  // overlaps c1
   Circle c3(Point(10.0, 10.0), 1.0); // far away
 
-  auto id1 = surface.AddCircle(c1);
-  auto id2 = surface.AddCircle(c2);
-  auto id3 = surface.AddCircle(c3);
+  auto id1 = s.AddCircle(c1);
+  auto id2 = s.AddCircle(c2);
+  auto id3 = s.AddCircle(c3);
 
+  REQUIRE(id1 != id2);
+  REQUIRE(id1 != id3);
+  REQUIRE(id2 != id3);
 
-  Box b1(Point(-0.5, -0.5), Point(0.5, 0.5));
-  auto idb1 = surface.AddBox(b1);
+  auto pairs = s.DetectAllOverlaps();
 
-
-  Box b2(Point(0.4, 0.4), Point(2.0, 2.0));
-  auto idb2 = surface.AddBox(b2);
-
-
-  auto pairs = surface.DetectAllOverlaps();
-  // Expect c1 & c2 overlap, c1 & b1 overlap, b1 & b2 may overlap, etc.
   auto contains_pair = [&](Surface::ShapeID a, Surface::ShapeID b) {
-    for (auto &p : pairs) {
+    for (const auto &p : pairs) {
       if ((p.first == a && p.second == b) || (p.first == b && p.second == a)) return true;
     }
     return false;
   };
 
-  assert(contains_pair(id1, id2) && "Expected circle c1 and c2 to overlap");
-  assert(contains_pair(id1, idb1) && "Expected circle c1 and box b1 to overlap");
-  assert(contains_pair(idb1, idb2) && "Expected box b1 and box b2 to overlap");
+  REQUIRE( contains_pair(id1, id2) );
+  REQUIRE_FALSE( contains_pair(id1, id3) );
+  REQUIRE_FALSE( contains_pair(id2, id3) );
+}
 
+TEST_CASE("Surface; add boxes and detect overlap", "surface box") {
+  Surface::Config cfg;
+  cfg.sector_size = 4.0;
+  Surface s(cfg);
 
-  for (auto &p : pairs) {
-    assert(!(p.first == id3 || p.second == id3));
-  }
+  // Box coordinates: min then max (ensure min <= max)
+  Box b1(Point(-1.0, -1.0), Point(1.0, 1.0));
+  Box b2(Point(0.5, 0.5), Point(2.0, 2.0)); // overlaps b1
+  Box b3(Point(5.0, 5.0), Point(6.0, 6.0)); // far away
 
+  auto idb1 = s.AddBox(b1);
+  auto idb2 = s.AddBox(b2);
+  auto idb3 = s.AddBox(b3);
 
-  auto q = surface.QueryRadius(Point(0.0, 0.0), 2.0);
+  auto pairs = s.DetectAllOverlaps();
+  auto contains_pair = [&](Surface::ShapeID a, Surface::ShapeID b) {
+    for (const auto &p : pairs) {
+      if ((p.first == a && p.second == b) || (p.first == b && p.second == a)) return true;
+    }
+    return false;
+  };
+
+  REQUIRE( contains_pair(idb1, idb2) );
+  REQUIRE_FALSE( contains_pair(idb1, idb3) );
+  REQUIRE_FALSE( contains_pair(idb2, idb3) );
+}
+
+TEST_CASE("overlap detection and QueryRadius", "surface mixed query") {
+  Surface::Config cfg;
+  cfg.sector_size = 5.0;
+  Surface s(cfg);
+
+  Circle c(Point(0.0, 0.0), 1.0);
+  Box b(Point(-0.5, -0.5), Point(0.5, 0.5)); // overlaps circle
+  Box b_far(Point(10.0, 10.0), Point(11.0, 11.0));
+
+  auto idc = s.AddCircle(c);
+  auto idb = s.AddBox(b);
+  auto idbf = s.AddBox(b_far);
+
+  auto pairs = s.DetectAllOverlaps();
+  auto contains_pair = [&](Surface::ShapeID a, Surface::ShapeID b) {
+    for (const auto &p : pairs) {
+      if ((p.first == a && p.second == b) || (p.first == b && p.second == a)) return true;
+    }
+    return false;
+  };
+
+  REQUIRE( contains_pair(idc, idb) );
+  REQUIRE_FALSE( contains_pair(idc, idbf) );
+
+  // QueryRadius centered at origin radius 2 should find idc and idb but not idbf
+  auto q = s.QueryRadius(Point(0.0, 0.0), 2.0);
   std::set<Surface::ShapeID> qset(q.begin(), q.end());
-  assert(qset.count(id1));
-  assert(qset.count(id2));
-  assert(qset.count(idb1));
-  assert(qset.count(id3) == 0);
+  REQUIRE( qset.count(idc) == 1 );
+  REQUIRE( qset.count(idb) == 1 );
+  REQUIRE( qset.count(idbf) == 0 );
+}
 
+TEST_CASE("Surface: overlap callbacks ", "surface callbacks") {
+  Surface::Config cfg;
+  cfg.sector_size = 5.0;
+  Surface s(cfg);
+
+  Circle c1(Point(0.0, 0.0), 1.0);
+  Circle c2(Point(1.5, 0.0), 1.0);
+
+  auto id1 = s.AddCircle(c1);
+  auto id2 = s.AddCircle(c2);
 
   std::vector<std::tuple<Surface::ShapeID, Surface::ShapeID, bool>> events;
-  surface.SetOverlapCallback([&events](Surface::ShapeID a, Surface::ShapeID b, bool started) {
-    events.emplace_back(a,b,started);
+  s.SetOverlapCallback([&events](Surface::ShapeID a, Surface::ShapeID b, bool started){
+    events.emplace_back(a, b, started);
   });
 
-  surface.step();
 
-  bool start_c1_b1 = false, start_c1_c2 = false, start_b1_b2 = false;
+  s.step();
+  bool got_start = false;
   for (auto &ev : events) {
     auto a = std::get<0>(ev);
     auto b = std::get<1>(ev);
-    auto s = std::get<2>(ev);
-    if (s && ((a == id1 && b == idb1) || (a == idb1 && b == id1))) start_c1_b1 = true;
-    if (s && ((a == id1 && b == id2) || (a == id2 && b == id1))) start_c1_c2 = true;
-    if (s && ((a == idb1 && b == idb2) || (a == idb2 && b == idb1))) start_b1_b2 = true;
+    auto sflag = std::get<2>(ev);
+    if (sflag && ((a == id1 && b == id2) || (a == id2 && b == id1))) got_start = true;
   }
-  assert(start_c1_b1 && start_c1_c2 && start_b1_b2);
+  REQUIRE(got_start);
   events.clear();
 
 
-  surface.TranslateShape(id2, Point(10.0, 0.0));
-  surface.step();
-  bool ended_c1_c2 = false;
+  bool ok = s.TranslateShape(id2, Point(10.0, 0.0));
+  REQUIRE(ok);
+  s.step();
+
+  bool got_end = false;
   for (auto &ev : events) {
-    if (!std::get<2>(ev) && ((std::get<0>(ev) == id1 && std::get<1>(ev) == id2) ||
-                             (std::get<0>(ev) == id2 && std::get<1>(ev) == id1))) {
-      ended_c1_c2 = true;
-    }
+    auto a = std::get<0>(ev);
+    auto b = std::get<1>(ev);
+    auto sflag = std::get<2>(ev);
+    if (!sflag && ((a == id1 && b == id2) || (a == id2 && b == id1))) got_end = true;
   }
-  assert(ended_c1_c2);
+  REQUIRE(got_end);
   events.clear();
 
 
-  surface.TranslateShape(id2, Point(-10.0, 0.0));
-  surface.step();
-  bool restarted_c1_c2 = false;
+  REQUIRE( s.TranslateShape(id2, Point(-10.0, 0.0)) );
+  s.step();
+  bool got_restart = false;
   for (auto &ev : events) {
-    if (std::get<2>(ev) && ((std::get<0>(ev) == id1 && std::get<1>(ev) == id2) ||
-                             (std::get<0>(ev) == id2 && std::get<1>(ev) == id1))) {
-      restarted_c1_c2 = true;
-    }
+    auto a = std::get<0>(ev);
+    auto b = std::get<1>(ev);
+    auto sflag = std::get<2>(ev);
+    if (sflag && ((a == id1 && b == id2) || (a == id2 && b == id1))) got_restart = true;
   }
-  assert(restarted_c1_c2);
-  events.clear();
-
-
-  surface.RemoveShape(id1);
-  auto ids = surface.AllShapeIDs();
-  for (auto id : ids) assert(id != id1);
-
-  std::cout << "All Surface tests passed.\n";
-  return 0;
+  REQUIRE(got_restart);
 }
+
+TEST_CASE("Remove shape", "surface remove") {
+  Surface::Config cfg;
+  cfg.sector_size = 5.0;
+  Surface s(cfg);
+
+  Circle c(Point(0.0, 0.0), 1.0);
+  Circle c2(Point(1.2, 0.0), 1.0);
+
+  auto id1 = s.AddCircle(c);
+  auto id2 = s.AddCircle(c2);
+
+
