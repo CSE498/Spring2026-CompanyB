@@ -1,3 +1,4 @@
+// By Luke Bridges
 #pragma once
 #include <cassert>
 #include <cstddef>
@@ -59,6 +60,8 @@ class WeightedSet {
   std::unique_ptr<Node> root_;
   // TODO: replace this with custom random class once we have that
   std::random_device rd_{};
+  // Note: marked as mutable because its state gets updated whenever we generate
+  // a random number, including in GetRandomElement which is a const function.
   mutable std::mt19937 rng_{rd_()};
   // Keys are elements stored in the WeightedSet; values are non-owning
   // pointers to the nodes in the tree representing that element.
@@ -77,7 +80,8 @@ class WeightedSet {
     if (node->parent->left.get() == node) return node->parent->left;
     return node->parent->right;
   }
-
+  // Copies the subtree starting at src, making it a child of the given
+  // "parent" node. Returns a unique pointer to the copy of src it creates.
   std::unique_ptr<Node> CopyTree(const Node* src, Node* parent) {
     if (!src) return nullptr;
 
@@ -332,7 +336,8 @@ class WeightedSet {
     }
     return std::nullopt;
   }
-
+  // Returns an element chosen at random, where each element's probability
+  // of being chosen is (weight of element) / (total weight).
   std::optional<T> GetRandomElement() const {
     if (!root_) {
       return std::nullopt;
@@ -381,10 +386,12 @@ class WeightedSet {
   }
 
   ~WeightedSet() = default;
-
+  // Returns the total number of elements in the set.
   size_t size() const { return element_to_node_.size(); }
   bool empty() const { return size() == 0; }
+  // Returns the total weight of all the elements in the set;
   double total_weight() const { return root_ ? root_->subtree_weight : 0.0; }
+  // Returns whether the set contains the given element.
   bool Contains(const T& element) const {
     return element_to_node_.find(element) != element_to_node_.end();
   }
