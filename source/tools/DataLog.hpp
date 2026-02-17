@@ -1,9 +1,6 @@
 /**
- * This file serves as the center of data aggregation and storage
- * for the Data Analytics group. 
- * @brief An internal class to collect, organize, analyze and store 
- * real-time data. 
- * @note Status: INITIAL DESIGN
+ * @file DataLog.hpp
+ * @author Divyalakshmi Varadha Rajan Prem Sudha
  **/
 
 #pragma once
@@ -14,6 +11,10 @@
 #include "nlohmann/json.hpp"
 
 namespace cse498 {
+    /* Class Description:
+    *  DataLog is the center of data aggregation and storage for the simulation.
+    *  It collects, organizes, and analyzes real-time action data from agents.
+    */
     class DataLog {
         private:
             /// @brief Vector storing all log entries as JSON objects
@@ -47,37 +48,34 @@ namespace cse498 {
             /// @brief Assignment operator (disabled)
             DataLog& operator=(const DataLog&) = delete;
 
-            /// @brief Adds a log entry from a JSON object
-            /// @param data JSON object with required fields:
-            ///             agentId (string), actionType (string), 
-            ///             duration (double), summary (string)
-            /// @note Timestamp is automatically added from GlobalClock::GetTime()
+            /// @brief Adds a log entry with automatic timestamp.
+            /// @param data JSON object containing agentId, actionType, duration, and summary.
             void AddEntry(const nlohmann::json& data);
-            /// @brief Returns the mean of all action durations
-            /// @return Mean duration, or 0.0 if no entries exist
+            /// @brief Gets the mean of all logged action durations.
+            /// @return Mean duration value.
             double GetMean() const;
             
-            /// @brief Returns the median of all action durations
-            /// @return Median duration, or 0.0 if no entries exist
+            /// @brief Gets the median of all logged action durations.
+            /// @return Median duration value.
             double GetMedian() const;
             
-            /// @brief Returns the minimum action duration
-            /// @return Minimum duration, or 0.0 if no entries exist
+            /// @brief Gets the minimum logged action duration.
+            /// @return Minimum duration value.
             double GetMin() const;
             
-            /// @brief Returns the maximum action duration
-            /// @return Maximum duration, or 0.0 if no entries exist
+            /// @brief Gets the maximum logged action duration.
+            /// @return Maximum duration value.
             double GetMax() const;
             
-            /// @brief Returns the total number of logged actions
-            /// @return Count of entries
+            /// @brief Gets the total number of logged entries.
+            /// @return Total entry count.
             size_t GetCount() const;
             
-            /// @brief Gets all log entries
-            /// @return Const reference to the entries vector
+            /// @brief Gets all logged entries.
+            /// @return Const reference to the entries vector.
             const std::vector<nlohmann::json>& GetEntries() const;
             
-            /// @brief Clears all stored data and resets internal statistics
+            /// @brief Clears all entries and resets statistics.
             void Reset();
     };
 
