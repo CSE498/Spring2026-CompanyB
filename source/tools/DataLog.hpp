@@ -5,9 +5,10 @@
 
 #pragma once
 
-#include <vector>
-#include <string>
 #include <cstddef>
+#include <string>
+#include <vector>
+
 #include "nlohmann/json.hpp"
 
 namespace cse498 {

@@ -5,30 +5,28 @@
 
 #pragma once
 
-#include "nlohmann/json.hpp"
 #include "DataLog.hpp"
+#include "nlohmann/json.hpp"
 
 namespace cse498 {
-    /// @brief Status codes for logging events
-    enum class LogEventStatus {
-        SUCCESS,
-        FAILURE
-    };
+/// @brief Status codes for logging events
+enum class LogEventStatus { SUCCESS, FAILURE };
 
-    /// @brief This file is the interface for logging any events.
-    class ActionLog {
-        private:
-            /// @brief Reference to the DataLog instance where events will be recorded.
-            DataLog& dataLog;
-        public:
-            /// @brief Basic constructor taking a reference to a DataLog instance.
-            /// @param log Reference to DataLog where events will be recorded.
-            ActionLog(DataLog& log) : dataLog(log) {}
-            ~ActionLog() = default;
+/// @brief This file is the interface for logging any events.
+class ActionLog {
+ private:
+  /// @brief Reference to the DataLog instance where events will be recorded.
+  DataLog& dataLog;
 
-            /// @brief Log an event with the provided data.
-            /// @param data JSON object containing event data.
-            /// @return Success status of the logging operation.
-            LogEventStatus LogEvent(const nlohmann::json& data);
-    };
-}
+ public:
+  /// @brief Basic constructor taking a reference to a DataLog instance.
+  /// @param log Reference to DataLog where events will be recorded.
+  ActionLog(DataLog& log) : dataLog(log) {}
+  ~ActionLog() = default;
+
+  /// @brief Log an event with the provided data.
+  /// @param data JSON object containing event data.
+  /// @return Success status of the logging operation.
+  LogEventStatus LogEvent(const nlohmann::json& data);
+};
+}  // namespace cse498

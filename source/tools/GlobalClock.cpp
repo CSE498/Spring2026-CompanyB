@@ -6,18 +6,18 @@ namespace cse498 {
 uint64_t GlobalClock::mGlobalTime = 0;
 
 uint64_t GlobalClock::GetTime() {
-    // Returns the current value of the global time counter
-    return mGlobalTime;
+  // Returns the current value of the global time counter
+  return mGlobalTime;
 }
 
 void GlobalClock::Tick(uint64_t deltaTime) {
-    // Increments the global time counter by the specified delta time amount
-    mGlobalTime += deltaTime;
+  // Increments the global time counter by the specified delta time amount
+  mGlobalTime += deltaTime;
 }
 
 void GlobalClock::Reset() {
-    // Resets the global time counter back to zero
-    mGlobalTime = 0;
+  // Resets the global time counter back to zero
+  mGlobalTime = 0;
 }
 
-}
+}  // namespace cse498
