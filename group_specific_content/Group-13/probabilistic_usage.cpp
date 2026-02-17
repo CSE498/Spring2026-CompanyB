@@ -11,7 +11,7 @@
 #include <iostream>
 #include <iomanip>
 
-#include "Scheduler.h"
+#include "Scheduler.hpp"
 
 using namespace cse498;
 
