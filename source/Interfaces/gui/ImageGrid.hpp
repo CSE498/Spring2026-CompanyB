@@ -18,7 +18,7 @@
 
 namespace cse498
 {
-    // find example usagage at Group-21/MadiQtTest.cpp
+    // find example usage at Group-21/MadiQtTest.cpp
     class ImageGrid : public WorldGrid
     {
     private:
