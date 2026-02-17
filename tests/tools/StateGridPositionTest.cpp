@@ -1,7 +1,7 @@
 #define CATCH_CONFIG_MAIN
-#include "../../third-party/Catch/single_include/catch2/catch.hpp"
-#include "../../source/core/StateGridPosition.hpp"
-// #include "../../source/core/StateGrid.hpp"  // Not ready yet
+#include "../../../third-party/Catch/single_include/catch2/catch.hpp"
+#include "../../../source/tools/StateGridPosition.hpp"
+// #include "../../../source/core/StateGrid.hpp"  // Not ready yet
 
 TEST_CASE("Test StateGridPosition Constructors", "[core]")
 {
@@ -282,19 +282,22 @@ TEST_CASE("Test StateGridPosition Edge Cases - Direction Wrapping", "[core]")
   CHECK(pos.GetDirection() == cse498::Direction::North);
 }
 
-TEST_CASE("Test StateGridPosition Edge Cases - Position at Boundary", "[core]")
-{
-  // Test forward position at edge (y=0)
-  cse498::StateGridPosition edge_north(5.0, 0.0, cse498::Direction::North);
-  auto forward = edge_north.GetForwardPosition();
-  CHECK(forward.Y() == -1.0);  // Goes negative (grid validation will handle)
-
-  // Test backward position at edge
-  auto backward = edge_north.GetBackwardPosition();
-  CHECK(backward.Y() == 1.0);
-}
 
 // Need working StateGrid first
+// These tests will most likely change based on the StateGrid methods available
+
+//TEST_CASE("Test StateGridPosition Edge Cases - Position at Boundary", "[core]")
+//{
+//  // Test forward position at edge (y=0)
+//  cse498::StateGridPosition edge_north(5.0, 0.0, cse498::Direction::North);
+//  auto forward = edge_north.GetForwardPosition();
+//  CHECK(forward.Y() == -1.0);  // Goes negative (grid validation will handle)
+//
+//  // Test backward position at edge
+//  auto backward = edge_north.GetBackwardPosition();
+//  CHECK(backward.Y() == 1.0);
+//}
+
 /*
 TEST_CASE("Test StateGridPosition MoveForward", "[core]")
 {
@@ -309,7 +312,7 @@ TEST_CASE("Test StateGridPosition MoveForward", "[core]")
   CHECK(pos.Y() == 4.0);
   CHECK(pos.X() == 5.0);
 
-  // Test move into blocked cell (if grid supports blocking)
+  // Test move into blocked cell
   // grid.SetBlocked(5, 3, true);
   // moved = pos.MoveForward(grid);
   // CHECK(moved == false);

@@ -4,7 +4,7 @@
  **/
 
 #include "StateGridPosition.hpp"
-#include "StateGrid.hpp"  // Need to wait on this
+//#include "StateGrid.hpp"  // Need to wait on this
 
 namespace cse498 {
 
