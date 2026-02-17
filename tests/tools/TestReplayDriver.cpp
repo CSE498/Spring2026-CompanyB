@@ -10,7 +10,7 @@ TEST_CASE("ReplayDriver can read and replay events from a JSON file", "[ReplayDr
         {"events", {
             {
                 {"type", "agent_added"},
-                {"agent_id", 1},
+                {"id", 1},
                 {"position", {0, 0}}
             }
         }}

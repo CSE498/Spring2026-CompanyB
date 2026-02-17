@@ -14,7 +14,7 @@ using nlohmann::json;
 // Helper to create a valid event
 json make_valid_event() {
     return json{
-        {"event_type", "test_event"},
+        {"type", "test_event"},
         {"log_level", LogLevel::Normal},
         {"id", "test_id"},
         {"details", json{{"key", "value"}}}
@@ -30,7 +30,7 @@ TEST_CASE("ActionLog logs valid events and updates DataLog", "[ActionLog]") {
     REQUIRE(actionLog.LogEvent(event) == LogEventStatus::SUCCESS);
     REQUIRE(dataLog.GetEntries().size() == 1);
     const auto& logged = dataLog.GetEntries()[0];
-    REQUIRE(logged["event_type"] == "test_event");
+    REQUIRE(logged["type"] == "test_event");
     REQUIRE(logged["log_level"] == LogLevel::Normal);
     REQUIRE(logged["id"] == "test_id");
     REQUIRE(logged["details"]["key"] == "value");
@@ -41,9 +41,9 @@ TEST_CASE("ActionLog rejects events with missing fields", "[ActionLog]") {
     ActionLog actionLog(dataLog);
     dataLog.Reset();
 
-    // Missing event_type
+    // Missing type
     auto event1 = make_valid_event();
-    event1.erase("event_type");
+    event1.erase("type");
     REQUIRE(actionLog.LogEvent(event1) == LogEventStatus::FAILURE);
     // Missing log_level
     auto event2 = make_valid_event();
@@ -66,9 +66,9 @@ TEST_CASE("ActionLog rejects events with invalid field types or values", "[Actio
     ActionLog actionLog(dataLog);
     dataLog.Reset();
 
-    // Empty event_type
+    // Empty type
     auto event3 = make_valid_event();
-    event3["event_type"] = "";
+    event3["type"] = "";
     REQUIRE(actionLog.LogEvent(event3) == LogEventStatus::FAILURE);
     // Invalid log_level: string instead of integer
     auto event4 = make_valid_event();

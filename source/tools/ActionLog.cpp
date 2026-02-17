@@ -11,8 +11,8 @@ using cse498::LogLevel;
 namespace cse498 {
 bool CheckRequiredFields(const nlohmann::json &data) {
   // Event type must be a non-empty string
-  if (!data.contains("event_type") || !data["event_type"].is_string() ||
-      data["event_type"].get<std::string>().empty()) {
+  if (!data.contains("type") || !data["type"].is_string() ||
+      data["type"].get<std::string>().empty()) {
     return false;
   }
 

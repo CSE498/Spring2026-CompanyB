@@ -35,7 +35,7 @@ void ReplayDriver::SendInstructions(const nlohmann::json &eventData) {
     // Here we would have logic to interpret the event and send instructions to
     // the world.
     event["type"];
-    event["agent_id"];
+    event["id"];
     event["position"];
     // world->getAgent(event.at("AgentID")).executeInstruction(event.at("Instruction"));
   }
