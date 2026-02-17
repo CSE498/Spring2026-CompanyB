@@ -1,7 +1,7 @@
-#include <emscripten.h>
-#include "../third-party/Catch/include/catch_with_main.hpp"
 
-#include "../source/Interfaces/WebButton.h"
+#include <catch2/catch_test_macros.hpp>
+
+#include "Interfaces/WebButton.h"
 
 
 TEST_CASE("WebButton basics") {
