@@ -1,17 +1,23 @@
 /**
  * @file example_circle_usage.cpp
- * @brief Example usage of the Circle class (Group-13).
+ * @brief Example usage of the Circle class (Group-13 demo only).
+ * @author Group-13 (Lemuel). Developed with AI assistance (Cursor).
  *
  * Demonstrates construction, containment, overlap, distances, scalar properties,
- * intersection points, and transformations.
+ * intersection points, and transformations. Circle/Point live in source/tools/;
+ * this file is group-only demo code in the personal folder.
  *
- * Compile with: g++ -std=c++17 example_circle_usage.cpp -o example_circle
- * (from group_specific_content/Group-13 with Point.h and Circle.h in the same directory)
+ * From repo root:
+ *   g++ -std=c++17 -I source/tools group_specific_content/Group-13/example_circle_usage.cpp -o example_circle
+ * From group_specific_content/Group-13:
+ *   g++ -std=c++17 -I ../../source/tools example_circle_usage.cpp -o example_circle
  */
 
-#include "Circle.h"
-#include "Point.h"
+#include "Circle.hpp"
+#include "Point.hpp"
 #include <iostream>
+
+using namespace cse498;
 #include <iomanip>
 #include <cmath>
 

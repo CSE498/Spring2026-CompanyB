@@ -1,13 +1,18 @@
 /**
  * @file test_circle.cpp
- * @brief Unit tests for the Circle class (Group-13).
+ * @brief Unit tests for the Circle class (source/tools/Circle.hpp).
+ * @author Group-13 (Lemuel). Developed with AI assistance (Cursor).
+ *
+ * Test files for company C++ classes live in tests/tools/, parallel to source/tools/.
  */
 
 #include <catch2/catch.hpp>
 #include <cmath>
 
-#include "Point.h"
-#include "Circle.h"
+#include "Point.hpp"
+#include "Circle.hpp"
+
+using namespace cse498;
 
 TEST_CASE("Circle default constructor") {
   Circle c;

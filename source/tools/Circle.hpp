@@ -1,13 +1,14 @@
 /**
- * @file Circle.h
+ * @file Circle.hpp
  * @brief Lightweight circle geometry type for 2D simulations.
+ * @author Group-13 (Lemuel). Developed with AI assistance (Cursor).
  *
  * Assumes an existing Point type with:
  *   - double x() const, double y() const
  *   - arithmetic operators (e.g., Point + Point)
  *   - equality operator
  *
- * If your Point header name differs, update the include below.
+ * Company shared C++ classes live in source/tools/; headers use .hpp.
  */
 
 #pragma once
@@ -18,7 +19,9 @@
 #include <ostream>
 #include <vector>
 
-#include "Point.h"
+#include "Point.hpp"
+
+namespace cse498 {
 
 /**
  * @class Circle
@@ -41,10 +44,6 @@ class Circle {
   static constexpr double kEps = 1e-9;   ///< Default tolerance for floating-point comparisons
   static constexpr double kPi = 3.14159265358979323846;  ///< Pi constant
 
-  // ---------------------------------------------------------------------------
-  // Constructors
-  // ---------------------------------------------------------------------------
-
   /**
    * @brief Default constructor: center at origin, radius zero.
    */
@@ -59,9 +58,6 @@ class Circle {
     assert(radius_ >= 0.0);
   }
 
-  // ---------------------------------------------------------------------------
-  // Accessors / Mutators
-  // ---------------------------------------------------------------------------
 
   /**
    * @brief Get the center of the circle.
@@ -90,9 +86,6 @@ class Circle {
     radius_ = radius;
   }
 
-  // ---------------------------------------------------------------------------
-  // Geometry Queries
-  // ---------------------------------------------------------------------------
 
   /**
    * @brief Test whether a point lies inside or on the circle.
@@ -153,10 +146,6 @@ class Circle {
     return std::sqrt(DistanceSquared(center_, other.center_));
   }
 
-  // ---------------------------------------------------------------------------
-  // Overlap Detection
-  // ---------------------------------------------------------------------------
-
   /**
    * @brief Test whether this circle overlaps another (tangency counts as overlap).
    * @param other Circle to test
@@ -190,10 +179,6 @@ class Circle {
     return ext_tangent <= eps || int_tangent <= eps;
   }
 
-  // ---------------------------------------------------------------------------
-  // Scalar Properties
-  // ---------------------------------------------------------------------------
-
   /** @brief Diameter (2 * radius). */
   double Diameter() const { return 2.0 * radius_; }
 
@@ -203,9 +188,6 @@ class Circle {
   /** @brief Area (pi * radius^2). */
   double Area() const { return kPi * radius_ * radius_; }
 
-  // ---------------------------------------------------------------------------
-  // Intersection
-  // ---------------------------------------------------------------------------
 
   /**
    * @brief Compute intersection points of this circle with another.
@@ -246,10 +228,6 @@ class Circle {
     return points;
   }
 
-  // ---------------------------------------------------------------------------
-  // Transformations
-  // ---------------------------------------------------------------------------
-
   /**
    * @brief Translate the circle by a delta vector.
    * @param delta Point to add to the center
@@ -264,10 +242,6 @@ class Circle {
     assert(factor >= 0.0);
     radius_ *= factor;
   }
-
-  // ---------------------------------------------------------------------------
-  // Helpers
-  // ---------------------------------------------------------------------------
 
   /**
    * @brief Minimum distance between the two circles' boundaries.
@@ -305,3 +279,5 @@ inline std::ostream& operator<<(std::ostream& os, const Circle& c) {
      << "), radius=" << c.GetRadius() << ")";
   return os;
 }
+
+}  // namespace cse498

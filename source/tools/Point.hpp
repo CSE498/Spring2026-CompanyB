@@ -1,7 +1,15 @@
+/**
+ * @file Point.hpp
+ * @brief 2D point type used by Circle and other geometry in source/tools.
+ * @author Group-13 (Lemuel). Developed with AI assistance (Cursor).
+ */
+
 #pragma once
 
+namespace cse498 {
+
 class Point {
-public:
+ public:
   Point() : x_(0.0), y_(0.0) {}
   Point(double x, double y) : x_(x), y_(y) {}
 
@@ -16,7 +24,9 @@ public:
     return x_ == other.x_ && y_ == other.y_;
   }
 
-private:
+ private:
   double x_;
   double y_;
 };
+
+}  // namespace cse498
