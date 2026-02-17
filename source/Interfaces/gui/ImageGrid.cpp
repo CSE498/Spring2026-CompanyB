@@ -92,7 +92,7 @@ namespace cse498
         mScene.setSceneRect(0, 0, grid.GetWidth() * mTileSize, grid.GetHeight() * mTileSize);
 
         // set up the view size and scene
-        view.setFixedSize(mScene.sceneRect().width() + 2, mScene.sceneRect().height() + 2);
+        view.setFixedSize(mScene.sceneRect().width(), mScene.sceneRect().height());
         view.setScene(&mScene);
 
         view.show();

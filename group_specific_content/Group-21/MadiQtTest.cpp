@@ -29,23 +29,12 @@ int main(int argc, char *argv[])
 
     std::vector<QString> imagePaths = {"images/test1.png", "images/test2.png"};
 
+    // create ImageGrid
     ImageGrid imageGrid(world, scene, tileSize, imagePaths);
 
+    // render
     imageGrid.RenderGrid();
     imageGrid.SetSceneAndView(view);
 
     return app.exec();
-
-    // add image to scene
-    // scene.addPixmap(pixmap);
-
-    // set scene to view
-    // view.setScene(&scene);
-
-    // resize scene to image size
-    // scene.setSceneRect(pixmap.rect());
-
-    // view.show();
-
-    // return app.exec();
 }
