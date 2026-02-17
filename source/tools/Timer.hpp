@@ -43,21 +43,22 @@ namespace cse498 {
         /// @return the given name of the object when it was initialized
         const std::string& GetName() const;
 
-    private:
-        // Name of the object
-        std::string name;
-        // Time when the stop watch is either started or resumed
-        double startTime;
-        // Time when the stop watch is stopped
-        double endTime;
-        // The accumulated total Time when the stopwatch is running, NOT including when the stopwatch is paused
-        double accumulatedTime;
-        // Check if the stopwatch has started and not stopped
-        bool isRunning;
-        // Check if the stopwatch has been paused
-        bool isPaused;
+ private:
+  // Name of the object
+  std::string name;
+  // Time when the stop watch is either started or resumed
+  double startTime;
+  // Time when the stop watch is stopped
+  double endTime;
+  // The accumulated total Time when the stopwatch is running, NOT including
+  // when the stopwatch is paused
+  double accumulatedTime;
+  // Check if the stopwatch has started and not stopped
+  bool isRunning;
+  // Check if the stopwatch has been paused
+  bool isPaused;
 
-        double pauseTime;
-    };
+    double pauseTime;
+};
 
 }

@@ -16,9 +16,9 @@ namespace cse498 {
      *  Citation: Used AI responsibly and actively in building the class below.
      */
 class GlobalClock {
-public:
-    // GlobalClock is a static utility class and cannot be instantiated
-    GlobalClock() = delete;
+ public:
+  // GlobalClock is a static utility class and cannot be instantiated
+  GlobalClock() = delete;
 
     /// @return current global time in ticks
     static uint64_t GetTime();
@@ -26,12 +26,12 @@ public:
     /// Advance global time by a @param deltaTime amount
     static void Tick(uint64_t deltaTime = 1);
 
-    // Reset global time to zero
-    static void Reset();
+  // Reset global time to zero
+  static void Reset();
 
-private:
-    // The current global time
-    static uint64_t mGlobalTime;
+ private:
+  // The current global time
+  static uint64_t mGlobalTime;
 };
 
 }
