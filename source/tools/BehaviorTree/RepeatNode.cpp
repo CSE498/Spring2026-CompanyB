@@ -4,8 +4,21 @@ int RepeatNode::tick()
 {
     ++m_tickCount;
 
-    auto& child = this->getChild();
-    int s = child->tick();
+    int fail = 0;
+    int running = -1;
 
-    return (s != 0) ? -1 : 0;
+    auto& child = this->getChild();
+
+    int status = child->tick();
+
+    m_status = (status != fail) ? running : fail;
+
+    return m_status;
+}
+
+std::string RepeatNode::getActivePath()
+{ 
+    auto& child = this->getChild();
+
+    return m_name + " - " + child->getActivePath();
 }

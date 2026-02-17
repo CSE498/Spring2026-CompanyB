@@ -11,6 +11,8 @@ class ActionNode: public LeafNode
 
         int tickCount() const { return m_tickCount; }
 
+        std::string getActivePath() override { return m_name; }
+
     private:
         int m_tickCount{};
 };

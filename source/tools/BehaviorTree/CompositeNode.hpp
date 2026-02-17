@@ -2,21 +2,23 @@
 
 #include "Node.hpp"
 
-#include <vector>
-
 class CompositeNode: public Node 
 {
     public:
         using Node::Node;
         virtual ~CompositeNode() = default;
 
-        bool addNode(std::unique_ptr<Node> node); // Insertion
-        bool deleteNode(Node* node); // Deletion
+        void addNode(std::unique_ptr<Node> node);
+        void deleteNode(Node* node);
 
         virtual void print(int depth) const;
         virtual int tick() = 0;
 
+        virtual std::string getActivePath() = 0;
+
     protected:
+        int m_status{-1};
+
         const std::vector< std::unique_ptr<Node>>& getChildren() const 
         {
             return m_children;

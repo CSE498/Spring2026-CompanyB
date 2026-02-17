@@ -1,21 +1,20 @@
 #include "BehaviorTree.hpp"
 
-BehaviorTree::BehaviorTree(std::unique_ptr<Node> root) : m_root(std::move(root))
-{
+#include <iostream>
 
+std::string cse498::BehaviorTree::getActivePath()
+{
+    return m_root->getActivePath();
 }
 
-void BehaviorTree::getActivePath()
+int cse498::BehaviorTree::tick()
 {
-
-}
-
-int BehaviorTree::tick()
-{
+    ++m_tickCount;
     return m_root->tick();
 }
 
-void BehaviorTree::debugView() const
+void cse498::BehaviorTree::debugView() const
 {
-    m_root->print(0);
+    int depth = 0;
+    m_root->print(depth);
 }

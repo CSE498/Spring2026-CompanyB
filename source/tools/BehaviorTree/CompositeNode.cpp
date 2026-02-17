@@ -3,18 +3,16 @@
 #include <iostream>
 #include <algorithm>
 
-bool CompositeNode::addNode(std::unique_ptr<Node> node)
+void CompositeNode::addNode(std::unique_ptr<Node> node)
 {
-    if (!node) return false; // Check for Nullptr
+    //assert(node); // Check for Nullptr
 
     m_children.push_back(std::move(node));
-
-    return true;
 }
 
 // ATTRIBUTIONS: Used ChatGPT to get the remove_if algorithm implementation
 
-bool CompositeNode::deleteNode(Node* node)
+void CompositeNode::deleteNode(Node* node)
 {
     auto delNode = std::remove_if(
                         m_children.begin(),
@@ -24,17 +22,31 @@ bool CompositeNode::deleteNode(Node* node)
                         }
                     );
 
-    if (delNode == m_children.end()) return false;
+    //assert(delNode == m_children.end());
 
     m_children.erase(delNode, m_children.end());
-
-    return true;
 }
 
 void CompositeNode::print(int depth) const
 {
-    std::cout << std::string(depth * 2, ' ') << m_name << '\n';
+    int indent = 2;
+
+    std::cout << std::string(depth * indent, ' ') << m_name << " (" << m_status << ")" << '\n';
 
     for (const auto& child : m_children)
         child->print(depth + 1);
 }
+
+// bool CompositeNode::getActivePath(std::vector< std::unique_ptr<Node>>& path)
+// {
+//     if (m_status == -1) 
+//     {
+//         path.push_back(this);
+//         return true;
+//     }
+
+//     for (const auto& child : m_children)
+//         child->getActivePath(path);
+
+//     return false;
+// }

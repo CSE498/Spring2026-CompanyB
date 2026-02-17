@@ -4,10 +4,28 @@ int InvertNode::tick()
 {
     ++m_tickCount;
 
+    int fail = 0;
+    int running = -1;
+    int pass = 1;
+
     auto& child = this->getChild();
-    int s = child->tick();
+    
+    int status = child->tick();
 
-    if (s == -1) return -1;
+    if (status == running) 
+    {
+        m_status = running;
+        return m_status;
+    }
 
-    return (s == 1) ? 0 : 1;
+    m_status = (status == pass) ? fail : pass;
+
+    return m_status;
+}
+
+std::string InvertNode::getActivePath()
+{ 
+    auto& child = this->getChild();
+
+    return m_name + " - " + child->getActivePath();
 }

@@ -8,18 +8,21 @@
 
 #include <memory>
 
-class BehaviorTree
+namespace cse498
 {
-public:
-    BehaviorTree(std::unique_ptr<Node> root);
+    class BehaviorTree
+    {
+    public:
+        BehaviorTree(std::unique_ptr<Node> root) : m_root(std::move(root)) { assert(m_root != nullptr); }
 
-    int tick();
-    int tickCount() const;
+        int tick();
+        int tickCount() const { return m_tickCount; }
 
-    void getActivePath(); // Searching
-    void debugView() const; // Traversal
+        std::string getActivePath(); // Searching
+        void debugView() const; // Traversal
 
-private:
-    int m_ticks;
-    std::unique_ptr<Node> m_root;
-};
+    private:
+        int m_tickCount{};
+        std::unique_ptr<Node> m_root;
+    };
+}
