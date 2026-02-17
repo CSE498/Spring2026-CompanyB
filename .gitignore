@@ -1,3 +1,6 @@
+# Local files
+/.vscode/
+
 # Prerequisites
 *.d
 
@@ -39,3 +42,8 @@
 
 # debug information files
 *.dwo
+
+**/.DS_Store
+
+# JetBrains IDE
+.idea
