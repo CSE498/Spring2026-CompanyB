@@ -6,12 +6,41 @@ int SelectNode::tick()
 
     bool isRunning = false;
 
-    for (auto& child : this->getChildren()) {
-        int s = child->tick();
+    int fail = 0;
+    int running = -1;
+    int pass = 1;
 
-        if (s == 1) return 1;
-        if (s == -1) isRunning = true;
+    auto& children = this->getChildren();
+    auto& child = *(children.begin() + m_index);
+
+    int status = child->tick();
+
+    switch (status)
+    {
+        case 1: 
+            m_status = pass;
+            return pass;
+            break;
+
+        case -1: 
+            isRunning = true;
+            break;
+
+        case 0: 
+            ++m_index;
+            isRunning = true;
+            break;
     }
+
+    m_status = (isRunning && m_index < children.size()) ? running : fail;
     
-    return (isRunning) ? -1 : 0;
+    return m_status;
+}
+
+std::string SelectNode::getActivePath()
+{ 
+    auto& children = this->getChildren();
+    auto& child = *(children.begin() + m_index);
+
+    return m_name + " - " + child->getActivePath();
 }

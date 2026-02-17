@@ -11,6 +11,9 @@ class SelectNode: public CompositeNode
 
         int tickCount() const { return m_tickCount; }
 
+        std::string getActivePath() override;
+
     private:
         int m_tickCount{};
+        unsigned int m_index{};
 };

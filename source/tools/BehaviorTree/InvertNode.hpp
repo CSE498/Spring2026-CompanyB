@@ -11,6 +11,8 @@ class InvertNode: public DecoratorNode
 
         int tickCount() const { return m_tickCount; }
 
+        std::string getActivePath() override;
+
     private:
-        int m_tickCount{    };
+        int m_tickCount{};
 };
