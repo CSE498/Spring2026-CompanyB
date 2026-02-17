@@ -7,7 +7,7 @@
 #define CATCH_CONFIG_MAIN
 #include "../../third-party/Catch/single_include/catch2/catch.hpp"
 
-#include "../../group_specific_content/Group-13/Scheduler.h"
+#include "../../group_specific_content/Group-13/Scheduler.hpp"
 
 using namespace cse498;
 
@@ -193,6 +193,8 @@ TEST_CASE("Scheduler: Deterministic GetNext", "[scheduler]") {
     CHECK(*count2 == 5);
     CHECK(*count3 == 2);
   }
+  
+  
 }
 
 TEST_CASE("Scheduler: Probabilistic GetNext", "[scheduler]") {
