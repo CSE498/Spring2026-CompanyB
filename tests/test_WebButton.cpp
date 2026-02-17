@@ -1,49 +1,52 @@
-#include <cassert>
-#include <iostream>
+#include <emscripten.h>
+#include "../third-party/Catch/include/catch_with_main.hpp"
+
 #include "../source/Interfaces/WebButton.h"
 
-int main() {
+
+TEST_CASE("WebButton basics") {
   WebButton b("Start", "startBtn");
 
-  // Label test
-  assert(b.GetLabel() == "Start");
-  b.SetLabel("Pause");
-  assert(b.GetLabel() == "Pause");
+  SECTION("Label set/get works") {
+    REQUIRE(b.GetLabel() == "Start");
+    b.SetLabel("Pause");
+    REQUIRE(b.GetLabel() == "Pause");
+  }
 
-  // Visibility test
-  assert(b.IsVisible() == true);
-  b.Hide();
-  assert(b.IsVisible() == false);
-  b.Show();
-  assert(b.IsVisible() == true);
+  SECTION("Visibility works") {
+    REQUIRE(b.IsVisible());
+    b.Hide();
+    REQUIRE_FALSE(b.IsVisible());
+    b.Show();
+    REQUIRE(b.IsVisible());
+  }
 
-  // Enable/Disable test
-  assert(b.IsEnabled() == true);
-  b.Disable();
-  assert(b.IsEnabled() == false);
-  b.Enable();
-  assert(b.IsEnabled() == true);
+  SECTION("Enable/Disable works") {
+    REQUIRE(b.IsEnabled());
+    b.Disable();
+    REQUIRE_FALSE(b.IsEnabled());
+    b.Enable();
+    REQUIRE(b.IsEnabled());
+  }
 
-  // Click callback test
-  int count = 0;
-  b.SetOnClick([&]() { count++; });
+  SECTION("Click runs callback only when enabled and visible") {
+    int count = 0;
+    b.SetOnClick([&count]() { ++count; });
 
-  b.Click();
-  assert(count == 1);
+    b.Click();
+    REQUIRE(count == 1);
 
-  b.Disable();
-  b.Click();
-  assert(count == 1);
+    b.Disable();
+    b.Click();
+    REQUIRE(count == 1);
 
-  b.Enable();
-  b.Hide();
-  b.Click();
-  assert(count == 1);
+    b.Enable();
+    b.Hide();
+    b.Click();
+    REQUIRE(count == 1);
 
-  b.Show();
-  b.Click();
-  assert(count == 2);
-
-  std::cout << "All WebButton tests passed!\n";
-  return 0;
+    b.Show();
+    b.Click();
+    REQUIRE(count == 2);
+  }
 }
