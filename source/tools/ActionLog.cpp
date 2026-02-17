@@ -26,6 +26,13 @@ bool CheckRequiredFields(const nlohmann::json &data) {
     return false;
   }
 
+  // ID must be a non-empty string
+  if (!data.contains("id") ||
+      !data["id"].is_string() ||
+      data["id"].get<std::string>().empty()) {
+    return false;
+  }
+
   // Details must be a JSON object
   if (!data.contains("details") || !data["details"].is_object()) {
     return false;

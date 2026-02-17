@@ -16,6 +16,7 @@ json make_valid_event() {
     return json{
         {"event_type", "test_event"},
         {"log_level", LogLevel::Normal},
+        {"id", "test_id"},
         {"details", json{{"key", "value"}}}
     };
 }
@@ -31,6 +32,7 @@ TEST_CASE("ActionLog logs valid events and updates DataLog", "[ActionLog]") {
     const auto& logged = dataLog.GetEntries()[0];
     REQUIRE(logged["event_type"] == "test_event");
     REQUIRE(logged["log_level"] == LogLevel::Normal);
+    REQUIRE(logged["id"] == "test_id");
     REQUIRE(logged["details"]["key"] == "value");
 }
 
@@ -47,10 +49,14 @@ TEST_CASE("ActionLog rejects events with missing fields", "[ActionLog]") {
     auto event2 = make_valid_event();
     event2.erase("log_level");
     REQUIRE(actionLog.LogEvent(event2) == LogEventStatus::FAILURE);
-    // Missing details
+    // Missing id
     auto event3 = make_valid_event();
-    event3.erase("details");
+    event3.erase("id");
     REQUIRE(actionLog.LogEvent(event3) == LogEventStatus::FAILURE);
+    // Missing details
+    auto event4 = make_valid_event();
+    event4.erase("details");
+    REQUIRE(actionLog.LogEvent(event4) == LogEventStatus::FAILURE);
     // No entries should be logged
     REQUIRE(dataLog.GetEntries().empty());
 }
@@ -76,6 +82,10 @@ TEST_CASE("ActionLog rejects events with invalid field types or values", "[Actio
     auto event5 = make_valid_event();
     event5["details"] = "not an object";
     REQUIRE(actionLog.LogEvent(event5) == LogEventStatus::FAILURE);
+    // id is empty string
+    auto event6 = make_valid_event();
+    event6["id"] = "";
+    REQUIRE(actionLog.LogEvent(event6) == LogEventStatus::FAILURE);
     // No entries should be logged
     REQUIRE(dataLog.GetEntries().empty());
 }
@@ -88,10 +98,12 @@ TEST_CASE("ActionLog can log multiple valid events", "[ActionLog]") {
     for (int i = 1; i <= 3; ++i) {
         auto event = make_valid_event();
         event["test_event"] = std::to_string(i);
+        event["id"] = "test_id_" + std::to_string(i);
         REQUIRE(actionLog.LogEvent(event) == LogEventStatus::SUCCESS);
     }
     REQUIRE(dataLog.GetEntries().size() == 3);
     for (int i = 0; i < 3; ++i) {
         REQUIRE(dataLog.GetEntries()[i]["test_event"] == std::to_string(i + 1));
+        REQUIRE(dataLog.GetEntries()[i]["id"] == "test_id_" + std::to_string(i + 1));
     }
 }
