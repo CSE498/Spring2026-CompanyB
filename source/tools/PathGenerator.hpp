@@ -1,0 +1,403 @@
+/// @file PathGenerator.hpp
+/// @author Group 11 (Chirag Bhansali, Lalit Chitibomma, Daniel Petkoski, Cole
+/// Scheller, Devansh Tayal)
+/// @brief Pathfinding and path generation utilities for agent navigation.
+
+// NOTE - Some methods and comments were written with the help of AI
+
+#pragma once
+
+#include <algorithm>
+#include <cassert>
+#include <cmath>
+#include <functional>
+#include <optional>
+#include <queue>
+#include <random>
+#include <unordered_map>
+#include <unordered_set>
+#include <vector>
+
+#include "Math/Point.hpp"
+#include "WorldPath.hpp"
+
+namespace cse498 {
+
+using Point = Math::Point;
+
+/// Type alias for world query callback functions
+using WorldQueryFunc = std::function<bool(const Point &)>;
+
+/// Type alias for distance heuristic callback functions
+using HeuristicFunc = std::function<double(const Point &, const Point &)>;
+
+/**
+ * @brief Pathfinding and path generation for agent navigation.
+ *
+ * Provides A* pathfinding, patrol routes, avoidance paths, random walks,
+ * and procedural path generation (spirals). Configurable with custom
+ * heuristics and step sizes for different world representations.
+ */
+class PathGenerator {
+public:
+  /**
+   * @brief Construct a PathGenerator with default settings.
+   *
+   * Default heuristic: Euclidean distance
+   * Default step size: 1.0
+   */
+  PathGenerator() : heuristic_(EuclideanDistance), step_size_(1.0) {}
+
+  // ========== Core Path Generation ==========
+
+  /**
+   * @brief Generate shortest path from start to goal using A* algorithm.
+   * @param start Starting point
+   * @param goal Goal point
+   * @param canMove Callback to check if a point is traversable
+   * @return Optional WorldPath (nullopt if no path exists)
+   */
+  [[nodiscard]] std::optional<WorldPath>
+  ShortestPath(const Point &start, const Point &goal, WorldQueryFunc canMove) {
+    assert(canMove && "WorldQueryFunc cannot be null");
+
+    // Handle degenerate case: start == goal
+    if (std::abs(start.x() - goal.x()) < 0.01 &&
+        std::abs(start.y() - goal.y()) < 0.01) {
+      WorldPath path;
+      path.addPoint(start);
+      return path;
+    }
+
+    // Check if start and goal are valid
+    if (!canMove(start) || !canMove(goal)) {
+      return std::nullopt;
+    }
+
+    // A* algorithm implementation
+    using PointDist = std::pair<double, Point>;
+    auto cmp = [](const PointDist &a, const PointDist &b) {
+      return a.first > b.first; // Min-heap based on f-score
+    };
+    std::priority_queue<PointDist, std::vector<PointDist>, decltype(cmp)>
+        openSet(cmp);
+
+    std::unordered_set<Point, Math::PointHash> closedSet; // Track visited nodes
+    std::unordered_map<Point, Point, Math::PointHash> cameFrom;
+    std::unordered_map<Point, double, Math::PointHash> gScore;
+
+    gScore[start] = 0.0;
+    double fStart = heuristic_(start, goal);
+    openSet.push({fStart, start});
+
+    size_t iterations = 0;
+    const size_t maxIterations = 10000; // Prevent infinite loops
+
+    while (!openSet.empty() && iterations++ < maxIterations) {
+      Point current = openSet.top().second;
+      openSet.pop();
+
+      // Skip if already visited
+      if (closedSet.count(current) > 0) {
+        continue;
+      }
+
+      closedSet.insert(current);
+
+      // Check if we reached the goal
+      double distToGoal = heuristic_(current, goal);
+      if (distToGoal < step_size_ * 0.6) {
+        // Close enough to goal - add goal point and return
+        if (distToGoal > 0.01) {
+          cameFrom[goal] = current;
+          return ReconstructPath(cameFrom, goal);
+        } else {
+          return ReconstructPath(cameFrom, current);
+        }
+      }
+
+      // Explore neighbors
+      std::vector<Point> neighbors = GetNeighbors(current);
+      for (const Point &neighbor : neighbors) {
+        if (closedSet.count(neighbor) > 0 || !canMove(neighbor))
+          continue;
+
+        double tentativeGScore =
+            gScore[current] + heuristic_(current, neighbor);
+
+        if (gScore.find(neighbor) == gScore.end() ||
+            tentativeGScore < gScore[neighbor]) {
+          cameFrom[neighbor] = current;
+          gScore[neighbor] = tentativeGScore;
+          double fScore = gScore[neighbor] + heuristic_(neighbor, goal);
+          openSet.push({fScore, neighbor});
+        }
+      }
+    }
+
+    // No path found
+    return std::nullopt;
+  }
+
+  /**
+   * @brief Generate a patrol path through waypoints.
+   * @param waypoints Points to visit in order
+   * @param loop If true, return to start point
+   * @return Optional WorldPath (nullopt if waypoints are unreachable)
+   */
+  [[nodiscard]] std::optional<WorldPath>
+  PatrolPath(const std::vector<Point> &waypoints, bool loop = true) {
+    if (waypoints.empty()) {
+      return std::nullopt;
+    }
+
+    if (waypoints.size() == 1) {
+      WorldPath path;
+      path.addPoint(waypoints[0]);
+      return path;
+    }
+
+    WorldPath finalPath;
+    auto canMoveAnywhere = [](const Point &) { return true; };
+
+    // Connect each waypoint to the next
+    for (size_t i = 0; i < waypoints.size() - 1; ++i) {
+      auto segment =
+          ShortestPath(waypoints[i], waypoints[i + 1], canMoveAnywhere);
+      if (!segment.has_value()) {
+        // Skip unreachable waypoints (soft error per docs)
+        continue;
+      }
+
+      // Add points, avoiding duplicates at waypoint junctions
+      for (size_t j = 0; j < segment->size(); ++j) {
+        if (i > 0 && j == 0 && !finalPath.empty()) {
+          // Skip first point of segment if it duplicates last point
+          continue;
+        }
+        finalPath.addPoint((*segment)[j]);
+      }
+    }
+
+    // If loop requested, connect back to start
+    if (loop && !waypoints.empty() && !finalPath.empty()) {
+      auto lastSegment =
+          ShortestPath(waypoints.back(), waypoints.front(), canMoveAnywhere);
+      if (lastSegment.has_value()) {
+        for (size_t j = 1; j < lastSegment->size(); ++j) {
+          finalPath.addPoint((*lastSegment)[j]);
+        }
+      }
+    }
+
+    return finalPath.empty() ? std::nullopt
+                             : std::optional<WorldPath>(finalPath);
+  }
+
+  /**
+   * @brief Generate path from start to goal while avoiding a region.
+   * @param start Starting point
+   * @param goal Goal point
+   * @param avoid Center of region to avoid
+   * @param radius Radius around avoid point to stay away from
+   * @param canMove Callback to check if a point is traversable
+   * @return Optional WorldPath (nullopt if avoidance makes path impossible)
+   */
+  [[nodiscard]] std::optional<WorldPath>
+  AvoidancePath(const Point &start, const Point &goal, const Point &avoid,
+                double radius, WorldQueryFunc canMove) {
+    assert(canMove && "WorldQueryFunc cannot be null");
+    assert(radius >= 0.0 && "Avoidance radius cannot be negative");
+
+    // Create a combined movement validator
+    auto canMoveWithAvoidance = [&](const Point &p) {
+      if (!canMove(p))
+        return false;
+      double dist = std::hypot(p.x() - avoid.x(), p.y() - avoid.y());
+      return dist >= radius;
+    };
+
+    return ShortestPath(start, goal, canMoveWithAvoidance);
+  }
+
+  // ========== Utility Generation ==========
+
+  /**
+   * @brief Generate a random walk path for exploration.
+   * @param start Starting point
+   * @param steps Number of steps to take
+   * @param canMove Callback to check if a point is traversable
+   * @return WorldPath (returns partial path if dead-end reached)
+   */
+  [[nodiscard]] WorldPath RandomWalk(const Point &start, size_t steps,
+                                     WorldQueryFunc canMove) {
+    assert(canMove && "WorldQueryFunc cannot be null");
+
+    WorldPath path;
+    path.addPoint(start);
+
+    if (steps == 0 || !canMove(start)) {
+      return path;
+    }
+
+    static std::random_device rd;
+    static std::mt19937 gen(rd());
+    std::uniform_int_distribution<> dis(0, 7); // 8 directions
+
+    Point current = start;
+
+    for (size_t i = 0; i < steps; ++i) {
+      std::vector<Point> validNeighbors;
+      auto neighbors = GetNeighbors(current);
+
+      for (const Point &neighbor : neighbors) {
+        if (canMove(neighbor)) {
+          validNeighbors.push_back(neighbor);
+        }
+      }
+
+      if (validNeighbors.empty()) {
+        // Dead end - return partial path
+        break;
+      }
+
+      // Pick random valid neighbor
+      std::uniform_int_distribution<> neighborDis(0, validNeighbors.size() - 1);
+      current = validNeighbors[neighborDis(gen)];
+      path.addPoint(current);
+    }
+
+    return path;
+  }
+
+  /**
+   * @brief Generate an expanding spiral path centered at a point.
+   * @param center Center of the spiral
+   * @param spacing Distance between spiral turns
+   * @param turns Number of complete rotations
+   * @return WorldPath representing the spiral
+   */
+  [[nodiscard]] WorldPath SpiralPath(const Point &center, double spacing,
+                                     size_t turns) {
+    WorldPath path;
+
+    if (turns == 0) {
+      path.addPoint(center);
+      return path;
+    }
+
+    // Start at center
+    path.addPoint(center);
+
+    // Generate spiral using parametric equations
+    // r(t) = spacing * t / (2*pi)
+    // x(t) = center.x() + r(t) * cos(t)
+    // y(t) = center.y() + r(t) * sin(t)
+
+    const double maxAngle = turns * 2.0 * M_PI;
+    const double angleStep = step_size_ / (spacing > 0 ? spacing : 1.0);
+
+    for (double angle = angleStep; angle <= maxAngle; angle += angleStep) {
+      double r = (spacing * angle) / (2.0 * M_PI);
+      Point p(center.x() + r * std::cos(angle),
+              center.y() + r * std::sin(angle));
+      path.addPoint(p);
+    }
+
+    return path;
+  }
+
+  // ========== Configuration ==========
+
+  /**
+   * @brief Set the distance heuristic for pathfinding algorithms.
+   * @param h Heuristic function (e.g., Manhattan, Euclidean, Chebyshev)
+   */
+  void SetHeuristic(HeuristicFunc h) {
+    assert(h && "HeuristicFunc cannot be null");
+    heuristic_ = h;
+  }
+
+  /**
+   * @brief Set step size for continuous world pathfinding.
+   * @param size Step size (must be positive)
+   */
+  void SetStepSize(double size) {
+    assert(size > 0.0 && "Step size must be positive");
+    step_size_ = size;
+  }
+
+  /**
+   * @brief Get current step size.
+   * @return Current step size value
+   */
+  [[nodiscard]] double GetStepSize() const { return step_size_; }
+
+private:
+  HeuristicFunc heuristic_; ///< Distance estimation function
+  double step_size_;        ///< Granularity for continuous worlds
+
+  // ========== Helper Functions ==========
+
+  /**
+   * @brief Default Euclidean distance heuristic.
+   */
+  static double EuclideanDistance(const Point &a, const Point &b) {
+    double dx = b.x() - a.x();
+    double dy = b.y() - a.y();
+    return std::hypot(dx, dy);
+  }
+
+  /**
+   * @brief Get neighboring points for pathfinding expansion.
+   * @param p Current point
+   * @return Vector of neighboring points based on step_size_
+   */
+  [[nodiscard]] std::vector<Point> GetNeighbors(const Point &p) const {
+    std::vector<Point> neighbors;
+    neighbors.reserve(8);
+
+    // 8-directional movement (cardinal + diagonal)
+    const double step = step_size_;
+    const std::vector<std::pair<double, double>> directions = {
+        {step, 0},    {-step, 0},    {0, step},     {0, -step},
+        {step, step}, {step, -step}, {-step, step}, {-step, -step}};
+
+    for (const auto &[dx, dy] : directions) {
+      Point neighbor(p.x() + dx, p.y() + dy);
+      neighbors.push_back(neighbor);
+    }
+
+    return neighbors;
+  }
+
+  /**
+   * @brief Reconstruct path from A* search results.
+   * @param came_from Map of point -> previous point
+   * @param current Final point reached
+   * @return Reconstructed WorldPath
+   */
+  [[nodiscard]] WorldPath ReconstructPath(
+      const std::unordered_map<Point, Point, Math::PointHash> &came_from,
+      const Point &current) const {
+    WorldPath path;
+    std::vector<Point> reversePath;
+
+    Point node = current;
+    reversePath.push_back(node);
+
+    while (came_from.find(node) != came_from.end()) {
+      node = came_from.at(node);
+      reversePath.push_back(node);
+    }
+
+    // Reverse to get path from start to goal
+    for (auto it = reversePath.rbegin(); it != reversePath.rend(); ++it) {
+      path.addPoint(*it);
+    }
+
+    return path;
+  }
+};
+
+} // namespace cse498
