@@ -16,8 +16,8 @@ TEST_CASE("Surface; add shapes and detect overlap", "surface circle") {
   Surface s(cfg);
 
   Circle c1(Point(0.0, 0.0), 1.0);
-  Circle c2(Point(1.5, 0.0), 1.0);  // overlaps c1
-  Circle c3(Point(10.0, 10.0), 1.0); // far away
+  Circle c2(Point(1.5, 0.0), 1.0);
+  Circle c3(Point(10.0, 10.0), 1.0);
 
   auto id1 = s.AddCircle(c1);
   auto id2 = s.AddCircle(c2);
@@ -46,7 +46,7 @@ TEST_CASE("Surface; add boxes and detect overlap", "surface box") {
   cfg.sector_size = 4.0;
   Surface s(cfg);
 
-  // Box coordinates: min then max (ensure min <= max)
+
   Box b1(Point(-1.0, -1.0), Point(1.0, 1.0));
   Box b2(Point(0.5, 0.5), Point(2.0, 2.0)); // overlaps b1
   Box b3(Point(5.0, 5.0), Point(6.0, 6.0)); // far away
@@ -74,7 +74,7 @@ TEST_CASE("overlap detection and QueryRadius", "surface mixed query") {
   Surface s(cfg);
 
   Circle c(Point(0.0, 0.0), 1.0);
-  Box b(Point(-0.5, -0.5), Point(0.5, 0.5)); // overlaps circle
+  Box b(Point(-0.5, -0.5), Point(0.5, 0.5));
   Box b_far(Point(10.0, 10.0), Point(11.0, 11.0));
 
   auto idc = s.AddCircle(c);
@@ -92,7 +92,7 @@ TEST_CASE("overlap detection and QueryRadius", "surface mixed query") {
   REQUIRE( contains_pair(idc, idb) );
   REQUIRE_FALSE( contains_pair(idc, idbf) );
 
-  // QueryRadius centered at origin radius 2 should find idc and idb but not idbf
+
   auto q = s.QueryRadius(Point(0.0, 0.0), 2.0);
   std::set<Surface::ShapeID> qset(q.begin(), q.end());
   REQUIRE( qset.count(idc) == 1 );
