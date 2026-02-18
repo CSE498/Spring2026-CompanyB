@@ -16,6 +16,7 @@ BUILD_DIR := ../tests/build/
 BIN       := $(BUILD_DIR)/run_tests
 
 CATCH_INC := ../third-party/Catch/single_include
+INCLUDE_PATH = $(CURDIR)/../third-party/include
 
 CXXFLAGS ?= -O2 -g
 WARNFLAGS ?= -Wall -Wextra -Wpedantic

@@ -19,6 +19,7 @@ class ActionLog {
   DataLog& dataLog;
 
  public:
+  ActionLog() = delete; // Delete default constructor
   /// @brief Basic constructor taking a reference to a DataLog instance.
   /// @param log Reference to DataLog where events will be recorded.
   ActionLog(DataLog& log) : dataLog(log) {}
