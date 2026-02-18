@@ -16,3 +16,14 @@ I added getters for direction and positions. And then a setter for direction.
 Finally, there's comparison functionality. SameCell checks if two StateGridPosition objects are in the same cell. Also I set up the spaceship operator to allow for any type of comparison for StateGridPosition objects. 
 
 That’s it for the StateGridPosition class. 
+
+# StateGrid
+Hi, i worked on the State grid class, its relatively simple just stores a 2d vector of tile classes which do most of the heavy lifting along with meta data
+
+It does a couple of weird things, currently the symbol to tile translation is done in class but it should be its own file to easily add, remove symbols or modify what tiles they produce without messing with this class
+The second thing is if you get a specific tile it returns a pointer if you get all tile the vector uses references which makes it weird to use the tile depending on how you get it, '.' vs the '->' operators, might use std optional with a bool to indicate an error state
+
+The tile class is relatively simple it has a bunch of meta data from a traversal perspective which is nice but might be redundant depending on where we go with the module. Tiles also have a traversable bool to differentiate walls from path to make sue you cant walk over a wall
+but i only have a getter, a setter might be nice for open, shut doors and such. They also store agents and i have a dummy class for testing rn but they can only store one agent and cant remove an agent if they don't have one. I use bools to indicate error states once again.
+
+Neither of my classes do anything too weird or interesting, they're relatively simple and yeah, other than a few modifications should be good to go.
