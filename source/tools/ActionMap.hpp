@@ -339,6 +339,6 @@ namespace cse498 {
       
       funcs[name] = FuncEntry{std::any(func), f, variant_index<Ret>(), param_sig_vec<Args...>()};
       return name;
-    };
+    }
   };
 };

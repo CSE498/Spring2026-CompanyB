@@ -1,7 +1,7 @@
 // ATTRIBUTIONS: I used Chat GPT to generate the base test cases. I did modify them, however.
 
-#include "../../third-party/Catch/single_include/catch2/catch.hpp"
-#include "../../source/tools/FunctionSet.hpp"
+#include "catch2/catch.hpp"
+#include "tools/FunctionSet.hpp"
 
 TEST_CASE("FunctionSet - Construction and basic operations") {
     cse498::FunctionSet<int, int> fs;

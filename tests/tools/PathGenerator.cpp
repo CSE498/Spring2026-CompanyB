@@ -5,9 +5,8 @@
 
 // NOTE - The tests were written with the help of AI.
 
-#include "../../third-party/Catch/single_include/catch2/catch.hpp"
-
-#include "../../source/tools/PathGenerator.hpp"
+#include "catch2/catch.hpp"
+#include "tools/PathGenerator.hpp"
 
 using cse498::PathGenerator;
 using cse498::Point;
