@@ -31,14 +31,14 @@ class StateGrid
     /***********************************************
      * Width getter
      *
-     * returns the width of the 2d tiles vector
+     * @returns the width of the 2d tiles vector
      ************************************************/
     int getWidth() const;
 
     /***********************************************
      * Height getter
      *
-     * returns the height of the 2d tiles vector
+     * @returns the height of the 2d tiles vector
      ************************************************/
     int getHeight() const;
 
@@ -48,14 +48,14 @@ class StateGrid
      * @param row row of the tile to get
      * @param col col of the tile to get
      *
-     * returns a pointer to the tile, null pointer if out of bounds
+     * @returns a pointer to the tile, null pointer if out of bounds
      ************************************************/
     Tile *getTile(int row, int col);
 
     /***********************************************
      * All tile getter
      *
-     * returns a reference to the tiles vector so it's mutable
+     * @returns a reference to the tiles vector so it's mutable
      ************************************************/
     std::vector<std::vector<Tile>> &getAllTiles();
 
@@ -65,7 +65,7 @@ class StateGrid
      * @param row Row index to check.
      * @param col Column index to check.
      *
-     * returns True if (row, col) is inside the grid and the tile is traversable.
+     * @returns True if (row, col) is inside the grid and the tile is traversable.
      ************************************************/
     bool inBounds(int row, int col) const;
 };
