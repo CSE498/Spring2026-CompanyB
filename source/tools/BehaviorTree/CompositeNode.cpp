@@ -36,17 +36,3 @@ void CompositeNode::print(int depth) const
     for (const auto& child : m_children)
         child->print(depth + 1);
 }
-
-// bool CompositeNode::getActivePath(std::vector< std::unique_ptr<Node>>& path)
-// {
-//     if (m_status == -1) 
-//     {
-//         path.push_back(this);
-//         return true;
-//     }
-
-//     for (const auto& child : m_children)
-//         child->getActivePath(path);
-
-//     return false;
-// }

@@ -2,6 +2,20 @@
 
 #include "LeafNode.hpp"
 
+// ATTRIBUTIONS: Used ChatGPT to create Docstrings. Further modifications come from my input
+
+/**
+ * @brief Leaf node that performs a concrete action.
+ *
+ * An ActionNode represents an executable behavior at the leaf
+ * level of a behavior tree. Unlike composite or decorator nodes,
+ * it does not have children and encapsulates a specific action
+ * or task.
+ *
+ * The result of tick() determines whether the action:
+ * - Succeeds, or
+ * - Is still Running.
+ */
 class ActionNode: public LeafNode
 {
     public:

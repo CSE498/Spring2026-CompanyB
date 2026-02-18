@@ -4,7 +4,7 @@
 
 void DecoratorNode::addNode(std::unique_ptr<Node> node)
 {
-    //assert(m_child); // Check for Existing Child
+    // assert(m_child == nullptr); // Check for Existing Child
     
     m_child = std::move(node);
 }
@@ -22,16 +22,3 @@ void DecoratorNode::print(int depth) const
     
     m_child->print(depth + 1);
 }
-
-// bool DecoratorNode::getActivePath(std::vector< std::unique_ptr<Node>>& path)
-// {
-//     if (m_status == -1) 
-//     {
-//         path.push_back(this);
-//         return true;
-//     }
-
-//     m_child->getActivePath(path);
-
-//     return false;
-// }

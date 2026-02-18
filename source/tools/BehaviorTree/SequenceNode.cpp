@@ -10,6 +10,7 @@ int SequenceNode::tick()
     int running = -1;
     int pass = 1;
 
+    // Check status of active child
     auto& children = this->getChildren();
     auto& child = *(children.begin() + m_index);
 

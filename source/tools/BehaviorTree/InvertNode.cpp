@@ -8,8 +8,8 @@ int InvertNode::tick()
     int running = -1;
     int pass = 1;
 
+    // Check status of active child
     auto& child = this->getChild();
-    
     int status = child->tick();
 
     if (status == running) 
