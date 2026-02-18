@@ -76,7 +76,6 @@ public:
         std::ofstream file(path);
         if (!file.is_open()) return false;
 
-        // Write Headers
         for (size_t i = 0; i < m_columnNames.size(); ++i) {
             file << m_columnNames[i] << (i == m_columnNames.size() - 1 ? "" : ",");
         }
