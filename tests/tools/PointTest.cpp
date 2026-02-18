@@ -306,3 +306,118 @@ TEST_CASE("Testing normalize method", "[Point][normalize]"){
     CHECK(Z.getY() == 0.0);
     CHECK(Z.magnitude() == 0.0);
 };
+
+
+
+TEST_CASE("Testing rotate method", "[Point][rotate]"){
+
+    Point A(2.5, -3.0);
+    Point original = A;
+
+    A.rotate(0);
+    CHECK(A == original);
+
+    Point B(1,0);
+    B.rotate(90);
+    CHECK(tol_equal(B.getX() ,  0.0));
+    CHECK(tol_equal(B.getY() ,  1.0));
+
+
+    Point C(1,0);
+    C.rotate(90, Point(0,0), false);
+    CHECK(tol_equal(C.getX(), 0.0));
+    CHECK(tol_equal(C.getY(), -1.0));
+
+    Point D(2,-3);
+    D.rotate(180);
+    CHECK(tol_equal(D.getX(), -2.0));
+    CHECK(tol_equal(D.getY(), 3.0));
+
+    Point E(2.5, -3.0);
+    Point ooriginal = E;
+
+    E.rotate(360);
+    CHECK(A == ooriginal);
+
+    Point F(2,1);
+    Point pivot(1,1);
+    F.rotate(90, pivot);
+    CHECK(tol_equal(F.getX(), 1.0));
+    CHECK(tol_equal(F.getY(), 2.0));
+
+    Point G(2,1);
+    G.rotate(90, pivot, false);
+    CHECK(tol_equal(G.getX(), 1.0));
+    CHECK(tol_equal(G.getY(), 0.0));
+
+    Point H(1,0);
+    H.rotate(90).rotate(90);
+    CHECK(tol_equal(H.getX(), -1.0));
+    CHECK(tol_equal(H.getY(), 0.0));
+
+
+    Point I(3,4);
+    Point pivotI(1,2);
+    Point before = I;
+
+    double dx0 = before.getX() - pivotI.getX();
+    double dy0 = before.getY() - pivotI.getY();
+    double dsquare_before = dx0*dx0 + dy0*dy0;
+
+    I.rotate(37,pivotI);
+
+    double dx1 = I.getX() - pivotI.getX();
+    double dy1 = I.getY() - pivotI.getY();
+    double dsquare_after = dx1*dx1 + dy1*dy1;
+
+    CHECK(tol_equal(dsquare_before, dsquare_after));
+
+
+
+};
+
+
+
+TEST_CASE("Testing cross_product method", "[Point][cross_product]"){
+   Point A(1,2); 
+   Point B(3,4); 
+
+    CHECK(tol_equal(A.cross_product(B), -2.0));
+    CHECK(tol_equal(B.cross_product(A), 2.0));
+
+    Point C(5.5, -3.0);
+    CHECK(tol_equal(C.cross_product(C), 0.0));
+
+    Point D(4,8);
+    CHECK(tol_equal(A.cross_product(D), 0.0));
+    CHECK(tol_equal(D.cross_product(A), 0.0));
+
+    Point i(1,0);
+    Point j(0,1);
+    CHECK(tol_equal(i.cross_product(j), 1.0));
+    CHECK(tol_equal(j.cross_product(i), -1.0));
+
+    Point M(1,0);
+    Point N(1,1);
+    Point P(1,-1);
+    CHECK(M.cross_product(N) > 0);
+    CHECK(M.cross_product(P) < 0);
+
+    CHECK(tol_equal(A.cross_product(B+C), A.cross_product(B) +
+          A.cross_product(C)));
+    
+    Point E(3,0);
+    Point F(0,-4);
+    double d = -2.5;
+
+    CHECK(tol_equal((E*d).cross_product(F), d*E.cross_product(F)));
+    CHECK(tol_equal((E).cross_product(F*d), d*E.cross_product(F)));
+
+    //triangle
+    double res = E.cross_product(F);
+    CHECK(tol_equal(res, -12.0));
+
+    double triangle_area = 0.5 * std::abs(res);
+    CHECK(tol_equal(triangle_area, 6.0));
+
+};

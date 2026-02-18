@@ -2,8 +2,9 @@
 #pragma once 
 
 #include <iostream>
-#include <cmath> // for std::abs, std::sqrt
+#include <cmath> // for std::abs, std::sqrt, std::cos, std::sin
 #include <algorithm> // for std::max
+#include <numbers> // for std::numbers::pi
 
 constexpr double EPSILON = 1e-9;
 constexpr double RELATIVE_TOLERANCE= 1e-12;
@@ -109,11 +110,35 @@ public:
     }
     
     // rotate 
-    Point& rotate(){
-        return *this; // I will implement this later.
+    Point& rotate(double deg, Point pivot = {0,0},
+                  bool counter_clockwise = true){ 
+        //return *this; // I will implement this later.
+        if (tol_equal(deg, 0)) return *this;
+        if (!counter_clockwise) deg = -deg;
+
+        double rad = deg * (std::numbers::pi / 180.0); 
+
+        double tempx = x - pivot.x; 
+        double tempy = y - pivot.y; 
+
+        double c = std::cos(rad);
+        double s = std::sin(rad);
+
+        x = (( tempx*c ) - ( tempy*s )) + pivot.x;
+        y = (( tempx*s ) + ( tempy*c )) + pivot.y;
+
+        return *this;
     }
 
-    // 
+
+    // 2D cross product -- useful for finding area of the parallelogram
+    // area of triangle, possibly torque
+    // 2D cross product yields a fake "k" in ijk system 
+    // my method will return a scalar, not a point vector 
+    double cross_product(const Point& other) const {
+        return (this->x * other.y) - (this->y * other.x);
+    }
+
 
 };
 
