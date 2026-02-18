@@ -1,6 +1,5 @@
-#define CATCH_CONFIG_MAIN
-#include "../../../third-party/Catch/single_include/catch2/catch.hpp"
-#include "../../../source/tools/StateGridPosition.hpp"
+#include "../../third-party/Catch/single_include/catch2/catch.hpp"
+#include "../../source/tools/StateGridPosition.hpp"
 // #include "../../../source/core/StateGrid.hpp"  // Not ready yet
 
 TEST_CASE("Test StateGridPosition Constructors", "[core]")
