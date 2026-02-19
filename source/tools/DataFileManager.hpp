@@ -13,9 +13,9 @@ namespace cse498 {
 
 /**
  * Class: DataFileManager
- * Brief: A generic tool to record and buffer simulation states into a 2D structure.
- * * Intuition:
- * This class acts records values for attributes of different agents. You tell it which variables to watch 
+ * A generic tool to record and buffer simulation states into a 2D structure.
+ * 
+ * This class records values for attributes of different agents. You tell it which variables to watch 
  * (RegisterAttribute), and every time you call Update(), it takes a snapshot 
  * of those variables and stores them in a new row of a 2D vector.
  * 
