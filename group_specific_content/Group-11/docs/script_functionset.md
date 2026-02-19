@@ -1,4 +1,4 @@
-## ``<CLASS_NAME>``
+## ``FunctionSet``
 
 <!--
 - Brief introduction (developer's name, name of implemented class)
@@ -23,18 +23,19 @@
 - Give example use cases
   - First, cover the template parameters (Ret, Params...) 
   - Demonstrate adding functions
+  - Note how all of the functions are different (Free, Lambda, Member)
   - Demonstrate invoking functions
+  - Show the order the functions are called
   - Demonstrate iterating, things like size(), clear()
 
 ### Usage example
 - Give a stub of a meaningful basic usage of your class
   - Show function set with different functions taking a reference and mutating it
-  - Note how all of the functions are different (Free, Lambda, Member)
-  - Show the order the functions are called
   - Show final result
 ### Error handling
 - Give description of how you handle errors, and how you expect users to handle them
   - Be careful passing temporaries, as they may be consumed by a function and then become invalid for the next function
+  - Indexing with operator[] is UB
   - Normal invoke() propogates exceptions
   - invoke\_all returns an std::expected if any function throws detailing the function that threw
 ### Limitations & restrictions
