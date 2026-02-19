@@ -16,7 +16,7 @@ namespace cse498
         }
     }
 
-    // helper function
+    // load images into an image list
     bool ImageGrid::LoadImages(const std::vector<QString> &mImagePaths)
     {
         mImageList.clear();
@@ -46,7 +46,7 @@ namespace cse498
             qWarning() << "Number of images: " << mImageList.size() << " Number of cell types: " << cellTypes.size();
             for (const auto &cellType : cellTypes)
             {
-                qWarning() << QString::fromStdString(cellType.name); // Assuming 'name' is a std::string
+                qWarning() << QString::fromStdString(cellType.name);
             }
             return;
         }
@@ -68,16 +68,20 @@ namespace cse498
         // get the grid from the WorldBase class
         WorldGrid &grid = mWorld.GetGrid();
 
+        // loop over rows
         for (size_t y = 0; y < grid.GetHeight(); ++y)
         {
+            // loop over columns
             for (size_t x = 0; x < grid.GetWidth(); ++x)
             {
 
                 size_t cell_id = grid[x, y];
 
+                // find the corresponding image to the cell_id
                 auto it = mTilePixmaps.find(cell_id);
                 if (it != mTilePixmaps.end())
                 {
+                    // add pixmap to scene
                     QGraphicsPixmapItem *item = mScene.addPixmap(it->second);
                     item->setPos(x * mTileSize, y * mTileSize);
                 }
