@@ -1,42 +1,83 @@
-## ``<CLASS_NAME>``
-
-<!--
-- Brief introduction (developer's name, name of implemented class)
-- General overview of implemented class, brief example use case(s) (just how it might be useful)
-- Example usage (we can show a code snippet and talk through it here)
-- Overview of failure modes (any use of expecteds or exceptions, any notes on error handling suggestions)
-- Known limitations, if any (if you made any restrictions on how it's used, mention here) (e.g., I limit the permissible types in ActionMap to ones given at instantiation)
-- Depending on time left, overview of more challenging internal implementation concepts (things you wrote that are maybe more complex but are a backbone to the class)
--->
+## ``ActionMap``
 
 ### Introduction
 
 - Introduce self
+  - Cole Scheller
 - Introduce implemented class
+  - ActionMap
 
 ### Broad overview
 - Give broad description of implemented class
-  - [ Fill in bullets for broad description ]
-  - [ What is it? What is its utility? What pain point does it solve? ]
+  - `ActionMap` offers a map matching a string to a callable function, allowing the programmer to dynamically select and invoke arbitrary functions at runtime
+  - The functionality of this class largely mimics the idea of a dispatch table
 - Give example use cases
-  - [ Fill in bullets for possible use cases ]
-  - [ Can be broad, just want to describe how it might be useful ]
+  - A web interface dropdown of actions
 ### Usage example
 - Give a stub of a meaningful basic usage of your class
-  - [ Fill in code block with basic usage ]
-  - [ Fill in bullets explaining the usage example ]
-	- [ Describe the broad strokes of your example, note any nuances like instantiation or whatever ]
+```cpp
+
+#include <functional>
+#include <string>
+
+// Return whether the string s as a double is equal to d
+bool str_dbl_cmp(std::string s, double d) {
+	return (std::stod(s) == d);
+}
+
+int main() {
+	using namespace cse498;
+	ActionMap<std::string, int, double> demo_map{};
+	
+	// Insert named function
+	// auto here will be std::expected<str, ActionMapErr>
+	auto reg_res = demo_map.register_callable("compare_double", str_dbl_cmp);
+	if (!res.has_value()) {
+		// Handle error
+	}
+	
+	auto invoke_res = demo_map.invoke<bool>("compare_double", "1.0", 1.0);
+	if (!res.has_value()) {
+		// Handle error
+	} else {
+		std::cout << "Result: " << invoke_res.value() << std::endl;
+	}
+	
+	
+	// Register func to check double equality
+	// Let EPS be some very small range
+	reg_res = demo_map.register_callable("double_eq",
+		[] (double a, double b) {
+			double diff = a - b;
+			return (-EPS < diff && diff < EPS);
+		}
+	);
+	
+	auto second_invoke_res = demo_map<bool>("double_eq", 1.0, 2.0);
+	if (!res.has_value()) {
+		// Handle error
+	} else {
+		std::cout << "Result: " << second_invoke_res << std::endl;
+	}
+}
+
+```
+  <!-- - [ Fill in code block with basic usage ] -->
+  <!-- - [ Fill in bullets explaining the usage example ] -->
+  <!-- 	- [ Describe the broad strokes of your example, note any nuances like instantiation or whatever ] -->
 ### Error handling
 - Give description of how you handle errors, and how you expect users to handle them
-  - [ Fill in bullets for errors which may originate from your class ]
-	- [ (basically just give the main ways someone can misuse your class) ]
-  - [ Fill in bullets for how you handle errors ]
-  - [ Do you use ``std::expected``? What should the user do with the error results? ]
-  - [ Do you use exceptions? When should the user expect to handle thrown exceptions? ]
+  - No exceptions
+  - ``std::expected`` with an enum of errors in ``ActionMapErr``
+  - These can be:
+	- Invalid signature on invocation (TooFew, TooMany, InvalidRet, InvalidArg)
+	- Callable not found / Name already exists
+	- Other undetermined error at invocation
+   - Some errors handled via compilation error
+	 - Only types defined for a given ActionMap are permissible, trying to pass other types in will fail to compile
+ - Users can choose to handle errors as they see fit, as fatal errors are handled via compile error
 ### Limitations & restrictions
 - Give description any known limitations in your design, or restrictions you made for it
-  - [ Fill in bullets for known limitations ]
-  - [ Fill in bullets for restrictions made ]
-	- [ If restrictions were made, fill in bullets for why ]
-	- [ (essentially what tradeoffs did you make and why) ]
+  - As mentioned prior, a given actionmap is restricted to permit only the types specified when instantiated
+  - This restriction allows for runtime type-checking through the use of a variant, which eliminates the need for costly exceptions
 
