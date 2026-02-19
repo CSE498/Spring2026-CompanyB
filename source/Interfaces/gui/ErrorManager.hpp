@@ -7,7 +7,7 @@
 
 class ErrorManager {
 public:
-    // Error level severity
+    // Severity levels for errors
     enum class Severity {
         Warning,
         Error,
@@ -42,6 +42,9 @@ public:
     void clearHandlers();
 
 private:
+    // Internal dispatch
+    void dispatch(const std::string& message, Severity severity);
+
     // Default behaviors
     void defaultHandler(const std::string& message, Severity severity);
 
