@@ -6,6 +6,9 @@
 #include <algorithm> // for std::max
 #include <numbers> // for std::numbers::pi
 
+
+namespace cse498 {
+
 constexpr double EPSILON = 1e-9;
 constexpr double RELATIVE_TOLERANCE= 1e-12;
 inline bool tol_equal(double a, double b){
@@ -171,3 +174,4 @@ bool operator!=(double lhs, const Point& rhs);
 // dot product
 double dot(const Point& A, const Point& B);
 
+} // namespace cse498
