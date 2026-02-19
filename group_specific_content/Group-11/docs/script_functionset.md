@@ -11,32 +11,34 @@
 
 ### Introduction
 
-- Introduce self
-- Introduce implemented class
+- Introduce self (Hello I'm Daniel Petkoski, etc.)
+- Introduce implemented class (I wrote the FunctionSet class).
 
 ### Broad overview
 - Give broad description of implemented class
-  - [ Fill in bullets for broad description ]
-  - [ What is it? What is its utility? What pain point does it solve? ]
+  - The FunctionSet is a container of functions that all have the same signature.
+  - The FunctionSet allows for each of its stored functions to be called one at a time.
+  - It is iterable and indexable as well, allowing for the access of functions in different ways.
+  - Its use is useful if you have many different functions that need to called when something happens (i.e action, event loop).
 - Give example use cases
-  - [ Fill in bullets for possible use cases ]
-  - [ Can be broad, just want to describe how it might be useful ]
+  - First, cover the template parameters (Ret, Params...) 
+  - Demonstrate adding functions
+  - Demonstrate invoking functions
+  - Demonstrate iterating, things like size(), clear()
+
 ### Usage example
 - Give a stub of a meaningful basic usage of your class
-  - [ Fill in code block with basic usage ]
-  - [ Fill in bullets explaining the usage example ]
-	- [ Describe the broad strokes of your example, note any nuances like instantiation or whatever ]
+  - Show function set with different functions taking a reference and mutating it
+  - Note how all of the functions are different (Free, Lambda, Member)
+  - Show the order the functions are called
+  - Show final result
 ### Error handling
 - Give description of how you handle errors, and how you expect users to handle them
-  - [ Fill in bullets for errors which may originate from your class ]
-	- [ (basically just give the main ways someone can misuse your class) ]
-  - [ Fill in bullets for how you handle errors ]
-  - [ Do you use ``std::expected``? What should the user do with the error results? ]
-  - [ Do you use exceptions? When should the user expect to handle thrown exceptions? ]
+  - Be careful passing temporaries, as they may be consumed by a function and then become invalid for the next function
+  - Normal invoke() propogates exceptions
+  - invoke\_all returns an std::expected if any function throws detailing the function that threw
 ### Limitations & restrictions
 - Give description any known limitations in your design, or restrictions you made for it
-  - [ Fill in bullets for known limitations ]
-  - [ Fill in bullets for restrictions made ]
-	- [ If restrictions were made, fill in bullets for why ]
-	- [ (essentially what tradeoffs did you make and why) ]
+  - No return type aggregation becuase its hard to deduce what types can be stored in a vector to return
+  - Decided to not allow stuff like resize() since this is a high-level container, storing and doing stuff efficiently is less important since stuff will not be added as often.
 
