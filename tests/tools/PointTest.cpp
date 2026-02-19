@@ -1,6 +1,8 @@
 #include "PointClass.hpp"
 #include <catch2/catch_test_macros.hpp>
 
+using namespace cse498;
+
 
 TEST_CASE("Testing Constructors, setters/getters", "[Point][constructor]"){
     Point A;

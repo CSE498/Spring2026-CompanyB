@@ -1,5 +1,6 @@
 #include "PointClass.hpp"
 
+namespace cse498 {
 /* Additions */
 // addition (+) between two points
 Point operator+(const Point& lhs, const Point& rhs){
@@ -91,12 +92,5 @@ bool operator!=(double lhs, const Point& rhs){
 double dot(const Point& A, const Point& B){
     return (( A.getX() * B.getX()) + (A.getY() * B.getY() ));
 }
-//int main(){
-//
-//    Point a{10, 11};
-//    Point b{12, 13};
-//    Point c = b + a;
-//    std::cout << "(" << (c+2).getX() << ", " 
-//        << (c+2).getY()  << ")" << std::endl; 
-//    return 0;
-//}
+
+} // namespace cse498
