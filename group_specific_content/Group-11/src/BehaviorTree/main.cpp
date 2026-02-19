@@ -1,89 +1,152 @@
-#include "../../sources/tools/BehaviorTree/BehaviorTree.hpp"
+#include "tools/BehaviorTree/BehaviorTree.hpp"
 
-#include <cassert>
 #include <iostream>
 
-// int main() {
-//     // Create BehaviorTree
-//     std::unique_ptr<SequenceNode> root = std::make_unique<SequenceNode>("SeqRoot");
-//     SequenceNode* rootPtr = root.get();
+cse498::BehaviorTree createBasicSequence() {
+    /*
+    Tree:
+        SeqRoot
+          Grab Ball
+          Chuck It
+    */
 
-//     BehaviorTree tree = BehaviorTree(std::move(root));
-
-//     // Add Nodes
-//     std::unique_ptr<InvertNode> node1 = std::make_unique<InvertNode>("Inv1");
-//     InvertNode* node1Ptr = node1.get();
-
-//     std::unique_ptr<InvertNode> node2 = std::make_unique<InvertNode>("Inv2");
-//     InvertNode* node2Ptr = node2.get();
-
-//     assert(  rootPtr->addNode(std::move(node1)) );
-//     assert(  rootPtr->addNode(std::move(node2)) );
-//     assert( !rootPtr->addNode(std::move(node1)) ); // No Duplicate Nodes
-
-//     std::unique_ptr<ActionNode> node3 = std::make_unique<ActionNode>("Act1");
-//     ActionNode* node3Ptr = node3.get();
-
-//     assert( node1Ptr->addNode(std::move(node3)) );
-
-//     std::unique_ptr<ActionNode> node4 = std::make_unique<ActionNode>("Act2");
-//     ActionNode* node4Ptr = node4.get();
-
-//     assert(  node2Ptr->addNode(std::move(node4)) );
-//     assert( !node1Ptr->addNode(std::move(node4)) ); // No Duplicate Nodes
-
-//     // View Behavior Tree
-//     tree.debugView();
-//     tree.tick();
-
-//     // Node Tick Count
-//     std::cout << rootPtr->tickCount() << '\n';
-//     std::cout << node1Ptr->tickCount() << '\n';
-//     std::cout << node2Ptr->tickCount() << '\n';
-//     std::cout << node3Ptr->tickCount() << '\n';
-//     std::cout << node4Ptr->tickCount() << '\n';
-
-
-//     // Delete Nodes
-//     assert( node2Ptr->deleteNode(node3Ptr) );
-//     assert( node1Ptr->deleteNode(node4Ptr) );
-
-//     assert(  rootPtr->deleteNode(node2Ptr) );
-//     assert(  rootPtr->deleteNode(node1Ptr) );
-
-//     return 0;
-// }
-
-int main() {
-    // Create BehaviorTree
-    std::unique_ptr<SequenceNode> root = std::make_unique<SequenceNode>("SeqRoot");
+    auto root = std::make_unique<SequenceNode>("SeqRoot");
     SequenceNode* rootPtr = root.get();
 
-    BehaviorTree tree = BehaviorTree(std::move(root));
+    cse498::BehaviorTree tree(std::move(root));
 
-    std::unique_ptr<ActionNode> node1 = std::make_unique<ActionNode>("Act1");
-    ActionNode* node1Ptr = node1.get();
+    auto act1 = std::make_unique<ActionNode>("Grab Ball", 2);
+    auto act2 = std::make_unique<ActionNode>("Chuck It", 2);
 
-    assert( rootPtr->addNode(std::move(node1)) );
+    rootPtr->addNode(std::move(act1));
+    rootPtr->addNode(std::move(act2));
 
-    std::unique_ptr<ActionNode> node2 = std::make_unique<ActionNode>("Act2");
-    ActionNode* node2Ptr = node2.get();
+    return tree;
+}
 
-    assert(  rootPtr->addNode(std::move(node2)) );
-    assert( !rootPtr->addNode(std::move(node1)) ); // No Duplicate Nodes
+cse498::BehaviorTree createBasicSelect() {
+    /*
+    Tree:
+        SeqRoot
+          Inv1
+            Grab Blue Ball
+          Inv2
+            Grab Red Ball
+    */
 
-    // View Behavior Tree
+    auto root = std::make_unique<SelectNode>("SelRoot");
+    SelectNode* rootPtr = root.get();
+
+    cse498::BehaviorTree tree(std::move(root));
+
+    auto inv1 = std::make_unique<InvertNode>("Inv1");
+    InvertNode* inv1Ptr = inv1.get();
+
+    auto inv2 = std::make_unique<InvertNode>("Inv2");
+    InvertNode* inv2Ptr = inv2.get();
+
+    rootPtr->addNode(std::move(inv1));
+    rootPtr->addNode(std::move(inv2));
+
+    auto act1 = std::make_unique<ActionNode>("Grab Red Ball", 2);
+    auto act2 = std::make_unique<ActionNode>("Grab Blue Ball", 2);
+
+    inv1Ptr->addNode(std::move(act1));
+    inv2Ptr->addNode(std::move(act2));
+
+    return tree;
+}
+
+cse498::BehaviorTree createSelectFail() {
+        /*
+    Tree:
+        SelRoot
+          Rep1
+            Inv1
+              Act1
+          Rep2
+            Inv2
+              Act2
+    */
+
+    auto root = std::make_unique<SelectNode>("SelRoot");
+    SelectNode* rootPtr = root.get();
+
+    cse498::BehaviorTree tree(std::move(root));
+
+    auto rep1 = std::make_unique<RepeatNode>("Rep1");
+    auto rep2 = std::make_unique<RepeatNode>("Rep2");
+
+    RepeatNode* rep1Ptr = rep1.get();
+    RepeatNode* rep2Ptr = rep2.get();
+
+    rootPtr->addNode(std::move(rep1));
+    rootPtr->addNode(std::move(rep2));
+
+    auto inv1 = std::make_unique<InvertNode>("Inv1");
+    auto inv2 = std::make_unique<InvertNode>("Inv2");
+
+    InvertNode* inv1Ptr = inv1.get();
+    InvertNode* inv2Ptr = inv2.get();
+
+    rep1Ptr->addNode(std::move(inv1));
+    rep2Ptr->addNode(std::move(inv2));
+
+    auto act1 = std::make_unique<ActionNode>("Act1", 2);
+    auto act2 = std::make_unique<ActionNode>("Act2", 2);
+
+    inv1Ptr->addNode(std::move(act1));
+    inv2Ptr->addNode(std::move(act2));
+
+    return tree;
+}
+
+int main() {
+    std::string line = "\n_______________________________________\n";
+
+    auto tree = createBasicSelect();
+
+    std::cout << "Initial Tree: \n";
+
+    std::string active_path = "Current Path: " + tree.getActivePath();
+
+    std::cout << line + "Tick #" << tree.tickCount() << ":" + line;
+    std::cout << active_path << "\n\n";
     tree.debugView();
-    tree.tick();
+    std::cout << "\n";
 
-    // Node Tick Count
-    std::cout << rootPtr->tickCount() << '\n';
-    std::cout << node1Ptr->tickCount() << '\n';
-    std::cout << node2Ptr->tickCount() << '\n';
+    // See if there are any keys waiting in standard input (wait if needed)
+    char input;
 
-    // Delete Nodes
-    assert(  rootPtr->deleteNode(node2Ptr) );
-    assert(  rootPtr->deleteNode(node1Ptr) );
+    // Quit program with 'q'
+    while(input != 'q') {    
+        do {
+        std::cin >> input;
+        } while (!std::cin);
+
+        // Increment tick with 't'
+        if (input == 't') {
+            std::string active_path = "Current Path: " + tree.getActivePath();
+
+            int status = tree.tick();
+
+            std::cout << line + "Tick #" << tree.tickCount() << ":" + line;
+            std::cout << active_path << "\n\n";
+
+            tree.debugView();
+
+            if (tree.tickCount() < 4) std::cout << line;
+
+            else if (tree.tickCount() >= 4 && tree.tickCount() < 10) {
+                if (status == 1 or status == 0) { std::cout << "\nThat's it! Keep going ig..." + line; }
+            }
+
+            else if (tree.tickCount() >= 10 && tree.tickCount() < 15) std::cout << line + "\nway to go..." + line;
+
+            else if (tree.tickCount() >= 15) std::cout << line + "\nwow..." + line;
+
+        }
+    }
 
     return 0;
 }

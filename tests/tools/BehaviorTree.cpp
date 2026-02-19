@@ -71,6 +71,13 @@ TEST_CASE("Tick propagates correctly through tree (Action)", "[tick]") {
     REQUIRE(tree.tickCount() == 2);
 
     REQUIRE(act1Ptr->tickCount() == 2);
+
+    // tick #3
+    REQUIRE(tree.getActivePath() == "SelRoot - Act1");
+    REQUIRE(tree.tick() == 1);
+    REQUIRE(tree.tickCount() == 3);
+
+    REQUIRE(act1Ptr->tickCount() == 3);
 }
 
 TEST_CASE("Tick propagates correctly through tree (Simple Sequence)", "[tick]") {
@@ -130,6 +137,15 @@ TEST_CASE("Tick propagates correctly through tree (Simple Sequence)", "[tick]") 
     REQUIRE(act1Ptr->tickCount() == 2);
 
     REQUIRE(act2Ptr->tickCount() == 2);
+
+    // tick #5
+    // REQUIRE(tree.getActivePath() == "SeqRoot - Act2");
+    // REQUIRE(tree.tick() == 1);
+    // REQUIRE(tree.tickCount() == 5);
+
+    // REQUIRE(act1Ptr->tickCount() == 2);
+
+    // REQUIRE(act2Ptr->tickCount() == 3);
 }
 
 TEST_CASE("Tick propagates correctly through tree (Simple Select)", "[tick]") {
@@ -476,6 +492,19 @@ TEST_CASE("Tick propagates correctly through tree (Select Fail)", "[tick]") {
     REQUIRE(rep2Ptr->tickCount() == 2);
     REQUIRE(inv2Ptr->tickCount() == 2);
     REQUIRE(act2Ptr->tickCount() == 2);
+
+    // // tick #5
+    // REQUIRE(tree.getActivePath() == "SelRoot - Rep2 - Inv2 - Act2");
+    // REQUIRE(tree.tick() == 0);
+    // REQUIRE(tree.tickCount() == 5);
+
+    // REQUIRE(rep1Ptr->tickCount() == 2);
+    // REQUIRE(inv1Ptr->tickCount() == 2);
+    // REQUIRE(act1Ptr->tickCount() == 2);
+
+    // REQUIRE(rep2Ptr->tickCount() == 3);
+    // REQUIRE(inv2Ptr->tickCount() == 3);
+    // REQUIRE(act2Ptr->tickCount() == 3);
 }
 
 TEST_CASE("Node deletion works correctly", "[delete]") {
