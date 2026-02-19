@@ -47,8 +47,8 @@ public:
             }
         };
 
-        m_columnNames.push_back(columnName);
-        m_callbacks.push_back(stringWrapper);
+        m_columnNames.push_back(columnName); // Stores the column name
+        m_callbacks.push_back(stringWrapper); // Stores the function as a string
     }
 
     /**
@@ -59,7 +59,7 @@ public:
         if (m_callbacks.empty()) return;
 
         Row newRow;
-        newRow.reserve(m_callbacks.size());
+        newRow.reserve(m_callbacks.size()); // Reserves memory
 
         for (const auto& fetchValue : m_callbacks) {
             newRow.push_back(fetchValue());
@@ -71,7 +71,7 @@ public:
     /**
      * Exports the buffered 2D Table to a CSV file.
      * Returns true if successful, false otherwise.
-     */
+     
     [[nodiscard]] bool SaveToDisk(const std::string& path) {
         std::ofstream file(path);
         if (!file.is_open()) return false;
@@ -93,15 +93,16 @@ public:
         m_table.clear(); // Free memory after saving
         return true;
     }
+        */
 
-    // --- Simple Getters for Testing ---
+    // Simple Getters for Testing
     size_t GetRowCount() const { return m_table.size(); }
     size_t GetColCount() const { return m_columnNames.size(); }
     void Clear() { m_table.clear(); }
 
 private:
-    Table m_table;                             // Our "2D Array" (Rows x Columns)
-    std::vector<std::string> m_columnNames;    // List of Header names
+    Table m_table;                             // Our 2d array
+    std::vector<std::string> m_columnNames;    // List of Column names
     std::vector<std::function<std::string()>> m_callbacks; // List of functions for recording data
 };
 
