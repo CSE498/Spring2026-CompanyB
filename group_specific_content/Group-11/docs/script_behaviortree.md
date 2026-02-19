@@ -1,4 +1,4 @@
-## ``<CLASS_NAME>``
+# ``BehaviorTree``
 
 <!--
 - Brief introduction (developer's name, name of implemented class)
@@ -9,34 +9,150 @@
 - Depending on time left, overview of more challenging internal implementation concepts (things you wrote that are maybe more complex but are a backbone to the class)
 -->
 
-### Introduction
+## Introduction
 
-- Introduce self
-- Introduce implemented class
+Hey y'all, Lalit here, and today I will show you my implementation of the BehaviorTree class
 
-### Broad overview
-- Give broad description of implemented class
-  - [ Fill in bullets for broad description ]
-  - [ What is it? What is its utility? What pain point does it solve? ]
-- Give example use cases
-  - [ Fill in bullets for possible use cases ]
-  - [ Can be broad, just want to describe how it might be useful ]
+## Broad overview
+Behavior Trees helps map conditional logic for agents by using different nodes and excecuting actions in a tick based system
+
+Nodes can be one of the following base types:
+
+- ### Leaf Nodes: 
+	- Nodes that perform an action within a given tick duration
+	
+- ### Parent Nodes:
+	- **Decorator Nodes:** Wraps around a child and perform an operation on it
+	- **Composite Nodes:** Holds multiple children and perform an operation on them
+	- **The child in a parent can be any node**
+
+Each nodes can pass (1), fail (0), or still be running (-1)
+
+
+
+### Benefits of using a Behavior Tree:
+
+- #### Extendibility (Add More Nodes Types):
+	- Cycle (Composite): Continuously loops through children until it's status isn't running (-1)
+	- Random (Composite): Randomly access children
+	- Parallel (Composite): Runs all children at the same time
+	- Limiter (Decorator): Limit how many times a child can execute
+
+- #### Modularity:
+	- Mix an match whatever nodes you want!
+	- Easy to create complex behaviors from simple building blocks
+
+I will now demonstrate whether an agent should pick up a Red Ball or a Blue Ball
+
 ### Usage example
-- Give a stub of a meaningful basic usage of your class
-  - [ Fill in code block with basic usage ]
-  - [ Fill in bullets explaining the usage example ]
-	- [ Describe the broad strokes of your example, note any nuances like instantiation or whatever ]
+```
+#include "tools/BehaviorTree/BehaviorTree.hpp"
+
+#include <iostream>
+
+cse498::BehaviorTree createBasicSelect() {
+    /*
+    Tree:
+        SeqRoot
+          Inv1
+            Grab Blue Ball
+          Inv2
+            Grab Red Ball
+    */
+
+    auto root = std::make_unique<SelectNode>("SelRoot");
+    SelectNode* rootPtr = root.get();
+
+    cse498::BehaviorTree tree(std::move(root));
+
+    auto inv1 = std::make_unique<InvertNode>("Inv1");
+    InvertNode* inv1Ptr = inv1.get();
+
+    auto inv2 = std::make_unique<InvertNode>("Inv2");
+    InvertNode* inv2Ptr = inv2.get();
+
+    rootPtr->addNode(std::move(inv1));
+    rootPtr->addNode(std::move(inv2));
+
+    auto act1 = std::make_unique<ActionNode>("Grab Red Ball", 2);
+    auto act2 = std::make_unique<ActionNode>("Grab Blue Ball", 2);
+
+    inv1Ptr->addNode(std::move(act1));
+    inv2Ptr->addNode(std::move(act2));
+
+    return tree;
+}
+
+int main() {
+    std::string line = "\n_______________________________________\n";
+
+    auto tree = createBasicSelect();
+
+    std::cout << "Initial Tree: \n";
+
+    std::string active_path = "Current Path: " + tree.getActivePath();
+
+    std::cout << line + "Tick #" << tree.tickCount() << ":" + line;
+    std::cout << active_path << "\n\n";
+    tree.debugView();
+    std::cout << "\n";
+
+    // See if there are any keys waiting in standard input (wait if needed)
+    char input;
+
+    // Quit program with 'q'
+    while(input != 'q') {    
+        do {
+        std::cin >> input;
+        } while (!std::cin);
+
+        // Increment tick with 't'
+        if (input == 't') {
+            std::string active_path = "Current Path: " + tree.getActivePath();
+
+            int status = tree.tick();
+
+            std::cout << line + "Tick #" << tree.tickCount() << ":" + line;
+            std::cout << active_path << "\n\n";
+
+            tree.debugView();
+
+            if (tree.tickCount() < 4) std::cout << line;
+
+            else if (tree.tickCount() >= 4 && tree.tickCount() < 10) {
+                if (status == 1 or status == 0) { std::cout << "\nThat's it! Keep going ig..." + line; }
+            }
+
+            else if (tree.tickCount() >= 10 && tree.tickCount() < 15) std::cout << line + "\nway to go..." + line;
+
+            else if (tree.tickCount() >= 15) std::cout << line + "\nwow..." + line;
+
+        }
+    }
+
+    return 0;
+}
+```
+In this demonstration, I create a tree with two branches each with an inverter node wrapped around an action. I used `tickCount()`, `getActivePath()`, and `debugView()` in my output to help visualize the tree's state as we advance through each tick by running `tick()` by entering `t`. 
+
+After 2 ticks, we can see that the agent has decided not to pick the Red Ball, and after 2 more ticks, we can see that the agent has decided to not pick up the Blue Ball, and so the agent lives happily ever after without picking either ball. 
+
+Once we reach a non running status on the root node, we can still advance the tick count and not have the state of the tree change.
+
+You can run this example and more by going to the `Group-11/src/BehaviorTree` Folder in the `Group-11-BasicClassImplement` branch and running the provided Makefile with `make`
 ### Error handling
-- Give description of how you handle errors, and how you expect users to handle them
-  - [ Fill in bullets for errors which may originate from your class ]
-	- [ (basically just give the main ways someone can misuse your class) ]
-  - [ Fill in bullets for how you handle errors ]
-  - [ Do you use ``std::expected``? What should the user do with the error results? ]
-  - [ Do you use exceptions? When should the user expect to handle thrown exceptions? ]
+
+**Programmer Errors: (Asserts)**
+- Trees cannot be empty
+- Deleting nonexistent child in Composite Node
+- Adding node to a Decorator which already has a child
+
+**Runtime Errors: (Conditional Logic)**
+- Accessing `nullptr` in Composite Nodes (UB)
 ### Limitations & restrictions
-- Give description any known limitations in your design, or restrictions you made for it
-  - [ Fill in bullets for known limitations ]
-  - [ Fill in bullets for restrictions made ]
-	- [ If restrictions were made, fill in bullets for why ]
-	- [ (essentially what tradeoffs did you make and why) ]
+- Actions Nodes are just print statements and always pass once the tick durration hits zero
+	- Actions can either pass or fail within a tick durration which will have to be handled accordingly 
+- Memory Map has not been implemented
+	- This will allow for the nodes to communicate with each other
+	- I wanted to focus on the basic functionality such as creating a Behavior Tree and excecuting ticks with statuses being properly updated
 
