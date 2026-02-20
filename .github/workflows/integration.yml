@@ -15,6 +15,20 @@ jobs:
       - name: Formatting Checks
         run: find source tests -type f \( -name "*.cpp" -o -name "*.hpp" -o -name "*.c" -o -name "*.h" \) | xargs clang-format --style="Google" -n -Werror --verbose
 
+  native-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure
+        run: cmake -S source -B /tmp/native-build -DBUILD_TESTS=ON
+
+      - name: Build
+        run: cmake --build /tmp/native-build -j$(nproc)
+
+      - name: Run Tests
+        run: /tmp/native-build/tests
+
   test:
     runs-on: ubuntu-latest
     steps:
