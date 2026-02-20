@@ -4,7 +4,8 @@ project(cse498-segfault-survivors)
 # Configuration options
 set(SDL_VERSION "2" CACHE STRING "SDL version 2 or 3")
 set(BUILD_OUTPUT "html" CACHE STRING "Output format")
-set(BUILD_TESTS OFF CACHE BOOL "Build tests")
+set(BUILD_TESTS OFF CACHE BOOL "Build native tests")
+set(BUILD_WASM_TESTS OFF CACHE BOOL "Build Emscripten-specific wasm tests")
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
@@ -25,9 +26,8 @@ set(HEADER_DIRS
     ${CMAKE_CURRENT_SOURCE_DIR}/Worlds
 )
 
-if(BUILD_TESTS)
+if(BUILD_WASM_TESTS)
     # Fetch Catch2 v3 from GitHub
-    # We can change this if we would like to use the version in the third-party directory
     include(FetchContent)
     FetchContent_Declare(
         Catch2
@@ -49,11 +49,11 @@ if(BUILD_TESTS)
         target_include_directories(project_lib PUBLIC ${HEADER_DIRS})
     endif()
 
-    # Create test executable
-    file(GLOB TEST_SOURCES "../tests/*.cpp")
+    # Emscripten specific tests from tests/wasm/
+    file(GLOB_RECURSE TEST_SOURCES "../tests/wasm/*.cpp")
     list(LENGTH TEST_SOURCES TEST_SOURCES_COUNT)
     if(TEST_SOURCES_COUNT EQUAL 0)
-        message(FATAL_ERROR "No test files found in tests/ directory")
+        message(FATAL_ERROR "No test files found in tests/wasm/ directory")
     endif()
     add_executable(tests ${TEST_SOURCES})
     target_link_libraries(tests PRIVATE project_lib Catch2::Catch2WithMain)
@@ -69,6 +69,40 @@ if(BUILD_TESTS)
         -lembind
         -sNO_DISABLE_EXCEPTION_CATCHING
     )
+
+elseif(BUILD_TESTS)
+    # Fetch Catch2 v3 from GitHub
+    include(FetchContent)
+    FetchContent_Declare(
+        Catch2
+        GIT_REPOSITORY https://github.com/catchorg/Catch2.git
+        GIT_TAG v3.12.0
+    )
+    FetchContent_MakeAvailable(Catch2)
+
+    # Exclude main source files from library
+    list(FILTER SOURCES EXCLUDE REGEX "(_main|^main)\\.cpp$")
+
+    # Create INTERFACE library if header-only, regular if sources exist
+    list(LENGTH SOURCES SOURCES_COUNT)
+    if(SOURCES_COUNT EQUAL 0)
+        add_library(project_lib INTERFACE)
+        target_include_directories(project_lib INTERFACE ${HEADER_DIRS})
+    else()
+        add_library(project_lib ${SOURCES})
+        target_include_directories(project_lib PUBLIC ${HEADER_DIRS})
+    endif()
+
+    # Native tests from tests/ (excluding tests/wasm/)
+    file(GLOB_RECURSE TEST_SOURCES "../tests/*.cpp")
+    list(FILTER TEST_SOURCES EXCLUDE REGEX ".*/wasm/.*")
+    list(LENGTH TEST_SOURCES TEST_SOURCES_COUNT)
+    if(TEST_SOURCES_COUNT EQUAL 0)
+        message(FATAL_ERROR "No test files found in tests/ directory")
+    endif()
+    add_executable(tests ${TEST_SOURCES})
+    target_link_libraries(tests PRIVATE project_lib Catch2::Catch2WithMain)
+
 else()
     # Emscripten build
     # Determine output suffix

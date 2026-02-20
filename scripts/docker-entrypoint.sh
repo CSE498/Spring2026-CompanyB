@@ -2,7 +2,7 @@
 set -e
 
 # Default values
-export SDL_VERSION="${SDL_VERSION:-3}"
+export SDL_VERSION="${SDL_VERSION:-2}"
 export BUILD_OUTPUT="${BUILD_OUTPUT:-html}"
 export SERVE_PORT="${SERVE_PORT:-8080}"
 export SOURCE_DIR="${SOURCE_DIR:-/app/source}"
@@ -85,11 +85,11 @@ do_test() {
     local TEST_BUILD_DIR="${BUILD_DIR}/tests"
     mkdir -p "${TEST_BUILD_DIR}"
 
-    # Configure with emcmake for Emscripten tests
+    # Configure for Emscripten specific wasm tests
     emcmake cmake \
         -S "${SOURCE_DIR}" \
         -B "${TEST_BUILD_DIR}" \
-        -DBUILD_TESTS=ON
+        -DBUILD_WASM_TESTS=ON
 
     # Build tests with emmake
     emmake make -C "${TEST_BUILD_DIR}" -j$(nproc)
