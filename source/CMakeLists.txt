@@ -66,6 +66,8 @@ if(BUILD_WASM_TESTS)
     target_link_options(tests PRIVATE
         -sNODERAWFS=1
         -sALLOW_MEMORY_GROWTH=1
+        -lembind
+        -sNO_DISABLE_EXCEPTION_CATCHING
     )
 
 elseif(BUILD_TESTS)
@@ -78,8 +80,9 @@ elseif(BUILD_TESTS)
     )
     FetchContent_MakeAvailable(Catch2)
 
-    # Exclude main source files from library
+    # Exclude main source files and Emscripten sources from native build
     list(FILTER SOURCES EXCLUDE REGEX "(_main|^main)\\.cpp$")
+    list(FILTER SOURCES EXCLUDE REGEX ".*/tools/webui/.*")
 
     # Create INTERFACE library if header-only, regular if sources exist
     list(LENGTH SOURCES SOURCES_COUNT)
@@ -129,5 +132,6 @@ else()
         -sMAXIMUM_MEMORY=1gb
         -sEXPORTED_RUNTIME_METHODS=ccall,cwrap
         --emrun
+        -lembind
     )
 endif()
