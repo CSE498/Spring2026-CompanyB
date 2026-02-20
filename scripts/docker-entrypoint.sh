@@ -2,7 +2,7 @@
 set -e
 
 # Default values
-export SDL_VERSION="${SDL_VERSION:-3}"
+export SDL_VERSION="${SDL_VERSION:-2}"
 export BUILD_OUTPUT="${BUILD_OUTPUT:-html}"
 export SERVE_PORT="${SERVE_PORT:-8080}"
 export SOURCE_DIR="${SOURCE_DIR:-/app/source}"
