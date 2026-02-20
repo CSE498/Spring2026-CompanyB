@@ -1,7 +1,7 @@
+#include "WebElement.hpp"
+
 #include <emscripten.h>
 #include <emscripten/html5.h>
-
-#include "WebElement.hpp"
 
 namespace cse498 {
 
@@ -11,8 +11,7 @@ WebElement::WebElement(const std::string& id) : id(id) {
       {
         let elemId = UTF8ToString($0);
         let elem = document.getElementById(elemId);
-        if (!elem)
-        {
+        if (!elem) {
           elem = document.createElement('div');
           elem.id = elemId;
           document.body.appendChild(elem);

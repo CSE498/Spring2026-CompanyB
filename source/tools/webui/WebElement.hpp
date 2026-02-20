@@ -8,23 +8,22 @@
 
 #include <string>
 
-namespace cse498
-{
-  class WebElement
-  {
-  protected:
-    std::string id = "";
+namespace cse498 {
+class WebElement {
+ protected:
+  std::string id = "";
 
-    /// Constructor that only initializes the ID and does not create a DOM element.
-    /// For use by subclasses that create their own element types (canvas) until further discussion.
-    WebElement(const std::string &id, bool) : id(id) {}
+  /// Constructor that only initializes the ID and does not create a DOM
+  /// element. For use by subclasses that create their own element types
+  /// (canvas) until further discussion.
+  WebElement(const std::string& id, bool) : id(id) {}
 
-  public:
-    WebElement() = delete;
-    // Create an element with the given ID in the DOM
-    WebElement(const std::string &id);
-    virtual ~WebElement() = default;
+ public:
+  WebElement() = delete;
+  // Create an element with the given ID in the DOM
+  WebElement(const std::string& id);
+  virtual ~WebElement() = default;
 
-    [[nodiscard]] std::string GetId() const { return id; }
-  };
-}
+  [[nodiscard]] std::string GetId() const { return id; }
+};
+}  // namespace cse498

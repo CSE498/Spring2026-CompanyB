@@ -3,7 +3,6 @@
 
 #include "tools/webui/WebButton.h"
 
-
 TEST_CASE("WebButton basics") {
   WebButton b("Start", "startBtn");
 

@@ -6,18 +6,19 @@
 
 #pragma once
 
-#include "WebElement.hpp"
-#include <utility>
 #include <memory>
+#include <utility>
 #include <vector>
+
+#include "WebElement.hpp"
 
 namespace cse498 {
 
 class WebLayout : WebElement {
-protected:
+ protected:
   std::vector<std::shared_ptr<WebElement>> elements;
 
-public:
+ public:
   // Create a container in the DOM for the layout
   WebLayout(std::string id);
 
@@ -31,4 +32,4 @@ public:
   WebLayout& SetGap(std::string gap);
 };
 
-} // End of namespace cse498
+}  // End of namespace cse498

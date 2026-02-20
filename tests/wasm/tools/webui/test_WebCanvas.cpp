@@ -6,91 +6,92 @@
 
 // Sets up a mock DOM so WebCanvas can create, find, and remove canvas elements
 struct SetupMockCanvas {
-  SetupMockCanvas(){
-  EM_ASM({
-    if (typeof document === 'undefined') {
-      globalThis.document = {};
-    }
+  SetupMockCanvas() {
+    EM_ASM({
+      if (typeof document == = 'undefined') {
+        globalThis.document = {};
+      }
 
-    // Contain DOM elements
-    var elements = {};
+      // Contain DOM elements
+      var elements = {};
 
-    // Create a fresh 2D context stub
-    function makeCtx() {
-      var ctx = {};
-      ctx.clearRect = function(){};
-      ctx.fillRect = function(){};
-      ctx.strokeRect = function(){};
-      ctx.beginPath = function(){};
-      ctx.moveTo = function(){};
-      ctx.lineTo = function(){};
-      ctx.closePath = function(){};
-      ctx.arc = function(){};
-      ctx.fill = function(){};
-      ctx.stroke = function(){};
-      ctx.fillText = function(){};
-      ctx.drawImage = function(){};
-      ctx.translate = function(){};
-      ctx.rotate = function(){};
-      ctx.scale = function(){};
-      ctx.save = function(){};
-      ctx.restore = function(){};
-      return ctx;
-    }
+      // Create a fresh 2D context stub
+      function makeCtx() {
+        var ctx = {};
+        ctx.clearRect = function(){};
+        ctx.fillRect = function(){};
+        ctx.strokeRect = function(){};
+        ctx.beginPath = function(){};
+        ctx.moveTo = function(){};
+        ctx.lineTo = function(){};
+        ctx.closePath = function(){};
+        ctx.arc = function(){};
+        ctx.fill = function(){};
+        ctx.stroke = function(){};
+        ctx.fillText = function(){};
+        ctx.drawImage = function(){};
+        ctx.translate = function(){};
+        ctx.rotate = function(){};
+        ctx.scale = function(){};
+        ctx.save = function(){};
+        ctx.restore = function(){};
+        return ctx;
+      }
 
-    document.getElementById = function(id) { return elements[id] || null; };
+      document.getElementById = function(id) { return elements[id] || null; };
 
-    // Creates a mock element. Setting the ID registers the element.
-    document.createElement = function() {
-      var ctx = makeCtx();
-      var elem = {};
-      elem.width = 0;
-      elem.height = 0;
-      elem.style = {};
-      elem.getContext = function() { return ctx; };
-      elem.remove = function() {
-        if (elem._id && elements[elem._id]) {
-          delete elements[elem._id];
-        }
-      };
-      elem._id = "";
+      // Creates a mock element. Setting the ID registers the element.
+      document.createElement = function() {
+        var ctx = makeCtx();
+        var elem = {};
+        elem.width = 0;
+        elem.height = 0;
+        elem.style = {};
+        elem.getContext = function() { return ctx; };
+        elem.remove = function() {
+          if (elem._id && elements[elem._id]) {
+            delete elements[elem._id];
+          }
+        };
+        elem._id = "";
       Object.defineProperty(elem, 'id', {
         get: function() { return elem._id;
-    }
-    , set : function(v) {
-      elem._id = v;
-      elements[v] = elem;
-    }
-  });
-  return elem;
-};
+      }
+      , set : function(v) {
+        elem._id = v;
+        elements[v] = elem;
+      }
+    });
+    return elem;
+  };
 
-if (!document.body) {
-  document.body = {};
-}
-document.body.appendChild = function(){};
+  if (!document.body) {
+    document.body = {};
+  }
+  document.body.appendChild = function(){};
 
-// Support for LoadImage or DrawImage
-if (typeof window === 'undefined') {
-  globalThis.window = globalThis;
-}
-globalThis.Image = function() { this.complete = false; };
-window._imageCache = {};
+  // Support for LoadImage or DrawImage
+  if (typeof window == = 'undefined') {
+    globalThis.window = globalThis;
+  }
+  globalThis.Image = function() { this.complete = false; };
+  window._imageCache = {};
 
-// Support for RequestAnimationFrame
-if (typeof globalThis.requestAnimationFrame === 'undefined') {
-  globalThis.requestAnimationFrame = function(cb) { return 0; };
-}
+  // Support for RequestAnimationFrame
+  if (typeof globalThis.requestAnimationFrame == = 'undefined') {
+    globalThis.requestAnimationFrame = function(cb) { return 0; };
+  }
 });
 }
-~SetupMockCanvas(){
-    EM_ASM({
-       delete globalThis.document;
-       delete globalThis.window;
-       delete globalThis.Image;
-    });
+~SetupMockCanvas() {
+  EM_ASM({
+    delete globalThis.document;
+    delete globalThis.window;
+    delete globalThis.Image;
+  });
 }
-};
+}
+;
 
 TEST_CASE("Initialize Canvas", "[web_canvas]") {
   SetupMockCanvas mock;
