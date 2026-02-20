@@ -17,8 +17,6 @@ jobs:
 
   test:
     runs-on: ubuntu-latest
-    env:
-      SDL_VERSION: 2
     steps:
       - uses: actions/checkout@v4
 
@@ -28,12 +26,6 @@ jobs:
         with:
           path: ~/emsdk
           key: emsdk-${{ runner.os }}-5.0.0
-
-      - name: Cache SDL Port
-        uses: actions/cache@v4
-        with:
-          path: ~/emsdk/upstream/emscripten/cache/sysroot
-          key: sdl-port-${{ runner.os }}-sdl${{ env.SDL_VERSION }}-emsdk5.0.0
 
       - name: Install Emscripten
         if: steps.cache-emsdk.outputs.cache-hit != 'true'
@@ -47,7 +39,6 @@ jobs:
           source ~/emsdk/emsdk_env.sh
           echo "EMSDK=$HOME/emsdk" >> $GITHUB_ENV
           echo "$HOME/emsdk/upstream/emscripten" >> $GITHUB_PATH
-          emcc --use-port=sdl${SDL_VERSION} --check
 
       - name: Run Tests
         env:
