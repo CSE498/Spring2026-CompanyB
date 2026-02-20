@@ -1,5 +1,5 @@
-#include "MiniTest.hpp"
-#include "../Interfaces/WebTextbox.hpp"
+#include <catch2/catch_test_macros.hpp>
+#include "tools/WebTextbox.hpp"
 #include <random>
 #include <iostream>
 #include <limits>
@@ -12,7 +12,8 @@ std::string GenerateGarbage(size_t length) {
     std::string s;
     s.reserve(length);
     for (size_t i = 0; i < length; ++i) {
-        s.push_back(static_cast<char>(rand() % 256));
+        // Keep garbage text as valid UTF-8 in ASCII printable range, otherwise the text gets mangled. This issue occurs when the DOM exists.
+        s.push_back(static_cast<char>(32 + rand() % 95));
     }
     return s;
 }

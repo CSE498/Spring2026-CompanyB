@@ -1,7 +1,7 @@
 
 #include <catch2/catch_test_macros.hpp>
 
-#include "Interfaces/WebButton.h"
+#include "tools/WebButton.h"
 
 
 TEST_CASE("WebButton basics") {
