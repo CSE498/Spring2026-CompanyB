@@ -32,7 +32,7 @@ jobs:
       - name: Cache SDL Port
         uses: actions/cache@v4
         with:
-          path: ~/emsdk/upstream/emscripten/cache/ports
+          path: ~/emsdk/upstream/emscripten/cache/sysroot
           key: sdl-port-${{ runner.os }}-sdl${{ env.SDL_VERSION }}-emsdk5.0.0
 
       - name: Install Emscripten
