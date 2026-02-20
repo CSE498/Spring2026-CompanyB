@@ -47,8 +47,13 @@ class WorldPosition {
   /// Enable all comparison operators (==, !=, <, <=, >, >=)
   auto operator<=>(const WorldPosition&) const = default;
 
-  // DEVELOPER NOTE: Add a SameCell function to identify if two positions are in
-  // the same cell.
+    WorldPosition & Set(double in_x, double in_y) {
+      x = in_x;
+      y = in_y;
+      return *this;
+    }
+
+    // DEVELOPER NOTE: Add a SameCell function to identify if two positions are in the same cell.
 
   /// Return a the WorldPosition at the requested offset.
   [[nodiscard]] WorldPosition GetOffset(double offset_x,

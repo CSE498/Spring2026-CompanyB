@@ -16,6 +16,9 @@ HEADERS := $(shell find Agents core Interfaces tools Worlds -name '*.hpp')
 EXECUTABLES = simple
 
 default: simple
+debug: debug-simple
+opt: opt-simple
+grumpy: grumpy-simple
 
 .PHONY: default clean debug-% opt-% quick-% $(EXECUTABLES)
 
