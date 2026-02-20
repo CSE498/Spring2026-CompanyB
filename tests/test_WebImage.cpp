@@ -1,6 +1,6 @@
 #include <emscripten.h>
 #include <catch2/catch_test_macros.hpp>
-#include "tools/WebImage.hpp"
+#include "tools/webui/WebImage.hpp"
 
 /// Creates fake DOM elements for WebImage tests to run on.
 struct SetupMockDOM {

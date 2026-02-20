@@ -2,7 +2,7 @@
 
 #include <catch2/catch_test_macros.hpp>
 
-#include "tools/WebCanvas.hpp"
+#include "tools/webui/WebCanvas.hpp"
 
 // Sets up a mock DOM so WebCanvas can create, find, and remove canvas elements
 struct SetupMockCanvas {

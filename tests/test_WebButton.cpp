@@ -1,7 +1,7 @@
 
 #include <catch2/catch_test_macros.hpp>
 
-#include "tools/WebButton.h"
+#include "tools/webui/WebButton.h"
 
 
 TEST_CASE("WebButton basics") {
