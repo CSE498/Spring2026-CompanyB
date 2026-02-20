@@ -7,9 +7,10 @@
 /// Creates fake DOM elements for WebImage tests to run on.
 struct SetupMockDOM {
   SetupMockDOM() {
+    // clang-format off
     EM_ASM({
       /// creates a document if it doesn't exist
-      if (typeof document == = 'undefined') {
+      if (typeof document === 'undefined') {
         globalThis.document = {};
       }
 
@@ -66,13 +67,16 @@ struct SetupMockDOM {
 
   document.body.appendChild = function(elem) { return elem; };
   });
+  // clang-format on
   }
   ~SetupMockDOM() {
+    // clang-format off
     EM_ASM({
       delete globalThis.document;
       delete globalThis.window;
       delete globalThis.Image;
     });
+    // clang-format on
   }
   }
   ;

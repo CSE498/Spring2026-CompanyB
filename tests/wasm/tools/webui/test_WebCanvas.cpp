@@ -5,10 +5,12 @@
 #include "tools/webui/WebCanvas.hpp"
 
 // Sets up a mock DOM so WebCanvas can create, find, and remove canvas elements
+
 struct SetupMockCanvas {
   SetupMockCanvas() {
+    // clang-format off
     EM_ASM({
-      if (typeof document == = 'undefined') {
+      if (typeof document === 'undefined') {
         globalThis.document = {};
       }
 
@@ -71,24 +73,27 @@ struct SetupMockCanvas {
   document.body.appendChild = function(){};
 
   // Support for LoadImage or DrawImage
-  if (typeof window == = 'undefined') {
+  if (typeof window === 'undefined') {
     globalThis.window = globalThis;
   }
   globalThis.Image = function() { this.complete = false; };
   window._imageCache = {};
 
   // Support for RequestAnimationFrame
-  if (typeof globalThis.requestAnimationFrame == = 'undefined') {
+  if (typeof globalThis.requestAnimationFrame === 'undefined') {
     globalThis.requestAnimationFrame = function(cb) { return 0; };
   }
 });
+// clang-format on
 }
 ~SetupMockCanvas() {
+  // clang-format off
   EM_ASM({
     delete globalThis.document;
     delete globalThis.window;
     delete globalThis.Image;
   });
+  // clang-format on
 }
 }
 ;
