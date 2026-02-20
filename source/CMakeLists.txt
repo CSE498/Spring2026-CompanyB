@@ -80,8 +80,9 @@ elseif(BUILD_TESTS)
     )
     FetchContent_MakeAvailable(Catch2)
 
-    # Exclude main source files from library
+    # Exclude main source files and Emscripten sources from native build
     list(FILTER SOURCES EXCLUDE REGEX "(_main|^main)\\.cpp$")
+    list(FILTER SOURCES EXCLUDE REGEX ".*/tools/webui/.*")
 
     # Create INTERFACE library if header-only, regular if sources exist
     list(LENGTH SOURCES SOURCES_COUNT)
