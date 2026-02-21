@@ -16,10 +16,11 @@ BUILD_DIR := ../tests/build/
 BIN       := $(BUILD_DIR)/run_tests
 
 CATCH_INC := ../third-party/Catch/single_include
+QT_INC := ../third-party/qt/include
 
 CXXFLAGS ?= -O2 -g
 WARNFLAGS ?= -Wall -Wextra -Wpedantic
-CPPFLAGS += -I$(SRC_DIR) -I$(CATCH_INC)
+CPPFLAGS += -I$(SRC_DIR) -I$(CATCH_INC) -I$(QT_INC)
 LDFLAGS  ?=
 LDLIBS   ?=
 

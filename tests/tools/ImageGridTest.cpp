@@ -4,16 +4,12 @@
 #include "../../source/core/WorldBase.hpp"
 #include "../../source/Worlds/MazeWorld.hpp"
 
-#include <QApplication>
-#include <QGraphicsScene>
-#include <QGraphicsView>
+#include "../../../third-party/qt/include/QtWidgets/QApplication"
+#include "../../../third-party/qt/include/QtWidgets/QGraphicsView"
+#include "../../../third-party/qt/include/QtWidgets/QGraphicsScene"
 
-TEST_CASE("Test ImageGrid Constructor", "[Interfaces][gui]")
+TEST_CASE("Test ImageGrid Constructor", "[Interfaces]")
 {
-    int argc = 0;
-    char *argv[] = {nullptr};
-    QApplication app(argc, argv);
-
     cse498::MazeWorld world; // I'm using a MazeWorld to test currently
     QGraphicsScene scene;
     int tileSize = 64;
