@@ -106,33 +106,44 @@ namespace cse498 {
     using TypeVariant = decltype(std::variant<Types...>());
 
     /**
-     * @brief Alias to tuple containing information relevant to function storage.
+     * @brief Dataclass to store registered function entries.
      *
-     * Entries in tuple are:
-     * - The original function wrapped in std::any
-     * - The lambda-wrapped function, takes in the original function wrapped 
-     *   with std::any and a std::vector of TypeVariants
+     * Contains:
+     * - The original function wrapped in a lambda
      * - Index of variant alternative for return type in TypeVariant
      * - std::vector of indices of variant alternatives for parameter types
      *   in TypeVariant
+     * 
+     * Default and copy ctors are deleted restricting usage
+     * to moves, minimizing copies. 
      */
-    using FuncEntry = std::tuple<std::any, // Original func
-				std::function<TypeVariant(std::any, std::vector<TypeVariant>)>, // Wrapped func
-				size_t, // Return type variant index
-				std::vector<size_t> // Params variant indices
-				>;
+    struct FuncEntry {
+      std::function<TypeVariant(std::vector<TypeVariant>&&)> wrapped_func;
+      size_t ret_t_idx;
+      std::vector<size_t> arg_t_idxs;
 
-    static constexpr size_t ORIG_FUNC = 0;
-    static constexpr size_t WRAPPED_FUNC = 1;
-    static constexpr size_t RETURN_IDX = 2;
-    static constexpr size_t PARAM_IDXS = 3;
-    
+      FuncEntry() = delete;
+      FuncEntry(std::function<TypeVariant(std::vector<TypeVariant>&&)> wrapped_func,
+		size_t ret_t_idx,
+		std::vector<size_t> &&arg_t_idxs)
+	: wrapped_func(std::move(wrapped_func)), ret_t_idx(ret_t_idx), arg_t_idxs(std::move(arg_t_idxs)) {};
+
+      // Delete copy ctors
+      FuncEntry(FuncEntry&) = delete;
+      FuncEntry& operator=(FuncEntry&) = delete;
+      FuncEntry operator=(FuncEntry) = delete;
+
+      // Permit moving
+      FuncEntry& operator=(FuncEntry&&) = default;
+      FuncEntry(FuncEntry&&) = default;
+    };
+
     std::unordered_map<std::string, FuncEntry> funcs{};
 
     // Adapted from https://stackoverflow.com/questions/28410697/c-convert-vector-to-tuple
     // See arg_tuple doc comment  
     template <typename V, typename AsTuple, size_t ...Is>
-    static AsTuple gen_arg_tuple(std::vector<V> args, std::index_sequence<Is...>) {
+    static AsTuple gen_arg_tuple(std::vector<V> &&args, std::index_sequence<Is...>) {
       return std::make_tuple(std::get<typename std::tuple_element<Is, AsTuple>::type>(args[Is])...);
     }
   
@@ -151,8 +162,8 @@ namespace cse498 {
      * @return std::tuple<Ts...>
      */
     template <size_t L, typename V, typename ...Ts>
-    static std::tuple<Ts...> arg_tuple(std::vector<V> args) {
-      return gen_arg_tuple<V, std::tuple<Ts...>>(args, std::make_index_sequence<L>{});
+    static std::tuple<Ts...> arg_tuple(std::vector<V> &&args) {
+      return gen_arg_tuple<V, std::tuple<Ts...>>(std::move(args), std::make_index_sequence<L>{});
     }
 
     /**
@@ -273,26 +284,27 @@ namespace cse498 {
      */
     template <TemplTools::IsOneOf<Types...> Ret, TemplTools::IsOneOf<Types...>  ...Args>
     [[nodiscard]] std::expected<Ret, ActionMapErr> invoke(const std::string &name, Args ...args) const {
-      auto func_it = funcs.find(name);
-      if (func_it == funcs.end())
+      if (!exists(name))
 	return std::unexpected(ActionMapErr::CALLABLE_NOT_FOUND);
+
+      FuncEntry const &target_func = funcs.at(name);
 
       // Lift all supplied args into the TypeVariant and collect into a vec
       std::vector<TypeVariant> arg_list{args...};
       std::vector<size_t> arg_types = param_sig_vec<Args...>();
 
       // Verify function signature is as expected
-      if (!(arg_list.size() == std::get<PARAM_IDXS>(func_it->second).size()))
-	return (arg_list.size() < std::get<PARAM_IDXS>(func_it->second).size())
+      if (!(arg_list.size() == target_func.arg_t_idxs.size()))
+	return (arg_list.size() < target_func.arg_t_idxs.size())
 	  ? std::unexpected(ActionMapErr::TOO_FEW_ARGS) : std::unexpected(ActionMapErr::TOO_MANY_ARGS);
-	
-      if (!(variant_index<Ret>() == std::get<RETURN_IDX>(func_it->second)))
+
+      if (!(variant_index<Ret>() == target_func.ret_t_idx))
 	return std::unexpected(ActionMapErr::INVALID_RET_TYPE);
 
-      if (!(std::equal(arg_types.cbegin(), arg_types.cend(), std::get<PARAM_IDXS>(func_it->second).cbegin())))
+      if (!(std::equal(arg_types.cbegin(), arg_types.cend(), target_func.arg_t_idxs.cbegin())))
 	return std::unexpected(ActionMapErr::INVALID_ARG_TYPE);
 
-      TypeVariant output = (std::get<WRAPPED_FUNC>(func_it->second)(std::get<ORIG_FUNC>(func_it->second), arg_list));
+      TypeVariant output = std::invoke(target_func.wrapped_func, std::move(arg_list));
 
       return std::get<Ret>(output);
     }
@@ -310,35 +322,33 @@ namespace cse498 {
      * necessary to get back to the desired signature.
      *
      * Returns std::expected:
-     * - std::string giving provided name if successful
+     * - void if successful
      * - ActionMapErr describing the error encountered
      *
      * @param name The name for which the function should map to
      * @param func The `std::function` object to insert into the table.
-     * @return std::expected<std::string, ActionMapErr>
+     * @return std::expected<void, ActionMapErr>
      */
     template <TemplTools::IsOneOf<Types...> Ret, TemplTools::IsOneOf<Types...> ...Args> 
-    [[nodiscard]] std::expected<std::string, ActionMapErr> register_callable(const std::string &name, 
-									     std::function<Ret(Args...)> &&func) {
+    [[nodiscard]] std::expected<void, ActionMapErr> register_callable(const std::string &name, 
+								      std::function<Ret(Args...)> &&func) {
       if (exists(name))
 	return std::unexpected(ActionMapErr::NAME_EXISTS);
 
       // Create function object w/ a lambda wrapping the original function
-      std::function<TypeVariant(std::any, std::vector<TypeVariant>)> f = 
-	[](std::any any_f, std::vector<TypeVariant> args) {
+      std::function<TypeVariant(std::vector<TypeVariant>&&)> wrapped_func = 
+	[func = std::move(func)](std::vector<TypeVariant> &&args) {
 	  // Convert given vector of variants to a tuple of args matching ...Args
 	  std::tuple<Args...> arg_tuple_vars = arg_tuple<TemplTools::pack_length<Args...>(),
-						       TypeVariant,
-						       Args...>(args);
+							 TypeVariant,
+							 Args...>(std::move(args));
 
-	  // We can anycast back the function because we still know its
-	  // type/signature via the template params
-	  return std::apply(std::any_cast<std::function<Ret(Args...)>>(any_f),
-			    arg_tuple_vars);
+	  return std::apply(func, arg_tuple_vars);
 	};
-      
-      funcs[name] = FuncEntry{std::any(std::move(func)), std::move(f), variant_index<Ret>(), param_sig_vec<Args...>()};
-      return name;
+
+      funcs.try_emplace(name, std::move(wrapped_func), variant_index<Ret>(), std::move(param_sig_vec<Args...>()));
+
+      return {};
     }
   };
 };

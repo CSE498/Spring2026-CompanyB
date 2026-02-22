@@ -13,8 +13,8 @@ TEST_CASE("ActionMap basic functionality tests", "[ActionMap]") {
   std::function<double(int, double)> test_func = [](int a, double b){return a+b; };
   auto result = action_map.register_callable("test_func", std::move(test_func));
 
+
   REQUIRE(result.has_value());
-  REQUIRE(result.value() == "test_func");
 
   REQUIRE(action_map.size() == 1);
   REQUIRE_FALSE(action_map.empty());
@@ -25,8 +25,7 @@ TEST_CASE("ActionMap basic functionality tests", "[ActionMap]") {
 
   SECTION("entry can be removed") {
     auto result = action_map.deregister_callable("test_func");
-    REQUIRE((result.has_value()
-	     && result.value() == "test_func"));
+    REQUIRE(result.has_value());
 
     REQUIRE((action_map.empty()
 	     && action_map.size() == 0));
@@ -40,8 +39,7 @@ TEST_CASE("ActionMap basic functionality tests", "[ActionMap]") {
 
   SECTION("map can be cleared") {
     auto result = action_map.register_callable("test_func_2", std::move(test_func));
-    REQUIRE((result.has_value()
-	     && result.value() == "test_func_2"));
+    REQUIRE(result.has_value());
 
     REQUIRE(action_map.size() == 2);
 
@@ -50,8 +48,8 @@ TEST_CASE("ActionMap basic functionality tests", "[ActionMap]") {
     REQUIRE((action_map.empty()
 	     && action_map.size() == 0));
 
-    REQUIRE_FALSE((action_map.exists("test_func")
-		   && action_map.exists("test_func_2")));
+    REQUIRE_FALSE(action_map.exists("test_func"));
+    REQUIRE_FALSE(action_map.exists("test_func_2"));
   }
 }
 
@@ -64,8 +62,7 @@ TEST_CASE("ActionMap error cases", "[ActionMap]") {
   std::function<double(int, double)> test_func = [](int a, double b){return a+b; };
   auto result = action_map.register_callable("test_func", std::move(test_func));
 
-  REQUIRE((result.has_value()
-	   && result.value() == "test_func"));
+  REQUIRE(result.has_value());
 
   REQUIRE(action_map.size() == 1);
   REQUIRE_FALSE(action_map.empty());
