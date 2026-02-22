@@ -319,7 +319,7 @@ namespace cse498 {
      */
     template <TemplTools::IsOneOf<Types...> Ret, TemplTools::IsOneOf<Types...> ...Args> 
     [[nodiscard]] std::expected<std::string, ActionMapErr> register_callable(const std::string &name, 
-									     std::function<Ret(Args...)> func) {
+									     std::function<Ret(Args...)> &&func) {
       if (exists(name))
 	return std::unexpected(ActionMapErr::NAME_EXISTS);
 
@@ -337,7 +337,7 @@ namespace cse498 {
 			    arg_tuple_vars);
 	};
       
-      funcs[name] = FuncEntry{std::any(func), f, variant_index<Ret>(), param_sig_vec<Args...>()};
+      funcs[name] = FuncEntry{std::any(std::move(func)), std::move(f), variant_index<Ret>(), param_sig_vec<Args...>()};
       return name;
     }
   };
