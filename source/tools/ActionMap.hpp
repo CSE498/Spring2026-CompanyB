@@ -220,7 +220,7 @@ namespace cse498 {
      * @param name Name to check for within map
      * @return bool
      */
-    [[nodiscard]] bool exists(std::string name) const noexcept {
+    [[nodiscard]] bool exists(const std::string &name) const noexcept {
       return funcs.contains(name);
     }
 
@@ -246,7 +246,7 @@ namespace cse498 {
      * @param name Name of entry to remove from map.
      * @return std::expected<std::string, ActionMapErr>
      */
-    [[nodiscard]] std::expected<std::string, ActionMapErr> deregister_callable(std::string name) {
+    [[nodiscard]] std::expected<std::string, ActionMapErr> deregister_callable(const std::string &name) {
       auto it = funcs.find(name);
 
       if (it == funcs.end())
@@ -272,7 +272,7 @@ namespace cse498 {
      * @return std::expected<Ret, ActionMapErr>
      */
     template <TemplTools::IsOneOf<Types...> Ret, TemplTools::IsOneOf<Types...>  ...Args>
-    [[nodiscard]] std::expected<Ret, ActionMapErr> invoke(std::string name, Args ...args) const {
+    [[nodiscard]] std::expected<Ret, ActionMapErr> invoke(const std::string &name, Args ...args) const {
       auto func_it = funcs.find(name);
       if (func_it == funcs.end())
 	return std::unexpected(ActionMapErr::CALLABLE_NOT_FOUND);
@@ -318,7 +318,7 @@ namespace cse498 {
      * @return std::expected<std::string, ActionMapErr>
      */
     template <TemplTools::IsOneOf<Types...> Ret, TemplTools::IsOneOf<Types...> ...Args> 
-    [[nodiscard]] std::expected<std::string, ActionMapErr> register_callable(std::string name, 
+    [[nodiscard]] std::expected<std::string, ActionMapErr> register_callable(const std::string &name, 
 									     std::function<Ret(Args...)> func) {
       if (exists(name))
 	return std::unexpected(ActionMapErr::NAME_EXISTS);
