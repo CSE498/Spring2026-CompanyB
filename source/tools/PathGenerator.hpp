@@ -40,6 +40,9 @@ using HeuristicFunc = std::function<double(const Point &, const Point &)>;
  */
 class PathGenerator {
 public:
+  // Tolerance for treating two points as coincident (floating-point comparison)
+  static constexpr double kPointCoincidentTolerance = 0.01;
+
   /**
    * @brief Construct a PathGenerator with default settings.
    *
@@ -58,12 +61,13 @@ public:
    * @return Optional WorldPath (nullopt if no path exists)
    */
   [[nodiscard]] std::optional<WorldPath>
-  ShortestPath(const Point &start, const Point &goal, WorldQueryFunc canMove) {
+  ShortestPath(const Point &start, const Point &goal,
+               const WorldQueryFunc &canMove) {
     assert(canMove && "WorldQueryFunc cannot be null");
 
     // Handle degenerate case: start == goal
-    if (std::abs(start.x() - goal.x()) < 0.01 &&
-        std::abs(start.y() - goal.y()) < 0.01) {
+    if (std::abs(start.x() - goal.x()) < kPointCoincidentTolerance &&
+        std::abs(start.y() - goal.y()) < kPointCoincidentTolerance) {
       WorldPath path;
       path.addPoint(start);
       return path;
@@ -108,7 +112,7 @@ public:
       double distToGoal = heuristic_(current, goal);
       if (distToGoal < step_size_ * 0.6) {
         // Close enough to goal - add goal point and return
-        if (distToGoal > 0.01) {
+        if (distToGoal > kPointCoincidentTolerance) {
           cameFrom[goal] = current;
           return ReconstructPath(cameFrom, goal);
         } else {
@@ -205,7 +209,7 @@ public:
    */
   [[nodiscard]] std::optional<WorldPath>
   AvoidancePath(const Point &start, const Point &goal, const Point &avoid,
-                double radius, WorldQueryFunc canMove) {
+                double radius, const WorldQueryFunc &canMove) {
     assert(canMove && "WorldQueryFunc cannot be null");
     assert(radius >= 0.0 && "Avoidance radius cannot be negative");
 
@@ -230,7 +234,7 @@ public:
    * @return WorldPath (returns partial path if dead-end reached)
    */
   [[nodiscard]] WorldPath RandomWalk(const Point &start, size_t steps,
-                                     WorldQueryFunc canMove) {
+                                     const WorldQueryFunc &canMove) {
     assert(canMove && "WorldQueryFunc cannot be null");
 
     WorldPath path;
