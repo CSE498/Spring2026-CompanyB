@@ -5,74 +5,35 @@
 # - Tests live under: tests/ (and mirror source/ directory structure)
 #
 # Usage:
-#   make            # build + run tests
-#   make test       # run tests
-#   make build      # build test binary only
-#   make clean
+#   make              # build + run tests
+#   make test         # run test
+#   make build        # build test binary only
+#   make clean        # remove build directory
+#   make list         # show source and test files cmake will pick up
 
-SRC_DIR   := ../source
-TEST_DIR  := ../tests
-BUILD_DIR := ../tests/build/
-BIN       := $(BUILD_DIR)/run_tests
-
-CATCH_INC := ../third-party/Catch/single_include
-
-CXXFLAGS ?= -O2 -g
-WARNFLAGS ?= -Wall -Wextra -Wpedantic
-CPPFLAGS += -I$(SRC_DIR) -I$(CATCH_INC)
-LDFLAGS  ?=
-LDLIBS   ?=
-
-# Pick up .cpp from tests/
-TEST_FILES := $(shell find $(TEST_DIR) -type f -name '*.cpp')
-
-# Pick up headers from source/, then compile only matching .cpp next to them
-SRC_HPP    := $(shell find $(SRC_DIR)  -type f -name '*.hpp')
-SRC_FILES  := $(patsubst %.hpp,%.cpp,$(SRC_HPP))
-SRC_FILES  := $(filter $(shell find $(SRC_DIR) -type f -name '*.cpp'),$(SRC_FILES))
-
-OBJ_FILES := \
-  $(patsubst $(TEST_DIR)/%,$(BUILD_DIR)/tests/%.o,$(TEST_FILES)) \
-  $(patsubst $(SRC_DIR)/%,$(BUILD_DIR)/source/%.o,$(SRC_FILES))
-
-DEP_FILES := $(OBJ_FILES:.o=.d)
+BUILD_DIR := ../build/tests
 
 .PHONY: all build test clean list
 
 all: test
 
-build: $(BIN)
+build:
+	cmake -S ../source -B $(BUILD_DIR) -DBUILD_TESTS=ON
+	cmake --build $(BUILD_DIR) --parallel
 
-test: $(BIN)
-	$(BIN)
-
-# Link test runner
-$(BIN): $(OBJ_FILES) | $(BUILD_DIR)
-	$(CXX) -std=c++23 $(CXXFLAGS) $(WARNFLAGS) $(LDFLAGS) $^ $(LDLIBS) -o $@
-
-# Compile source/ -> build/tests/source/...
-$(BUILD_DIR)/source/%.o: $(SRC_DIR)/% | $(BUILD_DIR)
-	@mkdir -p $(dir $@)
-	$(CXX) -std=c++23 $(CPPFLAGS) $(CXXFLAGS) $(WARNFLAGS) -MMD -MP -c $< -o $@
-
-# Compile tests/ -> build/tests/tests/...
-$(BUILD_DIR)/tests/%.o: $(TEST_DIR)/% | $(BUILD_DIR)
-	@mkdir -p $(dir $@)
-	$(CXX) -std=c++23 $(CPPFLAGS) $(CXXFLAGS) $(WARNFLAGS) -MMD -MP -c $< -o $@
-
-$(BUILD_DIR):
-	@mkdir -p $(BUILD_DIR)
-
-# Sanity helper
-list:
-	@echo "Sources:"; echo "$(SRC_FILES)" | tr ' ' '\n'
-	@echo
-	@echo "Tests:";   echo "$(TEST_FILES)" | tr ' ' '\n'
-	@echo
-	@echo "Objects:"; echo "$(OBJ_FILES)" | tr ' ' '\n'
+test: build
+	$(BUILD_DIR)/tests
 
 clean:
-	rm -rf build
+	rm -rf $(BUILD_DIR)
 
-# Auto-deps
--include $(DEP_FILES)
+list:
+	@echo "Sources:"; \
+	for hpp in $$(find ../source -type f -name '*.hpp' | sort); do \
+		cpp="$${hpp%.hpp}.cpp"; \
+		[ -f "$$cpp" ] && echo "$$cpp" || true; \
+	done
+	@echo
+	@echo "Tests:"; find ../tests -type f -name '*.cpp' | sort
+	@echo
+	@echo "Objects:"; find $(BUILD_DIR) -type f -name '*.o' ! -path '*/_deps/*' 2>/dev/null | sort || echo "  (no object files: run make build first)"

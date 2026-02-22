@@ -13,10 +13,9 @@
 #   make opt            # optimized build (programs)
 #
 # You can also forward any target directly:
-#   make src-simple
-#   make src-debug-simple
+#   make src-debug
+#   make src-grumpy
 #   make test-build
-#   make test-list
 
 .PHONY: default all build test clean debug opt quick grumpy \
         src-% test-% help docker-build docker-test docker-serve \
@@ -47,16 +46,15 @@ clean:
 	$(MAKE) -C tests clean
 
 # Forward anything to source/ by prefixing with src-
-#   make src-simple
 #   make src-debug
-#   make src-opt-simple
+#   make src-grumpy
 src-%:
 	$(MAKE) -C source $*
 
 # Forward anything to tests/ by prefixing with test-
 #   make test-build
-#   make test-test
 #   make test-list
+#   make test-clean
 test-%:
 	$(MAKE) -C tests $*
 
