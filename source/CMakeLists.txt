@@ -129,6 +129,7 @@ elseif(DEFINED EMSCRIPTEN)
 
 else()
     # Native build
+    list(FILTER SOURCES EXCLUDE REGEX ".*/tools/webui/.*")
     add_executable(app ${SOURCES})
     target_include_directories(app PRIVATE ${HEADER_DIRS})
     target_compile_options(app PRIVATE
