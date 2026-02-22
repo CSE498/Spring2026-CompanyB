@@ -3,7 +3,6 @@ set -e
 
 # Default values
 export SDL_VERSION="${SDL_VERSION:-2}"
-export BUILD_OUTPUT="${BUILD_OUTPUT:-html}"
 export SERVE_PORT="${SERVE_PORT:-8080}"
 export SOURCE_DIR="${SOURCE_DIR:-/app/source}"
 export OUTPUT_DIR="${OUTPUT_DIR:-/app/output}"
@@ -21,7 +20,6 @@ show_help() {
     echo ""
     echo "Environment Variables:"
     echo "  SDL_VERSION   SDL version to use (2 or 3, default: 3)"
-    echo "  BUILD_OUTPUT  Output format: html, js (default: html)"
     echo "  SERVE_PORT    Port for emrun server (default: 8080)"
     echo "  SOURCE_DIR    Source directory (default: /app/source)"
     echo "  OUTPUT_DIR    Output directory (default: /app/output)"
@@ -35,7 +33,7 @@ show_help() {
 }
 
 do_build() {
-    echo "==> Building with Emscripten (SDL${SDL_VERSION}, output: ${BUILD_OUTPUT}) <=="
+    echo "==> Building with Emscripten (SDL${SDL_VERSION}) <=="
 
     if [ ! -f "${SOURCE_DIR}/CMakeLists.txt" ]; then
         echo "Error: No CMakeLists.txt found in ${SOURCE_DIR}"
@@ -49,7 +47,6 @@ do_build() {
         -S "${SOURCE_DIR}" \
         -B "${BUILD_DIR}" \
         -DSDL_VERSION="${SDL_VERSION}" \
-        -DBUILD_OUTPUT="${BUILD_OUTPUT}" \
         -DCMAKE_RUNTIME_OUTPUT_DIRECTORY="${OUTPUT_DIR}"
 
     # Build with emmake

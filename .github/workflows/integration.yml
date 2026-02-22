@@ -25,14 +25,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Configure
-        run: cmake -S source -B /tmp/native-build -DBUILD_TESTS=ON
-
-      - name: Build
-        run: cmake --build /tmp/native-build -j$(nproc)
-
       - name: Run Tests
-        run: /tmp/native-build/tests
+        run: make test
 
   emscripten-test:
     runs-on: ubuntu-latest

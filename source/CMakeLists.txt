@@ -3,9 +3,8 @@ project(cse498-segfault-survivors)
 
 # Configuration options
 set(SDL_VERSION "2" CACHE STRING "SDL version 2 or 3")
-set(BUILD_OUTPUT "html" CACHE STRING "Output format")
 set(BUILD_TESTS OFF CACHE BOOL "Build native tests")
-set(BUILD_WASM_TESTS OFF CACHE BOOL "Build Emscripten-specific wasm tests")
+set(BUILD_WASM_TESTS OFF CACHE BOOL "Build Emscripten specific wasm tests")
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
@@ -19,11 +18,11 @@ file(GLOB_RECURSE SOURCES
 # Header directories
 set(HEADER_DIRS
     ${CMAKE_CURRENT_SOURCE_DIR}
-    ${CMAKE_CURRENT_SOURCE_DIR}/Agents
+    ${CMAKE_CURRENT_SOURCE_DIR}/agents
     ${CMAKE_CURRENT_SOURCE_DIR}/core
     ${CMAKE_CURRENT_SOURCE_DIR}/Interfaces
     ${CMAKE_CURRENT_SOURCE_DIR}/tools
-    ${CMAKE_CURRENT_SOURCE_DIR}/Worlds
+    ${CMAKE_CURRENT_SOURCE_DIR}/worlds
 )
 
 if(BUILD_WASM_TESTS)
@@ -84,7 +83,7 @@ elseif(BUILD_TESTS)
     list(FILTER SOURCES EXCLUDE REGEX "(_main|^main)\\.cpp$")
     list(FILTER SOURCES EXCLUDE REGEX ".*/tools/webui/.*")
 
-    # Create INTERFACE library if header-only, regular if sources exist
+    # Create INTERFACE library if header only, regular if sources exist
     list(LENGTH SOURCES SOURCES_COUNT)
     if(SOURCES_COUNT EQUAL 0)
         add_library(project_lib INTERFACE)
@@ -103,19 +102,12 @@ elseif(BUILD_TESTS)
     endif()
     add_executable(tests ${TEST_SOURCES})
     target_link_libraries(tests PRIVATE project_lib Catch2::Catch2WithMain)
+    target_compile_options(tests PRIVATE -O2 -g -Wall -Wextra -Wpedantic)
 
-else()
+elseif(DEFINED EMSCRIPTEN)
     # Emscripten build
-    # Determine output suffix
-    if(BUILD_OUTPUT STREQUAL "html")
-        set(OUTPUT_SUFFIX ".html")
-    else()
-        set(OUTPUT_SUFFIX ".js")
-    endif()
-
-    # Create executable
     add_executable(index ${SOURCES})
-    set_target_properties(index PROPERTIES SUFFIX ${OUTPUT_SUFFIX})
+    set_target_properties(index PROPERTIES SUFFIX ".html")
     target_include_directories(index PRIVATE ${HEADER_DIRS})
 
     # Emscripten compile options
@@ -134,4 +126,13 @@ else()
         --emrun
         -lembind
     )
+
+else()
+    # Native build
+    add_executable(app ${SOURCES})
+    target_include_directories(app PRIVATE ${HEADER_DIRS})
+    target_compile_options(app PRIVATE
+        -Wall -Wextra -Wcast-align -Wnon-virtual-dtor -Woverloaded-virtual -pedantic
+    )
+
 endif()
