@@ -1,6 +1,6 @@
+#include "tools/WorldPath.hpp"
 #include "catch2/catch.hpp"
 #include <cmath>
-#include "tools/WorldPath.hpp"
 
 using namespace cse498;
 
@@ -286,4 +286,40 @@ TEST_CASE("WorldPath segments yields correct pairs", "[worldpath]") {
   REQUIRE(it != segs.end());
   REQUIRE(std::get<0>(*it).y() == Approx(0.0));
   REQUIRE(std::get<1>(*it).y() == Approx(2.0));
+}
+
+TEST_CASE("WorldPath segments on single point path", "[worldpath]") {
+  WorldPath path;
+  path.addPoint({1.0, 1.0});
+
+  auto segs = path.segments();
+  REQUIRE(segs.begin() == segs.end());
+}
+
+TEST_CASE("WorldPath segments on empty path", "[worldpath]") {
+  WorldPath path;
+  auto segs = path.segments();
+  REQUIRE(segs.begin() == segs.end());
+}
+
+TEST_CASE("WorldPath reversed on empty path", "[worldpath]") {
+  WorldPath path;
+  WorldPath r = path.reversed();
+  REQUIRE(r.empty());
+  REQUIRE(r.size() == 0);
+}
+
+TEST_CASE("WorldPath isClosed on empty path", "[worldpath]") {
+  WorldPath path;
+  REQUIRE_FALSE(path.isClosed());
+}
+
+TEST_CASE("WorldPath furthestPair with overlapping points", "[worldpath]") {
+  WorldPath path;
+  path.addPoint({1.0, 1.0});
+  path.addPoint({1.0, 1.0});
+
+  auto [a, b] = path.furthestPair();
+  REQUIRE(a.x() == Approx(1.0));
+  REQUIRE(b.x() == Approx(1.0));
 }

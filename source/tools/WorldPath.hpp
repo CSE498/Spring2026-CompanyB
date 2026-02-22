@@ -26,7 +26,7 @@ namespace cse498 {
  * interpolating along the path, etc.
  */
 class WorldPath {
-public:
+ public:
   /// Tolerance for floating-point comparisons in geometry helpers.
   static constexpr double kDefaultEps = 1e-9;
 
@@ -35,8 +35,8 @@ public:
   auto begin() const { return points_.begin(); }
   auto end() const { return points_.end(); }
 
-  Point &operator[](std::size_t i) { return points_[i]; }
-  const Point &operator[](std::size_t i) const { return points_[i]; }
+  Point& operator[](std::size_t i) { return points_[i]; }
+  const Point& operator[](std::size_t i) const { return points_[i]; }
 
   /**
    * @brief Bounds-checked access to the i-th point.
@@ -44,32 +44,32 @@ public:
    * @return Reference to the point at index i.
    * @throws std::out_of_range if i >= size().
    */
-  Point &at(std::size_t i) {
+  Point& at(std::size_t i) {
     if (i >= points_.size())
       throw std::out_of_range("WorldPath::at");
     return points_[i];
   }
 
   /** @copydoc at(std::size_t) */
-  const Point &at(std::size_t i) const {
+  const Point& at(std::size_t i) const {
     if (i >= points_.size())
       throw std::out_of_range("WorldPath::at");
     return points_[i];
   }
 
-  Point &front() {
+  Point& front() {
     assert(!points_.empty());
     return points_.front();
   }
-  const Point &front() const {
+  const Point& front() const {
     assert(!points_.empty());
     return points_.front();
   }
-  Point &back() {
+  Point& back() {
     assert(!points_.empty());
     return points_.back();
   }
-  const Point &back() const {
+  const Point& back() const {
     assert(!points_.empty());
     return points_.back();
   }
@@ -83,7 +83,7 @@ public:
    * @brief Appends a point to the path.
    * @param p Point to add. Must have finite coordinates (asserts on NaN/Inf).
    */
-  void addPoint(const Point &p) {
+  void addPoint(const Point& p) {
     assert(isValidPoint(p));
     points_.push_back(p);
   }
@@ -123,7 +123,7 @@ public:
    */
   double totalLength() const {
     return std::ranges::fold_left(
-        segments(), 0.0, [](double acc, const auto &seg) {
+        segments(), 0.0, [](double acc, const auto& seg) {
           return acc + dist(std::get<0>(seg), std::get<1>(seg));
         });
   }
@@ -175,7 +175,7 @@ public:
    * @brief Tacks another path's points onto the end of this one.
    * @param other Path whose points will be appended.
    */
-  void append(const WorldPath &other) {
+  void append(const WorldPath& other) {
     points_.insert(points_.end(), other.points_.begin(), other.points_.end());
   }
 
@@ -194,21 +194,28 @@ public:
    * @param target Distance along the path to sample at.
    * @return The interpolated point. Clamps to first/last point if out of range.
    */
-  Point pointAtDistance(double target) const {
+  Point pointAtDistance(double distance_along_path) const {
     assert(!points_.empty());
-    if (target <= 0.0)
+    if (distance_along_path <= 0.0)
       return points_.front();
 
-    double traveled = 0.0;
-    for (auto [a, b] : segments()) {
-      double len = dist(a, b);
-      if (len > 0.0 && traveled + len >= target) {
-        double t = (target - traveled) / len;
-        return {a.x() + t * (b.x() - a.x()), a.y() + t * (b.y() - a.y())};
+    double remaining = distance_along_path;
+
+    for (auto&& [start, end] : segments()) {
+      const double segment_length = dist(start, end);
+      if (segment_length <= 0.0)
+        continue;  // skip duplicate points
+
+      if (remaining <= segment_length) {
+        const double t = remaining / segment_length;
+        return {start.x() + t * (end.x() - start.x()),
+                start.y() + t * (end.y() - start.y())};
       }
-      traveled += len;
+
+      remaining -= segment_length;
     }
-    return points_.back();
+
+    return points_.back();  // clamp past-the-end distances
   }
 
   /**
@@ -237,16 +244,16 @@ public:
     return false;
   }
 
-private:
+ private:
   std::vector<Point> points_;
 
   // Geometry helpers (replace with Group 13's utilities when available)
 
-  static bool isValidPoint(const Point &p) {
+  static bool isValidPoint(const Point& p) {
     return std::isfinite(p.x()) && std::isfinite(p.y());
   }
 
-  static double dist(const Point &a, const Point &b) {
+  static double dist(const Point& a, const Point& b) {
     double dx = b.x() - a.x();
     double dy = b.y() - a.y();
     return std::sqrt(dx * dx + dy * dy);
@@ -256,12 +263,15 @@ private:
     return std::abs(a - b) <= eps;
   }
 
-  static bool samePoint(const Point &a, const Point &b,
+  static bool samePoint(const Point& a,
+                        const Point& b,
                         double eps = kDefaultEps) {
     return nearlyEq(a.x(), b.x(), eps) && nearlyEq(a.y(), b.y(), eps);
   }
 
-  static int orient(const Point &a, const Point &b, const Point &c,
+  static int orient(const Point& a,
+                    const Point& b,
+                    const Point& c,
                     double eps = kDefaultEps) {
     double cross =
         (b.x() - a.x()) * (c.y() - a.y()) - (b.y() - a.y()) * (c.x() - a.x());
@@ -270,16 +280,20 @@ private:
     return (cross > 0.0) ? 1 : -1;
   }
 
-  static bool onSegment(const Point &seg_start, const Point &query,
-                        const Point &seg_end, double eps = kDefaultEps) {
+  static bool onSegment(const Point& seg_start,
+                        const Point& query,
+                        const Point& seg_end,
+                        double eps = kDefaultEps) {
     return query.x() >= std::min(seg_start.x(), seg_end.x()) - eps &&
            query.x() <= std::max(seg_start.x(), seg_end.x()) + eps &&
            query.y() >= std::min(seg_start.y(), seg_end.y()) - eps &&
            query.y() <= std::max(seg_start.y(), seg_end.y()) + eps;
   }
 
-  static bool segmentsIntersect(const Point &a1, const Point &a2,
-                                const Point &b1, const Point &b2,
+  static bool segmentsIntersect(const Point& a1,
+                                const Point& a2,
+                                const Point& b1,
+                                const Point& b2,
                                 double eps = kDefaultEps) {
     int d1 = orient(a1, a2, b1, eps);
     int d2 = orient(a1, a2, b2, eps);
@@ -299,4 +313,4 @@ private:
   }
 };
 
-} // namespace cse498
+}  // namespace cse498
