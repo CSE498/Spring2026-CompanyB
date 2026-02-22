@@ -5,7 +5,7 @@
 #include <unordered_map>
 #include <vector>
 
-#include "../../third-party/Catch/single_include/catch2/catch.hpp"
+#include "catch2/catch.hpp"
 
 void FillSetWithInts(cse498::WeightedSet<int>& ws, const int lower,
                      const int upper, const bool differentWeights = false) {

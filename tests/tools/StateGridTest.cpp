@@ -1,6 +1,6 @@
 #include "../../source/tools/StateGrid/StateGrid.hpp"
 #include "../../source/tools/StateGrid/Tile.hpp"
-#include "../../third-party/Catch/single_include/catch2/catch.hpp"
+#include "catch2/catch.hpp"
 
 /***********************************************
  * Just to be used for testing
