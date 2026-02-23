@@ -42,6 +42,9 @@ class PathGenerator {
 public:
   // Tolerance for treating two points as coincident (floating-point comparison)
   static constexpr double kPointCoincidentTolerance = 0.01;
+  // Fraction of step_size_ within which a node is considered to have reached
+  // the goal
+  static constexpr double kGoalReachedFraction = 0.6;
 
   /**
    * @brief Construct a PathGenerator with default settings.
@@ -110,7 +113,7 @@ public:
 
       // Check if we reached the goal
       double distToGoal = heuristic_(current, goal);
-      if (distToGoal < step_size_ * 0.6) {
+      if (distToGoal < step_size_ * kGoalReachedFraction) {
         // Close enough to goal - add goal point and return
         if (distToGoal > kPointCoincidentTolerance) {
           cameFrom[goal] = current;
