@@ -1,7 +1,6 @@
 #pragma once
 
 #include <algorithm>
-#include <any>
 #include <concepts>
 #include <expected>
 #include <functional>
@@ -317,15 +316,14 @@ public:
 
   /**
    * @brief Register function into map if possible.
-   *
-   * Wraps given function into a lambda which takes in the function
-   * wrapped in `std::any` and a `std::vector` of arguments wrapped
-   * in `TypeVariant`, and inserts wrapped function into map.
+   * 
+   * Moves given function into a lambda which takes in a `std::vector`
+   * of arguments wrapped in `TypeVariant`, and inserts this lambda
+   * into map.
    *
    * Leverages the fact that the full function signature is known at
    * the time that this method is called to supply the argument tuple
-   * generation and the `std::any_cast` with the exact type information
-   * necessary to get back to the desired signature.
+   * generation and to store signature types.
    *
    * Returns std::expected:
    * - void if successful
