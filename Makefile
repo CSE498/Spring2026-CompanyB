@@ -18,7 +18,8 @@
 #   make test-build
 
 .PHONY: default all build test clean debug opt quick grumpy \
-        src-% test-% help
+        src-% test-% help docker-build docker-test docker-serve \
+        docker-dev docker-shell docker-clean docker-image docker-rebuild
 
 # ---------- High-level targets ----------
 
@@ -57,6 +58,36 @@ src-%:
 test-%:
 	$(MAKE) -C tests $*
 
+# Build the project
+docker-build:
+	docker compose run --rm build
+
+# Build and run tests
+docker-test:
+	docker compose run --rm test
+
+# Build and serve with web server
+docker-serve:
+	docker compose up serve
+
+# Interactive development shell
+docker-dev:
+	docker compose run --rm dev
+
+docker-shell: dev
+
+# Build just the Docker image
+docker-image:
+	docker build -t cse498-companyb-project .
+
+# Clean output directory
+docker-clean:
+	rm -rf output/*
+
+# Rebuild image from scratch
+docker-rebuild:
+	docker build --no-cache -t cse498-companyb-project .
+
 help:
 	@echo "Top-level targets:"
 	@echo "  make / make build      Build program(s) in source/"
@@ -68,3 +99,13 @@ help:
 	@echo "Forwarding targets:"
 	@echo "  make src-<tgt>         Run 'make <tgt>' in source/"
 	@echo "  make test-<tgt>        Run 'make <tgt>' in tests/"
+	@echo
+	@echo "Docker Build System"
+	@echo "  make docker-build       Build program(s) in source/ and run in a container"
+	@echo "  make docker-test        Build + run unit tests in tests/ and run in a container"
+	@echo "  make docker-serve       Build program(s) in source/ and serve the built output from a container"
+	@echo "  make docker-dev         Build program(s) in source/ and run in a container with an interactive shell"
+	@echo "  make docker-shell       Alias for dev"
+	@echo "  make docker-image       Build the docker image"
+	@echo "  make docker-clean       Clean the output directory"
+	@echo "  make docker-rebuild     Rebuild the docker image from scratch without using the cache"
