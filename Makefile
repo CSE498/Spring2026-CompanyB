@@ -62,9 +62,13 @@ test-%:
 docker-build:
 	docker compose run --rm build
 
-# Build and run tests
-docker-test:
+# Build and run emscripten tests
+docker-test-emscripten:
 	docker compose run --rm test
+
+# Build and run native tests
+docker-test-native:
+	docker compose run --rm test-native
 
 # Build and serve with web server
 docker-serve:
@@ -101,11 +105,12 @@ help:
 	@echo "  make test-<tgt>        Run 'make <tgt>' in tests/"
 	@echo
 	@echo "Docker Build System"
-	@echo "  make docker-build       Build program(s) in source/ and run in a container"
-	@echo "  make docker-test        Build + run unit tests in tests/ and run in a container"
-	@echo "  make docker-serve       Build program(s) in source/ and serve the built output from a container"
-	@echo "  make docker-dev         Build program(s) in source/ and run in a container with an interactive shell"
-	@echo "  make docker-shell       Alias for dev"
-	@echo "  make docker-image       Build the docker image"
-	@echo "  make docker-clean       Clean the output directory"
-	@echo "  make docker-rebuild     Rebuild the docker image from scratch without using the cache"
+	@echo "  make docker-build              Build program(s) in source/ and run in a container"
+	@echo "  make docker-test-emscripten    Build + run unit tests in tests/ on emscipten source"
+	@echo "  make docker-test-native        Build + run unit tests in tests/ on non-emscipten source"
+	@echo "  make docker-serve              Build program(s) in source/ and serve the built output from a container"
+	@echo "  make docker-dev                Build program(s) in source/ and run in a container with an interactive shell"
+	@echo "  make docker-shell              Alias for dev"
+	@echo "  make docker-image              Build the docker image"
+	@echo "  make docker-clean              Clean the output directory"
+	@echo "  make docker-rebuild            Rebuild the docker image from scratch without using the cache"

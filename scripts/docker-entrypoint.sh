@@ -71,7 +71,7 @@ do_serve() {
         "${OUTPUT_DIR}/index.html"
 }
 
-do_test() {
+do_test_emscripten() {
     echo "==> Building and running tests (Catch2 + Emscripten) <=="
 
     if [ ! -f "${SOURCE_DIR}/CMakeLists.txt" ]; then
@@ -96,6 +96,28 @@ do_test() {
     node "${TEST_BUILD_DIR}/tests.js"
 }
 
+do_test_native() {
+    echo "==> Building and running tests (Catch2, native) <=="
+
+    if [ ! -f "${SOURCE_DIR}/CMakeLists.txt" ]; then
+        echo "Error: No CMakeLists.txt found in ${SOURCE_DIR}"
+        exit 1
+    fi
+
+    local TEST_BUILD_DIR="${BUILD_DIR}/tests"
+    mkdir -p "${TEST_BUILD_DIR}"
+
+    cmake \
+        -S "${SOURCE_DIR}" \
+        -B "${TEST_BUILD_DIR}" \
+        -DBUILD_TESTS=ON
+
+    cmake --build "${TEST_BUILD_DIR}" --parallel
+
+    echo "==> Running tests <=="
+    "${TEST_BUILD_DIR}/tests"
+}
+
 do_clean() {
     echo "==> Cleaning build artifacts <=="
     rm -rf "${BUILD_DIR}"/* "${OUTPUT_DIR}"/*
@@ -106,8 +128,11 @@ case "${1:-build}" in
     build)
         do_build
         ;;
-    test)
+    test-emscripten)
         do_test
+        ;;
+    test-native)
+        do_test_native
         ;;
     serve)
         do_serve

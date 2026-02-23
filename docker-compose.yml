@@ -14,8 +14,8 @@ services:
       - BUILD_OUTPUT=html
     command: build
 
-  # Build and run tests
-  test:
+  # Build and run emscripten tests
+  test-emscripten:
     build:
       context: .
       args:
@@ -24,7 +24,19 @@ services:
       - ./source:/app/source:ro
       - ./tests:/app/tests:ro
       - ./scripts/docker-entrypoint.sh:/app/docker-entrypoint.sh:ro
-    command: test
+    command: test-emscripten
+
+  # Build and run native tests
+  test-native:
+    build:
+      context: .
+      args:
+        SDL_VERSION: 2
+    volumes:
+      - ./source:/app/source:ro
+      - ./tests:/app/tests:ro
+      - ./scripts/docker-entrypoint.sh:/app/docker-entrypoint.sh:ro
+    command: test-native
 
   # Build and serve with emrun web server
   serve:
