@@ -14,13 +14,14 @@
 
 namespace cse498 {
 
-class WebLayout : WebElement {
+class WebLayout : public WebElement {
  protected:
   std::vector<std::shared_ptr<WebElement>> elements;
 
  public:
   // Create a container in the DOM for the layout
   WebLayout(std::string id);
+  ~WebLayout();
 
   WebLayout& AddChild(std::shared_ptr<WebElement> elem);
   WebLayout& RemoveChild(std::shared_ptr<WebElement> elem);
