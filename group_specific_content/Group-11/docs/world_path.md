@@ -30,6 +30,10 @@ We plan to implement the following:
   **Behavior:** Removes last point.  
   **Returns:** `false` if already empty.
 
+- `std::optional<Point> popBackPoint();`  
+  **Behavior:** Removes last point and returns it.  
+  **Returns:** `std::nullopt` if already empty.
+
 - `void reserve(size_t n);`  
   **Behavior:** Pre-allocates memory for performance when generating paths.
 

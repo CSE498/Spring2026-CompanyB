@@ -100,6 +100,18 @@ class WorldPath {
   }
 
   /**
+   * @brief Removes the last point and returns it.
+   * @return The removed point, or std::nullopt if the path was already empty.
+   */
+  [[nodiscard]] std::optional<Point> popBackPoint() {
+    if (points_.empty())
+      return std::nullopt;
+    Point p = points_.back();
+    points_.pop_back();
+    return p;
+  }
+
+  /**
    * @brief Read-only span over the internal point storage.
    * @return A std::span of const Points.
    */
