@@ -75,78 +75,85 @@ struct SetupMockDOMWebLayout {
       document.body.appendChild = function(elem) { return elem; };
     });
     // clang-format on
-  }
+    }
 
-  ~SetupMockDOMWebLayout() {
-    // clang-format off
+    ~SetupMockDOMWebLayout() {
+      // clang-format off
     EM_ASM({
       delete globalThis.document;
       delete globalThis.window;
       delete globalThis.Image;
     });
-    // clang-format on
-  }
-};
+      // clang-format on
+    }
+    }
+    ;
 
-using namespace cse498;
+    using namespace cse498;
 
-TEST_CASE("WebLayout constructor creates DOM element with ID", "[WebLayout]") {
-  SetupMockDOMWebLayout mock;
-  WebLayout layout("layout1");
+    TEST_CASE("WebLayout constructor creates DOM element with ID",
+              "[WebLayout]") {
+      SetupMockDOMWebLayout mock;
+      WebLayout layout("layout1");
 
-  REQUIRE(layout.GetId() == "layout1");
+      REQUIRE(layout.GetId() == "layout1");
 
-  int layoutPresent = EM_ASM_INT({
-    const id = UTF8ToString($0);
-    const elem = document.getElementById(id);
-    if (elem) {
-      return 1;
-    } else return 0;
-  }, layout.GetId().c_str());
+      int layoutPresent = EM_ASM_INT(
+          {
+            const id = UTF8ToString($0);
+            const elem = document.getElementById(id);
+            if (elem) {
+              return 1;
+            } else
+              return 0;
+          },
+          layout.GetId().c_str());
 
-  REQUIRE(layoutPresent == 1);
-}
+      REQUIRE(layoutPresent == 1);
+    }
 
-TEST_CASE("WebLayout DOM element is removed on object being destructed", "[WebLayout]") {
-  SetupMockDOMWebLayout mock;
-  {
-    WebLayout layout("layout1");
-  }
+    TEST_CASE("WebLayout DOM element is removed on object being destructed",
+              "[WebLayout]") {
+      SetupMockDOMWebLayout mock;
+      {
+        WebLayout layout("layout1");
+      }
 
-  std::string id = "layout1";
+      std::string id = "layout1";
 
-  int layoutPresent = EM_ASM_INT({
-    const id = UTF8ToString($0);
-    const elem = document.getElementById(id);
-    if (elem) {
-      return 1;
-    } else return 0;
-  }, id.c_str());
+      int layoutPresent = EM_ASM_INT(
+          {
+            const id = UTF8ToString($0);
+            const elem = document.getElementById(id);
+            if (elem) {
+              return 1;
+            } else
+              return 0;
+          },
+          id.c_str());
 
-  REQUIRE(layoutPresent == 0);
-}
+      REQUIRE(layoutPresent == 0);
+    }
 
-TEST_CASE("WebLayout can add and remove children", "[WebLayout]") {
-  SetupMockDOMWebLayout mock;
-  WebLayout layout("layout1");
+    TEST_CASE("WebLayout can add and remove children", "[WebLayout]") {
+      SetupMockDOMWebLayout mock;
+      WebLayout layout("layout1");
 
-  auto elem1 = std::make_shared<WebElement>("elem1");
-  auto elem2 = std::make_shared<WebElement>("elem2");
+      auto elem1 = std::make_shared<WebElement>("elem1");
+      auto elem2 = std::make_shared<WebElement>("elem2");
 
-  REQUIRE_NOTHROW(layout.AddChild(elem1));
-  REQUIRE_NOTHROW(layout.AddChild(elem2));
-}
+      REQUIRE_NOTHROW(layout.AddChild(elem1));
+      REQUIRE_NOTHROW(layout.AddChild(elem2));
+    }
 
-TEST_CASE("WebLayout can set properties with chained function calls", "[WebLayout]") {
-  SetupMockDOMWebLayout mock;
-  WebLayout layout("layout1");
+    TEST_CASE("WebLayout can set properties with chained function calls",
+              "[WebLayout]") {
+      SetupMockDOMWebLayout mock;
+      WebLayout layout("layout1");
 
-  REQUIRE_NOTHROW(
-    layout
-      .SetDirection("column")
-      .SetJustifyContent("flex-start")
-      .SetAlignItems("center")
-      .SetAlignContent("center")
-      .SetGap("5px")
-  );
-}
+      REQUIRE_NOTHROW(layout.SetDirection("column")
+                          .SetJustifyContent("flex-start")
+                          .SetAlignItems("center")
+                          .SetAlignContent("center")
+                          .SetGap("5px"));
+    }
