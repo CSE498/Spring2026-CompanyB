@@ -7,6 +7,7 @@
 
 struct SetupMockDOMWebLayout {
   SetupMockDOMWebLayout() {
+    // clang-format off
     EM_ASM({
       /// creates a document if it doesn't exist
       if (typeof document === 'undefined') {
@@ -73,14 +74,17 @@ struct SetupMockDOMWebLayout {
 
       document.body.appendChild = function(elem) { return elem; };
     });
+    // clang-format on
   }
 
   ~SetupMockDOMWebLayout() {
+    // clang-format off
     EM_ASM({
       delete globalThis.document;
       delete globalThis.window;
       delete globalThis.Image;
     });
+    // clang-format on
   }
 };
 
