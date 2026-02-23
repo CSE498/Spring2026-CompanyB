@@ -15,7 +15,8 @@
 namespace cse498 {
 
 /**
- * @brief Manages a flex container in the DOM for laying out WebElement children.
+ * @brief Manages a flex container in the DOM for laying out WebElement
+ * children.
  */
 class WebLayout : public WebElement {
  protected:
@@ -23,7 +24,8 @@ class WebLayout : public WebElement {
 
  public:
   /**
-   * @brief Constructs a WebLayout, creating a flex div in the DOM with the given ID.
+   * @brief Constructs a WebLayout, creating a flex div in the DOM with the
+   * given ID.
    * @param id The HTML element ID to assign to the layout container.
    */
   WebLayout(std::string id);
@@ -70,7 +72,8 @@ class WebLayout : public WebElement {
 
   /**
    * @brief Sets the align-content CSS property of the layout container.
-   * @param alignContent The align-content value (e.g., "stretch", "space-around").
+   * @param alignContent The align-content value (e.g., "stretch",
+   * "space-around").
    * @return Reference to this layout for method chaining.
    */
   WebLayout& SetAlignContent(std::string alignContent);

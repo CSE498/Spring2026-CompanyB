@@ -23,7 +23,7 @@ class WebElement {
   // Create an element with the given ID in the DOM
   WebElement(const std::string& id);
   virtual ~WebElement() = default;
-  
+
   std::string GetId() const { return id; }
 };
 }  // namespace cse498
