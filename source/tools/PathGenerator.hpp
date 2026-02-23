@@ -62,7 +62,7 @@ public:
    */
   [[nodiscard]] std::optional<WorldPath>
   ShortestPath(const Point &start, const Point &goal,
-               const WorldQueryFunc &canMove) {
+               const WorldQueryFunc &canMove) const {
     assert(canMove && "WorldQueryFunc cannot be null");
 
     // Handle degenerate case: start == goal
@@ -150,7 +150,7 @@ public:
    * @return Optional WorldPath (nullopt if waypoints are unreachable)
    */
   [[nodiscard]] std::optional<WorldPath>
-  PatrolPath(const std::vector<Point> &waypoints, bool loop = true) {
+  PatrolPath(const std::vector<Point> &waypoints, bool loop = true) const {
     if (waypoints.empty()) {
       return std::nullopt;
     }
@@ -209,7 +209,7 @@ public:
    */
   [[nodiscard]] std::optional<WorldPath>
   AvoidancePath(const Point &start, const Point &goal, const Point &avoid,
-                double radius, const WorldQueryFunc &canMove) {
+                double radius, const WorldQueryFunc &canMove) const {
     assert(canMove && "WorldQueryFunc cannot be null");
     assert(radius >= 0.0 && "Avoidance radius cannot be negative");
 
@@ -234,7 +234,7 @@ public:
    * @return WorldPath (returns partial path if dead-end reached)
    */
   [[nodiscard]] WorldPath RandomWalk(const Point &start, size_t steps,
-                                     const WorldQueryFunc &canMove) {
+                                     const WorldQueryFunc &canMove) const {
     assert(canMove && "WorldQueryFunc cannot be null");
 
     WorldPath path;
@@ -282,7 +282,7 @@ public:
    * @return WorldPath representing the spiral
    */
   [[nodiscard]] WorldPath SpiralPath(const Point &center, double spacing,
-                                     size_t turns) {
+                                     size_t turns) const {
     WorldPath path;
 
     if (turns == 0) {
@@ -361,15 +361,22 @@ private:
     std::vector<Point> neighbors;
     neighbors.reserve(8);
 
-    // 8-directional movement (cardinal + diagonal)
-    const double step = step_size_;
-    const std::vector<std::pair<double, double>> directions = {
-        {step, 0},    {-step, 0},    {0, step},     {0, -step},
-        {step, step}, {step, -step}, {-step, step}, {-step, -step}};
+    static constexpr std::array<std::pair<double, double>, 8> kUnitDirections{{
+        {1.0, 0.0},
+        {-1.0, 0.0},
+        {0.0, 1.0},
+        {0.0, -1.0},
+        {1.0, 1.0},
+        {1.0, -1.0},
+        {-1.0, 1.0},
+        {-1.0, -1.0},
+    }};
 
-    for (const auto &[dx, dy] : directions) {
-      Point neighbor(p.x() + dx, p.y() + dy);
-      neighbors.push_back(neighbor);
+    neighbors.reserve(kUnitDirections.size());
+
+    const double step = step_size_;
+    for (const auto &[ux, uy] : kUnitDirections) {
+      neighbors.emplace_back(p.x() + ux * step, p.y() + uy * step);
     }
 
     return neighbors;
