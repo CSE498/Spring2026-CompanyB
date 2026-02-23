@@ -18,10 +18,20 @@ WebLayout::WebLayout(std::string id) : WebElement(id) {
         let layout = document.getElementById(layoutId);
         if (!layout) {
           layout = document.createElement('div');
-          layout.id = layoutId;
-          layout.style.display = 'flex';
-          document.body.appendChild(layout);
         }
+        layout.id = layoutId;
+        layout.style.display = 'flex';
+        document.body.appendChild(layout);
+      },
+      id.c_str());
+}
+
+WebLayout::~WebLayout() {
+  EM_ASM(
+      {
+        let layoutId = UTF8ToString($0);
+        let layout = document.getElementById(layoutId);
+        layout.remove();
       },
       id.c_str());
 }
@@ -36,6 +46,7 @@ WebLayout& WebLayout::AddChild(std::shared_ptr<WebElement> elem) {
 
         let layout = document.getElementById(layoutId);
         let child = document.getElementById(childId);
+
         if (layout && child) {
           layout.appendChild(child);
         }
