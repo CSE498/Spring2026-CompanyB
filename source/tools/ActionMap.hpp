@@ -127,12 +127,11 @@ template <TemplTools::UniqueTypes... Types> class ActionMap {
           arg_t_idxs(std::move(arg_t_idxs)){};
 
     // Delete copy ctors
-    FuncEntry(FuncEntry &) = delete;
-    FuncEntry &operator=(FuncEntry &) = delete;
-    FuncEntry operator=(FuncEntry) = delete;
+    FuncEntry(const FuncEntry &) = delete;
+    FuncEntry & operator=(const FuncEntry &) = delete;
 
     // Permit moving
-    FuncEntry &operator=(FuncEntry &&) = default;
+    FuncEntry & operator=(FuncEntry &&) = default;
     FuncEntry(FuncEntry &&) = default;
   };
 
