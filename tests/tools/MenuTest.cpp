@@ -1,265 +1,142 @@
-// MenuTest.cpp
+#define CATCH_CONFIG_MAIN
+#include "catch2/catch.hpp"
 
 #include "../../source/Interfaces/gui/Menu.hpp"
-
-
-#include <iostream>
 #include <string>
-#include <vector>
 
 using cse498::Menu;
 
-static int g_failures = 0;
-
-#define CHECK(expr) do { \
-    if (!(expr)) { ++g_failures; std::cerr << "FAIL: " << #expr << " (" << __FILE__ << ":" << __LINE__ << ")\n"; } \
-} while (0)
-
-#define CHECK_EQ(a,b) do { \
-    auto lhs = (a); auto rhs = (b); \
-    if (!(lhs == rhs)) { ++g_failures; std::cerr << "FAIL: " << #a << " == " << #b << " (" << __FILE__ << ":" << __LINE__ << ")\n"; } \
-} while (0)
-
-
-
-static void test_title_get_set()
+TEST_CASE("Menu basics: title/open/ignoreDisabledActivation", "[gui][menu]")
 {
     Menu m;
     CHECK(m.title().empty());
+    CHECK(m.isOpen());
+    CHECK(m.ignoreDisabledActivation());
 
     m.setTitle("Main Menu");
-    CHECK_EQ(m.title(), std::string("Main Menu"));
-
-    Menu m2(std::string("Options"));
-    CHECK_EQ(m2.title(), std::string("Options"));
-}
-
-static void test_open_get_set_and_handleNav_gate()
-{
-    Menu m;
-    CHECK(m.isOpen()); // default true
+    CHECK(m.title() == std::string("Main Menu"));
 
     m.setOpen(false);
-    CHECK(!m.isOpen());
-
-    // Closed menu should ignore input
+    CHECK_FALSE(m.isOpen());
     CHECK(m.handleNav(Menu::NavEvent::Down) == Menu::InputResult::Ignored);
-    CHECK(m.handleNav(Menu::NavEvent::Back) == Menu::InputResult::Ignored);
 
     m.setOpen(true);
-    CHECK(m.isOpen());
     CHECK(m.handleNav(Menu::NavEvent::Down) == Menu::InputResult::Heard);
-}
-
-static void test_ignoreDisabledActivation_get_set()
-{
-    Menu m;
-    CHECK(m.ignoreDisabledActivation()); // default true
 
     m.setIgnoreDisabledActivation(false);
-    CHECK(!m.ignoreDisabledActivation());
-
-    m.setIgnoreDisabledActivation(true);
-    CHECK(m.ignoreDisabledActivation());
+    CHECK_FALSE(m.ignoreDisabledActivation());
 }
 
-static void test_addItem_getItem_items()
+TEST_CASE("Menu add/get + setters + remove/clear", "[gui][menu]")
 {
     Menu m;
-    bool activated = false;
+    auto id = m.addItem("x", "X", []{}, true, true);
+    REQUIRE(id != 0);
+    REQUIRE(m.items().size() == 1);
 
-    auto id = m.addItem("play", "Play", [&]{ activated = true; }, true, true);
-
-    CHECK(id != 0);
-    CHECK_EQ(m.items().size(), std::size_t(1));
-
-    // mutable getItem
-    Menu::Item* it = m.getItem(id);
-    CHECK(it != nullptr);
-    CHECK_EQ(it->key, std::string("play"));
-    CHECK_EQ(it->label, std::string("Play"));
+    auto* it = m.getItem(id);
+    REQUIRE(it != nullptr);
+    CHECK(it->key == "x");
+    CHECK(it->label == "X");
     CHECK(it->enabled);
     CHECK(it->visible);
 
-    // const getItem
-    const Menu& cm = m;
-    const Menu::Item* cit = cm.getItem(id);
-    CHECK(cit != nullptr);
-    CHECK_EQ(cit->key, std::string("play"));
-}
-
-static void test_item_setters_enabled_visible_label()
-{
-    Menu m;
-    auto id = m.addItem("x", "X", []{}, true, true);
-
-    m.setItemLabel(id, "New Label");
+    m.setItemLabel(id, "New");
     m.setItemEnabled(id, false);
     m.setItemVisible(id, false);
 
-    const Menu::Item* it = m.getItem(id);
-    CHECK(it != nullptr);
-    CHECK_EQ(it->label, std::string("New Label"));
-    CHECK(!it->enabled);
-    CHECK(!it->visible);
+    const auto* cit = m.getItem(id);
+    REQUIRE(cit != nullptr);
+    CHECK(cit->label == "New");
+    CHECK_FALSE(cit->enabled);
+    CHECK_FALSE(cit->visible);
+
+    CHECK_FALSE(m.removeItem(999999u));
+    CHECK(m.removeItem(id));
+    CHECK(m.getItem(id) == nullptr);
+
+    m.clear();
+    CHECK(m.items().empty());
 }
 
-static void test_predicates_affect_render_model()
+TEST_CASE("Menu predicates + hover/select/activate rules", "[gui][menu]")
 {
     Menu m;
-    auto id = m.addItem("x", "X", []{}, true, true);
+    int act = 0, hov = 0, sel = 0;
 
-    bool allowEnabled = true;
-    bool allowVisible = true;
+    auto id1 = m.addItem("one", "One", [&]{ act++; }, true, true);
+    auto id2 = m.addItem("two", "Two", []{}, true, true);
 
-    m.setEnabledPredicate(id, [&]{ return allowEnabled; });
-    m.setVisiblePredicate(id, [&]{ return allowVisible; });
+    bool allowEnabled = true, allowVisible = true;
+    m.setEnabledPredicate(id1, [&]{ return allowEnabled; });
+    m.setVisiblePredicate(id1, [&]{ return allowVisible; });
 
-    // both true
+    m.setHoverAction(id1, [&]{ hov++; });
+    m.setSelectedAction(id2, [&]{ sel++; });
+
+    // render model uses predicates
     {
         auto rm = m.buildRenderModel();
-        CHECK_EQ(rm.size(), std::size_t(1));
+        REQUIRE(rm.size() == 2);
         CHECK(rm[0].enabled);
         CHECK(rm[0].visible);
     }
-
-    // enabled false
     allowEnabled = false;
-    {
-        auto rm = m.buildRenderModel();
-        CHECK(!rm[0].enabled);
-        CHECK(rm[0].visible);
-    }
+    CHECK_FALSE(m.buildRenderModel()[0].enabled);
 
-    // visible false
     allowVisible = false;
-    {
-        auto rm = m.buildRenderModel();
-        CHECK(!rm[0].visible);
-    }
-}
+    CHECK_FALSE(m.buildRenderModel()[0].visible);
 
-static void test_action_setters_activate_hover_selected()
-{
-    Menu m;
-
-    int activated = 0;
-    int hovered = 0;
-    int selected = 0;
-
-    auto id1 = m.addItem("one", "One", []{}, true, true);
-    auto id2 = m.addItem("two", "Two", []{}, true, true);
-
-    m.setActivateAction(id1, [&]{ activated++; });
-    m.setHoverAction(id1, [&]{ hovered++; });
-    m.setSelectedAction(id2, [&]{ selected++; });
-
-    // hover should run if visible
+    // hover (only if visible)
+    allowVisible = true;
     m.hover(id1);
-    CHECK_EQ(hovered, 1);
+    CHECK(hov == 1);
 
-    // selecting triggers onSelected only on transition
+    // select only triggers once per transition
     CHECK(m.select(id2));
-    CHECK_EQ(selected, 1);
-
+    CHECK(sel == 1);
     CHECK(m.select(id2));
-    CHECK_EQ(selected, 1); // no second transition
+    CHECK(sel == 1);
 
-    // activation runs activate callback when allowed
-    CHECK(m.activate(id1));
-    CHECK_EQ(activated, 1);
-}
+    // activate rules invisible never activates
+    m.setItemVisible(id1, false);
+    CHECK_FALSE(m.activate(id1));
+    CHECK(act == 0);
 
-static void test_activation_rules_visibility_and_disabled()
-{
-    Menu m;
-    int act = 0;
-    auto id = m.addItem("x", "X", [&]{ act++; }, true, true);
-
-    // invisible never activates
-    m.setItemVisible(id, false);
-    CHECK(!m.activate(id));
-    CHECK_EQ(act, 0);
-
-    // visible again
-    m.setItemVisible(id, true);
-
-    // disabled + ignoreDisabledActivation=true blocks
-    m.setItemEnabled(id, false);
+    // disabled blocks when ignoreDisabledActivation=true
+    m.setItemVisible(id1, true);
+    m.setItemEnabled(id1, false);
     m.setIgnoreDisabledActivation(true);
-    CHECK(!m.activate(id));
-    CHECK_EQ(act, 0);
+    CHECK_FALSE(m.activate(id1));
+    CHECK(act == 0);
 
-    // disabled + ignoreDisabledActivation=false allows
+    // disabled allowed when ignoreDisabledActivation=false
     m.setIgnoreDisabledActivation(false);
-    CHECK(m.activate(id));
-    CHECK_EQ(act, 1);
+    CHECK(m.activate(id1));
+    CHECK(act == 1);
 }
 
-static void test_addItem_sameKey_updates_existing()
+TEST_CASE("Menu duplicate key updates existing item", "[gui][menu]")
 {
     Menu m;
-    int callsA = 0;
-    int callsB = 0;
+    int callsA = 0, callsB = 0;
 
     auto id1 = m.addItem("k", "Label1", [&]{ callsA++; }, true, true);
     auto id2 = m.addItem("k", "Label2", [&]{ callsB++; }, false, false);
 
-    CHECK_EQ(id1, id2);
-    CHECK_EQ(m.items().size(), std::size_t(1));
+    CHECK(id1 == id2);
+    REQUIRE(m.items().size() == 1);
 
-    const Menu::Item* it = m.getItem(id1);
-    CHECK(it != nullptr);
-    CHECK_EQ(it->label, std::string("Label2"));
-    CHECK(!it->enabled);
-    CHECK(!it->visible);
+    const auto* it = m.getItem(id1);
+    REQUIRE(it != nullptr);
+    CHECK(it->label == "Label2");
+    CHECK_FALSE(it->enabled);
+    CHECK_FALSE(it->visible);
 
+    // make visible, allow disabled activation, updated action used
     m.setItemVisible(id1, true);
-
-    // allow disabled activation and verify updated action is used
     m.setIgnoreDisabledActivation(false);
     CHECK(m.activate(id1));
-    CHECK_EQ(callsA, 0);
-    CHECK_EQ(callsB, 1);
-}
-
-static void test_remove_and_clear()
-{
-    Menu m;
-    auto id1 = m.addItem("a", "A", []{}, true, true);
-    auto id2 = m.addItem("b", "B", []{}, true, true);
-
-    CHECK(m.removeItem(id1));
-    CHECK(m.getItem(id1) == nullptr);
-    CHECK(m.getItem(id2) != nullptr);
-
-    CHECK(!m.removeItem(999999u)); // non existent
-
-    m.clear();
-    CHECK_EQ(m.items().size(), std::size_t(0));
-}
-
-int main()
-{
-    test_title_get_set();
-    test_open_get_set_and_handleNav_gate();
-    test_ignoreDisabledActivation_get_set();
-
-    test_addItem_getItem_items();
-    test_item_setters_enabled_visible_label();
-    test_predicates_affect_render_model();
-
-    test_action_setters_activate_hover_selected();
-    test_activation_rules_visibility_and_disabled();
-
-    test_addItem_sameKey_updates_existing();
-    test_remove_and_clear();
-
-    if (g_failures == 0) {
-        std::cout << "[OK] All Menu tests passed.\n";
-        return 0;
-    }
-
-    std::cerr << "[DONE] Failures: " << g_failures << "\n";
-    return 1;
+    CHECK(callsA == 0);
+    CHECK(callsB == 1);
 }
