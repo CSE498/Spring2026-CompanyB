@@ -21,6 +21,13 @@ json make_valid_event() {
     };
 }
 
+TEST_CASE("ActionLog constructor initializes with DataLog reference", "[ActionLog]") {
+    DataLog dataLog;
+    ActionLog actionLog(dataLog);
+    auto event = make_valid_event();
+    REQUIRE(actionLog.LogEvent(event) == LogEventStatus::SUCCESS);
+}
+
 TEST_CASE("ActionLog logs valid events and updates DataLog", "[ActionLog]") {
     DataLog dataLog;
     ActionLog actionLog(dataLog);

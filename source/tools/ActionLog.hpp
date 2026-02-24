@@ -18,16 +18,21 @@ class ActionLog {
   /// @brief Reference to the DataLog instance where events will be recorded.
   DataLog& dataLog;
 
+  /// @brief Validates that the event payload contains all required fields with correct types.
+  /// @param eventPayload JSON object representing the event to validate.
+  /// @return True if the payload is valid, false otherwise.
+  bool CheckRequiredFields(const nlohmann::json& eventPayload);
+
  public:
   ActionLog() = delete; // Delete default constructor
   /// @brief Basic constructor taking a reference to a DataLog instance.
   /// @param log Reference to DataLog where events will be recorded.
-  ActionLog(DataLog& log) : dataLog(log) {}
+  explicit ActionLog(DataLog& log) : dataLog(log) {}
   ~ActionLog() = default;
 
   /// @brief Log an event with the provided data.
-  /// @param data JSON object containing event data.
+  /// @param eventPayload JSON object containing event data.
   /// @return Success status of the logging operation.
-  LogEventStatus LogEvent(const nlohmann::json& data);
+  [[nodiscard]] LogEventStatus LogEvent(const nlohmann::json& eventPayload);
 };
 }  // namespace cse498
