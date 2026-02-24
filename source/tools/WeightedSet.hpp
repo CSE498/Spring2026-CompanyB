@@ -294,13 +294,13 @@ class WeightedSet {
     }
     return false;
   }
-  // This function takes in an index in the range [0, total weight] and returns
+  // This function takes in an index in the range [0, total weight) and returns
   // the element "at" that index. Each element has an interval associated to it,
   // with length equal to that element's weight, such that, if you give an index
   // in that interval, you'll get back that element. E.g. if you have just 1
   // element of weight 1 and another of weight 2, then (depending on the order
   // in which they were inserted) either the weight-1 element has [0, 1) and the
-  // weight-2 has [1, 3] or the weight-1 has [2, 3] and the weight-2 has [0, 2).
+  // weight-2 has [1, 3) or the weight-1 has [2, 3) and the weight-2 has [0, 2).
   // Classes other than WeightedSet shouldn't worry, or need to worry, about the
   // exact interval assigned to each element. These intervals may change on
   // inserting or deleting elements. The only guarantee is that the length of
@@ -309,16 +309,15 @@ class WeightedSet {
   std::optional<T> GetElementAt(const double index) const {
     Node* current_node = root_.get();
     double total = total_weight();
-    if (index < 0 || index > total) {
+    if (index < 0 || index >= total) {
       return std::nullopt;
     }
     double lower_bound = 0;
-    double upper_bound = total;
     while (current_node != nullptr) {
       // On the first iteration of this loop, we divide the whole interval [0,
       // total weight] into 3 subintervals: [0, left subtree weight), [left
       // subtree weight, left subtree weight + root weight), and [left subtree
-      // weight + root weight, total weight]. Note that the middle interval has
+      // weight + root weight, total weight). Note that the middle interval has
       // length equal to the weight of the root. If the index is in the middle
       // interval, we just return the root. If in the first interval: we enter
       // the left subtree and continue from there, dividing up that interval in
@@ -328,10 +327,8 @@ class WeightedSet {
       double current_node_interval_upper =
           current_node_interval_lower + current_node->weight;
       if (index < current_node_interval_lower) {
-        upper_bound = current_node_interval_lower;
         current_node = current_node->left.get();
-      } else if (index >= current_node_interval_upper &&
-                 current_node_interval_upper != upper_bound) {
+      } else if (index >= current_node_interval_upper) {
         lower_bound = current_node_interval_upper;
         current_node = current_node->right.get();
       } else {
