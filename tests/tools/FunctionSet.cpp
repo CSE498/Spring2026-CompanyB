@@ -166,8 +166,19 @@ TEST_CASE("FunctionSet - iteration") {
     for (const auto& func : fs) {
         sum += func(10);
     }
-    
+
     REQUIRE(sum == 60);
+}
+
+TEST_CASE("FunctionSet - empty iteration") {
+    cse498::FunctionSet<void, int&> fs;
+    
+    int val = 0;
+    for (const auto& func : fs) {
+        func(val);
+    }
+
+    REQUIRE(val == 0);
 }
 
 TEST_CASE("FunctionSet - multiple parameters") {
