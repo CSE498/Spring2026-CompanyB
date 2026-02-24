@@ -1,6 +1,6 @@
+#include "tools/WorldPath.hpp"
 #include "catch2/catch.hpp"
 #include <cmath>
-#include "tools/WorldPath.hpp"
 
 using namespace cse498;
 
@@ -10,6 +10,8 @@ using namespace cse498;
 //   - "WorldPath isClosed with single point"
 //   - "WorldPath selfIntersects with fewer than 4 points"
 //   - "WorldPath isValid on empty path"
+//   - "WorldPath isClosed uses epsilon"
+//   - "WorldPath isValid detects NaN after mutation"
 
 TEST_CASE("WorldPath default constructor produces empty path", "[worldpath]") {
   WorldPath path;
@@ -68,6 +70,17 @@ TEST_CASE("WorldPath popBack", "[worldpath]") {
 
   path.addPoint({0.0, 0.0});
   REQUIRE(path.popBack());
+  REQUIRE(path.empty());
+}
+
+TEST_CASE("WorldPath popBackPoint", "[worldpath]") {
+  WorldPath path;
+  REQUIRE_FALSE(path.popBackPoint().has_value());
+
+  path.addPoint({0.0, 0.0});
+  auto popped = path.popBackPoint();
+  REQUIRE(popped.has_value());
+  REQUIRE(popped->x() == Approx(0.0));
   REQUIRE(path.empty());
 }
 
@@ -286,4 +299,81 @@ TEST_CASE("WorldPath segments yields correct pairs", "[worldpath]") {
   REQUIRE(it != segs.end());
   REQUIRE(std::get<0>(*it).y() == Approx(0.0));
   REQUIRE(std::get<1>(*it).y() == Approx(2.0));
+}
+
+TEST_CASE("WorldPath segments on single point path", "[worldpath]") {
+  WorldPath path;
+  path.addPoint({1.0, 1.0});
+
+  auto segs = path.segments();
+  REQUIRE(segs.begin() == segs.end());
+}
+
+TEST_CASE("WorldPath segments on empty path", "[worldpath]") {
+  WorldPath path;
+  auto segs = path.segments();
+  REQUIRE(segs.begin() == segs.end());
+}
+
+TEST_CASE("WorldPath reversed on empty path", "[worldpath]") {
+  WorldPath path;
+  WorldPath r = path.reversed();
+  REQUIRE(r.empty());
+  REQUIRE(r.size() == 0);
+}
+
+TEST_CASE("WorldPath isClosed on empty path", "[worldpath]") {
+  WorldPath path;
+  REQUIRE_FALSE(path.isClosed());
+}
+
+TEST_CASE("WorldPath furthestPair with overlapping points", "[worldpath]") {
+  WorldPath path;
+  path.addPoint({1.0, 1.0});
+  path.addPoint({1.0, 1.0});
+
+  auto [a, b] = path.furthestPair();
+  REQUIRE(a.x() == Approx(1.0));
+  REQUIRE(b.x() == Approx(1.0));
+}
+
+TEST_CASE("WorldPath pointAtDistance hits exact vertex", "[worldpath]") {
+  WorldPath path;
+  path.addPoint({0.0, 0.0});
+  path.addPoint({3.0, 0.0});
+  path.addPoint({3.0, 4.0});
+
+  auto p = path.pointAtDistance(3.0);
+  REQUIRE(p.x() == Approx(3.0));
+  REQUIRE(p.y() == Approx(0.0));
+}
+
+TEST_CASE("WorldPath isClosed uses epsilon", "[worldpath]") {
+  WorldPath path;
+  path.addPoint({0.0, 0.0});
+  path.addPoint({1.0, 0.0});
+  path.addPoint({1e-10, 0.0});
+
+  REQUIRE(path.isClosed());
+  REQUIRE_FALSE(path.isClosed(1e-12));
+}
+
+TEST_CASE("WorldPath isValid detects NaN after mutation", "[worldpath]") {
+  WorldPath path;
+  path.addPoint({0.0, 0.0});
+  path.addPoint({1.0, 1.0});
+
+  path[1] = {std::nan(""), 1.0};
+  REQUIRE_FALSE(path.isValid());
+}
+
+TEST_CASE("WorldPath selfIntersects counts vertex touch", "[worldpath]") {
+  WorldPath path;
+  path.addPoint({0.0, 0.0});
+  path.addPoint({2.0, 0.0});
+  path.addPoint({2.0, 2.0});
+  path.addPoint({0.0, 0.0}); // returns to start (touch)
+  path.addPoint({0.0, 2.0}); // continues, should still count as intersecting
+
+  REQUIRE(path.selfIntersects());
 }

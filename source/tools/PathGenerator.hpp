@@ -40,6 +40,12 @@ using HeuristicFunc = std::function<double(const Point &, const Point &)>;
  */
 class PathGenerator {
 public:
+  // Tolerance for treating two points as coincident (floating-point comparison)
+  static constexpr double kPointCoincidentTolerance = 0.01;
+  // Fraction of step_size_ within which a node is considered to have reached
+  // the goal
+  static constexpr double kGoalReachedFraction = 0.6;
+
   /**
    * @brief Construct a PathGenerator with default settings.
    *
@@ -58,12 +64,13 @@ public:
    * @return Optional WorldPath (nullopt if no path exists)
    */
   [[nodiscard]] std::optional<WorldPath>
-  ShortestPath(const Point &start, const Point &goal, WorldQueryFunc canMove) {
+  ShortestPath(const Point &start, const Point &goal,
+               const WorldQueryFunc &canMove) const {
     assert(canMove && "WorldQueryFunc cannot be null");
 
     // Handle degenerate case: start == goal
-    if (std::abs(start.x() - goal.x()) < 0.01 &&
-        std::abs(start.y() - goal.y()) < 0.01) {
+    if (std::abs(start.x() - goal.x()) < kPointCoincidentTolerance &&
+        std::abs(start.y() - goal.y()) < kPointCoincidentTolerance) {
       WorldPath path;
       path.addPoint(start);
       return path;
@@ -106,9 +113,9 @@ public:
 
       // Check if we reached the goal
       double distToGoal = heuristic_(current, goal);
-      if (distToGoal < step_size_ * 0.6) {
+      if (distToGoal < step_size_ * kGoalReachedFraction) {
         // Close enough to goal - add goal point and return
-        if (distToGoal > 0.01) {
+        if (distToGoal > kPointCoincidentTolerance) {
           cameFrom[goal] = current;
           return ReconstructPath(cameFrom, goal);
         } else {
@@ -146,7 +153,7 @@ public:
    * @return Optional WorldPath (nullopt if waypoints are unreachable)
    */
   [[nodiscard]] std::optional<WorldPath>
-  PatrolPath(const std::vector<Point> &waypoints, bool loop = true) {
+  PatrolPath(const std::vector<Point> &waypoints, bool loop = true) const {
     if (waypoints.empty()) {
       return std::nullopt;
     }
@@ -205,7 +212,7 @@ public:
    */
   [[nodiscard]] std::optional<WorldPath>
   AvoidancePath(const Point &start, const Point &goal, const Point &avoid,
-                double radius, WorldQueryFunc canMove) {
+                double radius, const WorldQueryFunc &canMove) const {
     assert(canMove && "WorldQueryFunc cannot be null");
     assert(radius >= 0.0 && "Avoidance radius cannot be negative");
 
@@ -230,7 +237,7 @@ public:
    * @return WorldPath (returns partial path if dead-end reached)
    */
   [[nodiscard]] WorldPath RandomWalk(const Point &start, size_t steps,
-                                     WorldQueryFunc canMove) {
+                                     const WorldQueryFunc &canMove) const {
     assert(canMove && "WorldQueryFunc cannot be null");
 
     WorldPath path;
@@ -278,7 +285,7 @@ public:
    * @return WorldPath representing the spiral
    */
   [[nodiscard]] WorldPath SpiralPath(const Point &center, double spacing,
-                                     size_t turns) {
+                                     size_t turns) const {
     WorldPath path;
 
     if (turns == 0) {
@@ -357,15 +364,22 @@ private:
     std::vector<Point> neighbors;
     neighbors.reserve(8);
 
-    // 8-directional movement (cardinal + diagonal)
-    const double step = step_size_;
-    const std::vector<std::pair<double, double>> directions = {
-        {step, 0},    {-step, 0},    {0, step},     {0, -step},
-        {step, step}, {step, -step}, {-step, step}, {-step, -step}};
+    static constexpr std::array<std::pair<double, double>, 8> kUnitDirections{{
+        {1.0, 0.0},
+        {-1.0, 0.0},
+        {0.0, 1.0},
+        {0.0, -1.0},
+        {1.0, 1.0},
+        {1.0, -1.0},
+        {-1.0, 1.0},
+        {-1.0, -1.0},
+    }};
 
-    for (const auto &[dx, dy] : directions) {
-      Point neighbor(p.x() + dx, p.y() + dy);
-      neighbors.push_back(neighbor);
+    neighbors.reserve(kUnitDirections.size());
+
+    const double step = step_size_;
+    for (const auto &[ux, uy] : kUnitDirections) {
+      neighbors.emplace_back(p.x() + ux * step, p.y() + uy * step);
     }
 
     return neighbors;
