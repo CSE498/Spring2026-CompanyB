@@ -25,7 +25,17 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Install Qt6
+        uses: jurplel/install-qt-action@v4
+        with:
+          version: "6.*"
+          cache: true
+          install-deps: true
+
       - name: Run Tests
+        env:
+          # Headless mode
+          QT_QPA_PLATFORM: offscreen
         run: make test
 
   emscripten-test:
@@ -57,4 +67,4 @@ jobs:
         env:
           SOURCE_DIR: ${{ github.workspace }}/source
           BUILD_DIR: /tmp/build
-        run: bash scripts/docker-entrypoint.sh test
+        run: bash scripts/docker-entrypoint.sh test-emscripten

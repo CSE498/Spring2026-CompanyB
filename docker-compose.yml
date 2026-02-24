@@ -1,46 +1,57 @@
 services:
-  # Build only: outputs to ./output directory
-  build:
+  # Build with Emscripten
+  build-emscripten:
     build:
       context: .
-      args:
-        SDL_VERSION: 2
     volumes:
       - ./source:/app/source:ro
-      - ./output:/app/output
+      - ./build:/app/build
       - ./scripts/docker-entrypoint.sh:/app/docker-entrypoint.sh:ro
-    environment:
-      - SDL_VERSION=2
-      - BUILD_OUTPUT=html
-    command: build
+    command: build-emscripten
 
-  # Build and run tests
-  test:
+  # Build natively with Qt
+  build-native:
     build:
       context: .
-      args:
-        SDL_VERSION: 2
     volumes:
       - ./source:/app/source:ro
+      - ./build:/app/build
+      - ./scripts/docker-entrypoint.sh:/app/docker-entrypoint.sh:ro
+    command: build-native
+
+  # Build and run emscripten tests
+  test-emscripten:
+    build:
+      context: .
+    volumes:
+      - ./source:/app/source:ro
+      - ./build:/app/build
       - ./tests:/app/tests:ro
       - ./scripts/docker-entrypoint.sh:/app/docker-entrypoint.sh:ro
-    command: test
+    command: test-emscripten
+
+  # Build and run native tests
+  test-native:
+    build:
+      context: .
+    volumes:
+      - ./source:/app/source:ro
+      - ./build:/app/build
+      - ./tests:/app/tests:ro
+      - ./scripts/docker-entrypoint.sh:/app/docker-entrypoint.sh:ro
+    command: test-native
 
   # Build and serve with emrun web server
   serve:
     build:
       context: .
-      args:
-        SDL_VERSION: 2
     ports:
       - "8080:8080"
     volumes:
       - ./source:/app/source:ro
-      - ./output:/app/output
+      - ./build:/app/build
       - ./scripts/docker-entrypoint.sh:/app/docker-entrypoint.sh:ro
     environment:
-      - SDL_VERSION=2
-      - BUILD_OUTPUT=html
       - SERVE_PORT=8080
     command: serve
 
@@ -48,15 +59,13 @@ services:
   dev:
     build:
       context: .
-      args:
-        SDL_VERSION: 2
     stdin_open: true
     tty: true
     ports:
       - "8080:8080"
     volumes:
       - ./source:/app/source
-      - ./output:/app/output
+      - ./build:/app/build
       - ./scripts/docker-entrypoint.sh:/app/docker-entrypoint.sh:ro
     working_dir: /app
     command: shell
