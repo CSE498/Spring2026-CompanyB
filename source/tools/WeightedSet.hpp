@@ -161,16 +161,17 @@ class WeightedSet {
       return FindLeaf(current->right.get());
     }
   }
-  
-  // Helper function for "Remove". Given a node to_delete, swap in "replacement",
-  // which is a direct child (in the case where to_delete has 1 child) and/or a leaf
-  // (in the case where to_delete has 2 children).
+
+  // Helper function for "Remove". Given a node to_delete, swap in
+  // "replacement", which is a direct child (in the case where to_delete has 1
+  // child) and/or a leaf (in the case where to_delete has 2 children).
   void ReplaceDeletedNode(Node* to_delete, Node* replacement) {
     assert(to_delete != nullptr);
     assert(replacement != nullptr);
-    assert((to_delete->left && to_delete->right && IsLeaf(replacement)) ||
-           (to_delete->left.get() == replacement && to_delete->right == nullptr) ||
-           (to_delete->right.get() == replacement && to_delete->left == nullptr));
+    assert(
+        (to_delete->left && to_delete->right && IsLeaf(replacement)) ||
+        (to_delete->left.get() == replacement && to_delete->right == nullptr) ||
+        (to_delete->right.get() == replacement && to_delete->left == nullptr));
     // Commenting this more heavily than usual because otherwise it can be a bit
     // unclear what's going on here, IMO
 
@@ -200,14 +201,16 @@ class WeightedSet {
     // Step 4: Update the replacement's parent to be the deleted node's parent
     replacement_owned->parent = to_delete->parent;
 
-    // Step 5: Place the replacement into the deleted node's position in the tree.
-    // This assignment destroys to_delete via unique_ptr; its children have
-    // already been moved out above, so they survive.
+    // Step 5: Place the replacement into the deleted node's position in the
+    // tree. This assignment destroys to_delete via unique_ptr; its children
+    // have already been moved out above, so they survive.
     OwningPointer(to_delete) = std::move(replacement_owned);
   }
 
  public:
   WeightedSet() = default;
+
+  ~WeightedSet() = default;
 
   WeightedSet(const WeightedSet& other) {
     root_ = CopyTree(other.root_.get(), nullptr);
@@ -386,7 +389,6 @@ class WeightedSet {
     return std::make_optional(removed_value);
   }
 
-  ~WeightedSet() = default;
   // Returns the total number of elements in the set.
   size_t size() const { return element_to_node_.size(); }
   bool empty() const { return size() == 0; }
