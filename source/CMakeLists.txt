@@ -2,7 +2,6 @@ cmake_minimum_required(VERSION 3.13)
 project(cse498-segfault-survivors)
 
 # Configuration options
-set(SDL_VERSION "2" CACHE STRING "SDL version 2 or 3")
 set(BUILD_TESTS OFF CACHE BOOL "Build native tests")
 set(BUILD_WASM_TESTS OFF CACHE BOOL "Build Emscripten specific wasm tests")
 set(CMAKE_CXX_STANDARD 23)
@@ -26,6 +25,9 @@ set(HEADER_DIRS
 )
 
 if(BUILD_WASM_TESTS)
+    # Exclude Qt GUI files (Qt can't be compiled by emcc)
+    list(FILTER SOURCES EXCLUDE REGEX ".*/Interfaces/gui/.*")
+
     # Fetch Catch2 v3 from GitHub
     include(FetchContent)
     FetchContent_Declare(
@@ -38,7 +40,7 @@ if(BUILD_WASM_TESTS)
     # Exclude main source files from library
     list(FILTER SOURCES EXCLUDE REGEX "(_main|^main)\\.cpp$")
 
-    # Create INTERFACE library if header-only, regular if sources exist
+    # Create INTERFACE library if header only, regular if sources exist
     list(LENGTH SOURCES SOURCES_COUNT)
     if(SOURCES_COUNT EQUAL 0)
         add_library(project_lib INTERFACE)
@@ -70,6 +72,14 @@ if(BUILD_WASM_TESTS)
     )
 
 elseif(BUILD_TESTS)
+    # Exclude Emscripten only sources
+    list(FILTER SOURCES EXCLUDE REGEX "(_main|^main)\\.cpp$")
+    list(FILTER SOURCES EXCLUDE REGEX ".*/tools/webui/.*")
+
+    # Find Qt6 for native build
+    find_package(Qt6 REQUIRED COMPONENTS Core Gui Widgets)
+    set(CMAKE_AUTOMOC ON) # Necessary for QT macro searches
+
     # Fetch Catch2 v3 from GitHub
     include(FetchContent)
     FetchContent_Declare(
@@ -79,10 +89,6 @@ elseif(BUILD_TESTS)
     )
     FetchContent_MakeAvailable(Catch2)
 
-    # Exclude main source files and Emscripten sources from native build
-    list(FILTER SOURCES EXCLUDE REGEX "(_main|^main)\\.cpp$")
-    list(FILTER SOURCES EXCLUDE REGEX ".*/tools/webui/.*")
-
     # Create INTERFACE library if header only, regular if sources exist
     list(LENGTH SOURCES SOURCES_COUNT)
     if(SOURCES_COUNT EQUAL 0)
@@ -91,6 +97,7 @@ elseif(BUILD_TESTS)
     else()
         add_library(project_lib ${SOURCES})
         target_include_directories(project_lib PUBLIC ${HEADER_DIRS})
+        target_link_libraries(project_lib PUBLIC Qt6::Core Qt6::Gui Qt6::Widgets)
     endif()
 
     # Native tests from tests/ (excluding tests/wasm/)
@@ -105,7 +112,9 @@ elseif(BUILD_TESTS)
     target_compile_options(tests PRIVATE -O2 -g -Wall -Wextra -Wpedantic)
 
 elseif(DEFINED EMSCRIPTEN)
-    # Emscripten build
+    # Exclude Qt GUI files (Qt can't be compiled by emcc)
+    list(FILTER SOURCES EXCLUDE REGEX ".*/Interfaces/gui/.*")
+
     add_executable(index ${SOURCES})
     set_target_properties(index PROPERTIES SUFFIX ".html")
     target_include_directories(index PRIVATE ${HEADER_DIRS})
@@ -114,12 +123,10 @@ elseif(DEFINED EMSCRIPTEN)
     target_compile_options(index PRIVATE
         -O2
         -Wall
-        --use-port=sdl${SDL_VERSION}
     )
 
     # Emscripten link options
     target_link_options(index PRIVATE
-        --use-port=sdl${SDL_VERSION}
         -sALLOW_MEMORY_GROWTH=1
         -sMAXIMUM_MEMORY=1gb
         -sEXPORTED_RUNTIME_METHODS=ccall,cwrap
@@ -128,10 +135,15 @@ elseif(DEFINED EMSCRIPTEN)
     )
 
 else()
-    # Native build
+    # Native build: include Qt GUI files
     list(FILTER SOURCES EXCLUDE REGEX ".*/tools/webui/.*")
+
+    find_package(Qt6 REQUIRED COMPONENTS Core Gui Widgets)
+    set(CMAKE_AUTOMOC ON)
+
     add_executable(app ${SOURCES})
     target_include_directories(app PRIVATE ${HEADER_DIRS})
+    target_link_libraries(app PRIVATE Qt6::Core Qt6::Gui Qt6::Widgets)
     target_compile_options(app PRIVATE
         -Wall -Wextra -Wcast-align -Wnon-virtual-dtor -Woverloaded-virtual -pedantic
     )

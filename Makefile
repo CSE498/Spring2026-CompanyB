@@ -18,8 +18,10 @@
 #   make test-build
 
 .PHONY: default all build test clean debug opt quick grumpy \
-        src-% test-% help docker-build docker-test docker-serve \
-        docker-dev docker-shell docker-clean docker-image docker-rebuild
+        src-% test-% help docker-build-emscripten docker-build-native \
+        docker-test-emscripten docker-test-native \
+        docker-serve docker-dev docker-shell docker-clean \
+        docker-image docker-rebuild
 
 # ---------- High-level targets ----------
 
@@ -58,13 +60,17 @@ src-%:
 test-%:
 	$(MAKE) -C tests $*
 
-# Build the project
-docker-build:
-	docker compose run --rm build
+# Build the project with Emscripten (ignores Qt)
+docker-build-emscripten:
+	docker compose run --rm build-emscripten
+
+# Build the project natively with Qt (ignores emscripten)
+docker-build-native:
+	docker compose run --rm build-native
 
 # Build and run emscripten tests
 docker-test-emscripten:
-	docker compose run --rm test
+	docker compose run --rm test-emscripten
 
 # Build and run native tests
 docker-test-native:
@@ -78,7 +84,7 @@ docker-serve:
 docker-dev:
 	docker compose run --rm dev
 
-docker-shell: dev
+docker-shell: docker-dev
 
 # Build just the Docker image
 docker-image:
@@ -86,7 +92,7 @@ docker-image:
 
 # Clean output directory
 docker-clean:
-	rm -rf output/*
+	rm -rf build/*
 
 # Rebuild image from scratch
 docker-rebuild:
@@ -105,12 +111,13 @@ help:
 	@echo "  make test-<tgt>        Run 'make <tgt>' in tests/"
 	@echo
 	@echo "Docker Build System"
-	@echo "  make docker-build              Build program(s) in source/ and run in a container"
-	@echo "  make docker-test-emscripten    Build + run unit tests in tests/ on emscipten source"
-	@echo "  make docker-test-native        Build + run unit tests in tests/ on non-emscipten source"
-	@echo "  make docker-serve              Build program(s) in source/ and serve the built output from a container"
-	@echo "  make docker-dev                Build program(s) in source/ and run in a container with an interactive shell"
-	@echo "  make docker-shell              Alias for dev"
-	@echo "  make docker-image              Build the docker image"
+	@echo "  make docker-build              Build with Emscripten (outputs to /build/emscripten)"
+	@echo "  make docker-build-native       Build natively with Qt"
+	@echo "  make docker-test-emscripten    Build + run Emscripten Catch2 tests"
+	@echo "  make docker-test-native        Build + run native Catch2 tests with Qt"
+	@echo "  make docker-serve              Build with Emscripten and serve the output"
+	@echo "  make docker-dev                Interactive development shell"
+	@echo "  make docker-shell              Alias for docker-dev"
+	@echo "  make docker-image              Build the Docker image"
 	@echo "  make docker-clean              Clean the output directory"
-	@echo "  make docker-rebuild            Rebuild the docker image from scratch without using the cache"
+	@echo "  make docker-rebuild            Rebuild the Docker image without cache"
