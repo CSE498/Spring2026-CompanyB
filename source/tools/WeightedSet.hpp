@@ -150,11 +150,12 @@ class WeightedSet {
 
   // Searches for a child of the given node which is a leaf (such a child exists
   // in any tree, as long as the given node has at least one child).
+  // Favors the heavier subtree, which should help Remove balance the tree.
   Node* FindLeaf(Node* const current) const {
     if (IsLeaf(current)) {
       return current;
     }
-    if (current->left) {
+    if (LeftSubtreeWeight(current) > RightSubtreeWeight(current)) {
       return FindLeaf(current->left.get());
     } else {
       return FindLeaf(current->right.get());
