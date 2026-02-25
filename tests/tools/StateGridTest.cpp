@@ -2,6 +2,8 @@
 #include "../../source/tools/StateGrid/Tile.hpp"
 #include "catch2/catch.hpp"
 
+namespace cse498
+{
 /***********************************************
  * Just to be used for testing
  ***********************************************/
@@ -78,6 +80,11 @@ TEST_CASE("Test Tile")
     CHECK(Tile1.getAgent() == nullptr);
 
     CHECK(Tile1.removeAgent() == false);
+
+    // Checks traversability
+    CHECK(Tile1.getCanTraverse() == true);
+    Tile1.setCanTraverse(false);
+    CHECK(Tile1.getCanTraverse() == false);
 }
 
 TEST_CASE("Test StateGrid")
@@ -197,4 +204,5 @@ TEST_CASE("Tests Moving agents")
     CHECK(tiles[0][2].addAgent(moveAgent) == true);
     CHECK(tiles[0][2].hasAgent() == true);
     CHECK(tiles[0][2].getAgent()->getId() == 42);
+}
 }

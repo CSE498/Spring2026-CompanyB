@@ -2,6 +2,26 @@
 
 #include <stdexcept>
 
+namespace cse498{
+
+//Helper to move symbol table logic up here for easy access
+
+Tile tileFromSymbol(char symbol, int r, int c)
+{
+    if (symbol == 'W')
+    {
+        return Tile(r, c, 'W', false, "Wall", MetaData());
+    }
+    else if (symbol == 'P')
+    {
+        return Tile(r, c, 'P', true, "Path", MetaData());
+    }
+    else
+    {
+        throw std::invalid_argument("Only supported symbols rn are W and P for walls, paths");
+    }
+}
+
 StateGrid::StateGrid(int width, int height, const std::vector<std::vector<char>> &premadeMap)
     : width(width), height(height)
 {
@@ -34,20 +54,7 @@ StateGrid::StateGrid(int width, int height, const std::vector<std::vector<char>>
         tiles[r].reserve(width);
         for (int c = 0; c < width; ++c)
         {
-            // This should be its own class to easily add symbols and such but i am
-            // lazy
-            if (premadeMap[r][c] == 'W')
-            {
-                tiles[r].push_back(Tile(r, c, 'W', false, "Wall", MetaData()));
-            }
-            else if (premadeMap[r][c] == 'P')
-            {
-                tiles[r].push_back(Tile(r, c, 'P', true, "Path", MetaData()));
-            }
-            else
-            {
-                throw std::invalid_argument("Only supported symbols rn are W and P for walls, paths");
-            }
+            tiles[r].push_back(tileFromSymbol(premadeMap[r][c], r, c));           
         }
     }
 }
@@ -79,8 +86,10 @@ std::vector<std::vector<Tile>> &StateGrid::getAllTiles()
 
 bool StateGrid::inBounds(int row, int col) const
 {
+    // inbounds check
     if (row < 0 || row >= height || col < 0 || col >= width)
         return false;
     // Checks for if the tile is a wall to ensure you cant walk through, on them
     return tiles[row][col].getCanTraverse();
+}
 }

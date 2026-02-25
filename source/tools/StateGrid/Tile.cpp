@@ -1,5 +1,6 @@
 #include "Tile.hpp"
 
+namespace cse498{
 Tile::Tile(int row, int column, char symbol, bool canTraverse, const std::string &name, const MetaData &metaData)
     : row(row), column(column), symbol(symbol), canTraverse(canTraverse), name(name), metadata(metaData), agent(nullptr)
 {
@@ -42,6 +43,11 @@ bool Tile::getCanTraverse() const
     return canTraverse;
 }
 
+void Tile::setCanTraverse(bool traversability)
+{
+    canTraverse = traversability;
+}
+
 int Tile::getRow() const
 {
     return row;
@@ -65,4 +71,5 @@ const std::string &Tile::getName() const
 const MetaData &Tile::getMetaData() const
 {
     return metadata;
+}
 }

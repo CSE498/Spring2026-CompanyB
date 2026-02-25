@@ -5,6 +5,7 @@
 
 #include "Tile.hpp"
 
+namespace cse498 {
 /**********************************************
  * The grid stores Tiles in a 2D vector indexed as tiles[row][col].
  * It supports initialization from a premade symbol map and provides
@@ -69,3 +70,4 @@ class StateGrid
      ************************************************/
     bool inBounds(int row, int col) const;
 };
+}

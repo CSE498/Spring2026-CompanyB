@@ -8,6 +8,7 @@
 #include <memory>
 #include <string>
 
+namespace cse498{
 /***********************************************
  * Forward declaration for Agent
  ***********************************************/
@@ -91,6 +92,14 @@ class Tile
     bool getCanTraverse() const;
 
     /***********************************************
+     *  Sets traverseability, not no error checking, If its set to true
+     *  and you try to se it to true anyway, this will work
+     * 
+     * @param traversability to set the new status
+     ***********************************************/
+    void setCanTraverse(bool traversability);
+
+    /***********************************************
      *  Row getter
      *
      * @returns int, row of the tile
@@ -125,3 +134,4 @@ class Tile
      ***********************************************/
     const MetaData &getMetaData() const;
 };
+}
