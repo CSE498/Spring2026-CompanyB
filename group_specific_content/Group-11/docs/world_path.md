@@ -12,7 +12,7 @@ The main goal is to use **C++23 Ranges** for geometric calculations (like path l
 * **`std::optional` (C++17)**: We'll use this for functions that might fail (like asking for a segment length that doesn't exist) instead of throwing exceptions or returning magic numbers like `-1`.
 
 ### 3) Key Functions
-We plan to implement the following:
+The following are implemented:
 
 #### Core Modification
 - `void addPoint(const Point& p);`  
@@ -124,9 +124,9 @@ We plan to implement the following:
 ### 5) Expected Challenges
 * **Floating Point Precision:** Checking if two lines intersect is tricky with `double` because of precision errors. We'll need an epsilon check or we'll get false positives everywhere.
 * **Performance:** Checking for self-intersections is slow (O(N²)). If paths get really long, we might need to optimize by only checking the most recent segments.
-* **Compiler Support:** We're assuming the environment supports C++23. If `views::pairwise` or other C++23 features aren't working in the company compiler, we'll have to fall back to C++20 equivalents and regular loops.
+* **Compiler Support:** This class **requires C++23** and **must be compiled with `g++-15`** (or another GCC 15+ compiler). Apple Clang on macOS does not support `std::views::pairwise` and will fail to compile. Always use `make CXX=g++-15` or `export CXX=g++-15` before building. To run tests, run `make CXX=g++-15 test`.
 
 ### 6) Coordination with Other Groups
 * **Group 13 (Math World):** We're using their `Point` struct. We need to make sure we agree on the coordinate system (Cartesian vs. Polar).
 * **Group 11 (Internal):** `PathGenerator` creates these objects, so our functions need to match what they expect.
-* **Group 20 (Data Analytics):** They need to replay our paths, so we need to give them a string format they can parse easily.
+* **Group 20 (Data Analytics):** They can iterate over a `WorldPath` using the standard `begin()`/`end()` interface or `pointsView()` to serialize points however they need. No special serialization method is provided by `WorldPath`. The serialization of individual `Point` objects is Group 13's responsibility.

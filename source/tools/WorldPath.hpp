@@ -6,13 +6,10 @@
 
 #include <algorithm>
 #include <cassert>
-#include <cmath>
 #include <cstddef>
 #include <optional>
 #include <ranges>
 #include <span>
-#include <stdexcept>
-#include <utility>
 #include <vector>
 
 #include "Math/Point.hpp"
@@ -26,7 +23,7 @@ namespace cse498 {
  * interpolating along the path, etc.
  */
 class WorldPath {
- public:
+public:
   /// Tolerance for floating-point comparisons in geometry helpers.
   static constexpr double kDefaultEps = 1e-9;
 
@@ -35,8 +32,8 @@ class WorldPath {
   auto begin() const { return points_.begin(); }
   auto end() const { return points_.end(); }
 
-  Point& operator[](std::size_t i) { return points_[i]; }
-  const Point& operator[](std::size_t i) const { return points_[i]; }
+  Point &operator[](std::size_t i) { return points_[i]; }
+  const Point &operator[](std::size_t i) const { return points_[i]; }
 
   /**
    * @brief Bounds-checked access to the i-th point.
@@ -44,32 +41,32 @@ class WorldPath {
    * @return Reference to the point at index i.
    * @throws std::out_of_range if i >= size().
    */
-  Point& at(std::size_t i) {
+  Point &at(std::size_t i) {
     if (i >= points_.size())
       throw std::out_of_range("WorldPath::at");
     return points_[i];
   }
 
   /** @copydoc at(std::size_t) */
-  const Point& at(std::size_t i) const {
+  const Point &at(std::size_t i) const {
     if (i >= points_.size())
       throw std::out_of_range("WorldPath::at");
     return points_[i];
   }
 
-  Point& front() {
+  Point &front() {
     assert(!points_.empty());
     return points_.front();
   }
-  const Point& front() const {
+  const Point &front() const {
     assert(!points_.empty());
     return points_.front();
   }
-  Point& back() {
+  Point &back() {
     assert(!points_.empty());
     return points_.back();
   }
-  const Point& back() const {
+  const Point &back() const {
     assert(!points_.empty());
     return points_.back();
   }
@@ -83,10 +80,7 @@ class WorldPath {
    * @brief Appends a point to the path.
    * @param p Point to add. Must have finite coordinates (asserts on NaN/Inf).
    */
-  void addPoint(const Point& p) {
-    assert(isValidPoint(p));
-    points_.push_back(p);
-  }
+  void addPoint(const Point &p);
 
   /**
    * @brief Removes the last point.
@@ -133,102 +127,46 @@ class WorldPath {
    * @brief Total path length (sum of segment distances).
    * @return 0.0 for empty or single-point paths.
    */
-  double totalLength() const {
-    return std::ranges::fold_left(
-        segments(), 0.0, [](double acc, const auto& seg) {
-          return acc + dist(std::get<0>(seg), std::get<1>(seg));
-        });
-  }
+  double totalLength() const;
 
   /**
    * @brief Length of segment i (between point i and point i+1).
    * @param i Segment index.
    * @return The segment length, or nullopt if i is out of range.
    */
-  std::optional<double> segmentLength(std::size_t i) const {
-    if (i + 1 >= points_.size())
-      return std::nullopt;
-    return dist(points_[i], points_[i + 1]);
-  }
+  std::optional<double> segmentLength(std::size_t i) const;
 
   /**
    * @brief Brute-force O(n^2) search for the two most distant points.
    * @return The two points with the greatest Euclidean distance.
    */
-  std::pair<Point, Point> furthestPair() const {
-    assert(points_.size() >= 2);
-    std::size_t ai = 0;
-    std::size_t bi = 1;
-    double best = dist(points_[ai], points_[bi]);
-    for (std::size_t i = 0; i < points_.size(); ++i) {
-      for (std::size_t j = i + 1; j < points_.size(); ++j) {
-        double d = dist(points_[i], points_[j]);
-        if (d > best) {
-          best = d;
-          ai = i;
-          bi = j;
-        }
-      }
-    }
-    return {points_[ai], points_[bi]};
-  }
+  std::pair<Point, Point> furthestPair() const;
 
   /**
    * @brief Checks if the path forms a closed loop.
    * @param eps Tolerance for comparing the first and last points.
    * @return true if start and end points are the same within eps.
    */
-  bool isClosed(double eps = kDefaultEps) const {
-    return points_.size() >= 2 &&
-           samePoint(points_.front(), points_.back(), eps);
-  }
+  bool isClosed(double eps = kDefaultEps) const;
 
   /**
    * @brief Tacks another path's points onto the end of this one.
    * @param other Path whose points will be appended.
    */
-  void append(const WorldPath& other) {
-    points_.insert(points_.end(), other.points_.begin(), other.points_.end());
-  }
+  void append(const WorldPath &other);
 
   /**
    * @brief Returns a copy with points in reverse order.
    * @return A new WorldPath with reversed point order.
    */
-  WorldPath reversed() const {
-    WorldPath rev;
-    rev.points_.assign(points_.rbegin(), points_.rend());
-    return rev;
-  }
+  WorldPath reversed() const;
 
   /**
    * @brief Get the interpolated point at a given distance along the path.
-   * @param target Distance along the path to sample at.
+   * @param distance_along_path Distance along the path to sample at.
    * @return The interpolated point. Clamps to first/last point if out of range.
    */
-  Point pointAtDistance(double distance_along_path) const {
-    assert(!points_.empty());
-    if (distance_along_path <= 0.0)
-      return points_.front();
-
-    double remaining = distance_along_path;
-
-    for (auto&& [start, end] : segments()) {
-      const double segment_length = dist(start, end);
-      if (segment_length <= 0.0)
-        continue;  // skip duplicate points
-
-      if (remaining <= segment_length) {
-        const double t = remaining / segment_length;
-        return {start.x() + t * (end.x() - start.x()),
-                start.y() + t * (end.y() - start.y())};
-      }
-
-      remaining -= segment_length;
-    }
-
-    return points_.back();  // clamp past-the-end distances
-  }
+  Point pointAtDistance(double distance_along_path) const;
 
   /**
    * @brief O(n^2) check for any two non-adjacent segments crossing.
@@ -237,92 +175,42 @@ class WorldPath {
    *
    * @return true if any non-adjacent segments intersect.
    */
-  bool selfIntersects() const {
-    const std::size_t n = points_.size();
-    if (n < 4)
-      return false;
-    bool closed = samePoint(points_.front(), points_.back(), kDefaultEps);
-    for (std::size_t i = 0; i + 1 < n; ++i) {
-      for (std::size_t j = i + 2; j + 1 < n; ++j) {
-        // Skip the first-last segment pair for closed paths (they share a
-        // vertex).
-        if (closed && i == 0 && j == n - 2)
-          continue;
-        if (segmentsIntersect(points_[i], points_[i + 1], points_[j],
-                              points_[j + 1], kDefaultEps))
-          return true;
-      }
-    }
-    return false;
-  }
+  bool selfIntersects() const;
 
- private:
+private:
   std::vector<Point> points_;
 
-  // Geometry helpers (replace with Group 13's utilities when available)
+  // Geometry Helpers
+  // These are declared here so the class encapsulates its own logic,
+  // but implemented in the .cpp to keep the header clean.
 
-  static bool isValidPoint(const Point& p) {
-    return std::isfinite(p.x()) && std::isfinite(p.y());
-  }
+  /// @brief Validates that a point's coordinates are not NaN or Infinity.
+  static bool isValidPoint(const Point &p);
 
-  static double dist(const Point& a, const Point& b) {
-    double dx = b.x() - a.x();
-    double dy = b.y() - a.y();
-    return std::sqrt(dx * dx + dy * dy);
-  }
+  /// @brief Returns the Euclidean distance between points a and b.
+  static double dist(const Point &a, const Point &b);
 
-  static bool nearlyEq(double a, double b, double eps = kDefaultEps) {
-    return std::abs(a - b) <= eps;
-  }
+  /// @brief Checks if two doubles are equal within a small tolerance.
+  static bool nearlyEq(double a, double b, double eps = kDefaultEps);
 
-  static bool samePoint(const Point& a,
-                        const Point& b,
-                        double eps = kDefaultEps) {
-    return nearlyEq(a.x(), b.x(), eps) && nearlyEq(a.y(), b.y(), eps);
-  }
+  /// @brief Checks if two points share the exact same coordinates (within eps).
+  static bool samePoint(const Point &a, const Point &b,
+                        double eps = kDefaultEps);
 
-  static int orient(const Point& a,
-                    const Point& b,
-                    const Point& c,
-                    double eps = kDefaultEps) {
-    double cross =
-        (b.x() - a.x()) * (c.y() - a.y()) - (b.y() - a.y()) * (c.x() - a.x());
-    if (nearlyEq(cross, 0.0, eps))
-      return 0;
-    return (cross > 0.0) ? 1 : -1;
-  }
+  /// @brief Finds the orientation of the ordered triplet (a, b, c).
+  /// @return 0 if collinear, 1 if clockwise, -1 if counterclockwise.
+  static int orient(const Point &a, const Point &b, const Point &c,
+                    double eps = kDefaultEps);
 
-  static bool onSegment(const Point& seg_start,
-                        const Point& query,
-                        const Point& seg_end,
-                        double eps = kDefaultEps) {
-    return query.x() >= std::min(seg_start.x(), seg_end.x()) - eps &&
-           query.x() <= std::max(seg_start.x(), seg_end.x()) + eps &&
-           query.y() >= std::min(seg_start.y(), seg_end.y()) - eps &&
-           query.y() <= std::max(seg_start.y(), seg_end.y()) + eps;
-  }
+  /// @brief Checks if a collinear point query lies on the line segment
+  /// seg_start-seg_end.
+  static bool onSegment(const Point &seg_start, const Point &query,
+                        const Point &seg_end, double eps = kDefaultEps);
 
-  static bool segmentsIntersect(const Point& a1,
-                                const Point& a2,
-                                const Point& b1,
-                                const Point& b2,
-                                double eps = kDefaultEps) {
-    int d1 = orient(a1, a2, b1, eps);
-    int d2 = orient(a1, a2, b2, eps);
-    int d3 = orient(b1, b2, a1, eps);
-    int d4 = orient(b1, b2, a2, eps);
-    if (d1 != d2 && d3 != d4)
-      return true;
-    if (d1 == 0 && onSegment(a1, b1, a2, eps))
-      return true;
-    if (d2 == 0 && onSegment(a1, b2, a2, eps))
-      return true;
-    if (d3 == 0 && onSegment(b1, a1, b2, eps))
-      return true;
-    if (d4 == 0 && onSegment(b1, a2, b2, eps))
-      return true;
-    return false;
-  }
+  /// @brief Returns true if line segment a1-a2 intersects with b1-b2.
+  static bool segmentsIntersect(const Point &a1, const Point &a2,
+                                const Point &b1, const Point &b2,
+                                double eps = kDefaultEps);
 };
 
-}  // namespace cse498
+} // namespace cse498
