@@ -286,10 +286,12 @@ public:
             TemplTools::IsOneOf<Types...>... Args>
   [[nodiscard]] std::expected<Ret, ActionMapErr> invoke(const std::string &name,
                                                         Args... args) const {
-    if (!exists(name))
+    const auto it = funcs.find(name);
+
+    if (it == funcs.cend())
       return std::unexpected(ActionMapErr::CALLABLE_NOT_FOUND);
 
-    FuncEntry const &target_func = funcs.at(name);
+    const FuncEntry &target_func = it->second;
 
     // Lift all supplied args into the TypeVariant and collect into a vec
     std::vector<TypeVariant> arg_list{args...};
@@ -316,10 +318,10 @@ public:
 
   /**
    * @brief Register function into map if possible.
-   * 
+   *
    * Moves given function into a lambda which takes in a `std::vector`
    * of arguments wrapped in `TypeVariant`, and inserts this lambda
-   * into map.
+   * into map. Leaves given function in unspecified state after registration.
    *
    * Leverages the fact that the full function signature is known at
    * the time that this method is called to supply the argument tuple
