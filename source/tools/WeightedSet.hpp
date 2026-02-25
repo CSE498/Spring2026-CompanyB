@@ -4,6 +4,7 @@
 #include <cstddef>
 #include <iostream>
 #include <memory>
+#include <optional>
 #include <random>
 #include <sstream>
 #include <unordered_map>
