@@ -23,7 +23,7 @@ namespace cse498 {
  * interpolating along the path, etc.
  */
 class WorldPath {
-public:
+ public:
   /// Tolerance for floating-point comparisons in geometry helpers.
   static constexpr double kDefaultEps = 1e-9;
 
@@ -32,8 +32,8 @@ public:
   auto begin() const { return points_.begin(); }
   auto end() const { return points_.end(); }
 
-  Point &operator[](std::size_t i) { return points_[i]; }
-  const Point &operator[](std::size_t i) const { return points_[i]; }
+  Point& operator[](std::size_t i) { return points_[i]; }
+  const Point& operator[](std::size_t i) const { return points_[i]; }
 
   /**
    * @brief Bounds-checked access to the i-th point.
@@ -41,32 +41,32 @@ public:
    * @return Reference to the point at index i.
    * @throws std::out_of_range if i >= size().
    */
-  Point &at(std::size_t i) {
+  Point& at(std::size_t i) {
     if (i >= points_.size())
       throw std::out_of_range("WorldPath::at");
     return points_[i];
   }
 
   /** @copydoc at(std::size_t) */
-  const Point &at(std::size_t i) const {
+  const Point& at(std::size_t i) const {
     if (i >= points_.size())
       throw std::out_of_range("WorldPath::at");
     return points_[i];
   }
 
-  Point &front() {
+  Point& front() {
     assert(!points_.empty());
     return points_.front();
   }
-  const Point &front() const {
+  const Point& front() const {
     assert(!points_.empty());
     return points_.front();
   }
-  Point &back() {
+  Point& back() {
     assert(!points_.empty());
     return points_.back();
   }
-  const Point &back() const {
+  const Point& back() const {
     assert(!points_.empty());
     return points_.back();
   }
@@ -80,7 +80,7 @@ public:
    * @brief Appends a point to the path.
    * @param p Point to add. Must have finite coordinates (asserts on NaN/Inf).
    */
-  void addPoint(const Point &p);
+  void addPoint(const Point& p);
 
   /**
    * @brief Removes the last point.
@@ -153,7 +153,7 @@ public:
    * @brief Tacks another path's points onto the end of this one.
    * @param other Path whose points will be appended.
    */
-  void append(const WorldPath &other);
+  void append(const WorldPath& other);
 
   /**
    * @brief Returns a copy with points in reverse order.
@@ -177,7 +177,7 @@ public:
    */
   bool selfIntersects() const;
 
-private:
+ private:
   std::vector<Point> points_;
 
   // Geometry Helpers
@@ -185,32 +185,39 @@ private:
   // but implemented in the .cpp to keep the header clean.
 
   /// @brief Validates that a point's coordinates are not NaN or Infinity.
-  static bool isValidPoint(const Point &p);
+  static bool isValidPoint(const Point& p);
 
   /// @brief Returns the Euclidean distance between points a and b.
-  static double dist(const Point &a, const Point &b);
+  static double dist(const Point& a, const Point& b);
 
   /// @brief Checks if two doubles are equal within a small tolerance.
   static bool nearlyEq(double a, double b, double eps = kDefaultEps);
 
   /// @brief Checks if two points share the exact same coordinates (within eps).
-  static bool samePoint(const Point &a, const Point &b,
+  static bool samePoint(const Point& a,
+                        const Point& b,
                         double eps = kDefaultEps);
 
   /// @brief Finds the orientation of the ordered triplet (a, b, c).
   /// @return 0 if collinear, 1 if clockwise, -1 if counterclockwise.
-  static int orient(const Point &a, const Point &b, const Point &c,
+  static int orient(const Point& a,
+                    const Point& b,
+                    const Point& c,
                     double eps = kDefaultEps);
 
   /// @brief Checks if a collinear point query lies on the line segment
   /// seg_start-seg_end.
-  static bool onSegment(const Point &seg_start, const Point &query,
-                        const Point &seg_end, double eps = kDefaultEps);
+  static bool onSegment(const Point& seg_start,
+                        const Point& query,
+                        const Point& seg_end,
+                        double eps = kDefaultEps);
 
   /// @brief Returns true if line segment a1-a2 intersects with b1-b2.
-  static bool segmentsIntersect(const Point &a1, const Point &a2,
-                                const Point &b1, const Point &b2,
+  static bool segmentsIntersect(const Point& a1,
+                                const Point& a2,
+                                const Point& b1,
+                                const Point& b2,
                                 double eps = kDefaultEps);
 };
 
-} // namespace cse498
+}  // namespace cse498
