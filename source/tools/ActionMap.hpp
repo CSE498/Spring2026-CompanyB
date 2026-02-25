@@ -49,31 +49,6 @@ template <typename Head, typename... Tail> constexpr bool all_unique() {
  */
 template <typename... Ts>
 concept UniqueTypes = all_unique<Ts..., NullType>();
-
-/**
- * @brief Returns length of a parameter pack.
- *
- * @tparam Head First element in the sequence of types
- * @tparam ...Tail Remaining elements in the sequence of types
- * @return size_t
- */
-template <typename Head, typename... Tail>
-constexpr size_t _pack_length(size_t in = 0) {
-  if constexpr (std::is_same<std::tuple<Tail...>, std::tuple<NullType>>()) {
-    return in + 1;
-  } else {
-    return _pack_length<Tail...>(in + 1);
-  }
-}
-
-/** @brief Wraps _pack_length() to terminate input pack with `NullType()`.
- *
- * @tparam Ts Pack of one or more types
- * @return size_t
- */
-template <typename... Ts> constexpr size_t pack_length() {
-  return _pack_length<Ts..., NullType>();
-}
 }; // namespace TemplTools
 
 enum class ActionMapErr {
@@ -349,8 +324,7 @@ public:
           // Convert given vector of variants to a tuple of args matching
           // ...Args
           std::tuple<Args...> arg_tuple_vars =
-              arg_tuple<TemplTools::pack_length<Args...>(), TypeVariant,
-                        Args...>(std::move(args));
+              arg_tuple<sizeof...(Args), TypeVariant, Args...>(std::move(args));
 
           return std::apply(func, arg_tuple_vars);
         };
