@@ -34,7 +34,7 @@ brew install qt
 
 Download and run the [Qt Online Installer](https://www.qt.io/download-qt-installer). Select Qt 6.x for Desktop during setup. After installing, set `CMAKE_PREFIX_PATH` as a user environment variable pointing to your Qt installation:
 ```ps1
-CMAKE_PREFIX_PATH=C:\Qt\6.x.x\msvc2022_64 # Select the version for your compiler (Ex: MSVC MinGW)
+CMAKE_PREFIX_PATH=C:\Qt\6.x.x\msvc2022_64 # Select the version for your compiler (Ex: MSVC, MinGW, etc)
 ```
 
 **Linux**
