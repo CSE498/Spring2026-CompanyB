@@ -106,6 +106,11 @@ help:
 	@echo "  make debug|opt|quick|grumpy   Build program(s) with that mode (source/)"
 	@echo "  make clean             Clean source/ and tests/"
 	@echo
+	@echo "Flags:"
+	@echo "  NO_QT=1                Skip Qt. Excludes Interfaces/gui sources."
+	@echo "                         Works with: build, test, all, debug, opt, quick, grumpy"
+	@echo "                         Example: make test NO_QT=1"
+	@echo
 	@echo "Forwarding targets:"
 	@echo "  make src-<tgt>         Run 'make <tgt>' in source/"
 	@echo "  make test-<tgt>        Run 'make <tgt>' in tests/"
