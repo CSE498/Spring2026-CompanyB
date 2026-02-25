@@ -98,14 +98,14 @@ template <TemplTools::UniqueTypes... Types> class ActionMap {
         std::function<TypeVariant(std::vector<TypeVariant> &&)> wrapped_func,
         size_t ret_t_idx, std::vector<size_t> &&arg_t_idxs)
         : wrapped_func(std::move(wrapped_func)), ret_t_idx(ret_t_idx),
-          arg_t_idxs(std::move(arg_t_idxs)){};
+          arg_t_idxs(std::move(arg_t_idxs)) {};
 
     // Delete copy ctors
     FuncEntry(const FuncEntry &) = delete;
-    FuncEntry & operator=(const FuncEntry &) = delete;
+    FuncEntry &operator=(const FuncEntry &) = delete;
 
     // Permit moving
-    FuncEntry & operator=(FuncEntry &&) = default;
+    FuncEntry &operator=(FuncEntry &&) = default;
     FuncEntry(FuncEntry &&) = default;
   };
 
