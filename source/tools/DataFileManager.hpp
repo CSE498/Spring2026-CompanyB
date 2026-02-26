@@ -6,6 +6,7 @@
 #include <functional>
 #include <fstream>
 #include <iostream>
+#include <sstream>
 #include <cassert>
 #include <utility>
 
@@ -43,7 +44,10 @@ public:
             if constexpr (std::is_same_v<T, std::string>) {
                 return getter();
             } else {
-                return std::to_string(getter());
+                // idea taken from https://stackoverflow.com/questions/71041798/how-to-convert-from-any-type-to-stdstring-in-c
+                std::ostringstream oss{};
+                oss << getter();
+                return oss.str();
             }
         };
 
