@@ -1,6 +1,6 @@
 #include "catch2/catch.hpp"
 #include "../../source/tools/StateGridPosition.hpp"
-// #include "../../../source/core/StateGrid.hpp"  // Not ready yet
+#include "../../source/tools/StateGrid/StateGrid.hpp"
 
 TEST_CASE("Test StateGridPosition Constructors", "[core]")
 {
@@ -281,92 +281,123 @@ TEST_CASE("Test StateGridPosition Edge Cases - Direction Wrapping", "[core]")
   CHECK(pos.GetDirection() == cse498::Direction::North);
 }
 
+// Builds completely open 5x5 map
+// This will be given to a StateGrid constuctor to build a StateGrid object
+static std::vector<std::vector<char>> createOpenMap() {
+  return std::vector<std::vector<char>>(5, std::vector<char>(5, 'P'));
+}
 
-// Need working StateGrid first
-// These tests will most likely change based on the StateGrid methods available
-
-//TEST_CASE("Test StateGridPosition Edge Cases - Position at Boundary", "[core]")
-//{
-//  // Test forward position at edge (y=0)
-//  cse498::StateGridPosition edge_north(5.0, 0.0, cse498::Direction::North);
-//  auto forward = edge_north.GetForwardPosition();
-//  CHECK(forward.Y() == -1.0);  // Goes negative (grid validation will handle)
-//
-//  // Test backward position at edge
-//  auto backward = edge_north.GetBackwardPosition();
-//  CHECK(backward.Y() == 1.0);
-//}
-
-/*
 TEST_CASE("Test StateGridPosition MoveForward", "[core]")
 {
-  // Mock or create a simple StateGrid for testing
-  cse498::StateGrid grid(10, 10);  // 10x10 grid
+  auto map = createOpenMap();
+  cse498::StateGrid grid(5, 5, map);
 
-  cse498::StateGridPosition pos(5, 5, cse498::Direction::North);
+  // Moving North decreases Y by 1
+  cse498::StateGridPosition pos(2.0, 2.0, cse498::Direction::North);
+  CHECK(pos.MoveForward(grid) == true);
+  CHECK(pos.X() == 2.0);
+  CHECK(pos.Y() == 1.0);
 
-  // Test successful move
-  bool moved = pos.MoveForward(grid);
-  CHECK(moved == true);
-  CHECK(pos.Y() == 4.0);
-  CHECK(pos.X() == 5.0);
+  // Moving East increases X by 1
+  cse498::StateGridPosition pos2(2.0, 2.0, cse498::Direction::East);
+  CHECK(pos2.MoveForward(grid) == true);
+  CHECK(pos2.X() == 3.0);
+  CHECK(pos2.Y() == 2.0);
 
-  // Test move into blocked cell
-  // grid.SetBlocked(5, 3, true);
-  // moved = pos.MoveForward(grid);
-  // CHECK(moved == false);
-  // CHECK(pos.Y() == 4.0);  // Position unchanged
+  // Moving South increases Y
+  cse498::StateGridPosition pos3(2.0, 2.0, cse498::Direction::South);
+  CHECK(pos3.MoveForward(grid) == true);
+  CHECK(pos3.X() == 2.0);
+  CHECK(pos3.Y() == 3.0);
 
-  // Test move out of bounds
-  cse498::StateGridPosition edge_pos(0, 0, cse498::Direction::North);
-  moved = edge_pos.MoveForward(grid);
-  CHECK(moved == false);
-  CHECK(edge_pos.X() == 0.0);
-  CHECK(edge_pos.Y() == 0.0);
+  // Moving West decreases X
+  cse498::StateGridPosition pos4(2.0, 2.0, cse498::Direction::West);
+  CHECK(pos4.MoveForward(grid) == true);
+  CHECK(pos4.X() == 1.0);
+  CHECK(pos4.Y() == 2.0);
+
+  // Attempting to move out of bounds should return false and not change position
+  cse498::StateGridPosition pos5(0.0, 0.0, cse498::Direction::North);
+  CHECK(pos5.MoveForward(grid) == false);
+  CHECK(pos5.X() == 0.0);
+  CHECK(pos5.Y() == 0.0);
+
+  // A map with a wall
+  std::vector<std::vector<char>> wall_map = {
+    {'P', 'P', 'P'},
+    {'P', 'W', 'P'},
+    {'P', 'P', 'P'}
+  };
+  // Should not be able to move into a space with a wall
+  cse498::StateGrid walled_grid(3, 3, wall_map);
+  cse498::StateGridPosition pos6(1.0, 0.0, cse498::Direction::South);
+  CHECK(pos6.MoveForward(walled_grid) == false);
+  CHECK(pos6.X() == 1.0);
+  CHECK(pos6.Y() == 0.0);
 }
 
 TEST_CASE("Test StateGridPosition MoveBackward", "[core]")
 {
-  cse498::StateGrid grid(10, 10);
+  auto map = createOpenMap();
+  cse498::StateGrid grid(5, 5, map);
 
-  cse498::StateGridPosition pos(5, 5, cse498::Direction::North);
+  // Moving south should increase Y by 1
+  cse498::StateGridPosition pos(2.0, 2.0, cse498::Direction::North);
+  CHECK(pos.MoveBackward(grid) == true);
+  CHECK(pos.X() == 2.0);
+  CHECK(pos.Y() == 3.0);
 
-  // Test successful backward move (North facing, move South)
-  bool moved = pos.MoveBackward(grid);
-  CHECK(moved == true);
-  CHECK(pos.Y() == 6.0);
-  CHECK(pos.X() == 5.0);
+  // Moving north should decrease Y by 1
+  cse498::StateGridPosition pos2(2.0, 2.0, cse498::Direction::South);
+  CHECK(pos2.MoveBackward(grid) == true);
+  CHECK(pos2.X() == 2.0);
+  CHECK(pos2.Y() == 1.0);
+
+  // Attempting to move out of bounds should fail
+  cse498::StateGridPosition pos3(4.0, 4.0, cse498::Direction::North);
+  CHECK(pos3.MoveBackward(grid) == false);
+  CHECK(pos3.X() == 4.0);
+  CHECK(pos3.Y() == 4.0);
 }
 
 TEST_CASE("Test StateGridPosition IsValidForwardMove", "[core]")
 {
-  cse498::StateGrid grid(10, 10);
+  auto map = createOpenMap();
+  cse498::StateGrid grid(5, 5, map);
 
-  cse498::StateGridPosition pos(5, 5, cse498::Direction::North);
-
-  // Test valid move
+  // Move is valid, but shouldn't change position
+  cse498::StateGridPosition pos(2.0, 2.0, cse498::Direction::North);
   CHECK(pos.IsValidForwardMove(grid) == true);
+  CHECK(pos.X() == 2.0);
+  CHECK(pos.Y() == 2.0);
 
-  // Test invalid move (out of bounds)
-  cse498::StateGridPosition edge_pos(0, 0, cse498::Direction::North);
-  CHECK(edge_pos.IsValidForwardMove(grid) == false);
+  // Move isn't valid, so should return false
+  cse498::StateGridPosition pos2(0.0, 0.0, cse498::Direction::North);
+  CHECK(pos2.IsValidForwardMove(grid) == false);
 
-  // Verify position unchanged after check
-  CHECK(pos.X() == 5.0);
-  CHECK(pos.Y() == 5.0);
+  // Another map with a wall
+  std::vector<std::vector<char>> wall_map = {
+    {'P', 'W'},
+    {'P', 'P'}
+  };
+  // Should return false for inquiring about moving into a spot with a wall
+  cse498::StateGrid walled_grid(2, 2, wall_map);
+  cse498::StateGridPosition pos3(0.0, 0.0, cse498::Direction::East);
+  CHECK(pos3.IsValidForwardMove(walled_grid) == false);
 }
 
 TEST_CASE("Test StateGridPosition IsValidBackwardMove", "[core]")
 {
-  cse498::StateGrid grid(10, 10);
+  auto map = createOpenMap();
+  cse498::StateGrid grid(5, 5, map);
 
-  cse498::StateGridPosition pos(5, 5, cse498::Direction::North);
-
-  // Test valid backward move
+  // Move is valid, but shouldn't change position
+  cse498::StateGridPosition pos(2.0, 2.0, cse498::Direction::North);
   CHECK(pos.IsValidBackwardMove(grid) == true);
+  CHECK(pos.X() == 2.0);
+  CHECK(pos.Y() == 2.0);
 
-  // Test invalid backward move (out of bounds)
-  cse498::StateGridPosition edge_pos(9, 9, cse498::Direction::South);
-  CHECK(edge_pos.IsValidBackwardMove(grid) == false);
+  // Move isn't valid, so should return false
+  cse498::StateGridPosition pos2(2.0, 4.0, cse498::Direction::North);
+  CHECK(pos2.IsValidBackwardMove(grid) == false);
 }
-*/

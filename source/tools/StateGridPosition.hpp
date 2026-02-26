@@ -12,28 +12,9 @@
 #include <stdexcept>
 #include <compare>    // For operator<=>
 
-namespace cse498 {
-
-  /// @class MockStateGrid
-  /// @brief Bare minimum to allow for compilation
-  class MockStateGrid {
-  public:
-    MockStateGrid(int width, int height) {}
-
-    bool inBounds(int row, int col) const {
-      return true; 
-    }
-  };
-
-  using StateGrid = MockStateGrid;
-
-}
+#include "./StateGrid/StateGrid.hpp"
 
 namespace cse498 {
-
-  // Forward declaration
-  //class StateGrid;
-
   /// @brief Constitutes the direction of an agent
   enum class Direction {
     North = 0,
@@ -57,17 +38,11 @@ namespace cse498 {
       assert(dir_value >= 0 && dir_value <= 3 && "Invalid direction enum value");
     }
 
-    /// @brief Validates that coordinates are non-negative
-    static void ValidateCoordinates(double x, double y) {
-      assert(x >= 0.0 && y >= 0.0 && "Coordinate values cannot be negative");
-    }
-
   public:
     // -- Constructors --
     StateGridPosition() = default;
     StateGridPosition(double x, double y, Direction direction_facing = Direction::North)
       : x(x), y(y), direction_facing(direction_facing) {
-      ValidateCoordinates(x, y);
       ValidateDirection(direction_facing);
     }
 
@@ -141,14 +116,12 @@ namespace cse498 {
 
     /// @brief Get X coordinate as a grid cell index
     [[nodiscard]] size_t CellX() const {
-      assert(x >= 0.0);
-      return static_cast<size_t>(x);
+      return static_cast<int>(std::floor(x));
     }
 
     /// @brief Get Y coordinate as a grid cell index
     [[nodiscard]] size_t CellY() const {
-      assert(y >= 0.0);
-      return static_cast<size_t>(y);
+      return static_cast<int>(std::floor(y));
     }
 
     /// @brief Get current facing direction
@@ -204,8 +177,14 @@ namespace cse498 {
       return CellX() == other.CellX() && CellY() == other.CellY();
     }
 
-    /// @brief Enable all comparison operators (==, !=, <, <=, >, >=)
-    auto operator<=>(const StateGridPosition&) const = default;
-  };
+    // @brief Returns true if positions are in the same cell and facing the same direction
+    bool operator==(const StateGridPosition& other) const {
+      return SameCell(other) && direction_facing == other.direction_facing;
+    }
 
+    // @brief Returns false if positions are in the same cell and facing the same direction
+    bool operator!=(const StateGridPosition& other) const {
+      return !(*this == other);
+    }
+  };
 } // End of namespace cse498
