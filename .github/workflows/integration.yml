@@ -1,13 +1,9 @@
 name: Integration
 
 on:
-  # Run on all PRs to main, and on push to main to setup shared caches
-  pull_request:
-    branches:
-      - main
   push:
     branches:
-      - main
+      - "**"
   # Allows manually triggering on main to setup caches for existing PRs
   workflow_dispatch:
 
