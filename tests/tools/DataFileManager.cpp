@@ -87,6 +87,7 @@ TEST_CASE("DataFileManager File I/O", "[data_file_manager]") {
     // Since SaveToDisk opens a file, it might return true but result in an empty file.
     // However, our logic returns false if filename is empty.
     CHECK_FALSE(dfm.SaveToDisk(""));
+    std::remove("test_empty.csv");
   }
 
   SECTION("buffer reset after save") {
@@ -97,6 +98,7 @@ TEST_CASE("DataFileManager File I/O", "[data_file_manager]") {
     // SaveToDisk should clear the buffer on success
     if (dfm.SaveToDisk("test_output.csv")) {
       CHECK(dfm.GetRowCount() == 0);
+      std::remove("test_output.csv");
     }
   }
 }
