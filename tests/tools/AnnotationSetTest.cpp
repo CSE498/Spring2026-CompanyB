@@ -5,13 +5,18 @@
  * @date 2/10/2026
  */
 
-#include "../../third-party/Catch/single_include/catch2/catch.hpp"
-#include <string>
+#include <algorithm>
 #include <climits>
+#include <random>
+#include <string>
+#include <vector>
 
+#include "../../third-party/Catch/single_include/catch2/catch.hpp"
 #include "../../source/tools/AnnotationSet.hpp"
 
 // g++ -std=c++23 -Wall -Wextra -I../../../third-party/Catch/single_include AnnotationSet.cpp AnnotationSetTest.cpp -o AnnotationSetTest.exe
+
+using namespace cse498;
 
 //constructor 
 TEST_CASE("AnnotationSet constructor", "[Constructor]"){
@@ -19,6 +24,40 @@ TEST_CASE("AnnotationSet constructor", "[Constructor]"){
     CHECK(s.size() == 0);
     CHECK(s.empty() == true);
     CHECK_FALSE(s.hasTag("help"));
+}
+
+// Copy constructor test
+TEST_CASE("AnnotationSet copy constructor", "[CopyConstructor]") {
+    AnnotationSet original;
+    original.addTag("alpha");
+    original.addTag("beta");
+    AnnotationSet copy(original);
+
+    CHECK(copy.size() == original.size());
+    CHECK(copy.hasTag("alpha"));
+    CHECK(copy.hasTag("beta"));
+
+    copy.addTag("gamma");
+    CHECK(copy.hasTag("gamma"));
+    CHECK_FALSE(original.hasTag("gamma"));
+}
+
+// Copy Assignment operator test
+TEST_CASE("AnnotationSet copy assignment operator", "[CopyAssignment]") {
+    AnnotationSet original;
+    original.addTag("one");
+    original.addTag("two");
+
+    AnnotationSet assigned;
+    assigned = original;  
+
+    CHECK(assigned.size() == original.size());
+    CHECK(assigned.hasTag("one"));
+    CHECK(assigned.hasTag("two"));
+
+    assigned.removeTag("one");
+    CHECK_FALSE(assigned.hasTag("one"));
+    CHECK(original.hasTag("one"));
 }
 
 //insert
@@ -119,7 +158,7 @@ TEST_CASE("removeTag add one tag and then remove", "[removeTag]"){
     CHECK(set.getTags() == std::unordered_set<std::string>{});
 }
 
-TEST_CASE("remove tag that doesn't exsist", "[removeTag]"){
+TEST_CASE("remove tag that doesn't exist", "[removeTag]"){
     AnnotationSet g;
     CHECK(g.size() == 0);
     CHECK(g.empty());
@@ -153,10 +192,6 @@ TEST_CASE("Remove same tag twice", "[removeTag]") {
     CHECK(s.size() == 0);
 }
 
-#include <algorithm>
-#include <vector>
-#include <random>
-
 TEST_CASE("removeTag randomized stress", "[removeTag]") {
     AnnotationSet s;
     const int N = 1000;
@@ -183,11 +218,64 @@ TEST_CASE("getTag returns correct pointer", "[getTag]") {
     AnnotationSet s;
     s.addTag("alpha");
 
-    const auto* ptr = s.getTag("alpha");
-    REQUIRE(ptr != nullptr);
-    CHECK(*ptr == "alpha");
+    auto opt = s.getTag("alpha");
+    REQUIRE(opt != std::nullopt);
+    CHECK(*opt.value() == "alpha");
 
-    CHECK(s.getTag("beta") == nullptr);
+    CHECK(s.getTag("beta") == std::nullopt);
+}
+
+//[] operator
+
+TEST_CASE("[] operator returns correct pointer", "[bracketOperator]") {
+    AnnotationSet s;
+    s.addTag("alpha");
+
+    auto opt = s["alpha"];
+    REQUIRE(opt != std::nullopt);
+    CHECK(*opt.value() == "alpha");
+
+    CHECK(s["beta"] == std::nullopt);
+}
+
+TEST_CASE("Lookup works with multiple tags", "[getTag][bracketOperator]") {
+    AnnotationSet s;
+    s.addTag("alpha");
+    s.addTag("beta");
+    s.addTag("gamma");
+
+    CHECK(s.getTag("beta") != std::nullopt);
+    CHECK(*s.getTag("beta").value() == "beta");
+
+    CHECK(s["gamma"] != std::nullopt);
+    CHECK(*s["gamma"].value() == "gamma");
+}
+
+TEST_CASE("Lookup fails after removal", "[getTag][bracketOperator]") {
+    AnnotationSet s;
+    s.addTag("alpha");
+    s.removeTag("alpha");
+
+    CHECK(s.getTag("alpha") == std::nullopt);
+    CHECK(s["alpha"] == std::nullopt);
+}
+
+TEST_CASE("Lookup on empty set returns nullopt", "[getTag][bracketOperator]") {
+    AnnotationSet s;
+
+    CHECK(s.getTag("anything") == std::nullopt);
+    CHECK(s["anything"] == std::nullopt);
+}
+
+TEST_CASE("Pointer remains valid after adding other tags", "[getTag]") {
+    AnnotationSet s;
+    s.addTag("alpha");
+    auto opt = s.getTag("alpha");
+    REQUIRE(opt);
+
+    s.addTag("beta");
+    s.addTag("gamma");
+    CHECK(*opt.value() == "alpha");
 }
 
 //gettags

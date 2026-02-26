@@ -26,6 +26,8 @@
 
 // g++ -std=c++23 -Wall -I../../../third-party/Catch/single_include AnnotationSet.cpp TagManager.cpp TagManagerTest.cpp -o TagManagerTest.exe
 
+using namespace cse498;
+
 // Objects must have a tag before they can be registered
 TEST_CASE("One Object", "[IsRegistered][RegisterObject]") {
     TagManager mgr;
