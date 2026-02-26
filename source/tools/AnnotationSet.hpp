@@ -8,14 +8,18 @@
 
 #pragma once
 
-#include <unordered_set> 
+#include <cstddef>
+#include <optional>
 #include <string>
+#include <unordered_set> 
+
+
+namespace cse498 {
 
 /*
 * @brief Type definition for a tag.
 */
 using tag = std::string;
-
 
 /*
 * @brief Class representing a set of annotations with associated tags.
@@ -28,38 +32,48 @@ class AnnotationSet{
         * @brief A set of tags associated with the annotation set.
         */
         std::unordered_set<tag> tags;
+
     public:
 
         AnnotationSet() = default; // Default constructor
+        AnnotationSet(const AnnotationSet &) = default; //Default copy
+        AnnotationSet& operator=(const AnnotationSet &) = default; //Default assign
         ~AnnotationSet() = default; // Default destructor
 
         /*
         * @brief Adds a tag to the annotation set.
         * @param tag The tag to be added.
         */
-        void addTag(const tag& tag);
+        void addTag(const tag&);
 
         /*
         * @brief Removes a tag from the annotation set.
         * @param tag The tag to be removed.
         * @return true if the tag was removed, false if it was not found.
         */
-        bool removeTag(const tag& tag);
+        bool removeTag(const tag&);
 
         /*
         * @brief Checks if a tag exists in the annotation set. 
         * @param tag The tag to be checked.
         * @return true if the tag exists, false otherwise.
         */ 
-        bool hasTag(const tag& tag) const;
+        bool hasTag(const tag&) const;
 
         /*
         * @brief Retrieves a tag from the annotation set.
         * @param tag The tag to be retrieved.
         * @return A pointer to the tag if found, nullptr otherwise.
         */
-        const tag* getTag(const tag& tag) const; 
-        
+        std::optional<const tag*> getTag(const tag&) const; 
+
+        /*
+        * @brief Retrieves a tag from the annotation set.
+        * @param tag The tag to be retrieved.
+        * @return A pointer to the tag if found, nullptr otherwise.
+        */
+        std::optional<const tag*> operator[](const tag&) const;
+
         /*
         * @brief Retrieves all tags in the annotation set.
         * @return A set of all tags.
@@ -83,5 +97,7 @@ class AnnotationSet{
         */
         void clear();
 
-     
+    
 };
+
+} // cse498 namespace

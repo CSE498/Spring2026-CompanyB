@@ -9,7 +9,7 @@
 
   // Registers the object, indexes all the tags that are in the AnnotationSet.
   // If the object_id is already registered, it will be unregistered first to prevent duplicates.
-  void TagManager::RegisterObject(ObjectId object_id, const AnnotationSet& set) {
+  void TagManager::RegisterObject(ObjectId object_id, const cse498::AnnotationSet& set) {
     // If already registered, unregister first to prevent duplicates
     UnregisterObject(object_id);
 
@@ -43,7 +43,7 @@
 
   // Adds a tag to the object's AnnotationSet and updates the index. If the object is not registered, it will be registered first.
   // Returns true if the tag was added, false if the tag already existed in the set.
-  bool TagManager::AddTag(ObjectId object_id, AnnotationSet& set, const tag& tag) {
+  bool TagManager::AddTag(ObjectId object_id, cse498::AnnotationSet& set, const cse498::tag& tag) {
     if (!IsRegistered(object_id)) {
         RegisterObject(object_id, set);
     }
@@ -60,7 +60,7 @@
 
   // Removes a tag from the object's AnnotationSet and updates the index.
   // Returns true if the tag was removed, false if the tag was not found in the set.
-  bool TagManager::RemoveTag(ObjectId object_id, AnnotationSet& set, const tag& tag) {
+  bool TagManager::RemoveTag(ObjectId object_id, cse498::AnnotationSet& set, const cse498::tag& tag) {
     if (!set.hasTag(tag)) return false;
 
     set.removeTag(tag);
@@ -84,7 +84,7 @@
 
   // Clears all tags from the object's AnnotationSet and updates the index accordingly.
   // If the object is not registered, it will simply clear the provided set.
-  void TagManager::ClearTags(ObjectId object_id, AnnotationSet& set) {
+  void TagManager::ClearTags(ObjectId object_id, cse498::AnnotationSet& set) {
     auto it = object_tags.find(object_id);
     if (it != object_tags.end()) {
         for (const auto& t : it->second) {
@@ -123,7 +123,7 @@
     }
 
     // Returns a list of object_ids that have the specified tag.
-    std::vector<TagManager::ObjectId> TagManager::QueryOneTag(const tag& tag) const {
+    std::vector<TagManager::ObjectId> TagManager::QueryOneTag(const cse498::tag& tag) const {
         std::vector<ObjectId> result;
         auto it = tag_index.find(tag);
 
@@ -134,7 +134,7 @@
     }
 
     // Returns a list of object_ids that have all the tags in must_have and none of the tags in must_not_have.
-    std::vector<TagManager::ObjectId> TagManager::QueryMultiTags(const std::vector<tag>& must_have, const std::vector<tag>& must_not_have) const {
+    std::vector<TagManager::ObjectId> TagManager::QueryMultiTags(const std::vector<cse498::tag>& must_have, const std::vector<cse498::tag>& must_not_have) const {
         if (must_have.empty() && must_not_have.empty()) {
             return {};
         }
