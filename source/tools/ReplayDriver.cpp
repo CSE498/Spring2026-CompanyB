@@ -30,14 +30,8 @@ bool ReplayDriver::ReplayFromFile(const std::string &filePath) {
 void ReplayDriver::SendInstructions(const nlohmann::json &eventData) {
   // This function would contain logic to send instructions to the world based
   // on the event data. For now, we will pretend to send it to the world
-  auto events = eventData.at("events");
-  for (const auto &event : events) {
     // Here we would have logic to interpret the event and send instructions to
     // the world.
-    event["type"];
-    event["id"];
-    event["position"];
-    // world->getAgent(event.at("AgentID")).executeInstruction(event.at("Instruction"));
-  }
+    world->getAgent(eventData.at("id"))->loadFromJson(eventData);
 }
 }  // namespace cse498

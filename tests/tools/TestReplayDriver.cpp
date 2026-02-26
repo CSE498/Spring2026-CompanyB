@@ -6,26 +6,49 @@
 
 TEST_CASE("ReplayDriver can read and replay events from a JSON file", "[ReplayDriver]") {
     // Create a sample JSON file with event data
-    nlohmann::json sampleEventData = {
-        {"events", {
-            {
-                {"type", "agent_added"},
-                {"id", 1},
-                {"position", {0, 0}}
-            }
-        }}
-    };
+    cse498::MockWorld mockWorld = cse498::MockWorld();
 
-    std::string testFilePath = "test_events.json";
-    std::ofstream outFile(testFilePath);
-    outFile << sampleEventData.dump(4);
-    outFile.close();
+    mockWorld.agents.push_back(cse498::MockAgent());
+    cse498::MockAgent* mockAgent = &mockWorld.agents[0];
+    
+    mockAgent->jsonify();
 
-    cse498::ReplayDriver replayDriver;
-    bool result = replayDriver.ReplayFromFile(testFilePath);
+    cse498::ReplayDriver replayDriver(&mockWorld);
+    bool result = replayDriver.ReplayFromFile("test_events.json");
 
     REQUIRE(result == true);
 
+    // Verify that the agent's state has been updated based on the JSON data
+    REQUIRE(mockAgent->id == 5);
+    REQUIRE(mockAgent->position == std::vector<int>{1, 2});
+    REQUIRE(mockAgent->etc == "test value");
+
     // Clean up the test file
-    std::remove(testFilePath.c_str());
+    std::remove("test_events.json");
+}
+
+TEST_CASE("ReplayDriver handles invalid file paths gracefully", "[ReplayDriver]") {
+    cse498::MockWorld mockWorld;
+    cse498::ReplayDriver replayDriver(&mockWorld);
+    
+    bool result = replayDriver.ReplayFromFile("non_existent_file.json");
+    
+    REQUIRE(result == false);
+}
+
+TEST_CASE("ReplayDriver handles malformed JSON gracefully", "[ReplayDriver]") {
+    // Create a malformed JSON file
+    std::ofstream outFile("malformed.json");
+    outFile << "{ invalid json }";
+    outFile.close();
+
+    cse498::MockWorld mockWorld;
+    cse498::ReplayDriver replayDriver(&mockWorld);
+    
+    bool result = replayDriver.ReplayFromFile("malformed.json");
+    
+    REQUIRE(result == false);
+
+    // Clean up the test file
+    std::remove("malformed.json");
 }
