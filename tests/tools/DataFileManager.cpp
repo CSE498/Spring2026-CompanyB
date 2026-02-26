@@ -76,13 +76,14 @@ TEST_CASE("DataFileManager Update and Buffering", "[data_file_manager]") {
     CHECK(dfm.GetColCount() == 2);
   }
 }
-/*
+
 TEST_CASE("DataFileManager File I/O", "[data_file_manager]") {
   cse498::DataFileManager dfm;
 
   SECTION("saving empty manager") {
     // Should fail or at least handle gracefully if no attributes exist
     bool success = dfm.SaveToDisk("test_empty.csv");
+    CHECK(success);
     // Since SaveToDisk opens a file, it might return true but result in an empty file.
     // However, our logic returns false if filename is empty.
     CHECK_FALSE(dfm.SaveToDisk(""));
@@ -99,7 +100,6 @@ TEST_CASE("DataFileManager File I/O", "[data_file_manager]") {
     }
   }
 }
-  */
 
 TEST_CASE("DataFileManager Template Genericity", "[data_file_manager]") {
   cse498::DataFileManager dfm;

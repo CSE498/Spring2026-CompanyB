@@ -75,7 +75,7 @@ public:
     /**
      * Exports the buffered 2D Table to a CSV file.
      * Returns true if successful, false otherwise.
-     
+    */
     [[nodiscard]] bool SaveToDisk(const std::string& path) {
         std::ofstream file(path);
         if (!file.is_open()) return false;
@@ -97,7 +97,6 @@ public:
         m_table.clear(); // Free memory after saving
         return true;
     }
-        */
 
     // Simple Getters for Testing
     size_t GetRowCount() const { return m_table.size(); }
