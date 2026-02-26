@@ -7,7 +7,7 @@
 /**
  * @brief Decorator node that repeatedly executes its child.
  *
- * A RepeatNode wraps a single child node and re-executes it untill failure.
+ * A RepeatNode wraps a single child node and re-executes it until failure.
  *
  * The decorator controls how the child's return status
  * influences the overall result.
