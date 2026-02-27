@@ -1,22 +1,23 @@
-#include "catch2/catch.hpp"
-#include <string>
 #include "tools/ActionMap.hpp"
+#include "catch2/catch.hpp"
+#include <memory>
+#include <string>
 
 // Helper for repeated function generation w/o accidental reuse
 std::function<double(int, double)> test_func_factory() {
-  return [] (int a, double b) { return a + b; };
+  return [](int a, double b) { return a + b; };
 }
 
 TEST_CASE("ActionMap basic functionality tests", "[ActionMap]") {
   // Note - Setup outside of the SECTION(...)s below is done once per test.
-  // See https://github.com/catchorg/Catch2/blob/devel/docs/tutorial.md#test-cases-and-sections
+  // See
+  // https://github.com/catchorg/Catch2/blob/devel/docs/tutorial.md#test-cases-and-sections
   cse498::ActionMap<int, double, char> action_map;
 
   REQUIRE(action_map.empty());
   REQUIRE(action_map.size() == 0);
 
   auto result = action_map.register_callable("test_func", test_func_factory());
-
 
   REQUIRE(result.has_value());
 
@@ -31,8 +32,7 @@ TEST_CASE("ActionMap basic functionality tests", "[ActionMap]") {
     auto result = action_map.deregister_callable("test_func");
     REQUIRE(result.has_value());
 
-    REQUIRE((action_map.empty()
-	     && action_map.size() == 0));
+    REQUIRE((action_map.empty() && action_map.size() == 0));
   }
 
   SECTION("new entry can be invoked") {
@@ -42,15 +42,15 @@ TEST_CASE("ActionMap basic functionality tests", "[ActionMap]") {
   }
 
   SECTION("map can be cleared") {
-    auto result = action_map.register_callable("test_func_2", test_func_factory());
+    auto result =
+        action_map.register_callable("test_func_2", test_func_factory());
     REQUIRE(result.has_value());
 
     REQUIRE(action_map.size() == 2);
 
     action_map.clear();
 
-    REQUIRE((action_map.empty()
-	     && action_map.size() == 0));
+    REQUIRE((action_map.empty() && action_map.size() == 0));
 
     REQUIRE_FALSE(action_map.exists("test_func"));
     REQUIRE_FALSE(action_map.exists("test_func_2"));
@@ -60,10 +60,11 @@ TEST_CASE("ActionMap basic functionality tests", "[ActionMap]") {
 TEST_CASE("ActionMap error cases", "[ActionMap]") {
   cse498::ActionMap<int, char, double> action_map;
 
-  REQUIRE((action_map.empty()
-	   && action_map.size() == 0));
+  REQUIRE((action_map.empty() && action_map.size() == 0));
 
-  std::function<double(int, double)> test_func = [](int a, double b){return a+b; };
+  std::function<double(int, double)> test_func = [](int a, double b) {
+    return a + b;
+  };
   auto result = action_map.register_callable("test_func", test_func_factory());
 
   REQUIRE(result.has_value());
@@ -102,7 +103,8 @@ TEST_CASE("ActionMap error cases", "[ActionMap]") {
   }
 
   SECTION("function name already present") {
-    auto insert_res = action_map.register_callable("test_func", test_func_factory());
+    auto insert_res =
+        action_map.register_callable("test_func", test_func_factory());
     REQUIRE_FALSE(insert_res.has_value());
     REQUIRE(insert_res.error() == cse498::ActionMapErr::NAME_EXISTS);
   }
@@ -113,11 +115,13 @@ TEST_CASE("ActionMap compile-time behavior", "[ActionMap]") {
 
   SECTION("validate permissible types") {
     STATIC_REQUIRE(action_map.is_valid_type<int>());
-    STATIC_REQUIRE(action_map.is_valid_signature<char, int, char, double, char>());
+    STATIC_REQUIRE(
+        action_map.is_valid_signature<char, int, char, double, char>());
   }
 
   SECTION("reject impermissible types") {
     STATIC_REQUIRE_FALSE(action_map.is_valid_type<float>());
-    STATIC_REQUIRE_FALSE(action_map.is_valid_signature<char, int, char, float, char>());
+    STATIC_REQUIRE_FALSE(
+        action_map.is_valid_signature<char, int, char, float, char>());
   }
 }
