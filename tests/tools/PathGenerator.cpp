@@ -50,6 +50,34 @@ TEST_CASE("PathGenerator ShortestPath returns nullopt when blocked",
   REQUIRE_FALSE(result.has_value());
 }
 
+TEST_CASE("PathGenerator ShortestPath returns nullopt for invalid start",
+          "[pathgenerator]") {
+  PathGenerator gen;
+  Point start{0.0, 0.0};
+  Point goal{10.0, 0.0};
+
+  auto canMove = [&](const Point &p) {
+    return !(p.x() == start.x() && p.y() == start.y());
+  };
+  auto result = gen.ShortestPath(start, goal, canMove);
+
+  REQUIRE_FALSE(result.has_value());
+}
+
+TEST_CASE("PathGenerator ShortestPath returns nullopt for invalid goal",
+          "[pathgenerator]") {
+  PathGenerator gen;
+  Point start{0.0, 0.0};
+  Point goal{10.0, 0.0};
+
+  auto canMove = [&](const Point &p) {
+    return !(p.x() == goal.x() && p.y() == goal.y());
+  };
+  auto result = gen.ShortestPath(start, goal, canMove);
+
+  REQUIRE_FALSE(result.has_value());
+}
+
 TEST_CASE("PathGenerator ShortestPath finds path around obstacle",
           "[pathgenerator]") {
   PathGenerator gen;
@@ -138,6 +166,19 @@ TEST_CASE("PathGenerator AvoidancePath returns nullopt when impossible",
 
   // Both start and goal are within the avoidance zone (dist=5 < radius=20)
   REQUIRE_FALSE(result.has_value());
+}
+
+TEST_CASE("PathGenerator RandomWalk at invalid start returns start only",
+          "[pathgenerator]") {
+  PathGenerator gen;
+  Point start{0.0, 0.0};
+
+  auto canMove = [](const Point &) { return false; };
+  auto result = gen.RandomWalk(start, 10, canMove);
+
+  REQUIRE(result.size() == 1);
+  REQUIRE(result.front().x() == Approx(start.x()));
+  REQUIRE(result.front().y() == Approx(start.y()));
 }
 
 TEST_CASE("PathGenerator RandomWalk generates exploration path",
