@@ -119,7 +119,7 @@ int ELEMENT_PRESENT(std::string elemId) {
 void TEST_ADD_ELEMENT(WebLayout& layout, std::shared_ptr<WebElement> elem) {
   auto lengthBefore = layout.GetNumChildren();
 
-  REQUIRE_NOTHROW(layout.AddChild(elem));
+  REQUIRE(layout.AddChild(elem).has_value());
 
   REQUIRE(layout.GetNumChildren() == lengthBefore+1);
 
@@ -156,7 +156,7 @@ void TEST_REMOVE_ELEMENT(WebLayout& layout, std::shared_ptr<WebElement> elem) {
   //   std::println("{}", elem->GetId());
   // }
 
-  REQUIRE_NOTHROW(layout.RemoveChild(elem));
+  REQUIRE(layout.RemoveChild(elem).has_value());
 
   REQUIRE(layout.GetNumChildren() == lengthBefore-1);
   

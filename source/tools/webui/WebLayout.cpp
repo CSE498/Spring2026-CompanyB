@@ -37,14 +37,16 @@ WebLayout::~WebLayout() {
       id.c_str());
 }
 
-WebLayout& WebLayout::AddChild(std::shared_ptr<WebElement> elem) {
+std::expected<void, WebLayout::Error> WebLayout::AddChild(std::shared_ptr<WebElement> elem) {
+  if (!elem) {
+    return std::unexpected(WebLayout::Error::NullPtr);
+  }
   if (ContainsChild(elem)) {
-    // TODO: handle error case
+    return std::unexpected(WebLayout::Error::ElementAlreadyMember);
   }
 
   // Implementation to add child element to the layout
   auto childId = elem->GetId();
-  // TODO: Handle error case
   EM_ASM(
       {
         let layoutId = UTF8ToString($0);
@@ -56,18 +58,24 @@ WebLayout& WebLayout::AddChild(std::shared_ptr<WebElement> elem) {
         if (layout && child) {
           layout.appendChild(child);
         } else {
+          // TODO: Handle error case
           if (!layout) throw `Layout with id ${layoutId} not found!`;
           else if (!child) throw `Child with id ${childId} not found!`;
         }
       },
       id.c_str(), childId.c_str());
+
   elements.push_back(elem);
-  return *this;
+
+  return {};
 }
 
-WebLayout& WebLayout::RemoveChild(std::shared_ptr<WebElement> elem) {
+std::expected<void, WebLayout::Error> WebLayout::RemoveChild(std::shared_ptr<WebElement> elem) {
+  if (!elem) {
+    return std::unexpected(WebLayout::Error::NullPtr);
+  }
   if (!ContainsChild(elem)) {
-    // TODO: handle error case
+    return std::unexpected(WebLayout::Error::ElementNotFound);
   }
 
   // Implementation to remove child element from the layout
@@ -85,7 +93,8 @@ WebLayout& WebLayout::RemoveChild(std::shared_ptr<WebElement> elem) {
       },
       id.c_str(), childId.c_str());
   std::erase(elements, elem);
-  return *this;
+
+  return {};
 }
 
 size_t WebLayout::GetNumChildren() const {

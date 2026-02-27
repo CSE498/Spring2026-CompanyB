@@ -9,6 +9,7 @@
 #include <memory>
 #include <utility>
 #include <vector>
+#include <expected>
 
 #include "WebElement.hpp"
 
@@ -23,6 +24,12 @@ class WebLayout : public WebElement {
   std::vector<std::shared_ptr<WebElement>> elements;
 
  public:
+  enum class Error {
+    NullPtr,
+    ElementNotFound,
+    ElementAlreadyMember,
+  };
+
   /**
    * @brief Constructs a WebLayout, creating a flex div in the DOM with the
    * given ID.
@@ -40,14 +47,14 @@ class WebLayout : public WebElement {
    * @param elem The child element to add.
    * @return Reference to this layout for method chaining.
    */
-  WebLayout& AddChild(std::shared_ptr<WebElement> elem);
+  std::expected<void, WebLayout::Error> AddChild(std::shared_ptr<WebElement> elem);
 
   /**
    * @brief Removes a child WebElement from this layout in the DOM.
    * @param elem The child element to remove.
    * @return Reference to this layout for method chaining.
    */
-  WebLayout& RemoveChild(std::shared_ptr<WebElement> elem);
+  std::expected<void, WebLayout::Error> RemoveChild(std::shared_ptr<WebElement> elem);
 
   size_t GetNumChildren() const;
 
