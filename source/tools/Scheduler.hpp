@@ -399,7 +399,7 @@ namespace cse498 {
         return std::unexpected(SchedulerError::NegativeWeight);
       }
       
-      if (process_map.count(id)) 
+      if (process_map.contains(id)) 
       {
         return std::unexpected(SchedulerError::ProcessAlreadyExists);
       }
@@ -512,7 +512,7 @@ namespace cse498 {
      * @param id Process ID to check
      * @return true if process is scheduled
      */
-    [[nodiscard]] bool HasProcess(ID_TYPE id) const { return process_map.count(id) > 0; }
+    [[nodiscard]] bool HasProcess(ID_TYPE id) const { return process_map.contains(id); }
     
     /**
      * @brief Get the base weight of a process
@@ -530,8 +530,10 @@ namespace cse498 {
     }
     
     /**
-     * @brief Get the highest base weight among all processes
+     * @brief Get the highest effective weight among all schedulable processes
      * @return Expected containing maximum weight or error code
+     * 
+     * Returns dynamic weight when auto-adjust is enabled, base weight otherwise.
      */
     [[nodiscard]] std::expected<double, SchedulerError> GetHighestWeight() const 
     {
@@ -563,8 +565,10 @@ namespace cse498 {
     }
     
     /**
-     * @brief Get the sum of all base weights
-     * @return Total weight across all processes
+     * @brief Get the sum of all effective weights for schedulable processes
+     * @return Total weight across all schedulable processes
+     * 
+     * Returns dynamic weights when auto-adjust is enabled, base weights otherwise.
      */
     [[nodiscard]] double GetTotalWeight() const 
     {
@@ -827,16 +831,11 @@ namespace cse498 {
       info.success_count = 0;  // Reset success streak
       
       // Apply exponential backoff
-      size_t backoff = initial_backoff_cycles;
-      for (size_t i = 1; i < info.failure_count; ++i) 
-      {
-        backoff = static_cast<size_t>(backoff * backoff_multiplier);
-        if (backoff > max_backoff_cycles) 
-        {
-          backoff = max_backoff_cycles;
-          break;
-        }
-      }
+      size_t backoff = (info.backoff_cycles == 0)
+          ? initial_backoff_cycles
+          : static_cast<size_t>(std::min(
+                info.backoff_cycles * backoff_multiplier,
+                static_cast<double>(max_backoff_cycles)));
       info.backoff_cycles = backoff;
       info.cycles_until_retry = backoff;
       
