@@ -171,9 +171,9 @@ class DataMap {
         V& GetRef(const std::string& name)
         {
             auto it = mData.find(name);
-            assert(it != mData.end() && "Key not found");
+            assert(it != mData.end() && "DataMap::GetRef(): key not found (check for typo or initialization)");
             auto* p = std::any_cast<V>(&it->second);
-            assert(p != nullptr && "Key returns a nullptr");
+            assert(p != nullptr && "DataMap::GetRef(): stored value cannot be cast to requested type");
             return *p;
         }
 
@@ -199,5 +199,4 @@ class DataMap {
         void Clear() { mData.clear(); }
 
 };
-
 } // namespace cse498

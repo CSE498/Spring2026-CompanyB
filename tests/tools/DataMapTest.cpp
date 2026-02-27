@@ -467,6 +467,7 @@ TEST_CASE("DataMap GetRef returns mutable reference", "[DataMap]") {
     REQUIRE(data.Get<int>("counter").value() == 42);
 }
 
+
 TEST_CASE("DataMap GetRef with string type", "[DataMap]") {
     cse498::DataMap data;
     data.Set("greeting", std::string("hello"));
