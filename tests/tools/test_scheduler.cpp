@@ -64,6 +64,7 @@ TEST_CASE("Scheduler: Adding Processes", "[scheduler]") {
   }
   
   SECTION("Adding duplicate process returns error") {
+    scheduler.AddProcess(1, -10.0);
     CHECK(scheduler.AddProcess(1, 10.0).has_value());
     auto result = scheduler.AddProcess(1, 5.0);
     CHECK_FALSE(result.has_value());
@@ -79,8 +80,8 @@ TEST_CASE("Scheduler: Adding Processes", "[scheduler]") {
 
 TEST_CASE("Scheduler: Removing Processes", "[scheduler]") {
   Scheduler<size_t> scheduler;
-  scheduler.AddProcess(1, 10.0);
-  scheduler.AddProcess(2, 5.0);
+  REQUIRE(scheduler.AddProcess(1, 10.0).has_value());
+  REQUIRE(scheduler.AddProcess(2, 5.0).has_value());
   
   SECTION("Removing existing process") {
     auto result = scheduler.RemoveProcess(1);
@@ -106,9 +107,9 @@ TEST_CASE("Scheduler: Removing Processes", "[scheduler]") {
 
 TEST_CASE("Scheduler: Weight Queries", "[scheduler]") {
   Scheduler<size_t> scheduler;
-  scheduler.AddProcess(1, 10.0);
-  scheduler.AddProcess(2, 20.0);
-  scheduler.AddProcess(3, 5.0);
+  REQUIRE(scheduler.AddProcess(1, 10.0).has_value());
+  REQUIRE(scheduler.AddProcess(2, 20.0).has_value());
+  REQUIRE(scheduler.AddProcess(3, 5.0).has_value());
   
   SECTION("GetWeight returns correct values") {
     auto w1 = scheduler.GetWeight(1);
@@ -151,9 +152,9 @@ TEST_CASE("Scheduler: Weight Queries", "[scheduler]") {
 
 TEST_CASE("Scheduler: Deterministic GetNext", "[scheduler]") {
   Scheduler<size_t> scheduler(Scheduler<size_t>::Mode::DETERMINISTIC);
-  scheduler.AddProcess(1, 10.0);
-  scheduler.AddProcess(2, 5.0);
-  scheduler.AddProcess(3, 2.0);
+  REQUIRE(scheduler.AddProcess(1, 10.0).has_value());
+  REQUIRE(scheduler.AddProcess(2, 5.0).has_value());
+  REQUIRE(scheduler.AddProcess(3, 2.0).has_value());
   
   SECTION("GetNext returns process IDs proportional to weights") {
     std::map<size_t, size_t> counts;
@@ -178,7 +179,7 @@ TEST_CASE("Scheduler: Deterministic GetNext", "[scheduler]") {
   
   SECTION("Execution count is tracked correctly") {
     for (int i = 0; i < 17; ++i) {
-      (void)scheduler.GetNext();
+      REQUIRE(scheduler.GetNext().has_value());
     }
     
     auto count1 = scheduler.GetExecutionCount(1);
@@ -199,9 +200,9 @@ TEST_CASE("Scheduler: Deterministic GetNext", "[scheduler]") {
 
 TEST_CASE("Scheduler: Probabilistic GetNext", "[scheduler]") {
   Scheduler<size_t> scheduler(Scheduler<size_t>::Mode::PROBABILISTIC);
-  scheduler.AddProcess(1, 10.0);
-  scheduler.AddProcess(2, 5.0);
-  scheduler.AddProcess(3, 1.0);
+  REQUIRE(scheduler.AddProcess(1, 10.0).has_value());
+  REQUIRE(scheduler.AddProcess(2, 5.0).has_value());
+  REQUIRE(scheduler.AddProcess(3, 1.0).has_value());
   
   SECTION("GetNext returns valid process IDs") {
     for (int i = 0; i < 100; ++i) {
@@ -228,8 +229,8 @@ TEST_CASE("Scheduler: Probabilistic GetNext", "[scheduler]") {
 
 TEST_CASE("Scheduler: Mode Switching", "[scheduler]") {
   Scheduler<size_t> scheduler(Scheduler<size_t>::Mode::DETERMINISTIC);
-  scheduler.AddProcess(1, 10.0);
-  scheduler.AddProcess(2, 5.0);
+  REQUIRE(scheduler.AddProcess(1, 10.0).has_value());
+  REQUIRE(scheduler.AddProcess(2, 5.0).has_value());
   
   SECTION("Mode starts as DETERMINISTIC") {
     CHECK(scheduler.GetMode() == Scheduler<size_t>::Mode::DETERMINISTIC);
@@ -242,7 +243,7 @@ TEST_CASE("Scheduler: Mode Switching", "[scheduler]") {
   
   SECTION("Switching back to DETERMINISTIC resets current weights") {
     for (int i = 0; i < 5; ++i) {
-      (void)scheduler.GetNext();
+      REQUIRE(scheduler.GetNext().has_value());
     }
     
     scheduler.SetMode(Scheduler<size_t>::Mode::PROBABILISTIC);
@@ -256,8 +257,8 @@ TEST_CASE("Scheduler: Mode Switching", "[scheduler]") {
 
 TEST_CASE("Scheduler: Execution Count Tracking", "[scheduler]") {
   Scheduler<size_t> scheduler;
-  scheduler.AddProcess(1, 5.0);
-  scheduler.AddProcess(2, 5.0);
+  REQUIRE(scheduler.AddProcess(1, 5.0).has_value());
+  REQUIRE(scheduler.AddProcess(2, 5.0).has_value());
   
   SECTION("Initial execution counts are zero") {
     auto count1 = scheduler.GetExecutionCount(1);
@@ -272,7 +273,7 @@ TEST_CASE("Scheduler: Execution Count Tracking", "[scheduler]") {
   
   SECTION("Execution counts increment correctly") {
     for (int i = 0; i < 10; ++i) {
-      (void)scheduler.GetNext();
+      REQUIRE(scheduler.GetNext().has_value());
     }
     
     auto count1 = scheduler.GetExecutionCount(1);
@@ -295,8 +296,8 @@ TEST_CASE("Scheduler: Execution Count Tracking", "[scheduler]") {
 TEST_CASE("Scheduler: Template Instantiation with Different ID Types", "[scheduler]") {
   SECTION("Using std::string as ID type") {
     Scheduler<std::string> str_scheduler;
-    str_scheduler.AddProcess("high_priority", 10.0);
-    str_scheduler.AddProcess("low_priority", 1.0);
+    REQUIRE(str_scheduler.AddProcess("high_priority", 10.0).has_value());
+    REQUIRE(str_scheduler.AddProcess("low_priority", 1.0).has_value());
     
     CHECK(str_scheduler.GetProcessCount() == 2);
     CHECK(str_scheduler.HasProcess("high_priority"));
@@ -309,8 +310,8 @@ TEST_CASE("Scheduler: Template Instantiation with Different ID Types", "[schedul
   
   SECTION("Using int as ID type") {
     Scheduler<int> int_scheduler;
-    int_scheduler.AddProcess(-1, 5.0);
-    int_scheduler.AddProcess(100, 5.0);
+    REQUIRE(int_scheduler.AddProcess(-1, 5.0).has_value());
+    REQUIRE(int_scheduler.AddProcess(100, 5.0).has_value());
     
     CHECK(int_scheduler.GetProcessCount() == 2);
     
@@ -390,7 +391,7 @@ TEST_CASE("Scheduler: Auto-adjustment Configuration", "[scheduler]") {
 
 TEST_CASE("Scheduler: Manual Weight Setting", "[scheduler]") {
   Scheduler<size_t> scheduler;
-  scheduler.AddProcess(1, 10.0);
+  REQUIRE(scheduler.AddProcess(1, 10.0).has_value());
   
   SECTION("Set process weight") {
     auto result = scheduler.SetWeight(1, 20.0);
@@ -416,13 +417,13 @@ TEST_CASE("Scheduler: Manual Weight Setting", "[scheduler]") {
 
 TEST_CASE("Scheduler: Wait Cycle Tracking", "[scheduler]") {
   Scheduler<size_t> scheduler;
-  scheduler.AddProcess(1, 10.0);
-  scheduler.AddProcess(2, 1.0);
+  REQUIRE(scheduler.AddProcess(1, 10.0).has_value());
+  REQUIRE(scheduler.AddProcess(2, 1.0).has_value());
   scheduler.EnableAutoAdjustment(true);
   
   SECTION("Wait cycles increment for non-executed processes") {
     for (int i = 0; i < 5; ++i) {
-      (void)scheduler.GetNext();
+      REQUIRE(scheduler.GetNext().has_value());
     }
     
     auto wait1 = scheduler.GetWaitCycles(1);
@@ -443,16 +444,16 @@ TEST_CASE("Scheduler: Wait Cycle Tracking", "[scheduler]") {
 
 TEST_CASE("Scheduler: Dynamic Weight Adjustment", "[scheduler]") {
   Scheduler<size_t> scheduler;
-  scheduler.AddProcess(1, 10.0);
-  scheduler.AddProcess(2, 5.0);
+  REQUIRE(scheduler.AddProcess(1, 10.0).has_value());
+  REQUIRE(scheduler.AddProcess(2, 5.0).has_value());
   scheduler.EnableAutoAdjustment(true);
-  scheduler.SetFrequencyPenalty(0.1);
+  REQUIRE(scheduler.SetFrequencyPenalty(0.1).has_value());
   
   SECTION("Dynamic weight decreases after execution") {
     auto initial = scheduler.GetDynamicWeight(1);
     REQUIRE(initial.has_value());
     
-    (void)scheduler.GetNext();
+    REQUIRE(scheduler.GetNext().has_value());
     
     auto after = scheduler.GetDynamicWeight(1);
     REQUIRE(after.has_value());
@@ -469,11 +470,11 @@ TEST_CASE("Scheduler: Dynamic Weight Adjustment", "[scheduler]") {
 
 TEST_CASE("Scheduler: Starvation Prevention", "[scheduler]") {
   Scheduler<size_t> scheduler;
-  scheduler.AddProcess(1, 100.0);
-  scheduler.AddProcess(2, 1.0);
+  REQUIRE(scheduler.AddProcess(1, 100.0).has_value());
+  REQUIRE(scheduler.AddProcess(2, 1.0).has_value());
   scheduler.EnableAutoAdjustment(true);
-  scheduler.SetWaitBoostFactor(0.5);
-  scheduler.SetMinWeight(0.1);
+  REQUIRE(scheduler.SetWaitBoostFactor(0.5).has_value());
+  REQUIRE(scheduler.SetMinWeight(0.1).has_value());
   
   SECTION("Low-weight process eventually gets scheduled") {
     bool process2_executed = false;
@@ -493,7 +494,7 @@ TEST_CASE("Scheduler: Starvation Prevention", "[scheduler]") {
 
 TEST_CASE("Scheduler: Scheduling Cycle Counter", "[scheduler]") {
   Scheduler<size_t> scheduler;
-  scheduler.AddProcess(1, 5.0);
+  REQUIRE(scheduler.AddProcess(1, 5.0).has_value());
   
   SECTION("Scheduling cycle starts at 0") {
     CHECK(scheduler.GetSchedulingCycle() == 0);
@@ -501,7 +502,7 @@ TEST_CASE("Scheduler: Scheduling Cycle Counter", "[scheduler]") {
   
   SECTION("Scheduling cycle increments with GetNext") {
     for (int i = 0; i < 10; ++i) {
-      (void)scheduler.GetNext();
+      REQUIRE(scheduler.GetNext().has_value());
     }
     
     CHECK(scheduler.GetSchedulingCycle() == 10);
@@ -510,13 +511,13 @@ TEST_CASE("Scheduler: Scheduling Cycle Counter", "[scheduler]") {
 
 TEST_CASE("Scheduler: Reset Dynamic Weights", "[scheduler]") {
   Scheduler<size_t> scheduler;
-  scheduler.AddProcess(1, 10.0);
-  scheduler.AddProcess(2, 5.0);
+  REQUIRE(scheduler.AddProcess(1, 10.0).has_value());
+  REQUIRE(scheduler.AddProcess(2, 5.0).has_value());
   scheduler.EnableAutoAdjustment(true);
   
   SECTION("Reset clears all adjustments") {
     for (int i = 0; i < 20; ++i) {
-      (void)scheduler.GetNext();
+      REQUIRE(scheduler.GetNext().has_value());
     }
     
     scheduler.ResetDynamicWeights();
@@ -569,7 +570,7 @@ TEST_CASE("Scheduler: Failure Handling Enable/Disable", "[scheduler]") {
 
 TEST_CASE("Scheduler: Process Enable/Disable", "[scheduler]") {
   Scheduler<size_t> scheduler;
-  scheduler.AddProcess(1, 10.0);
+  REQUIRE(scheduler.AddProcess(1, 10.0).has_value());
   
   SECTION("Process enabled by default") {
     auto enabled = scheduler.IsProcessEnabled(1);
@@ -586,7 +587,7 @@ TEST_CASE("Scheduler: Process Enable/Disable", "[scheduler]") {
   }
   
   SECTION("Enable disabled process") {
-    scheduler.DisableProcess(1);
+    REQUIRE(scheduler.DisableProcess(1).has_value());
     CHECK(scheduler.EnableProcess(1).has_value());
     
     auto enabled = scheduler.IsProcessEnabled(1);
@@ -607,9 +608,9 @@ TEST_CASE("Scheduler: Process Enable/Disable", "[scheduler]") {
 
 TEST_CASE("Scheduler: Failure Tracking", "[scheduler]") {
   Scheduler<size_t> scheduler;
-  scheduler.AddProcess(1, 10.0);
+  REQUIRE(scheduler.AddProcess(1, 10.0).has_value());
   scheduler.EnableFailureHandling(true);
-  scheduler.SetRecoverySuccessThreshold(3);
+  REQUIRE(scheduler.SetRecoverySuccessThreshold(3).has_value());
   
   SECTION("Initial failure and success counts are zero") {
     auto failures = scheduler.GetFailureCount(1);
@@ -647,9 +648,9 @@ TEST_CASE("Scheduler: Failure Tracking", "[scheduler]") {
   }
   
   SECTION("Failure resets success count") {
-    scheduler.MarkProcessSuccess(1);
-    scheduler.MarkProcessSuccess(1);
-    scheduler.MarkProcessFailed(1);
+    REQUIRE(scheduler.MarkProcessSuccess(1).has_value());
+    REQUIRE(scheduler.MarkProcessSuccess(1).has_value());
+    REQUIRE(scheduler.MarkProcessFailed(1).has_value());
     
     auto successes = scheduler.GetSuccessCount(1);
     REQUIRE(successes.has_value());
@@ -657,12 +658,12 @@ TEST_CASE("Scheduler: Failure Tracking", "[scheduler]") {
   }
   
   SECTION("Recovery after successes") {
-    scheduler.MarkProcessFailed(1);
-    scheduler.MarkProcessFailed(1);
+    REQUIRE(scheduler.MarkProcessFailed(1).has_value());
+    REQUIRE(scheduler.MarkProcessFailed(1).has_value());
     
-    scheduler.MarkProcessSuccess(1);
-    scheduler.MarkProcessSuccess(1);
-    scheduler.MarkProcessSuccess(1);
+    REQUIRE(scheduler.MarkProcessSuccess(1).has_value());
+    REQUIRE(scheduler.MarkProcessSuccess(1).has_value());
+    REQUIRE(scheduler.MarkProcessSuccess(1).has_value());
     
     auto failures = scheduler.GetFailureCount(1);
     auto successes = scheduler.GetSuccessCount(1);
@@ -687,13 +688,13 @@ TEST_CASE("Scheduler: Failure Tracking", "[scheduler]") {
 
 TEST_CASE("Scheduler: Exponential Backoff", "[scheduler]") {
   Scheduler<size_t> scheduler;
-  scheduler.AddProcess(1, 10.0);
+  REQUIRE(scheduler.AddProcess(1, 10.0).has_value());
   scheduler.EnableFailureHandling(true);
   scheduler.SetInitialBackoffCycles(2);
-  scheduler.SetBackoffMultiplier(2.0);
+  REQUIRE(scheduler.SetBackoffMultiplier(2.0).has_value());
   
   SECTION("First failure sets initial backoff") {
-    scheduler.MarkProcessFailed(1);
+    REQUIRE(scheduler.MarkProcessFailed(1).has_value());
     
     auto backoff = scheduler.GetBackoffCycles(1);
     REQUIRE(backoff.has_value());
@@ -701,8 +702,8 @@ TEST_CASE("Scheduler: Exponential Backoff", "[scheduler]") {
   }
   
   SECTION("Second failure doubles backoff") {
-    scheduler.MarkProcessFailed(1);
-    scheduler.MarkProcessFailed(1);
+    REQUIRE(scheduler.MarkProcessFailed(1).has_value());
+    REQUIRE(scheduler.MarkProcessFailed(1).has_value());
     
     auto backoff = scheduler.GetBackoffCycles(1);
     REQUIRE(backoff.has_value());
@@ -710,9 +711,9 @@ TEST_CASE("Scheduler: Exponential Backoff", "[scheduler]") {
   }
   
   SECTION("Third failure quadruples initial backoff") {
-    scheduler.MarkProcessFailed(1);
-    scheduler.MarkProcessFailed(1);
-    scheduler.MarkProcessFailed(1);
+    REQUIRE(scheduler.MarkProcessFailed(1).has_value());
+    REQUIRE(scheduler.MarkProcessFailed(1).has_value());
+    REQUIRE(scheduler.MarkProcessFailed(1).has_value());
     
     auto backoff = scheduler.GetBackoffCycles(1);
     REQUIRE(backoff.has_value());
@@ -722,15 +723,15 @@ TEST_CASE("Scheduler: Exponential Backoff", "[scheduler]") {
 
 TEST_CASE("Scheduler: Max Backoff Cap", "[scheduler]") {
   Scheduler<size_t> scheduler;
-  scheduler.AddProcess(1, 10.0);
+  REQUIRE(scheduler.AddProcess(1, 10.0).has_value());
   scheduler.EnableFailureHandling(true);
   scheduler.SetInitialBackoffCycles(1);
-  scheduler.SetBackoffMultiplier(2.0);
+  REQUIRE(scheduler.SetBackoffMultiplier(2.0).has_value());
   scheduler.SetMaxBackoffCycles(10);
   
   SECTION("Backoff capped at max") {
     for (int i = 0; i < 10; ++i) {
-      scheduler.MarkProcessFailed(1);
+      REQUIRE(scheduler.MarkProcessFailed(1).has_value());
     }
     
     auto backoff = scheduler.GetBackoffCycles(1);
@@ -741,14 +742,14 @@ TEST_CASE("Scheduler: Max Backoff Cap", "[scheduler]") {
 
 TEST_CASE("Scheduler: Auto-disable After Max Failures", "[scheduler]") {
   Scheduler<size_t> scheduler;
-  scheduler.AddProcess(1, 10.0);
-  scheduler.AddProcess(2, 10.0);
+  REQUIRE(scheduler.AddProcess(1, 10.0).has_value());
+  REQUIRE(scheduler.AddProcess(2, 10.0).has_value());
   scheduler.EnableFailureHandling(true);
-  scheduler.SetMaxConsecutiveFailures(3);
+  REQUIRE(scheduler.SetMaxConsecutiveFailures(3).has_value());
   
   SECTION("Process disabled after max failures") {
     for (int i = 0; i < 3; ++i) {
-      scheduler.MarkProcessFailed(1);
+      REQUIRE(scheduler.MarkProcessFailed(1).has_value());
     }
     
     auto enabled = scheduler.IsProcessEnabled(1);
@@ -758,7 +759,7 @@ TEST_CASE("Scheduler: Auto-disable After Max Failures", "[scheduler]") {
   
   SECTION("Disabled process not scheduled") {
     for (int i = 0; i < 3; ++i) {
-      scheduler.MarkProcessFailed(1);
+      REQUIRE(scheduler.MarkProcessFailed(1).has_value());
     }
     
     auto schedulable = scheduler.IsProcessSchedulable(1);
@@ -775,20 +776,20 @@ TEST_CASE("Scheduler: Auto-disable After Max Failures", "[scheduler]") {
 
 TEST_CASE("Scheduler: Recovery After Successes", "[scheduler]") {
   Scheduler<size_t> scheduler;
-  scheduler.AddProcess(1, 10.0);
+  REQUIRE(scheduler.AddProcess(1, 10.0).has_value());
   scheduler.EnableFailureHandling(true);
-  scheduler.SetRecoverySuccessThreshold(2);
+  REQUIRE(scheduler.SetRecoverySuccessThreshold(2).has_value());
   
   SECTION("Success streak clears failures") {
-    scheduler.MarkProcessFailed(1);
-    scheduler.MarkProcessFailed(1);
+    REQUIRE(scheduler.MarkProcessFailed(1).has_value());
+    REQUIRE(scheduler.MarkProcessFailed(1).has_value());
     
     auto before = scheduler.GetFailureCount(1);
     REQUIRE(before.has_value());
     CHECK(*before == 2);
     
-    scheduler.MarkProcessSuccess(1);
-    scheduler.MarkProcessSuccess(1);
+    REQUIRE(scheduler.MarkProcessSuccess(1).has_value());
+    REQUIRE(scheduler.MarkProcessSuccess(1).has_value());
     
     auto after = scheduler.GetFailureCount(1);
     auto backoff = scheduler.GetBackoffCycles(1);
@@ -846,9 +847,9 @@ TEST_CASE("Scheduler: Failure Configuration", "[scheduler]") {
 
 TEST_CASE("Scheduler: Process Count Queries", "[scheduler]") {
   Scheduler<size_t> scheduler;
-  scheduler.AddProcess(1, 10.0);
-  scheduler.AddProcess(2, 10.0);
-  scheduler.AddProcess(3, 10.0);
+  REQUIRE(scheduler.AddProcess(1, 10.0).has_value());
+  REQUIRE(scheduler.AddProcess(2, 10.0).has_value());
+  REQUIRE(scheduler.AddProcess(3, 10.0).has_value());
   
   SECTION("Total and enabled counts match when all enabled") {
     CHECK(scheduler.GetProcessCount() == 3);
@@ -857,7 +858,7 @@ TEST_CASE("Scheduler: Process Count Queries", "[scheduler]") {
   }
   
   SECTION("Counts reflect disabled processes") {
-    scheduler.DisableProcess(1);
+    REQUIRE(scheduler.DisableProcess(1).has_value());
     
     CHECK(scheduler.GetProcessCount() == 3);
     CHECK(scheduler.GetEnabledProcessCount() == 2);
@@ -866,8 +867,8 @@ TEST_CASE("Scheduler: Process Count Queries", "[scheduler]") {
   
   SECTION("Counts reflect backoff processes") {
     scheduler.EnableFailureHandling(true);
-    scheduler.SetInitialBackoffCycles(5);  // Set higher backoff so it doesn't expire immediately
-    scheduler.MarkProcessFailed(1);
+    scheduler.SetInitialBackoffCycles(5);
+    REQUIRE(scheduler.MarkProcessFailed(1).has_value());
     
     auto next = scheduler.GetNext();
     REQUIRE(next.has_value());
@@ -880,14 +881,14 @@ TEST_CASE("Scheduler: Process Count Queries", "[scheduler]") {
 
 TEST_CASE("Scheduler: Failure Handling Integration", "[scheduler]") {
   Scheduler<size_t> scheduler;
-  scheduler.AddProcess(1, 10.0);
-  scheduler.AddProcess(2, 5.0);
+  REQUIRE(scheduler.AddProcess(1, 10.0).has_value());
+  REQUIRE(scheduler.AddProcess(2, 5.0).has_value());
   scheduler.EnableFailureHandling(true);
-  scheduler.SetMaxConsecutiveFailures(2);
+  REQUIRE(scheduler.SetMaxConsecutiveFailures(2).has_value());
   
   SECTION("Failed process skipped during scheduling") {
-    scheduler.MarkProcessFailed(1);
-    scheduler.MarkProcessFailed(1);
+    REQUIRE(scheduler.MarkProcessFailed(1).has_value());
+    REQUIRE(scheduler.MarkProcessFailed(1).has_value());
     
     for (int i = 0; i < 5; ++i) {
       auto next = scheduler.GetNext();
@@ -897,10 +898,10 @@ TEST_CASE("Scheduler: Failure Handling Integration", "[scheduler]") {
   }
   
   SECTION("Re-enabled process can be scheduled again") {
-    scheduler.MarkProcessFailed(1);
-    scheduler.MarkProcessFailed(1);
+    REQUIRE(scheduler.MarkProcessFailed(1).has_value());
+    REQUIRE(scheduler.MarkProcessFailed(1).has_value());
     
-    scheduler.EnableProcess(1);
+    REQUIRE(scheduler.EnableProcess(1).has_value());
     
     bool process1_scheduled = false;
     for (int i = 0; i < 20; ++i) {

@@ -87,8 +87,8 @@ namespace cse498 {
     /// Scheduling modes
     enum class Mode 
     {
-      DETERMINISTIC,  ///< Round-robin weighted: each process gets turns proportional to weight
-      PROBABILISTIC   ///< Random weighted: probability of selection proportional to weight
+      DETERMINISTIC,  ///< Round-robin weighted
+      PROBABILISTIC   ///< Random weighted
     };
 
   private:
@@ -387,7 +387,7 @@ namespace cse498 {
      * @return Success or error code
      * 
      */
-    std::expected<void, SchedulerError> AddProcess(ID_TYPE id, double weight) 
+    [[nodiscard]] std::expected<void, SchedulerError> AddProcess(ID_TYPE id, double weight) 
     {
       if (weight < 0.0) 
       {
@@ -408,7 +408,7 @@ namespace cse498 {
      * @param id id of the process
      * @return Success or error code
      */
-    std::expected<void, SchedulerError> RemoveProcess(ID_TYPE id) 
+    [[nodiscard]] std::expected<void, SchedulerError> RemoveProcess(ID_TYPE id) 
     {
       auto it = process_map.find(id);
       if (it == process_map.end()) 
@@ -630,7 +630,7 @@ namespace cse498 {
      * @return Success or error code
      * Default is  0.1
      */
-    std::expected<void, SchedulerError> SetMinWeight(double min) 
+    [[nodiscard]] std::expected<void, SchedulerError> SetMinWeight(double min) 
     {
       if (min < 0.0) return std::unexpected(SchedulerError::NegativeWeight);
       min_weight = min;
@@ -649,7 +649,7 @@ namespace cse498 {
      * @return Success or error code
      * 
      */
-    std::expected<void, SchedulerError> SetWaitBoostFactor(double factor) 
+    [[nodiscard]] std::expected<void, SchedulerError> SetWaitBoostFactor(double factor) 
     {
       if (factor < 0.0)  return std::unexpected(SchedulerError::InvalidParameter);
       wait_boost_factor = factor;
@@ -669,7 +669,7 @@ namespace cse498 {
      * 
      * Each process s multiplied by (1 - penalty) whenever it is selected.
      */
-    std::expected<void, SchedulerError> SetFrequencyPenalty(double penalty) 
+    [[nodiscard]] std::expected<void, SchedulerError> SetFrequencyPenalty(double penalty) 
     {
       if (penalty < 0.0 || penalty > 1.0) 
       {
@@ -691,7 +691,7 @@ namespace cse498 {
      * @param weight New base weight (must be non-negative)
      * @return Success or error code
      */
-    std::expected<void, SchedulerError> SetWeight(ID_TYPE id, double weight) 
+    [[nodiscard]] std::expected<void, SchedulerError> SetWeight(ID_TYPE id, double weight) 
     {
       if (weight < 0.0) { return std::unexpected(SchedulerError::NegativeWeight);  }
       
@@ -801,7 +801,7 @@ namespace cse498 {
      * 
      * Backoff formula: min(initial_backoff * (multiplier ^ failure_count), max_backoff)
      */
-    std::expected<void, SchedulerError> MarkProcessFailed(ID_TYPE id) 
+    [[nodiscard]] std::expected<void, SchedulerError> MarkProcessFailed(ID_TYPE id) 
     {
       auto it = process_map.find(id);
       if (it == process_map.end()) 
@@ -850,7 +850,7 @@ namespace cse498 {
      * Increments success count. If enough consecutive successes occur,
      * resets failure count (recovery).
      */
-    std::expected<void, SchedulerError> MarkProcessSuccess(ID_TYPE id) 
+    [[nodiscard]] std::expected<void, SchedulerError> MarkProcessSuccess(ID_TYPE id) 
     {
       auto it = process_map.find(id);
       if (it == process_map.end()) 
@@ -883,7 +883,7 @@ namespace cse498 {
      * @return Success or error code
      * 
      */
-    std::expected<void, SchedulerError> EnableProcess(ID_TYPE id) 
+    [[nodiscard]] std::expected<void, SchedulerError> EnableProcess(ID_TYPE id) 
     {
       auto it = process_map.find(id);
       if (it == process_map.end()) 
@@ -907,7 +907,7 @@ namespace cse498 {
      * @return Success or error code
      * 
      */
-    std::expected<void, SchedulerError> DisableProcess(ID_TYPE id) 
+    [[nodiscard]] std::expected<void, SchedulerError> DisableProcess(ID_TYPE id) 
     {
       auto it = process_map.find(id);
       if (it == process_map.end()) 
@@ -1032,7 +1032,7 @@ namespace cse498 {
      * @return Success or error code
      * Default: 3
      */
-    std::expected<void, SchedulerError> SetMaxConsecutiveFailures(size_t max) 
+    [[nodiscard]] std::expected<void, SchedulerError> SetMaxConsecutiveFailures(size_t max) 
     {
       if (max == 0) 
       {
@@ -1062,7 +1062,7 @@ namespace cse498 {
      * @return Success or error code
      * Default: 2.0
      */
-    std::expected<void, SchedulerError> SetBackoffMultiplier(double multiplier) 
+    [[nodiscard]] std::expected<void, SchedulerError> SetBackoffMultiplier(double multiplier) 
     {
       if (multiplier < 1.0) 
       {
@@ -1095,7 +1095,7 @@ namespace cse498 {
      * @return Success or error code
      * Default: 2
      */
-    std::expected<void, SchedulerError> SetRecoverySuccessThreshold(size_t threshold) 
+    [[nodiscard]] std::expected<void, SchedulerError> SetRecoverySuccessThreshold(size_t threshold) 
     {
       if (threshold == 0) 
       {
