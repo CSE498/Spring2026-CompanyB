@@ -31,6 +31,7 @@ class WebLayout : public WebElement {
   enum class Error {
     NullPtr,
     ElementNotFound,
+    DOMElementNotFound,
     ElementAlreadyMember,
   };
 
