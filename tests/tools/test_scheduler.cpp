@@ -123,6 +123,19 @@ TEST_CASE("Scheduler: Removing Processes", "[scheduler]") {
     CHECK(scheduler.GetProcessCount() == 0);
     CHECK_FALSE(scheduler.HasProcesses());
   }
+
+  SECTION("Clear removes all processes and allows re-use") {
+    scheduler.Clear();
+    CHECK(scheduler.GetProcessCount() == 0);
+    CHECK_FALSE(scheduler.HasProcesses());
+    CHECK_FALSE(scheduler.HasProcess(1));
+    CHECK_FALSE(scheduler.HasProcess(2));
+    REQUIRE(scheduler.AddProcess(10, 1.0).has_value());
+    REQUIRE(scheduler.AddProcess(20, 2.0).has_value());
+    CHECK(scheduler.GetProcessCount() == 2);
+    CHECK(scheduler.HasProcess(10));
+    CHECK(scheduler.HasProcess(20));
+  }
 }
 
 TEST_CASE("Scheduler: Weight Queries", "[scheduler]") {
