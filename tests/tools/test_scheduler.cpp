@@ -963,3 +963,104 @@ TEST_CASE("Scheduler: Failure Handling Integration", "[scheduler]") {
     CHECK(process1_scheduled);
   }
 }
+
+
+TEST_CASE("Scheduler: Zero-weight process", "[scheduler]") {
+  Scheduler<size_t> scheduler;
+  REQUIRE(scheduler.AddProcess(1, 0.0).has_value());
+  REQUIRE(scheduler.AddProcess(2, 5.0).has_value());
+
+  SECTION("Deterministic mode: zero-weight process is never selected") {
+    size_t zero_count = 0;
+    for (int i = 0; i < 100; ++i) {
+      auto next = scheduler.GetNext();
+      REQUIRE(next.has_value());
+      if (*next == 1) ++zero_count;
+    }
+    CHECK(zero_count == 0);
+  }
+
+  SECTION("Probabilistic mode: zero-weight process is never selected") {
+    scheduler.SetMode(Scheduler<size_t>::Mode::PROBABILISTIC);
+    size_t zero_count = 0;
+    for (int i = 0; i < 200; ++i) {
+      auto next = scheduler.GetNext();
+      REQUIRE(next.has_value());
+      if (*next == 1) ++zero_count;
+    }
+    CHECK(zero_count == 0);
+  }
+}
+
+TEST_CASE("Scheduler: All processes disabled", "[scheduler]") {
+  Scheduler<size_t> scheduler;
+  REQUIRE(scheduler.AddProcess(1, 3.0).has_value());
+  REQUIRE(scheduler.AddProcess(2, 5.0).has_value());
+  REQUIRE(scheduler.DisableProcess(1).has_value());
+  REQUIRE(scheduler.DisableProcess(2).has_value());
+
+  SECTION("GetNext returns NoSchedulableProcesses when all disabled") {
+    auto next = scheduler.GetNext();
+    REQUIRE_FALSE(next.has_value());
+    CHECK(next.error() == SchedulerError::NoSchedulableProcesses);
+  }
+}
+
+TEST_CASE("Scheduler: GetCyclesUntilRetry countdown", "[scheduler]") {
+  Scheduler<size_t> scheduler;
+  scheduler.EnableFailureHandling(true);
+  REQUIRE(scheduler.AddProcess(1, 5.0).has_value());
+  REQUIRE(scheduler.AddProcess(2, 5.0).has_value());
+
+  SECTION("Cycles until retry counts down after failure") {
+    REQUIRE(scheduler.MarkProcessFailed(1).has_value());
+
+    auto initial = scheduler.GetCyclesUntilRetry(1);
+    REQUIRE(initial.has_value());
+    size_t start_cycles = *initial;
+    CHECK(start_cycles > 0);
+
+    for (size_t i = 0; i < start_cycles; ++i) {
+      auto next = scheduler.GetNext();
+      REQUIRE(next.has_value());
+    }
+
+    auto after = scheduler.GetCyclesUntilRetry(1);
+    REQUIRE(after.has_value());
+    CHECK(*after == 0);
+  }
+}
+
+TEST_CASE("Scheduler: SetMode mid-scheduling switches algorithm", "[scheduler]") {
+  Scheduler<size_t> scheduler(Scheduler<size_t>::Mode::DETERMINISTIC, 42);
+  REQUIRE(scheduler.AddProcess(1, 1.0).has_value());
+  REQUIRE(scheduler.AddProcess(2, 3.0).has_value());
+
+  for (int i = 0; i < 5; ++i) {
+    auto next = scheduler.GetNext();
+    REQUIRE(next.has_value());
+  }
+
+  SECTION("Switching to probabilistic mid-run does not error") {
+    scheduler.SetMode(Scheduler<size_t>::Mode::PROBABILISTIC);
+    CHECK(scheduler.GetMode() == Scheduler<size_t>::Mode::PROBABILISTIC);
+
+    for (int i = 0; i < 10; ++i) {
+      auto next = scheduler.GetNext();
+      REQUIRE(next.has_value());
+    }
+  }
+
+  SECTION("Switching back to deterministic mid-run resets round-robin state") {
+    scheduler.SetMode(Scheduler<size_t>::Mode::PROBABILISTIC);
+    for (int i = 0; i < 5; ++i) {
+      auto next = scheduler.GetNext();
+      REQUIRE(next.has_value());
+    }
+    scheduler.SetMode(Scheduler<size_t>::Mode::DETERMINISTIC);
+    CHECK(scheduler.GetMode() == Scheduler<size_t>::Mode::DETERMINISTIC);
+
+    auto next = scheduler.GetNext();
+    REQUIRE(next.has_value());
+  }
+}
