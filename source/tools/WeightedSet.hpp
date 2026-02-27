@@ -10,6 +10,8 @@
 #include <unordered_map>
 #include <utility>
 
+#include "Random.hpp"
+
 namespace cse498 {
 /*
   The initial boilerplate setup (constructors, CopyTree(), assign and
@@ -75,15 +77,15 @@ class WeightedSet {
   };
 
   std::unique_ptr<Node> root_;  ///< Root of the tree
-  std::random_device rd_{};  ///< Random device. TODO: replace this with custom
-                             ///< random class once we have that
+  std::random_device rd_{};  ///< Random device.
+
   /**
-   * @brief Mersenne Twister random number generator.
+   * @brief Xoshiro random number generator.
    * @remark Marked as mutable because its state gets updated whenever we
    * generate a random number, including in GetRandomElement which is a const
    * function.
    */
-  mutable std::mt19937 rng_{rd_()};
+  mutable cse498::Random rng_{rd_()};
   /**
    * @brief Maps elements to their nodes in the tree.
    * @remark Keys are elements stored in the WeightedSet; values are non-owning
@@ -430,9 +432,7 @@ class WeightedSet {
     if (!root_) {
       return std::nullopt;
     }
-    auto random_real =
-        std::uniform_real_distribution<double>(0, total_weight());
-    return GetElementAt(random_real(rng_));
+    return GetElementAt(rng_.GetDouble(0, total_weight()));
   }
 
   /**
