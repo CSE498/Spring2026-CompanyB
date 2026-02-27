@@ -40,7 +40,7 @@ TEST_CASE("Scheduler: Adding Processes", "[scheduler]") {
     CHECK(scheduler.HasProcesses());
     CHECK(scheduler.GetProcessCount() == 1);
     CHECK(scheduler.HasProcess(1));
-    auto weight = scheduler.GetWeight(1);
+    auto weight = scheduler.GetBaseWeight(1);
     REQUIRE(weight.has_value());
     CHECK(*weight == 10.0);
   }
@@ -59,7 +59,7 @@ TEST_CASE("Scheduler: Adding Processes", "[scheduler]") {
   
   SECTION("Adding process with zero weight") {
     CHECK(scheduler.AddProcess(1, 0.0).has_value());
-    auto weight = scheduler.GetWeight(1);
+    auto weight = scheduler.GetBaseWeight(1);
     REQUIRE(weight.has_value());
     CHECK(*weight == 0.0);
     CHECK(scheduler.HasProcess(1));
@@ -144,10 +144,10 @@ TEST_CASE("Scheduler: Weight Queries", "[scheduler]") {
   REQUIRE(scheduler.AddProcess(2, 20.0).has_value());
   REQUIRE(scheduler.AddProcess(3, 5.0).has_value());
   
-  SECTION("GetWeight returns correct values") {
-    auto w1 = scheduler.GetWeight(1);
-    auto w2 = scheduler.GetWeight(2);
-    auto w3 = scheduler.GetWeight(3);
+  SECTION("GetBaseWeight returns correct values") {
+    auto w1 = scheduler.GetBaseWeight(1);
+    auto w2 = scheduler.GetBaseWeight(2);
+    auto w3 = scheduler.GetBaseWeight(3);
     
     REQUIRE(w1.has_value());
     REQUIRE(w2.has_value());
@@ -158,8 +158,8 @@ TEST_CASE("Scheduler: Weight Queries", "[scheduler]") {
     CHECK(*w3 == 5.0);
   }
   
-  SECTION("GetWeight for non-existent process returns error") {
-    auto result = scheduler.GetWeight(99);
+  SECTION("GetBaseWeight for non-existent process returns error") {
+    auto result = scheduler.GetBaseWeight(99);
     CHECK_FALSE(result.has_value());
     CHECK(result.error() == SchedulerError::ProcessNotFound);
   }
@@ -444,7 +444,7 @@ TEST_CASE("Scheduler: Manual Weight Setting", "[scheduler]") {
     auto result = scheduler.SetWeight(1, 20.0);
     CHECK(result.has_value());
     
-    auto weight = scheduler.GetWeight(1);
+    auto weight = scheduler.GetBaseWeight(1);
     REQUIRE(weight.has_value());
     CHECK(*weight == 20.0);
   }
@@ -583,8 +583,8 @@ TEST_CASE("Scheduler: Reset Dynamic Weights", "[scheduler]") {
     
     auto dyn1 = scheduler.GetDynamicWeight(1);
     auto dyn2 = scheduler.GetDynamicWeight(2);
-    auto weight1 = scheduler.GetWeight(1);
-    auto weight2 = scheduler.GetWeight(2);
+    auto weight1 = scheduler.GetBaseWeight(1);
+    auto weight2 = scheduler.GetBaseWeight(2);
     
     REQUIRE(dyn1.has_value());
     REQUIRE(dyn2.has_value());
