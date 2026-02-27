@@ -45,20 +45,16 @@ namespace cse498 {
 
  private:
   // Name of the object
-  std::string name;
+  std::string mName;
   // Time when the stop watch is either started or resumed
-  double startTime;
-  // Time when the stop watch is stopped
-  double endTime;
+  double mStartTime;
   // The accumulated total Time when the stopwatch is running, NOT including
   // when the stopwatch is paused
-  double accumulatedTime;
+  double mAccumulatedTime;
   // Check if the stopwatch has started and not stopped
-  bool isRunning;
+  bool mIsRunning;
   // Check if the stopwatch has been paused
-  bool isPaused;
-
-    double pauseTime;
+  bool mIsPaused;
 };
 
 }
