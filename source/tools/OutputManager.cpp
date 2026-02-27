@@ -5,6 +5,12 @@
 
 namespace cse498 {
 
+namespace {
+constexpr char kMessagesKey[] = "messages";
+constexpr char kEntriesKey[] = "entries";
+constexpr char kStatisticsKey[] = "statistics";
+}  // namespace
+
 void OutputManager::SetLogLevel(LogLevel level) noexcept { mCurrentLevel = level; }
 
 void OutputManager::ensureOutputStreamOpen() {
