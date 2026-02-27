@@ -252,10 +252,13 @@ public:
     std::uniform_int_distribution<> dis(0, 7); // 8 directions
 
     Point current = start;
+    std::vector<Point> neighbors;
+    std::vector<Point> validNeighbors;
+    validNeighbors.reserve(8);
 
     for (size_t i = 0; i < steps; ++i) {
-      std::vector<Point> validNeighbors;
-      auto neighbors = GetNeighbors(current);
+      validNeighbors.clear();
+      neighbors = GetNeighbors(current);
 
       for (const Point &neighbor : neighbors) {
         if (canMove(neighbor)) {
