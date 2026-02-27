@@ -33,7 +33,9 @@ TEST_CASE("PathGenerator ShortestPath finds direct path", "[pathgenerator]") {
   REQUIRE(result.has_value());
   REQUIRE_FALSE(result->empty());
   REQUIRE(result->front().x() == Approx(start.x()));
+  REQUIRE(result->front().y() == Approx(start.y()));
   REQUIRE(result->back().x() == Approx(goal.x()));
+  REQUIRE(result->back().y() == Approx(goal.y()));
 }
 
 TEST_CASE("PathGenerator ShortestPath returns nullopt when blocked",
@@ -134,9 +136,8 @@ TEST_CASE("PathGenerator AvoidancePath returns nullopt when impossible",
   auto canMove = [](const Point &) { return true; };
   auto result = gen.AvoidancePath(start, goal, avoid, radius, canMove);
 
-  // With such a large avoidance radius, path may be impossible
-  // (depends on implementation - might return partial path)
-  // This test documents expected behavior
+  // Both start and goal are within the avoidance zone (dist=5 < radius=20)
+  REQUIRE_FALSE(result.has_value());
 }
 
 TEST_CASE("PathGenerator RandomWalk generates exploration path",
@@ -231,8 +232,11 @@ TEST_CASE("PathGenerator SetHeuristic changes distance calculation",
 
   auto result = gen.ShortestPath(start, goal, canMove);
   REQUIRE(result.has_value());
-  // The path characteristics should differ from Euclidean heuristic
-  // (exact behavior depends on implementation details)
+  REQUIRE(result->front().x() == Approx(start.x()));
+  REQUIRE(result->front().y() == Approx(start.y()));
+  REQUIRE(result->back().x() == Approx(goal.x()));
+  REQUIRE(result->back().y() == Approx(goal.y()));
+  REQUIRE(result->totalLength() >= 5.0); // Euclidean distance is 5 (3-4-5 triangle)
 }
 
 TEST_CASE("PathGenerator handles same start and goal", "[pathgenerator]") {
@@ -277,4 +281,62 @@ TEST_CASE("PathGenerator EuclideanDistance computes correct distance",
   REQUIRE(result.has_value());
   // The total length should be approximately the Euclidean distance
   REQUIRE(result->totalLength() >= 5.0); // 3-4-5 triangle
+}
+
+TEST_CASE("PathGenerator RandomWalk with zero steps returns start only",
+          "[pathgenerator]") {
+  PathGenerator gen;
+  Point start{3.0, 7.0};
+
+  auto canMove = [](const Point &) { return true; };
+  auto result = gen.RandomWalk(start, 0, canMove);
+
+  REQUIRE(result.size() == 1);
+  REQUIRE(result.front().x() == Approx(start.x()));
+  REQUIRE(result.front().y() == Approx(start.y()));
+}
+
+TEST_CASE("PathGenerator SpiralPath with zero turns returns center only",
+          "[pathgenerator]") {
+  PathGenerator gen;
+  Point center{2.0, 5.0};
+
+  auto result = gen.SpiralPath(center, 1.0, 0);
+
+  REQUIRE(result.size() == 1);
+  REQUIRE(result.front().x() == Approx(center.x()));
+  REQUIRE(result.front().y() == Approx(center.y()));
+}
+
+TEST_CASE("PathGenerator SpiralPath with zero spacing stays at center",
+          "[pathgenerator]") {
+  PathGenerator gen;
+  Point center{0.0, 0.0};
+
+  auto result = gen.SpiralPath(center, 0.0, 2);
+
+  // All points should remain at center since r = spacing * angle / 2pi = 0
+  REQUIRE_FALSE(result.empty());
+  for (const auto &p : result.pointsView()) {
+    REQUIRE(p.x() == Approx(center.x()).margin(0.01));
+    REQUIRE(p.y() == Approx(center.y()).margin(0.01));
+  }
+}
+
+TEST_CASE("PathGenerator AvoidancePath with zero radius finds normal path",
+          "[pathgenerator]") {
+  PathGenerator gen;
+  Point start{0.0, 0.0};
+  Point goal{5.0, 0.0};
+  Point avoid{2.5, 0.0};
+
+  auto canMove = [](const Point &) { return true; };
+  auto result = gen.AvoidancePath(start, goal, avoid, 0.0, canMove);
+
+  // radius=0 only excludes the exact avoid point, path should still be found
+  REQUIRE(result.has_value());
+  REQUIRE(result->front().x() == Approx(start.x()));
+  REQUIRE(result->front().y() == Approx(start.y()));
+  REQUIRE(result->back().x() == Approx(goal.x()));
+  REQUIRE(result->back().y() == Approx(goal.y()));
 }
