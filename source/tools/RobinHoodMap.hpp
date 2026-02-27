@@ -7,12 +7,16 @@
 
 #pragma once
 
+#include <algorithm>
 #include <functional>
 #include <vector>
 #include <expected>
 #include <cassert>
 
+
 class RobinHoodMapTest;
+
+namespace cse498 {
 
 /**
  * A hash map implementation using the Robin Hood hashing algorithm.
@@ -24,6 +28,10 @@ class RobinHoodMap {
     "RobinHoodMap requires K to be default-constructible (used by operator[])");
 
  private:
+ /**
+  * Entry struct representing a key-value pair in the hash table, 
+  * along with metadata for Robin Hood hashing.
+  */
   struct Entry {
     K key;                 //< The key used to access the entry
     V value;               //< The value associated with the key
@@ -37,19 +45,6 @@ class RobinHoodMap {
   size_t mSize = 0;
   /// the hash function we use
   std::hash<K> mHasher;
-
-  /**
-  * Finds the first filled element in the table.
-  * @return Expected a K value if found, otherwise an error message.
-  */
-  std::expected<K, std::string> _findFirstElement() {
-    for (size_t i = 0; i < mTable.size(); ++i) {
-      if (mTable[i].filled) {
-        return mTable[i].key;
-      }
-    }
-    return std::unexpected("No filled elements found");
-  }
 
   /**
    * Resizes the internal table to double its current size.
@@ -67,13 +62,20 @@ class RobinHoodMap {
     }
   }
 
-  /// Internal insert that reuses precomputed hash
+  /**
+   * Inserts a key-value pair into the map using a precomputed hash.
+   * This is used internally during resizing to avoid recomputing hashes.
+   * @param key The key to insert.
+   * @param value The value associated with the key.
+   * @param hash The precomputed hash of the key.
+   */
   void _insertWithHash(K key, V value, size_t hash) {
     const size_t mask = mTable.size() - 1;
     size_t index = hash & mask;
     size_t probeCount = 0;
 
     while (mTable[index].filled) {
+      // If the key already exists update the value and return
       if (mTable[index].hash == hash && mTable[index].key == key) {
         mTable[index].value = std::move(value);
         return;
@@ -81,6 +83,7 @@ class RobinHoodMap {
 
       size_t existingProbeCount = (index - (mTable[index].hash & mask) + mTable.size()) & mask;
 
+      // If the existing entry has probed less than the current probe count, swap with it (Robin Hood step)
       if (existingProbeCount < probeCount) {
         std::swap(key, mTable[index].key);
         std::swap(value, mTable[index].value);
@@ -92,6 +95,7 @@ class RobinHoodMap {
       index = (index + 1) & mask;
     }
 
+    // Insert the new entry into the found slot
     mTable[index].key = std::move(key);
     mTable[index].value = std::move(value);
     mTable[index].hash = hash;
@@ -162,26 +166,30 @@ class RobinHoodMap {
     _insertWithHash(key, value, mHasher(key));
   }
 
+  /**
+   * Removes a key-value pair from the map given by the key.
+   * Will remove the key if it exists, otherwise does nothing.
+   * @param key The key to search and remove..
+   */
   void remove(const K& key) {
     const size_t mask = mTable.size() - 1;
     size_t hash = mHasher(key);
     size_t index = hash & mask;
     size_t probeCount = 0;
 
-    for (;;) {
-      if (!mTable[index].filled) {
-        return;
-      }
+    while (mTable[index].filled) {
 
+      // Found key
       if (mTable[index].hash == hash && mTable[index].key == key) {
         mTable[index].filled = false;
         --mSize;
 
+        // Now we need to check subsequent entries and shift them back if they are part of the same probe sequence
         size_t nextIndex = (index + 1) & mask;
         while (mTable[nextIndex].filled) {
-          size_t nextProbeCount = (nextIndex - (mTable[nextIndex].hash & mask) + mTable.size()) & mask;
-
-          if (nextProbeCount == 0) {
+          // If the next entry is in its home slot, we can stop shifting
+          if (size_t nextProbeCount = (nextIndex - (mTable[nextIndex].hash & mask) + mTable.size()) & mask;
+              nextProbeCount == 0) {
             break;
           }
 
@@ -194,9 +202,8 @@ class RobinHoodMap {
         return;
       }
 
-      size_t currentProbeCount = (index - (mTable[index].hash & mask) + mTable.size()) & mask;
-
-      if (currentProbeCount < probeCount) {
+      if (size_t currentProbeCount = (index - (mTable[index].hash & mask) + mTable.size()) & mask;
+          currentProbeCount < probeCount) {
         return;
       }
 
@@ -226,8 +233,8 @@ class RobinHoodMap {
         return std::unexpected("Key not found");
       }
 
-      size_t entryProbeCount = (index - (entry.hash & mask) + mTable.size()) & mask;
-      if (entryProbeCount < probeCount) {
+      if (size_t entryProbeCount = (index - (entry.hash & mask) + mTable.size()) & mask;
+          entryProbeCount < probeCount) {
         return std::unexpected("Key not found");
       }
 
@@ -252,7 +259,7 @@ class RobinHoodMap {
 
   /**
    * Overloaded non-const subscript operator for insertion/update.
-   * If the key doesnt exist inserts it with a default-constructed value
+   * If the key does not exist, this will insert it with a default-constructed value
    * @param key The key to look up or insert.
    * @return Reference to the value associated with the key.
    */
@@ -261,9 +268,9 @@ class RobinHoodMap {
     const size_t hash = mHasher(key);
     size_t index = hash & mask;
 
-    // First, check if key exists
     size_t searchIndex = index;
     size_t searchProbe = 0;
+
     for (;;) {
       Entry& entry = mTable[searchIndex];
       
@@ -271,8 +278,8 @@ class RobinHoodMap {
         break;
       }
 
-      size_t entryProbeCount = (searchIndex - (entry.hash & mask) + mTable.size()) & mask;
-      if (entryProbeCount < searchProbe) {
+      if (size_t entryProbeCount = (searchIndex - (entry.hash & mask) + mTable.size()) & mask;
+          entryProbeCount < searchProbe) {
         break;
       }
 
@@ -284,8 +291,10 @@ class RobinHoodMap {
       searchIndex = (searchIndex + 1) & mask;
     }
 
+    // default insert if not found
     insert(key, V{});
     
+    // now find the inserted entry to return a reference to its value
     index = hash & mask;
     for (;;) {
       Entry& entry = mTable[index];
@@ -314,8 +323,8 @@ class RobinHoodMap {
         return false;
       }
 
-      size_t entryProbeCount = (index - (entry.hash & mask) + mTable.size()) & mask;
-      if (entryProbeCount < probeCount) {
+      if (size_t entryProbeCount = (index - (entry.hash & mask) + mTable.size()) & mask;
+          entryProbeCount < probeCount) {
         return false;
       }
 
@@ -363,6 +372,7 @@ class RobinHoodMap {
       newSize *= 2;
     }
 
+    // Only resize if the new size is larger than the current table size
     if (newSize > mTable.size()) {
       std::vector<Entry> oldTable = std::move(mTable);
       mTable = std::vector<Entry>(newSize, Entry{});
@@ -572,12 +582,14 @@ class RobinHoodMap {
    * @return Iterator pointing to the first filled entry.
    */
   Iterator begin() {
-    for (size_t i = 0; i < mTable.size(); ++i) {
-      if (mTable[i].filled) {
-        return Iterator(&mTable[i], &mTable[mTable.size()]);
-      }
-    }
-    return end();
+    // find the first filled entry
+    auto it = std::find_if(mTable.begin(), mTable.end(),
+        [](const auto& entry) { return entry.filled; });
+
+    // if no entries are filled, return end(), otherwise rerturn an iterator
+    // to the first entry.
+    if (it == mTable.end()) return end();
+    return Iterator(&*it, &mTable[mTable.size()]);
   }
 
   /**
@@ -593,12 +605,10 @@ class RobinHoodMap {
    * @return Const iterator pointing to the first filled entry.
    */
   ConstIterator begin() const {
-    for (size_t i = 0; i < mTable.size(); ++i) {
-      if (mTable[i].filled) {
-        return ConstIterator(&mTable[i], &mTable[mTable.size()]);
-      }
-    }
-    return end();
+    auto it = std::find_if(mTable.cbegin(), mTable.cend(),
+        [](const auto& entry) { return entry.filled; });
+    if (it == mTable.cend()) return end();
+    return ConstIterator(&*it, &mTable[mTable.size()]);
   }
 
   /**
@@ -625,5 +635,6 @@ class RobinHoodMap {
     return end();
   }
 
-  friend class RobinHoodMapTest;
+  friend class ::RobinHoodMapTest;
 };
+} // namespace cse498
