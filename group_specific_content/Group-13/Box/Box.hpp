@@ -8,7 +8,7 @@
 #ifndef CSE498_BOX_HPP
 #define CSE498_BOX_HPP
 
-#include "Point.hpp"
+#include "PointClass.hpp"
 #include "Circle.hpp"
 #include <cmath>
 #include <optional>
@@ -72,7 +72,22 @@ public:
     Box& ScaleFromCenter(double scale_x, double scale_y);
     Box& ScaleFromPoint(double scale_factor, double origin_x, double origin_y);
     Box& ScaleFromPoint(double scale_factor, const Point& origin);
+    
+    /**
+     * @brief Expands the box by adding 'amount' to each half-dimension
+     * @param amount Amount to add (positive = grow, negative = shrink)
+     * @return Reference to this box for method chaining
+     * 
+     * Example: Expand(1.0) on a 4x6 box makes it 6x8
+     */
     Box& Expand(double amount);
+    
+    /**
+     * @brief Expands the box non-uniformly
+     * @param horizontal_amount Amount to add to half-width
+     * @param vertical_amount Amount to add to half-height
+     * @return Reference to this box for method chaining
+     */
     Box& Expand(double horizontal_amount, double vertical_amount);
     
     // Collision detection
@@ -100,6 +115,12 @@ public:
     // Operators
     bool operator==(const Box& other) const;
     bool operator!=(const Box& other) const;
+    
+    /**
+     * @brief Stream output operator
+     * 'friend' allows this function to access private members for printing
+     * This lets you use: std::cout << box; to display box information
+     */
     friend std::ostream& operator<<(std::ostream& os, const Box& box);
     
     // Validation
