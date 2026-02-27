@@ -92,16 +92,17 @@ struct SetupMockDOM {
     REQUIRE(img.GetHeight() == 0);
   }
 
-  TEST_CASE("WebImage SetSource changes and properly updates the image source", "[WebImage]") {
+  TEST_CASE("WebImage SetSource changes and properly updates the image source",
+            "[WebImage]") {
     SetupMockDOM mock;
     cse498::WebImage img("test-img-2", "initial.png");
 
     img.SetSource("new_image.png");
 
     REQUIRE(img.GetSource() == "new_image.png");
-    
+
     img.SetSource("another_image.jpg");
-    
+
     REQUIRE(img.GetSource() == "another_image.jpg");
   }
 
@@ -120,7 +121,8 @@ struct SetupMockDOM {
     REQUIRE(img.GetHeight() == 250);
   }
 
-  TEST_CASE("WebImage GetSize returns correct dimensions and updates properly", "[WebImage]") {
+  TEST_CASE("WebImage GetSize returns correct dimensions and updates properly",
+            "[WebImage]") {
     SetupMockDOM mock;
     cse498::WebImage img("test-img-4", "test.png");
 
@@ -213,33 +215,36 @@ struct SetupMockDOM {
     REQUIRE(img.GetAlt() == "");
   }
 
-TEST_CASE("WebImage HasError returns true when complete = true but naturalWidth = 0",
-          "[WebImage]") {
-  SetupMockDOM mock;
-  cse498::WebImage img("test-img-has-error", "bad-path.png");
+  TEST_CASE(
+      "WebImage HasError returns true when complete = true but naturalWidth = "
+      "0",
+      "[WebImage]") {
+    SetupMockDOM mock;
+    cse498::WebImage img("test-img-has-error", "bad-path.png");
 
-  // Since there are no setters for these properties, manually edit the mock element and simulate a failed load
-  emscripten::val document = emscripten::val::global("document");
-  emscripten::val elem = document.call<emscripten::val>("getElementById",
-                                                        std::string("test-img-has-error"));
-  elem.set("complete", true);
-  elem.set("naturalWidth", 0);
+    // Since there are no setters for these properties, manually edit the mock
+    // element and simulate a failed load
+    emscripten::val document = emscripten::val::global("document");
+    emscripten::val elem = document.call<emscripten::val>(
+        "getElementById", std::string("test-img-has-error"));
+    elem.set("complete", true);
+    elem.set("naturalWidth", 0);
 
-  REQUIRE(img.HasError() == true);
-}
+    REQUIRE(img.HasError() == true);
+  }
 
-TEST_CASE("WebImage HasError returns false for a successfully loaded image",
-          "[WebImage]") {
-  SetupMockDOM mock;
-  cse498::WebImage img("test-img-loaded-ok", "good-image.png");
+  TEST_CASE("WebImage HasError returns false for a successfully loaded image",
+            "[WebImage]") {
+    SetupMockDOM mock;
+    cse498::WebImage img("test-img-loaded-ok", "good-image.png");
 
-  // Since there are no setters for these properties, manually edit the mock element and simulate a successful load
-  emscripten::val document = emscripten::val::global("document");
-  emscripten::val elem = document.call<emscripten::val>("getElementById",
-                                                        std::string("test-img-loaded-ok"));
-  elem.set("complete", true);
-  elem.set("naturalWidth", 200);
+    // Since there are no setters for these properties, manually edit the mock
+    // element and simulate a successful load
+    emscripten::val document = emscripten::val::global("document");
+    emscripten::val elem = document.call<emscripten::val>(
+        "getElementById", std::string("test-img-loaded-ok"));
+    elem.set("complete", true);
+    elem.set("naturalWidth", 200);
 
-  REQUIRE(img.HasError() == false);
-}
-
+    REQUIRE(img.HasError() == false);
+  }
