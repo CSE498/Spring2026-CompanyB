@@ -22,6 +22,7 @@ TEST_CASE("BehaviorTree Construction and Node Insertion", "[tree][insert]") {
 TEST_CASE("Accessing Empty Children in Sequence Node", "[sequence]") {
 
     auto root = std::make_unique<SequenceNode>("SeqRoot");
+    SequenceNode* rootPtr = root.get();
 
     cse498::BehaviorTree tree(std::move(root));
 
@@ -29,11 +30,21 @@ TEST_CASE("Accessing Empty Children in Sequence Node", "[sequence]") {
     REQUIRE(tree.getActivePath() == "SeqRoot");
     REQUIRE(tree.tick() == Status::Running);
     REQUIRE(tree.tickCount() == 1);
+
+    REQUIRE(rootPtr->tickCount() == 1);
+
+    // tick #2
+    REQUIRE(tree.getActivePath() == "SeqRoot");
+    REQUIRE(tree.tick() == Status::Running);
+    REQUIRE(tree.tickCount() == 2);
+
+    REQUIRE(rootPtr->tickCount() == 2);
 }
 
 TEST_CASE("Accessing Empty Children in Select Node", "[select]") {
 
     auto root = std::make_unique<SelectNode>("SelRoot");
+    SelectNode* rootPtr = root.get();
 
     cse498::BehaviorTree tree(std::move(root));
 
@@ -41,11 +52,21 @@ TEST_CASE("Accessing Empty Children in Select Node", "[select]") {
     REQUIRE(tree.getActivePath() == "SelRoot");
     REQUIRE(tree.tick() == Status::Running);
     REQUIRE(tree.tickCount() == 1);
+    
+    REQUIRE(rootPtr->tickCount() == 1);
+
+    // tick #2
+    REQUIRE(tree.getActivePath() == "SelRoot");
+    REQUIRE(tree.tick() == Status::Running);
+    REQUIRE(tree.tickCount() == 2);
+
+    REQUIRE(rootPtr->tickCount() == 2);
 }
 
 TEST_CASE("Accessing Empty Child in Repeat Node", "[repeat]") {
 
     auto root = std::make_unique<RepeatNode>("RepRoot");
+    RepeatNode* rootPtr = root.get();
 
     cse498::BehaviorTree tree(std::move(root));
 
@@ -53,11 +74,21 @@ TEST_CASE("Accessing Empty Child in Repeat Node", "[repeat]") {
     REQUIRE(tree.getActivePath() == "RepRoot");
     REQUIRE(tree.tick() == Status::Running);
     REQUIRE(tree.tickCount() == 1);
+
+    REQUIRE(rootPtr->tickCount() == 1);
+
+    // tick #2
+    REQUIRE(tree.getActivePath() == "RepRoot");
+    REQUIRE(tree.tick() == Status::Running);
+    REQUIRE(tree.tickCount() == 2);
+
+    REQUIRE(rootPtr->tickCount() == 2);
 }
 
 TEST_CASE("Accessing Empty Child in Invert Node", "[invert]") {
 
     auto root = std::make_unique<InvertNode>("InvRoot");
+    InvertNode* rootPtr = root.get();
 
     cse498::BehaviorTree tree(std::move(root));
 
@@ -65,6 +96,15 @@ TEST_CASE("Accessing Empty Child in Invert Node", "[invert]") {
     REQUIRE(tree.getActivePath() == "InvRoot");
     REQUIRE(tree.tick() == Status::Running);
     REQUIRE(tree.tickCount() == 1);
+
+    REQUIRE(rootPtr->tickCount() == 1);
+
+    // tick #2
+    REQUIRE(tree.getActivePath() == "InvRoot");
+    REQUIRE(tree.tick() == Status::Running);
+    REQUIRE(tree.tickCount() == 2);
+
+    REQUIRE(rootPtr->tickCount() == 2);
 }
 
 TEST_CASE("Decorator accepts single child and prevents duplicates", "[decorator]") {
@@ -113,7 +153,7 @@ TEST_CASE("Tick propagates correctly through tree (Action)", "[tree][action][tic
 
     REQUIRE(act1Ptr->tickCount() == 1);
 
-    // tick #2
+    // tick #2 (Done)
     REQUIRE(tree.getActivePath() == "SelRoot - Act1");
     REQUIRE(tree.tick() == Status::Success);
     REQUIRE(tree.tickCount() == 2);
@@ -177,7 +217,7 @@ TEST_CASE("Tick propagates correctly through tree (Simple Sequence)", "[tree][se
 
     REQUIRE(act2Ptr->tickCount() == 1);
 
-    // tick #4
+    // tick #4 (Done)
     REQUIRE(tree.getActivePath() == "SeqRoot - Act2");
     REQUIRE(tree.tick() == Status::Success);
     REQUIRE(tree.tickCount() == 4);
@@ -187,13 +227,13 @@ TEST_CASE("Tick propagates correctly through tree (Simple Sequence)", "[tree][se
     REQUIRE(act2Ptr->tickCount() == 2);
 
     // tick #5
-    // REQUIRE(tree.getActivePath() == "SeqRoot - Act2");
-    // REQUIRE(tree.tick() == Status::Success);
-    // REQUIRE(tree.tickCount() == 5);
+    REQUIRE(tree.getActivePath() == "SeqRoot - Act2");
+    REQUIRE(tree.tick() == Status::Success);
+    REQUIRE(tree.tickCount() == 5);
 
-    // REQUIRE(act1Ptr->tickCount() == 2);
+    REQUIRE(act1Ptr->tickCount() == 2);
 
-    // REQUIRE(act2Ptr->tickCount() == 3);
+    REQUIRE(act2Ptr->tickCount() == 3);
 }
 
 TEST_CASE("Tick propagates correctly through tree (Simple Select)", "[tree][select][tick]") {
@@ -255,7 +295,7 @@ TEST_CASE("Tick propagates correctly through tree (Simple Select)", "[tree][sele
 
     REQUIRE(act2Ptr->tickCount() == 1);
 
-    // tick #4
+    // tick #4 (Done)
     REQUIRE(tree.getActivePath() == "SelRoot - Act2");
     REQUIRE(tree.tick() == Status::Success);
     REQUIRE(tree.tickCount() == 4);
@@ -528,7 +568,7 @@ TEST_CASE("Tick propagates correctly through tree (Select Fail)", "[tree][select
     REQUIRE(inv2Ptr->tickCount() == 1);
     REQUIRE(act2Ptr->tickCount() == 1);
 
-    // tick #4
+    // tick #4 (Done)
     REQUIRE(tree.getActivePath() == "SelRoot - Rep2 - Inv2 - Act2");
     REQUIRE(tree.tick() == Status::Failure);
     REQUIRE(tree.tickCount() == 4);
@@ -541,18 +581,18 @@ TEST_CASE("Tick propagates correctly through tree (Select Fail)", "[tree][select
     REQUIRE(inv2Ptr->tickCount() == 2);
     REQUIRE(act2Ptr->tickCount() == 2);
 
-    // // tick #5
-    // REQUIRE(tree.getActivePath() == "SelRoot - Rep2 - Inv2 - Act2");
-    // REQUIRE(tree.tick() == Status::Failure);
-    // REQUIRE(tree.tickCount() == 5);
+    // tick #5
+    REQUIRE(tree.getActivePath() == "SelRoot - Rep2 - Inv2 - Act2");
+    REQUIRE(tree.tick() == Status::Failure);
+    REQUIRE(tree.tickCount() == 5);
 
-    // REQUIRE(rep1Ptr->tickCount() == 2);
-    // REQUIRE(inv1Ptr->tickCount() == 2);
-    // REQUIRE(act1Ptr->tickCount() == 2);
+    REQUIRE(rep1Ptr->tickCount() == 2);
+    REQUIRE(inv1Ptr->tickCount() == 2);
+    REQUIRE(act1Ptr->tickCount() == 2);
 
-    // REQUIRE(rep2Ptr->tickCount() == 3);
-    // REQUIRE(inv2Ptr->tickCount() == 3);
-    // REQUIRE(act2Ptr->tickCount() == 3);
+    REQUIRE(rep2Ptr->tickCount() == 3);
+    REQUIRE(inv2Ptr->tickCount() == 3);
+    REQUIRE(act2Ptr->tickCount() == 3);
 }
 
 TEST_CASE("Node deletion works correctly", "[delete]") {
