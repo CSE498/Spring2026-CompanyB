@@ -69,7 +69,13 @@ namespace cse498 {
                 } else if (token.type == TokenType::Index) {
                     int i = std::stoi(token.value);
 
-                    if (i < 0 || i >= args.size()) {
+                    if (i < 0) {
+                        throw ExpressionException("Invalid index: Negative index " + token.value);
+                    }
+
+                    std::size_t idx = static_cast<std::size_t>(i);
+
+                    if (idx >= args.size()) {
                         throw ExpressionException("Index out of bounds: " + token.value);
                     }
 
