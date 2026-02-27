@@ -41,14 +41,10 @@ class CompositeNode: public Node
         void deleteNode(Node* node);
 
         virtual void print(int depth) const;
-        virtual int tick() = 0;
-
+        virtual Status tick() = 0;
         virtual std::string getActivePath() = 0;
 
     protected:
-        /// Stores the current execution status of the node.
-        int m_status{-1};
-
         /**
         * @brief Provides read-only access to the child nodes.
         *

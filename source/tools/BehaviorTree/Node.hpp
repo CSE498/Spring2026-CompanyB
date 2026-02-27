@@ -3,8 +3,27 @@
 #include <memory>
 #include <vector>
 #include <cassert>
+#include <iostream>
 
 // ATTRIBUTIONS: Used ChatGPT to create Docstrings. Further modifications come from my input
+
+/// Possible statuses of the nodes
+enum class Status {
+    Success = 1,
+    Failure = 0,
+    Running = -1
+};
+
+// Overload stream insertion operator for the Status enum class
+inline std::ostream& operator<<(std::ostream& os, const Status& status) {
+    switch (status) {
+        case Status::Success: os << "1"; break;
+        case Status::Failure: os << "0"; break;
+        case Status::Running: os << "-1"; break;
+        default: os << "NaN"; break;
+    }
+    return os;
+}
 
 /**
  * @brief Abstract base class representing a node in a Behavior Tree.
@@ -66,5 +85,9 @@ public:
      *
      * @return An integer status code (e.g., Success (1), Failure (0), or Running (-1)).
      */
-    virtual int tick() = 0;
+    virtual Status tick() = 0;
+
+protected:
+    /// Stores the current execution status of the node.
+    Status m_status = Status::Running;
 };

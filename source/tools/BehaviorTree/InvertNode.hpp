@@ -10,9 +10,9 @@
  * An InvertNode (also known as an Inverter) wraps a single child node
  * and reverses its success/failure outcome:
  *
- * - If the child returns Success -> returns Failure.
- * - If the child returns Failure -> returns Success.
- * - If the child returns Running -> returns Running (unchanged).
+ * - If the child returns Status::Success -> returns Status::Failure.
+ * - If the child returns Status::Failure -> returns Status::Success.
+ * - If the child returns Status::Running -> returns Status::Running (unchanged).
  *
  * This decorator is commonly used to negate conditions
  * or reverse logical behavior in a behavior tree.
@@ -22,7 +22,7 @@ class InvertNode: public DecoratorNode
     public:
         using DecoratorNode::DecoratorNode;
 
-        int tick() override;
+        Status tick() override;
 
         int tickCount() const { return m_tickCount; }
 

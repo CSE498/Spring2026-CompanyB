@@ -17,7 +17,7 @@ class RepeatNode: public DecoratorNode
     public:
         using DecoratorNode::DecoratorNode;
 
-        int tick() override;
+        Status tick() override;
 
         int tickCount() const { return m_tickCount; }
 

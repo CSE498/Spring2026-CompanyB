@@ -1,17 +1,14 @@
 #include "RepeatNode.hpp"
 
-int RepeatNode::tick()
+Status RepeatNode::tick()
 {
     ++m_tickCount;
 
-    int fail = 0;
-    int running = -1;
-
     // Check status of active child
     auto& child = this->getChild();
-    int status = child->tick();
+    Status status = child->tick();
 
-    m_status = (status != fail) ? running : fail;
+    m_status = (status != Status::Failure) ? Status::Running : Status::Failure;
 
     return m_status;
 }

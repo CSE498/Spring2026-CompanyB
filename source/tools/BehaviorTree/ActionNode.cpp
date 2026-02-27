@@ -2,16 +2,13 @@
 
 #include <iostream>
 
-int ActionNode::tick()
+Status ActionNode::tick()
 {
     ++m_tickCount;
 
-    int pass = 1;
-    int running = -1;
-
     std::cout << m_name << '\n';
 
-    m_status = (m_tickDuration > 1) ? running : pass;
+    m_status = (m_tickDuration > 1) ? Status::Running : Status::Success;
 
     if ((m_tickDuration > 0)) --m_tickDuration;
 

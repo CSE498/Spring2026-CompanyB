@@ -1,24 +1,20 @@
 #include "InvertNode.hpp"
 
-int InvertNode::tick()
+Status InvertNode::tick()
 {
     ++m_tickCount;
-
-    int fail = 0;
-    int running = -1;
-    int pass = 1;
-
+    
     // Check status of active child
     auto& child = this->getChild();
-    int status = child->tick();
+    Status status = child->tick();
 
-    if (status == running) 
+    if (status == Status::Running) 
     {
-        m_status = running;
+        m_status = Status::Running;
         return m_status;
     }
 
-    m_status = (status == pass) ? fail : pass;
+    m_status = (status == Status::Success) ? Status::Failure : Status::Success;
 
     return m_status;
 }

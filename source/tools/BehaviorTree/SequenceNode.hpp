@@ -10,10 +10,10 @@
  * A SequenceNode ticks its children in order from left to right.
  * Execution proceeds until:
  * 
- * - A child returns Failure -> the sequence immediately returns Failure.
- * - A child returns Running -> the sequence returns Running and resumes
+ * - A child returns Status::Failure -> the sequence immediately returns Status::Failure.
+ * - A child returns Status::Running -> the sequence returns Status::Running and resumes
  *   from that child on the next tick.
- * - All children return Success -> the sequence returns Success.
+ * - All children return Status::Success -> the sequence returns Status::Success.
  *
  * The node maintains internal state to track which child is currently
  * active between ticks.
@@ -23,7 +23,7 @@ class SequenceNode: public CompositeNode
     public:
         using CompositeNode::CompositeNode;
 
-        int tick() override;
+        Status tick() override;
 
         int tickCount() const { return m_tickCount; }
 

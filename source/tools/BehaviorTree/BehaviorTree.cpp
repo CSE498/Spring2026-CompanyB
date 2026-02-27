@@ -7,7 +7,7 @@ std::string cse498::BehaviorTree::getActivePath()
     return m_root->getActivePath();
 }
 
-int cse498::BehaviorTree::tick()
+Status cse498::BehaviorTree::tick()
 {
     ++m_tickCount;
     return m_root->tick();

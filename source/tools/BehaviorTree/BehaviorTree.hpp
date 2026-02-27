@@ -45,7 +45,7 @@ namespace cse498
          * @return The status code returned by the root node
          *         (e.g., Success (1), Failure (0), or Running (-1)).
          */
-        int tick();
+        Status tick();
 
         /**
          * @brief Returns the total number of times the tree has been ticked.

@@ -60,21 +60,21 @@ TEST_CASE("Tick propagates correctly through tree (Action)", "[tick]") {
 
     // tick #1
     REQUIRE(tree.getActivePath() == "SelRoot - Act1");
-    REQUIRE(tree.tick() == -1);
+    REQUIRE(tree.tick() == Status::Running);
     REQUIRE(tree.tickCount() == 1);
 
     REQUIRE(act1Ptr->tickCount() == 1);
 
     // tick #2
     REQUIRE(tree.getActivePath() == "SelRoot - Act1");
-    REQUIRE(tree.tick() == 1);
+    REQUIRE(tree.tick() == Status::Success);
     REQUIRE(tree.tickCount() == 2);
 
     REQUIRE(act1Ptr->tickCount() == 2);
 
     // tick #3
     REQUIRE(tree.getActivePath() == "SelRoot - Act1");
-    REQUIRE(tree.tick() == 1);
+    REQUIRE(tree.tick() == Status::Success);
     REQUIRE(tree.tickCount() == 3);
 
     REQUIRE(act1Ptr->tickCount() == 3);
@@ -104,7 +104,7 @@ TEST_CASE("Tick propagates correctly through tree (Simple Sequence)", "[tick]") 
 
     // tick #1
     REQUIRE(tree.getActivePath() == "SeqRoot - Act1");
-    REQUIRE(tree.tick() == -1);
+    REQUIRE(tree.tick() == Status::Running);
     REQUIRE(tree.tickCount() == 1);
     
     REQUIRE(act1Ptr->tickCount() == 1);
@@ -113,7 +113,7 @@ TEST_CASE("Tick propagates correctly through tree (Simple Sequence)", "[tick]") 
 
     // tick #2
     REQUIRE(tree.getActivePath() == "SeqRoot - Act1");
-    REQUIRE(tree.tick() == -1);
+    REQUIRE(tree.tick() == Status::Running);
     REQUIRE(tree.tickCount() == 2);
 
     REQUIRE(act1Ptr->tickCount() == 2);
@@ -122,7 +122,7 @@ TEST_CASE("Tick propagates correctly through tree (Simple Sequence)", "[tick]") 
 
     // tick #3
     REQUIRE(tree.getActivePath() == "SeqRoot - Act2");
-    REQUIRE(tree.tick() == -1);
+    REQUIRE(tree.tick() == Status::Running);
     REQUIRE(tree.tickCount() == 3);
 
     REQUIRE(act1Ptr->tickCount() == 2);
@@ -131,7 +131,7 @@ TEST_CASE("Tick propagates correctly through tree (Simple Sequence)", "[tick]") 
 
     // tick #4
     REQUIRE(tree.getActivePath() == "SeqRoot - Act2");
-    REQUIRE(tree.tick() == 1);
+    REQUIRE(tree.tick() == Status::Success);
     REQUIRE(tree.tickCount() == 4);
 
     REQUIRE(act1Ptr->tickCount() == 2);
@@ -140,7 +140,7 @@ TEST_CASE("Tick propagates correctly through tree (Simple Sequence)", "[tick]") 
 
     // tick #5
     // REQUIRE(tree.getActivePath() == "SeqRoot - Act2");
-    // REQUIRE(tree.tick() == 1);
+    // REQUIRE(tree.tick() == Status::Success);
     // REQUIRE(tree.tickCount() == 5);
 
     // REQUIRE(act1Ptr->tickCount() == 2);
@@ -179,7 +179,7 @@ TEST_CASE("Tick propagates correctly through tree (Simple Select)", "[tick]") {
     // tick #1
 
     REQUIRE(tree.getActivePath() == "SelRoot - Inv1 - Act1");
-    REQUIRE(tree.tick() == -1);
+    REQUIRE(tree.tick() == Status::Running);
     REQUIRE(tree.tickCount() == 1);
     
     REQUIRE(inv1Ptr->tickCount() == 1);
@@ -189,7 +189,7 @@ TEST_CASE("Tick propagates correctly through tree (Simple Select)", "[tick]") {
 
     // tick #2
     REQUIRE(tree.getActivePath() == "SelRoot - Inv1 - Act1");
-    REQUIRE(tree.tick() == -1);
+    REQUIRE(tree.tick() == Status::Running);
     REQUIRE(tree.tickCount() == 2);
 
     REQUIRE(inv1Ptr->tickCount() == 2);
@@ -199,7 +199,7 @@ TEST_CASE("Tick propagates correctly through tree (Simple Select)", "[tick]") {
 
     // tick #3
     REQUIRE(tree.getActivePath() == "SelRoot - Act2");
-    REQUIRE(tree.tick() == -1);
+    REQUIRE(tree.tick() == Status::Running);
     REQUIRE(tree.tickCount() == 3);
 
     REQUIRE(inv1Ptr->tickCount() == 2);
@@ -209,7 +209,7 @@ TEST_CASE("Tick propagates correctly through tree (Simple Select)", "[tick]") {
 
     // tick #4
     REQUIRE(tree.getActivePath() == "SelRoot - Act2");
-    REQUIRE(tree.tick() == 1);
+    REQUIRE(tree.tick() == Status::Success);
     REQUIRE(tree.tickCount() == 4);
 
     REQUIRE(inv1Ptr->tickCount() == 2);
@@ -219,7 +219,7 @@ TEST_CASE("Tick propagates correctly through tree (Simple Select)", "[tick]") {
 
     // tick #5
     REQUIRE(tree.getActivePath() == "SelRoot - Act2");
-    REQUIRE(tree.tick() == 1);
+    REQUIRE(tree.tick() == Status::Success);
     REQUIRE(tree.tickCount() == 5);
 
     REQUIRE(inv1Ptr->tickCount() == 2);
@@ -259,7 +259,7 @@ TEST_CASE("Tick propagates correctly through tree (Sequence Running)", "[tick]")
     // tick #1
 
     REQUIRE(tree.getActivePath() == "SeqRoot - Act1");
-    REQUIRE(tree.tick() == -1);
+    REQUIRE(tree.tick() == Status::Running);
     REQUIRE(tree.tickCount() == 1);
     
     REQUIRE(act1Ptr->tickCount() == 1);
@@ -269,7 +269,7 @@ TEST_CASE("Tick propagates correctly through tree (Sequence Running)", "[tick]")
 
     // tick #2
     REQUIRE(tree.getActivePath() == "SeqRoot - Act1");
-    REQUIRE(tree.tick() == -1);
+    REQUIRE(tree.tick() == Status::Running);
     REQUIRE(tree.tickCount() == 2);
 
     REQUIRE(act1Ptr->tickCount() == 2);
@@ -279,7 +279,7 @@ TEST_CASE("Tick propagates correctly through tree (Sequence Running)", "[tick]")
 
     // tick #3
     REQUIRE(tree.getActivePath() == "SeqRoot - Rep1 - Act2");
-    REQUIRE(tree.tick() == -1);
+    REQUIRE(tree.tick() == Status::Running);
     REQUIRE(tree.tickCount() == 3);
 
     REQUIRE(act1Ptr->tickCount() == 2);
@@ -289,7 +289,7 @@ TEST_CASE("Tick propagates correctly through tree (Sequence Running)", "[tick]")
 
     // tick #4
     REQUIRE(tree.getActivePath() == "SeqRoot - Rep1 - Act2");
-    REQUIRE(tree.tick() == -1);
+    REQUIRE(tree.tick() == Status::Running);
     REQUIRE(tree.tickCount() == 4);
 
     REQUIRE(act1Ptr->tickCount() == 2);
@@ -299,7 +299,7 @@ TEST_CASE("Tick propagates correctly through tree (Sequence Running)", "[tick]")
 
     // tick #5
     REQUIRE(tree.getActivePath() == "SeqRoot - Rep1 - Act2");
-    REQUIRE(tree.tick() == -1);
+    REQUIRE(tree.tick() == Status::Running);
     REQUIRE(tree.tickCount() == 5);
 
     REQUIRE(act1Ptr->tickCount() == 2);
@@ -343,7 +343,7 @@ TEST_CASE("Tick propagates correctly through tree (Select Running)", "[tick]") {
 
     // tick #1
     REQUIRE(tree.getActivePath() == "SelRoot - Inv1 - Act1");
-    REQUIRE(tree.tick() == -1);
+    REQUIRE(tree.tick() == Status::Running);
     REQUIRE(tree.tickCount() == 1);
     
     REQUIRE(inv1Ptr->tickCount() == 1);
@@ -354,7 +354,7 @@ TEST_CASE("Tick propagates correctly through tree (Select Running)", "[tick]") {
 
     // tick #2
     REQUIRE(tree.getActivePath() == "SelRoot - Inv1 - Act1");
-    REQUIRE(tree.tick() == -1);
+    REQUIRE(tree.tick() == Status::Running);
     REQUIRE(tree.tickCount() == 2);
 
     REQUIRE(inv1Ptr->tickCount() == 2);
@@ -365,7 +365,7 @@ TEST_CASE("Tick propagates correctly through tree (Select Running)", "[tick]") {
 
     // tick #3
     REQUIRE(tree.getActivePath() == "SelRoot - Rep1 - Act2");
-    REQUIRE(tree.tick() == -1);
+    REQUIRE(tree.tick() == Status::Running);
     REQUIRE(tree.tickCount() == 3);
 
     REQUIRE(inv1Ptr->tickCount() == 2);
@@ -376,7 +376,7 @@ TEST_CASE("Tick propagates correctly through tree (Select Running)", "[tick]") {
 
     // tick #4
     REQUIRE(tree.getActivePath() == "SelRoot - Rep1 - Act2");
-    REQUIRE(tree.tick() == -1);
+    REQUIRE(tree.tick() == Status::Running);
     REQUIRE(tree.tickCount() == 4);
 
     REQUIRE(inv1Ptr->tickCount() == 2);
@@ -387,7 +387,7 @@ TEST_CASE("Tick propagates correctly through tree (Select Running)", "[tick]") {
 
     // tick #5
     REQUIRE(tree.getActivePath() == "SelRoot - Rep1 - Act2");
-    REQUIRE(tree.tick() == -1);
+    REQUIRE(tree.tick() == Status::Running);
     REQUIRE(tree.tickCount() == 5);
 
     REQUIRE(inv1Ptr->tickCount() == 2);
@@ -443,7 +443,7 @@ TEST_CASE("Tick propagates correctly through tree (Select Fail)", "[tick]") {
 
     // tick #1
     REQUIRE(tree.getActivePath() == "SelRoot - Rep1 - Inv1 - Act1");
-    REQUIRE(tree.tick() == -1);
+    REQUIRE(tree.tick() == Status::Running);
     REQUIRE(tree.tickCount() == 1);
 
     REQUIRE(rep1Ptr->tickCount() == 1);
@@ -456,7 +456,7 @@ TEST_CASE("Tick propagates correctly through tree (Select Fail)", "[tick]") {
 
     // tick #2
     REQUIRE(tree.getActivePath() == "SelRoot - Rep1 - Inv1 - Act1");
-    REQUIRE(tree.tick() == -1);
+    REQUIRE(tree.tick() == Status::Running);
     REQUIRE(tree.tickCount() == 2);
 
     REQUIRE(rep1Ptr->tickCount() == 2);
@@ -469,7 +469,7 @@ TEST_CASE("Tick propagates correctly through tree (Select Fail)", "[tick]") {
 
     // tick #3
     REQUIRE(tree.getActivePath() == "SelRoot - Rep2 - Inv2 - Act2");
-    REQUIRE(tree.tick() == -1);
+    REQUIRE(tree.tick() == Status::Running);
     REQUIRE(tree.tickCount() == 3);
 
     REQUIRE(rep1Ptr->tickCount() == 2);
@@ -482,7 +482,7 @@ TEST_CASE("Tick propagates correctly through tree (Select Fail)", "[tick]") {
 
     // tick #4
     REQUIRE(tree.getActivePath() == "SelRoot - Rep2 - Inv2 - Act2");
-    REQUIRE(tree.tick() == 0);
+    REQUIRE(tree.tick() == Status::Failure);
     REQUIRE(tree.tickCount() == 4);
 
     REQUIRE(rep1Ptr->tickCount() == 2);
@@ -495,7 +495,7 @@ TEST_CASE("Tick propagates correctly through tree (Select Fail)", "[tick]") {
 
     // // tick #5
     // REQUIRE(tree.getActivePath() == "SelRoot - Rep2 - Inv2 - Act2");
-    // REQUIRE(tree.tick() == 0);
+    // REQUIRE(tree.tick() == Status::Failure);
     // REQUIRE(tree.tickCount() == 5);
 
     // REQUIRE(rep1Ptr->tickCount() == 2);

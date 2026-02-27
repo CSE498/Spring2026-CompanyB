@@ -10,10 +10,10 @@
  * A SelectNode (also known as a Selector or Fallback node)
  * ticks its children in order from left to right until:
  *
- * - A child returns Success -> the selector immediately returns Success.
- * - A child returns Running -> the selector returns Running and resumes
+ * - A child returns Status::Success -> the selector immediately returns Status::Success.
+ * - A child returns Status::Running -> the selector returns Status::Running and resumes
  *   from that child on the next tick.
- * - All children return Failure -> the selector returns Failure.
+ * - All children return Status::Failure -> the selector returns Status::Failure.
  *
  * The node maintains internal state to remember which child
  * is currently active between ticks.
@@ -23,7 +23,7 @@ class SelectNode: public CompositeNode
     public:
         using CompositeNode::CompositeNode;
 
-        int tick() override;
+        Status tick() override;
 
         int tickCount() const { return m_tickCount; }
 

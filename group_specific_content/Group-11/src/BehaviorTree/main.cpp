@@ -128,7 +128,7 @@ int main() {
         if (input == 't') {
             std::string active_path = "Current Path: " + tree.getActivePath();
 
-            int status = tree.tick();
+            Status status = tree.tick();
 
             std::cout << line + "Tick #" << tree.tickCount() << ":" + line;
             std::cout << active_path << "\n\n";
@@ -138,7 +138,7 @@ int main() {
             if (tree.tickCount() < 4) std::cout << line;
 
             else if (tree.tickCount() >= 4 && tree.tickCount() < 10) {
-                if (status == 1 or status == 0) { std::cout << "\nThat's it! Keep going ig..." + line; }
+                if (status == Status::Success or status == Status::Failure) { std::cout << "\nThat's it! Keep going ig..." + line; }
             }
 
             else if (tree.tickCount() >= 10 && tree.tickCount() < 15) std::cout << line + "\nway to go..." + line;
