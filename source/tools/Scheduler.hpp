@@ -451,6 +451,16 @@ namespace cse498 {
     }
     
     /**
+     * @brief Remove all processes and reset scheduler state
+     */
+    void Clear() noexcept
+    {
+      process_map.clear();
+      next_insertion_order = 0;
+      scheduling_cycle = 0;
+    }
+    
+    /**
      * @brief Get the ID of the next process to execute
      * @return Expected containing process ID or error code
      */
@@ -1178,4 +1188,4 @@ namespace cse498 {
     }
   };
 
-} 
+} // closing namespace
