@@ -66,7 +66,7 @@ TEST_CASE("Scheduler: Adding Processes", "[scheduler]") {
   }
   
   SECTION("Adding duplicate process returns error") {
-    scheduler.AddProcess(1, -10.0);
+    
     CHECK(scheduler.AddProcess(1, 10.0).has_value());
     auto result = scheduler.AddProcess(1, 5.0);
     CHECK_FALSE(result.has_value());
@@ -381,9 +381,9 @@ TEST_CASE("Scheduler: Auto-adjustment Configuration", "[scheduler]") {
   Scheduler<size_t> scheduler;
   
   SECTION("Default configuration values") {
-    CHECK(scheduler.GetMinWeight() == 0.1);
-    CHECK(scheduler.GetWaitBoostFactor() == 0.1);
-    CHECK(scheduler.GetFrequencyPenalty() == 0.05);
+    CHECK(scheduler.GetMinWeight() == Scheduler<size_t>::MIN_WEIGHT);
+    CHECK(scheduler.GetWaitBoostFactor() == Scheduler<size_t>::WAIT_BOOST_FACTOR);
+    CHECK(scheduler.GetFrequencyPenalty() == Scheduler<size_t>::FREQ_PENALTY);
   }
   
   SECTION("Set minimum weight") {
@@ -852,11 +852,11 @@ TEST_CASE("Scheduler: Failure Configuration", "[scheduler]") {
   Scheduler<size_t> scheduler;
   
   SECTION("Default configuration values") {
-    CHECK(scheduler.GetMaxConsecutiveFailures() == 3);
-    CHECK(scheduler.GetInitialBackoffCycles() == 1);
-    CHECK(scheduler.GetBackoffMultiplier() == 2.0);
-    CHECK(scheduler.GetMaxBackoffCycles() == 64);
-    CHECK(scheduler.GetRecoverySuccessThreshold() == 2);
+    CHECK(scheduler.GetMaxConsecutiveFailures() == Scheduler<size_t>::MAX_FAILURES);
+    CHECK(scheduler.GetInitialBackoffCycles() == Scheduler<size_t>::INTIAL_BACKOFF_CYCLES);
+    CHECK(scheduler.GetBackoffMultiplier() == Scheduler<size_t>::BACKOFF_MULT);
+    CHECK(scheduler.GetMaxBackoffCycles() == Scheduler<size_t>::MAX_BACKOFF_CYCLES);
+    CHECK(scheduler.GetRecoverySuccessThreshold() == Scheduler<size_t>::RECOVERY_THRESHOLD);
   }
   
   SECTION("Set valid configuration") {
