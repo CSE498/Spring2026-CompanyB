@@ -6,6 +6,7 @@
 #include <functional>
 #include <string>
 #include <tuple>
+#include <type_traits>
 #include <unordered_map>
 #include <utility>
 #include <variant>
@@ -70,9 +71,11 @@ enum class ActionMapErr {
  * which takes in and returns only types present in the set of
  * permissible types.
  *
- * @tparam Types All permissible types. Types must be unique.
+ * @tparam Types All permissible types. Types must be copyable and unique.
  */
-template <TemplTools::UniqueTypes... Types> class ActionMap {
+template <TemplTools::UniqueTypes... Types>
+  requires(std::is_copy_constructible_v<Types> && ...)
+class ActionMap {
   /** @brief Alias to std::variant, permits all types specified in `Types`. */
   using TypeVariant = decltype(std::variant<Types...>());
 
@@ -285,10 +288,10 @@ public:
                      target_func.arg_t_idxs.cbegin())))
       return std::unexpected(ActionMapErr::INVALID_ARG_TYPE);
 
-    TypeVariant output =
-        std::invoke(target_func.wrapped_func, std::move(arg_list));
+    TypeVariant output{
+        std::invoke(target_func.wrapped_func, std::move(arg_list))};
 
-    return std::get<Ret>(output);
+    return std::get<Ret>(std::move(output));
   }
 
   /**
