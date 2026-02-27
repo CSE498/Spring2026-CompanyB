@@ -28,14 +28,14 @@ Box::Box(double center_x, double center_y, double half_width, double half_height
 }
 
 Box::Box(const Point& center, double half_width, double half_height)
-    : Box(center.GetX(), center.GetY(), half_width, half_height) {
+    : Box(center.getX(), center.getY(), half_width, half_height) {
 }
 
 Box Box::FromCorners(const Point& corner1, const Point& corner2) {
-    double min_x = std::min(corner1.GetX(), corner2.GetX());
-    double max_x = std::max(corner1.GetX(), corner2.GetX());
-    double min_y = std::min(corner1.GetY(), corner2.GetY());
-    double max_y = std::max(corner1.GetY(), corner2.GetY());
+    double min_x = std::min(corner1.getX(), corner2.getX());
+    double max_x = std::max(corner1.getX(), corner2.getX());
+    double min_y = std::min(corner1.getY(), corner2.getY());
+    double max_y = std::max(corner1.getY(), corner2.getY());
     
     double center_x = (min_x + max_x) / 2.0;
     double center_y = (min_y + max_y) / 2.0;
@@ -52,8 +52,8 @@ Box Box::FromBottomLeft(const Point& bottom_left, double width, double height) {
     assert(width > 0.0 && "Box width must be positive");
     assert(height > 0.0 && "Box height must be positive");
     
-    double center_x = bottom_left.GetX() + width / 2.0;
-    double center_y = bottom_left.GetY() + height / 2.0;
+    double center_x = bottom_left.getX() + width / 2.0;
+    double center_y = bottom_left.getY() + height / 2.0;
     double half_width = width / 2.0;
     double half_height = height / 2.0;
     
@@ -92,7 +92,7 @@ void Box::SetCenter(double x, double y) {
 }
 
 void Box::SetCenter(const Point& center) {
-    SetCenter(center.GetX(), center.GetY());
+    SetCenter(center.getX(), center.getY());
 }
 
 void Box::SetBottomLeft(double x, double y) {
@@ -103,7 +103,7 @@ void Box::SetBottomLeft(double x, double y) {
 }
 
 void Box::SetBottomLeft(const Point& bottom_left) {
-    SetBottomLeft(bottom_left.GetX(), bottom_left.GetY());
+    SetBottomLeft(bottom_left.getX(), bottom_left.getY());
 }
 
 // Dimension setters
@@ -134,7 +134,7 @@ Box& Box::Translate(double dx, double dy) {
 }
 
 Box& Box::Translate(const Point& displacement) {
-    return Translate(displacement.GetX(), displacement.GetY());
+    return Translate(displacement.getX(), displacement.getY());
 }
 
 Box& Box::ScaleFromCenter(double scale_factor) {
@@ -169,7 +169,7 @@ Box& Box::ScaleFromPoint(double scale_factor, double origin_x, double origin_y) 
 }
 
 Box& Box::ScaleFromPoint(double scale_factor, const Point& origin) {
-    return ScaleFromPoint(scale_factor, origin.GetX(), origin.GetY());
+    return ScaleFromPoint(scale_factor, origin.getX(), origin.getY());
 }
 
 Box& Box::Expand(double amount) {
@@ -200,7 +200,7 @@ bool Box::Contains(double x, double y) const {
 }
 
 bool Box::Contains(const Point& point) const {
-    return Contains(point.GetX(), point.GetY());
+    return Contains(point.getX(), point.getY());
 }
 
 bool Box::Overlaps(const Box& other) const {
@@ -215,9 +215,10 @@ bool Box::Overlaps(const Box& other) const {
 
 bool Box::Overlaps(const Circle& circle) const {
     Point closest = ClosestPointTo(circle.GetCenter());
+    Point center = circle.GetCenter();
     
-    double dx = closest.GetX() - circle.GetCenterX();
-    double dy = closest.GetY() - circle.GetCenterY();
+    double dx = closest.getX() - center.getX();
+    double dy = closest.getY() - center.getY();
     double distance_squared = dx * dx + dy * dy;
     double radius = circle.GetRadius();
     
@@ -261,13 +262,13 @@ std::optional<Box> Box::GetIntersection(const Box& other) const {
 
 double Box::DistanceToPoint(double x, double y) const {
     Point closest = ClosestPointTo(x, y);
-    double dx = x - closest.GetX();
-    double dy = y - closest.GetY();
+    double dx = x - closest.getX();
+    double dy = y - closest.getY();
     return std::sqrt(dx * dx + dy * dy);
 }
 
 double Box::DistanceToPoint(const Point& point) const {
-    return DistanceToPoint(point.GetX(), point.GetY());
+    return DistanceToPoint(point.getX(), point.getY());
 }
 
 Point Box::ClosestPointTo(double x, double y) const {
@@ -277,7 +278,7 @@ Point Box::ClosestPointTo(double x, double y) const {
 }
 
 Point Box::ClosestPointTo(const Point& point) const {
-    return ClosestPointTo(point.GetX(), point.GetY());
+    return ClosestPointTo(point.getX(), point.getY());
 }
 
 double Box::DistanceToBox(const Box& other) const {
