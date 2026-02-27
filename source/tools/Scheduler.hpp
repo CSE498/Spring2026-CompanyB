@@ -745,7 +745,7 @@ namespace cse498 {
      * @param weight New base weight (must be non-negative)
      * @return Success or error code
      */
-    [[nodiscard]] std::expected<void, SchedulerError> SetWeight(ID_TYPE id, double weight) 
+    [[nodiscard]] std::expected<void, SchedulerError> SetBaseWeight(ID_TYPE id, double weight) 
     {
       if (!std::isfinite(weight)) { return std::unexpected(SchedulerError::InvalidWeight); }
       if (weight < 0.0) { return std::unexpected(SchedulerError::NegativeWeight);  }

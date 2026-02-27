@@ -441,7 +441,7 @@ TEST_CASE("Scheduler: Manual Weight Setting", "[scheduler]") {
   REQUIRE(scheduler.AddProcess(1, 10.0).has_value());
   
   SECTION("Set process weight") {
-    auto result = scheduler.SetWeight(1, 20.0);
+    auto result = scheduler.SetBaseWeight(1, 20.0);
     CHECK(result.has_value());
     
     auto weight = scheduler.GetBaseWeight(1);
@@ -450,25 +450,25 @@ TEST_CASE("Scheduler: Manual Weight Setting", "[scheduler]") {
   }
   
   SECTION("Set weight for non-existent process returns error") {
-    auto result = scheduler.SetWeight(99, 10.0);
+    auto result = scheduler.SetBaseWeight(99, 10.0);
     CHECK_FALSE(result.has_value());
     CHECK(result.error() == SchedulerError::ProcessNotFound);
   }
   
   SECTION("Set negative weight returns error") {
-    auto result = scheduler.SetWeight(1, -5.0);
+    auto result = scheduler.SetBaseWeight(1, -5.0);
     CHECK_FALSE(result.has_value());
     CHECK(result.error() == SchedulerError::NegativeWeight);
   }
   
   SECTION("Set NaN weight returns error") {
-    auto result = scheduler.SetWeight(1, std::numeric_limits<double>::quiet_NaN());
+    auto result = scheduler.SetBaseWeight(1, std::numeric_limits<double>::quiet_NaN());
     CHECK_FALSE(result.has_value());
     CHECK(result.error() == SchedulerError::InvalidWeight);
   }
   
   SECTION("Set infinity weight returns error") {
-    auto result = scheduler.SetWeight(1, std::numeric_limits<double>::infinity());
+    auto result = scheduler.SetBaseWeight(1, std::numeric_limits<double>::infinity());
     CHECK_FALSE(result.has_value());
     CHECK(result.error() == SchedulerError::InvalidWeight);
   }
