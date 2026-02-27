@@ -4,6 +4,8 @@
  * @author Joshua Twumasi
  */
 
+#include <cmath>
+#include <limits>
 #include <map>
 #include "../../third-party/Catch/single_include/catch2/catch.hpp"
 
@@ -75,6 +77,24 @@ TEST_CASE("Scheduler: Adding Processes", "[scheduler]") {
     auto result = scheduler.AddProcess(1, -5.0);
     CHECK_FALSE(result.has_value());
     CHECK(result.error() == SchedulerError::NegativeWeight);
+  }
+  
+  SECTION("Adding NaN weight returns error") {
+    auto result = scheduler.AddProcess(1, std::numeric_limits<double>::quiet_NaN());
+    CHECK_FALSE(result.has_value());
+    CHECK(result.error() == SchedulerError::InvalidWeight);
+  }
+  
+  SECTION("Adding infinity weight returns error") {
+    auto result = scheduler.AddProcess(1, std::numeric_limits<double>::infinity());
+    CHECK_FALSE(result.has_value());
+    CHECK(result.error() == SchedulerError::InvalidWeight);
+  }
+  
+  SECTION("Adding negative infinity weight returns error") {
+    auto result = scheduler.AddProcess(1, -std::numeric_limits<double>::infinity());
+    CHECK_FALSE(result.has_value());
+    CHECK(result.error() == SchedulerError::InvalidWeight);
   }
 }
 
@@ -412,6 +432,18 @@ TEST_CASE("Scheduler: Manual Weight Setting", "[scheduler]") {
     auto result = scheduler.SetWeight(1, -5.0);
     CHECK_FALSE(result.has_value());
     CHECK(result.error() == SchedulerError::NegativeWeight);
+  }
+  
+  SECTION("Set NaN weight returns error") {
+    auto result = scheduler.SetWeight(1, std::numeric_limits<double>::quiet_NaN());
+    CHECK_FALSE(result.has_value());
+    CHECK(result.error() == SchedulerError::InvalidWeight);
+  }
+  
+  SECTION("Set infinity weight returns error") {
+    auto result = scheduler.SetWeight(1, std::numeric_limits<double>::infinity());
+    CHECK_FALSE(result.has_value());
+    CHECK(result.error() == SchedulerError::InvalidWeight);
   }
 }
 

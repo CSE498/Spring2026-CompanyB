@@ -11,6 +11,7 @@
 #pragma once
 
 #include <cassert>
+#include <cmath>
 #include <cstddef>
 #include <expected>
 #include <optional>
@@ -389,6 +390,10 @@ namespace cse498 {
      */
     [[nodiscard]] std::expected<void, SchedulerError> AddProcess(ID_TYPE id, double weight) 
     {
+      if (!std::isfinite(weight)) 
+      {
+        return std::unexpected(SchedulerError::InvalidWeight);
+      }
       if (weight < 0.0) 
       {
         return std::unexpected(SchedulerError::NegativeWeight);
@@ -632,6 +637,7 @@ namespace cse498 {
      */
     [[nodiscard]] std::expected<void, SchedulerError> SetMinWeight(double min) 
     {
+      if (!std::isfinite(min)) return std::unexpected(SchedulerError::InvalidWeight);
       if (min < 0.0) return std::unexpected(SchedulerError::NegativeWeight);
       min_weight = min;
       return {};
@@ -651,6 +657,7 @@ namespace cse498 {
      */
     [[nodiscard]] std::expected<void, SchedulerError> SetWaitBoostFactor(double factor) 
     {
+      if (!std::isfinite(factor)) return std::unexpected(SchedulerError::InvalidParameter);
       if (factor < 0.0)  return std::unexpected(SchedulerError::InvalidParameter);
       wait_boost_factor = factor;
       return {};
@@ -671,7 +678,7 @@ namespace cse498 {
      */
     [[nodiscard]] std::expected<void, SchedulerError> SetFrequencyPenalty(double penalty) 
     {
-      if (penalty < 0.0 || penalty > 1.0) 
+      if (!std::isfinite(penalty) || penalty < 0.0 || penalty > 1.0) 
       {
         return std::unexpected(SchedulerError::InvalidParameter);
       }
@@ -693,6 +700,7 @@ namespace cse498 {
      */
     [[nodiscard]] std::expected<void, SchedulerError> SetWeight(ID_TYPE id, double weight) 
     {
+      if (!std::isfinite(weight)) { return std::unexpected(SchedulerError::InvalidWeight); }
       if (weight < 0.0) { return std::unexpected(SchedulerError::NegativeWeight);  }
       
       auto it = process_map.find(id);
@@ -1064,7 +1072,7 @@ namespace cse498 {
      */
     [[nodiscard]] std::expected<void, SchedulerError> SetBackoffMultiplier(double multiplier) 
     {
-      if (multiplier < 1.0) 
+      if (!std::isfinite(multiplier) || multiplier < 1.0) 
       {
         return std::unexpected(SchedulerError::InvalidBackoffMultiplier);
       }
