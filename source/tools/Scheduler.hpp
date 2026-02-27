@@ -91,6 +91,17 @@ namespace cse498 {
       DETERMINISTIC,  ///< Round-robin weighted
       PROBABILISTIC   ///< Random weighted
     };
+    
+    /// Default configuration values
+    static constexpr double MIN_WEIGHT = 0.1;
+    static constexpr double MAX_WEIGHT = 1000.0;
+    static constexpr double WAIT_BOOST_FACTOR = 0.1;
+    static constexpr double FREQ_PENALTY = 0.05;
+    static constexpr size_t MAX_FAILURES = 3;
+    static constexpr size_t INTIAL_BACKOFF_CYCLES = 1;
+    static constexpr double BACKOFF_MULT = 2.0;
+    static constexpr size_t MAX_BACKOFF_CYCLES = 64;
+    static constexpr size_t RECOVERY_THRESHOLD = 2;
 
   private:
     /**
@@ -132,6 +143,14 @@ namespace cse498 {
       {
         assert(weight >= 0.0 && "Weight must be non-negative");
       }
+      
+      void ResetFailureState() 
+      {
+        failure_count = 0;
+        success_count = 0;
+        backoff_cycles = 0;
+        cycles_until_retry = 0;
+      }
     };
 
     // Member Variables
@@ -146,6 +165,7 @@ namespace cse498 {
   
     bool auto_adjust_enabled{};                               ///< Enable automatic weight adjustment
     double min_weight{};                                      ///< Minimum weight (so as to prevent starvation)
+    double max_weight{};                                      ///< Maximum weight ceiling (prevents unbounded growth)
     double wait_boost_factor{};                               ///< Weight increase per wait cycle
     double frequency_penalty{};                               ///< Weight reduction for frequent execution
     size_t scheduling_cycle{};                                ///< Current scheduling cycle number
@@ -184,10 +204,13 @@ namespace cse498 {
           info.dynamic_weight += (wait_boost_factor * info.wait_cycles);
         }
         
-        // Enforcing minimum weight to prevent starvation
         if (info.dynamic_weight < min_weight) 
         {
           info.dynamic_weight = min_weight;
+        }
+        if (info.dynamic_weight > max_weight) 
+        {
+          info.dynamic_weight = max_weight;
         }
       }
     }
@@ -283,9 +306,8 @@ namespace cse498 {
         return std::unexpected(SchedulerError::NoSchedulableProcesses);
       }
       
-      // Reduce the selected process's weight
       double total_weight = GetTotalWeight();
-      process_map.at(best->id).current_weight -= total_weight;
+      process_map.find(best->id)->second.current_weight -= total_weight;
       
       return best->id;
     }
@@ -366,16 +388,17 @@ namespace cse498 {
         next_insertion_order(0),
         rng(seed),
         auto_adjust_enabled(false),
-        min_weight(0.1),
-        wait_boost_factor(0.1),
-        frequency_penalty(0.05),
+        min_weight(MIN_WEIGHT),
+        max_weight(MAX_WEIGHT),
+        wait_boost_factor(WAIT_BOOST_FACTOR),
+        frequency_penalty(FREQ_PENALTY),
         scheduling_cycle(0),
         failure_handling_enabled(false),
-        max_consecutive_failures(3),
-        initial_backoff_cycles(1),
-        backoff_multiplier(2.0),
-        max_backoff_cycles(64),
-        recovery_success_threshold(2)
+        max_consecutive_failures(MAX_FAILURES),
+        initial_backoff_cycles(INTIAL_BACKOFF_CYCLES),
+        backoff_multiplier(BACKOFF_MULT),
+        max_backoff_cycles(MAX_BACKOFF_CYCLES),
+        recovery_success_threshold(RECOVERY_THRESHOLD)
     { }
     
 
@@ -460,8 +483,7 @@ namespace cse498 {
       
       ID_TYPE selected_id = *selected;
       
-      // Update statistics
-      process_map.at(selected_id).execution_count++;
+      process_map.find(selected_id)->second.execution_count++;
       
       // Apply dynamic weight adjustments
       ApplyDynamicAdjustments(selected_id);
@@ -475,7 +497,7 @@ namespace cse498 {
      * @brief Change the scheduling mode
      * @param mode New scheduling algorithm 
      */
-    void SetMode(Mode mode) 
+    void SetMode(Mode mode) noexcept 
     {
       if (mode == scheduling_mode) return;
       
@@ -493,7 +515,7 @@ namespace cse498 {
      * @brief Get the current scheduling mode
      * @return Current scheduling algorithm
      */
-    [[nodiscard]] Mode GetMode() const {return scheduling_mode;}
+    [[nodiscard]] Mode GetMode() const noexcept {return scheduling_mode;}
     
     // Query Methods 
     
@@ -501,20 +523,20 @@ namespace cse498 {
      * @brief Check if scheduler has any processes
      * @return true if at least one process is scheduled
      */
-    [[nodiscard]] bool HasProcesses() const { return !process_map.empty(); }
+    [[nodiscard]] bool HasProcesses() const noexcept { return !process_map.empty(); }
     
     /**
      * @brief Get the number of processes currently scheduled
      * @return Count of processes
      */
-    [[nodiscard]] size_t GetProcessCount() const { return process_map.size(); }
+    [[nodiscard]] size_t GetProcessCount() const noexcept { return process_map.size(); }
     
     /**
      * @brief Check if a specific process exists in the scheduler
      * @param id Process ID to check
      * @return true if process is scheduled
      */
-    [[nodiscard]] bool HasProcess(ID_TYPE id) const { return process_map.contains(id); }
+    [[nodiscard]] bool HasProcess(ID_TYPE id) const noexcept { return process_map.contains(id); }
     
     /**
      * @brief Get the base weight of a process
@@ -572,7 +594,7 @@ namespace cse498 {
      * 
      * Returns dynamic weights when auto-adjust is enabled, base weights otherwise.
      */
-    [[nodiscard]] double GetTotalWeight() const 
+    [[nodiscard]] double GetTotalWeight() const noexcept 
     {
       double total = 0.0;
       for (const auto& [id, info] : process_map) 
@@ -611,7 +633,7 @@ namespace cse498 {
      *  Frequency of execution (frequently executed processes get reduced weight)
      *  Wait time (longer processes get increased weight)
      */
-    void EnableAutoAdjustment(bool enable) 
+    void EnableAutoAdjustment(bool enable) noexcept 
     {
       auto_adjust_enabled = enable;
       
@@ -630,7 +652,7 @@ namespace cse498 {
      * @brief Check if automatic weight adjustment is enabled
      * @return true if auto-adjustment is active
      */
-    [[nodiscard]] bool IsAutoAdjustmentEnabled() const 
+    [[nodiscard]] bool IsAutoAdjustmentEnabled() const noexcept 
     {
       return auto_adjust_enabled;
     }
@@ -653,7 +675,25 @@ namespace cse498 {
      * @brief Get the current minimum weight threshold
      * @return Min weight value
      */
-    [[nodiscard]] double GetMinWeight() const { return min_weight;  }
+    [[nodiscard]] double GetMinWeight() const noexcept { return min_weight;  }
+    
+    /**
+     * @brief Set the maximum weight ceiling
+     * @param max Maximum weight value (must be positive and finite)
+     * @return Success or error code
+     */
+    [[nodiscard]] std::expected<void, SchedulerError> SetMaxWeight(double max) 
+    {
+      if (!std::isfinite(max) || max <= 0.0) return std::unexpected(SchedulerError::InvalidParameter);
+      max_weight = max;
+      return {};
+    }
+    
+    /**
+     * @brief Get the current maximum weight ceiling
+     * @return Max weight value
+     */
+    [[nodiscard]] double GetMaxWeight() const noexcept { return max_weight; }
     
     /**
      * @brief Set the wait boost factor
@@ -673,7 +713,7 @@ namespace cse498 {
      * @brief Get the current wait boost factor
      * @return Wait boost factor value
      */
-    [[nodiscard]] double GetWaitBoostFactor() const { return wait_boost_factor;  }
+    [[nodiscard]] double GetWaitBoostFactor() const noexcept { return wait_boost_factor;  }
     
     /**
      * @brief Set the frequency penalty factor
@@ -696,7 +736,7 @@ namespace cse498 {
      * @brief Get the current frequency penalty factor
      * @return Frequency penalty value
      */
-    [[nodiscard]] double GetFrequencyPenalty() const {  return frequency_penalty;  }
+    [[nodiscard]] double GetFrequencyPenalty() const noexcept {  return frequency_penalty;  }
     
     /**
      * @brief Sets the base weight of a process
@@ -753,7 +793,7 @@ namespace cse498 {
      * @brief Get the current scheduling cycle number
      * @return Total number of GetNext() calls made
      */
-    [[nodiscard]] size_t GetSchedulingCycle() const { return scheduling_cycle;  }
+    [[nodiscard]] size_t GetSchedulingCycle() const noexcept { return scheduling_cycle;  }
     
     /**
      * @brief Reset all dynamic weights to their base values
@@ -779,18 +819,14 @@ namespace cse498 {
      * @param enable true to enable failure tracking and backoff, false to disable
      * 
      */
-    void EnableFailureHandling(bool enable) 
+    void EnableFailureHandling(bool enable) noexcept 
     {
       failure_handling_enabled = enable;
       
-      // Reset failure state when disabling
       if (!enable) {
         for (auto& [id, info] : process_map) 
         {
-          info.failure_count = 0;
-          info.success_count = 0;
-          info.backoff_cycles = 0;
-          info.cycles_until_retry = 0;
+          info.ResetFailureState();
           info.enabled = true;
         }
       }
@@ -800,7 +836,7 @@ namespace cse498 {
      * @brief Check if failure handling is enabled
      * @return true if failure tracking is active
      */
-    [[nodiscard]] bool IsFailureHandlingEnabled() const 
+    [[nodiscard]] bool IsFailureHandlingEnabled() const noexcept 
     {
       return failure_handling_enabled;
     }
@@ -877,10 +913,7 @@ namespace cse498 {
       // Check for recovery: enough consecutive successes clears failures
       if (info.success_count >= recovery_success_threshold) 
       {
-        info.failure_count = 0;
-        info.success_count = 0;
-        info.backoff_cycles = 0;
-        info.cycles_until_retry = 0;
+        info.ResetFailureState();
       }
       
       return {};
@@ -902,10 +935,8 @@ namespace cse498 {
       
       ProcessInfo& info = it->second;
       info.enabled = true;
-      info.failure_count = 0;
-      info.success_count = 0;
-      info.backoff_cycles = 0;
-      info.cycles_until_retry = 0;
+      info.current_weight = GetEffectiveWeight(info);
+      info.ResetFailureState();
       
       return {};
     }
@@ -1051,7 +1082,7 @@ namespace cse498 {
       return {};
     }
     
-    [[nodiscard]] size_t GetMaxConsecutiveFailures() const { return max_consecutive_failures; }
+    [[nodiscard]] size_t GetMaxConsecutiveFailures() const noexcept { return max_consecutive_failures; }
     
     /**
      * @brief Set initial backoff period after first failure
@@ -1063,7 +1094,7 @@ namespace cse498 {
       initial_backoff_cycles = cycles;
     }
     
-    [[nodiscard]] size_t GetInitialBackoffCycles() const { return initial_backoff_cycles;    }
+    [[nodiscard]] size_t GetInitialBackoffCycles() const noexcept { return initial_backoff_cycles;    }
     
     /**
      * @brief Set exponential backoff growth factor
@@ -1081,7 +1112,7 @@ namespace cse498 {
       return {};
     }
     
-    [[nodiscard]] double GetBackoffMultiplier() const  { return backoff_multiplier;  }
+    [[nodiscard]] double GetBackoffMultiplier() const noexcept  { return backoff_multiplier;  }
     
     /**
      * @brief Set maximum backoff period cap
@@ -1093,7 +1124,7 @@ namespace cse498 {
       max_backoff_cycles = max;
     }
     
-    [[nodiscard]] size_t GetMaxBackoffCycles() const 
+    [[nodiscard]] size_t GetMaxBackoffCycles() const noexcept 
     {
       return max_backoff_cycles;
     }
@@ -1114,13 +1145,13 @@ namespace cse498 {
       return {};
     }
     
-    [[nodiscard]] size_t GetRecoverySuccessThreshold() const {return recovery_success_threshold;  }
+    [[nodiscard]] size_t GetRecoverySuccessThreshold() const noexcept {return recovery_success_threshold;  }
     
     /**
      * @brief Get count of currently enabled processes
      * @return Number of enabled processes
      */
-    [[nodiscard]] size_t GetEnabledProcessCount() const 
+    [[nodiscard]] size_t GetEnabledProcessCount() const noexcept 
     {
       size_t count = 0;
       for (const auto& [id, info] : process_map) {
@@ -1133,7 +1164,7 @@ namespace cse498 {
      * @brief Get count of currently schedulable processes
      * @return Number of processes that can be scheduled now
      */
-    [[nodiscard]] size_t GetSchedulableProcessCount() const 
+    [[nodiscard]] size_t GetSchedulableProcessCount() const noexcept 
     {
       size_t count = 0;
       for (const auto& [id, info] : process_map) 
