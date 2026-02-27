@@ -625,6 +625,35 @@ TEST_CASE("Scheduler: Failure Handling Enable/Disable", "[scheduler]") {
     scheduler.EnableFailureHandling(false);
     CHECK_FALSE(scheduler.IsFailureHandlingEnabled());
   }
+
+  SECTION("Disabling failure handling does not re-enable manually disabled processes") {
+    REQUIRE(scheduler.AddProcess(1, 5.0).has_value());
+    REQUIRE(scheduler.AddProcess(2, 5.0).has_value());
+    REQUIRE(scheduler.DisableProcess(1).has_value());
+    scheduler.EnableFailureHandling(true);
+    scheduler.EnableFailureHandling(false);
+    auto enabled = scheduler.IsProcessEnabled(1);
+    REQUIRE(enabled.has_value());
+    CHECK_FALSE(*enabled);
+  }
+
+  SECTION("Disabling failure handling does not re-enable auto-disabled processes") {
+    REQUIRE(scheduler.AddProcess(1, 5.0).has_value());
+    REQUIRE(scheduler.AddProcess(2, 5.0).has_value());
+    scheduler.EnableFailureHandling(true);
+    REQUIRE(scheduler.SetMaxConsecutiveFailures(2).has_value());
+    REQUIRE(scheduler.MarkProcessFailed(1).has_value());
+    REQUIRE(scheduler.MarkProcessFailed(1).has_value());
+    {
+      auto eb = scheduler.IsProcessEnabled(1);
+      REQUIRE(eb.has_value());
+      CHECK_FALSE(*eb);
+    }
+    scheduler.EnableFailureHandling(false);
+    auto enabled = scheduler.IsProcessEnabled(1);
+    REQUIRE(enabled.has_value());
+    CHECK_FALSE(*enabled);
+  }
 }
 
 TEST_CASE("Scheduler: Process Enable/Disable", "[scheduler]") {

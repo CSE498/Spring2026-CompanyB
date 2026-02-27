@@ -832,6 +832,11 @@ namespace cse498 {
      * @brief Enable or disable automatic failure handling
      * @param enable true to enable failure tracking and backoff, false to disable
      * 
+     * When disabling: resets failure counters and backoff state for all processes,
+     * but does NOT change the enabled/disabled status of any process. Processes
+     * that were manually disabled via DisableProcess() stay disabled. Processes
+     * that were auto-disabled due to max consecutive failures stay disabled until
+     * the user explicitly calls EnableProcess(id).
      */
     void EnableFailureHandling(bool enable) noexcept 
     {
@@ -841,7 +846,6 @@ namespace cse498 {
         for (auto& [id, info] : process_map) 
         {
           info.ResetFailureState();
-          info.enabled = true;
         }
       }
     }
