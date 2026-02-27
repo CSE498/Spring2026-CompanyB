@@ -264,6 +264,7 @@ namespace cse498 {
      * Algorithm: Each process accumulates its base_weight to current_weight each cycle.
      * The process with the highest current_weight is selected, then its current_weight
      * is reduced by the total weight. 
+     * https://en.wikipedia.org/wiki/Deficit_round_robin
      */
     std::expected<ID_TYPE, SchedulerError> GetNextDeterministic() 
     {
@@ -556,7 +557,7 @@ namespace cse498 {
      * @param id Process id
      * @return Expected containing weight or error code
      */
-    [[nodiscard]] std::expected<double, SchedulerError> GetWeight(ID_TYPE id) const 
+    [[nodiscard]] std::expected<double, SchedulerError> GetBaseWeight(ID_TYPE id) const 
     {
       auto it = process_map.find(id);
       if (it == process_map.end()) 
