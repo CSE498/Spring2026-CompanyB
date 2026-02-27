@@ -35,6 +35,7 @@ namespace cse498 {
     NegativeWeight,              ///< Weight cannot be negative
     NoSchedulableProcesses,      ///< No processes available to schedule
     InvalidParameter,            ///< Invalid configuration parameter
+    WeightBlockedByAutoAdjust,   ///< Cannot set base weight while auto-adjust is enabled
     ZeroMaxFailures,             ///< Max failures must be > 0
     InvalidBackoffMultiplier,    ///< Backoff multiplier must be >= 1.0
     ZeroRecoveryThreshold        ///< Recovery threshold must be > 0
@@ -62,6 +63,8 @@ namespace cse498 {
         return "No schedulable processes available";
       case SchedulerError::InvalidParameter:
         return "Invalid configuration parameter";
+      case SchedulerError::WeightBlockedByAutoAdjust:
+        return "Cannot set base weight while auto-adjust is enabled; disable auto-adjust first";
       case SchedulerError::ZeroMaxFailures:
         return "Max consecutive failures must be greater than zero";
       case SchedulerError::InvalidBackoffMultiplier:
@@ -100,6 +103,7 @@ namespace cse498 {
     static constexpr double MAX_WEIGHT = 1000.0;
     static constexpr double WAIT_BOOST_FACTOR = 0.1;
     static constexpr double FREQ_PENALTY = 0.05;
+    static constexpr double MAX_FREQ_PENALTY = 1.0;
     static constexpr size_t MAX_FAILURES = 3;
     static constexpr size_t INTIAL_BACKOFF_CYCLES = 1;
     static constexpr double BACKOFF_MULT = 2.0;
@@ -725,7 +729,7 @@ namespace cse498 {
      */
     [[nodiscard]] std::expected<void, SchedulerError> SetFrequencyPenalty(double penalty) 
     {
-      if (!std::isfinite(penalty) || penalty < 0.0 || penalty > 1.0) 
+      if (!std::isfinite(penalty) || penalty < 0.0 || penalty > MAX_FREQ_PENALTY) 
       {
         return std::unexpected(SchedulerError::InvalidParameter);
       }
@@ -742,11 +746,20 @@ namespace cse498 {
     /**
      * @brief Sets the base weight of a process
      * @param id Process ID
-     * @param weight New base weight (must be non-negative)
+     * @param weight New base weight (must be non-negative and finite)
      * @return Success or error code
+     * 
+     * Fails with WeightBlockedByAutoAdjust if auto-adjustment is enabled.
+     * When auto-adjust is on, effective weight is dynamic; set weight has no effect.
+     * Disable auto-adjust with EnableAutoAdjustment(false) first, set weight, then
+     * re-enable if desired.
      */
     [[nodiscard]] std::expected<void, SchedulerError> SetBaseWeight(ID_TYPE id, double weight) 
     {
+      if (auto_adjust_enabled)
+      {
+        return std::unexpected(SchedulerError::WeightBlockedByAutoAdjust);
+      }
       if (!std::isfinite(weight)) { return std::unexpected(SchedulerError::InvalidWeight); }
       if (weight < 0.0) { return std::unexpected(SchedulerError::NegativeWeight);  }
       
@@ -754,9 +767,7 @@ namespace cse498 {
       if (it == process_map.end()) { return std::unexpected(SchedulerError::ProcessNotFound); }
       
       it->second.base_weight = weight;
-      
-      // If auto-adjust is disabled, also update dynamic weight
-      if (!auto_adjust_enabled) { it->second.dynamic_weight = weight; }
+      it->second.dynamic_weight = weight;
       return {};
     }
     

@@ -472,6 +472,23 @@ TEST_CASE("Scheduler: Manual Weight Setting", "[scheduler]") {
     CHECK_FALSE(result.has_value());
     CHECK(result.error() == SchedulerError::InvalidWeight);
   }
+
+  SECTION("SetBaseWeight returns error when auto-adjust is enabled") {
+    scheduler.EnableAutoAdjustment(true);
+    auto result = scheduler.SetBaseWeight(1, 20.0);
+    CHECK_FALSE(result.has_value());
+    CHECK(result.error() == SchedulerError::WeightBlockedByAutoAdjust);
+  }
+
+  SECTION("SetBaseWeight succeeds after disabling auto-adjust") {
+    scheduler.EnableAutoAdjustment(true);
+    scheduler.EnableAutoAdjustment(false);
+    auto result = scheduler.SetBaseWeight(1, 20.0);
+    CHECK(result.has_value());
+    auto weight = scheduler.GetBaseWeight(1);
+    REQUIRE(weight.has_value());
+    CHECK(*weight == 20.0);
+  }
 }
 
 TEST_CASE("Scheduler: Wait Cycle Tracking", "[scheduler]") {
