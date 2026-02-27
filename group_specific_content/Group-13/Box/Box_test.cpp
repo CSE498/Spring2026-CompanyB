@@ -5,10 +5,11 @@
  * @author Ebenezer Appiah (Group 13 - Math-Heavy Simulation World)
  */
 
-#include "Box.hpp"
-#include "PointClass.hpp"
+#include "../source/tools/Box.hpp"
+#include "Point.hpp"
 #include "Circle.hpp"
-#include <catch2/catch_test_macros.hpp>
+#include "../third-party/Catch/single_include/catch2/catch.hpp"
+#include <iostream>
 #include <cmath>
 #include <sstream>
 
