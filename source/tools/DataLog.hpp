@@ -6,6 +6,7 @@
 #pragma once
 
 #include <cstddef>
+#include <optional>
 #include <set>
 #include <string>
 #include <vector>
@@ -67,20 +68,20 @@ class DataLog {
   /// summary.
   void AddEntry(const nlohmann::json& data);
   /// @brief Gets the mean of all logged action durations.
-  /// @return Mean duration value.
-  double GetMean() const;
+  /// @return Mean duration value, or std::nullopt if no data has been logged.
+  std::optional<double> GetMean() const;
 
   /// @brief Gets the median of all logged action durations.
-  /// @return Median duration value.
-  double GetMedian() const;
+  /// @return Median duration value, or std::nullopt if no data has been logged.
+  std::optional<double> GetMedian() const;
 
   /// @brief Gets the minimum logged action duration.
-  /// @return Minimum duration value.
-  double GetMin() const;
+  /// @return Minimum duration value, or std::nullopt if no data has been logged.
+  std::optional<double> GetMin() const;
 
   /// @brief Gets the maximum logged action duration.
-  /// @return Maximum duration value.
-  double GetMax() const;
+  /// @return Maximum duration value, or std::nullopt if no data has been logged.
+  std::optional<double> GetMax() const;
 
   /// @brief Gets the total number of logged entries.
   /// @return Total entry count.

@@ -45,23 +45,16 @@ void DataLog::AddEntry(const nlohmann::json &data) {
   }
 }
 
-double DataLog::GetMean() const {
+std::optional<double> DataLog::GetMean() const {
   if (mCount == 0) {
-    return 0.0;
+    return std::nullopt;
   }
   return mRunningSum / static_cast<double>(mCount);
 }
 
-  // Post-Peer review optimization: Multiset keeps durations 
-  // sorted automatically (O(log n) insertion). However, O(n/2) 
-  // traversal via std::advance() is required to access middle 
-  // element(s).
-  // Solution: Cache the result to avoid O(n) cost on frequent 
-  // GetMedian() calls. The cache is invalidated whenever new 
-  // data is added (in AddEntry() function).
-double DataLog::GetMedian() const {
+std::optional<double> DataLog::GetMedian() const {
   if (mCount == 0) {
-    return 0.0;
+    return std::nullopt;
   }
 
   // Check if cached median is valid
@@ -89,16 +82,16 @@ double DataLog::GetMedian() const {
   return mMedianCache;
 }
 
-double DataLog::GetMin() const {
+std::optional<double> DataLog::GetMin() const {
   if (mCount == 0) {
-    return 0.0;
+    return std::nullopt;
   }
   return mMinValue;
 }
 
-double DataLog::GetMax() const {
+std::optional<double> DataLog::GetMax() const {
   if (mCount == 0) {
-    return 0.0;
+    return std::nullopt;
   }
   return mMaxValue;
 }

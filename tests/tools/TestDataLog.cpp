@@ -50,10 +50,14 @@ TEST_CASE("DataLog calculates mean, median, min, and max correctly", "[DataLog]"
     dataLog.AddEntry(entry3);
     
     REQUIRE(dataLog.GetCount() == 3);
-    REQUIRE(dataLog.GetMean() == 4.0);
-    REQUIRE(dataLog.GetMedian() == 4.0);
-    REQUIRE(dataLog.GetMin() == 2.0);
-    REQUIRE(dataLog.GetMax() == 6.0);
+    REQUIRE(dataLog.GetMean().has_value());
+    REQUIRE(dataLog.GetMean().value() == 4.0);
+    REQUIRE(dataLog.GetMedian().has_value());
+    REQUIRE(dataLog.GetMedian().value() == 4.0);
+    REQUIRE(dataLog.GetMin().has_value());
+    REQUIRE(dataLog.GetMin().value() == 2.0);
+    REQUIRE(dataLog.GetMax().has_value());
+    REQUIRE(dataLog.GetMax().value() == 6.0);
 }
 
 TEST_CASE("DataLog Reset clears all entries and statistics", "[DataLog]") {
@@ -73,5 +77,5 @@ TEST_CASE("DataLog Reset clears all entries and statistics", "[DataLog]") {
     
     REQUIRE(dataLog.GetCount() == 0);
     REQUIRE(dataLog.GetEntries().empty());
-    REQUIRE(dataLog.GetMean() == 0.0);
+    REQUIRE(!dataLog.GetMean().has_value());
 }
