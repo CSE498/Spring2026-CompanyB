@@ -251,7 +251,7 @@ Each nodes can pass (1), fail (0), or still be running (-1)
 I will now demonstrate whether an agent should pick up a Red Ball or a Blue Ball
 
 ### Usage example
-```
+```C++
 #include "tools/BehaviorTree/BehaviorTree.hpp"
 
 #include <iostream>

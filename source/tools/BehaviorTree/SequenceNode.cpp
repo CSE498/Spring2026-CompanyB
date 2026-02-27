@@ -34,7 +34,14 @@ Status SequenceNode::tick()
             break;
     }
 
-    m_status = (isRunning && m_index < children.size()) ? Status::Running : Status::Success;
+    if (isRunning && m_index < children.size()) {
+        m_status = Status::Running;
+    }
+
+    else {
+        m_status = Status::Success;
+        --m_index;
+    }
     
     return m_status;
 }

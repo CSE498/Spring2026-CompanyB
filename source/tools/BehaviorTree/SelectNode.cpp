@@ -34,8 +34,14 @@ Status SelectNode::tick()
             break;
     }
 
-    m_status = (isRunning && m_index < children.size()) ? Status::Running : Status::Failure;
-    
+    if (isRunning && m_index < children.size()) {
+        m_status = Status::Running;
+    }
+
+    else {
+        m_status = Status::Failure;
+        --m_index;
+    }    
     return m_status;
 }
 
