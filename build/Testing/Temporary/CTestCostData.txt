@@ -1,0 +1,36 @@
+sanity 16 0.000752482
+Circle default constructor 18 0.00121508
+Circle contains and boundary checks 18 0.000911104
+Circle overlap and separation 18 0.000938102
+Circle translate and scale 18 0.000978699
+Circle distance to point and circle 12 0.00200269
+Circle overlap when one is inside another 12 0.00244552
+Circle boundary epsilon behavior 12 0.00253973
+Circle scale by zero 12 0.0047722
+Circle scalar properties 8 0.00828167
+Circle circle-containment and relationship checks 8 0.00557266
+Circle signed distance to boundary 8 0.00331115
+Circle intersection points two-point case 8 0.00281568
+Circle intersection points tangent and disjoint 8 0.00257324
+Surface 2 0.00808825
+ add shapes and detect overlap 2 0.00806275
+Surface 2 0.00808825
+ add boxes and detect overlap 2 0.00769152
+overlap detection and QueryRadius 2 0.00931246
+Surface: overlap callbacks  2 0.00741202
+Remove shape 2 0.00759519
+Testing Constructors, setters/getters 2 0.00874737
+Testing addition operator 2 0.00831281
+Testing subtraction operator 2 0.0114534
+Testing multiplication operator 2 0.0102524
+Testing equality operator 2 0.0103391
+Testing dot method 2 0.00910475
+Testing magnitude method 2 0.0106783
+Testing scale method 2 0.00919929
+Testing normalize method 2 0.00912915
+Testing rotate method 2 0.0104066
+Testing cross_product method 2 0.00928548
+Test WorldPosition Constructors 2 0.010415
+BoxUnitTests 2 0.0243673
+Surface 1 0.0159803
+---

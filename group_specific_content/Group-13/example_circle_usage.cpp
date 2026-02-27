@@ -14,7 +14,7 @@
  */
 
 #include "Circle.hpp"
-#include "Point.hpp"
+#include "PointClass.hpp"
 #include <iostream>
 
 using namespace cse498;
@@ -26,7 +26,7 @@ static void DemonstrateConstruction() {
 
   Circle c1;
   std::cout << "Default: " << c1 << "\n";
-  std::cout << "  Center: (" << c1.GetCenter().x() << ", " << c1.GetCenter().y()
+  std::cout << "  Center: (" << c1.GetCenter().getX() << ", " << c1.GetCenter().getY()
             << "), radius = " << c1.GetRadius() << "\n\n";
 
   Circle c2(Point(1.0, -2.0), 3.0);
@@ -81,7 +81,7 @@ static void DemonstrateDistances() {
 
   Circle c(Point(0.0, 0.0), 3.0);
   Point p(3.0, 4.0);
-  std::cout << "Circle " << c << ", point (" << p.x() << ", " << p.y() << ")\n";
+  std::cout << "Circle " << c << ", point (" << p.getX() << ", " << p.getY() << ")\n";
   std::cout << "  Distance from center to point: " << c.DistanceTo(p) << " (expect 5)\n\n";
 
   Circle other(Point(6.0, 8.0), 1.0);
@@ -112,7 +112,7 @@ static void DemonstrateIntersections() {
   auto pts = a.IntersectionPoints(b);
   std::cout << "Two circles (centers 8 apart, radii 5): " << pts.size() << " intersection(s)\n";
   for (size_t i = 0; i < pts.size(); ++i)
-    std::cout << "  P" << (i + 1) << " = (" << pts[i].x() << ", " << pts[i].y() << ")\n";
+    std::cout << "  P" << (i + 1) << " = (" << pts[i].getX() << ", " << pts[i].getY() << ")\n";
   std::cout << "\n";
 
   Circle t1(Point(0.0, 0.0), 3.0);
@@ -120,7 +120,7 @@ static void DemonstrateIntersections() {
   auto tangent_pts = t1.IntersectionPoints(t2);
   std::cout << "Tangent circles: " << tangent_pts.size() << " intersection(s)\n";
   for (size_t i = 0; i < tangent_pts.size(); ++i)
-    std::cout << "  (" << tangent_pts[i].x() << ", " << tangent_pts[i].y() << ")\n";
+    std::cout << "  (" << tangent_pts[i].getX() << ", " << tangent_pts[i].getY() << ")\n";
   std::cout << "\n";
 
   Circle d1(Point(0.0, 0.0), 3.0);

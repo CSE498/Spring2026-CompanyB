@@ -1,10 +1,10 @@
 /**
  * @file Circle.hpp
  * @brief Lightweight circle geometry type for 2D simulations.
- * @author Group-13 (Lemuel). Developed with AI assistance (Cursor).
+ * @author Group-13 (Lemuel). Developed with AI assistance.
  *
  * Assumes an existing Point type with:
- *   - double x() const, double y() const
+ *   - double getX() const, double getY() const
  *   - arithmetic operators (e.g., Point + Point)
  *   - equality operator
  *
@@ -13,13 +13,17 @@
 
 #pragma once
 
-#include <cassert>
 #include <cstddef>
 #include <cmath>
 #include <ostream>
+#include <stdexcept>
 #include <vector>
 
-#include "Point.hpp"
+#if __has_include(<numbers>)
+#include <numbers>
+#endif
+
+#include "PointClass.hpp"
 
 namespace cse498 {
 
@@ -41,8 +45,14 @@ namespace cse498 {
  */
 class Circle {
  public:
-  static constexpr double kEps = 1e-9;   ///< Default tolerance for floating-point comparisons
-  static constexpr double kPi = 3.14159265358979323846;  ///< Pi constant
+  static constexpr double EPS = 1e-9;  ///< Default tolerance for floating-point comparisons
+#if defined(__cpp_lib_math_constants)
+  static constexpr double PI = std::numbers::pi_v<double>;  ///< Pi constant
+#else
+  static constexpr double PI = 3.14159265358979323846;  ///< Pi constant
+#endif
+  static constexpr double kEps = EPS;  ///< Legacy alias for compatibility
+  static constexpr double kPi = PI;    ///< Legacy alias for compatibility
 
   /**
    * @brief Default constructor: center at origin, radius zero.
@@ -52,10 +62,12 @@ class Circle {
   /**
    * @brief Construct circle from center and radius.
    * @param center Center of the circle
-   * @param radius Non-negative radius (asserted >= 0)
+   * @param radius Non-negative radius
    */
   Circle(const Point& center, double radius) : center_(center), radius_(radius) {
-    assert(radius_ >= 0.0);
+    if (radius_ < 0.0) {
+      throw std::invalid_argument("Circle radius must be non-negative.");
+    }
   }
 
 
@@ -63,7 +75,7 @@ class Circle {
    * @brief Get the center of the circle.
    * @return Const reference to the center point
    */
-  const Point& GetCenter() const { return center_; }
+  [[nodiscard]] const Point& GetCenter() const { return center_; }
 
   /**
    * @brief Set the center of the circle.
@@ -75,14 +87,16 @@ class Circle {
    * @brief Get the radius of the circle.
    * @return Radius (>= 0)
    */
-  double GetRadius() const { return radius_; }
+  [[nodiscard]] double GetRadius() const { return radius_; }
 
   /**
    * @brief Set the radius of the circle.
-   * @param radius Non-negative radius (asserted >= 0)
+   * @param radius Non-negative radius
    */
   void SetRadius(double radius) {
-    assert(radius >= 0.0);
+    if (radius < 0.0) {
+      throw std::invalid_argument("Circle radius must be non-negative.");
+    }
     radius_ = radius;
   }
 
@@ -90,31 +104,31 @@ class Circle {
   /**
    * @brief Test whether a point lies inside or on the circle.
    * @param p Point to test
-   * @return true if distance from center to p <= radius (within kEps)
+   * @return true if distance from center to p <= radius (within EPS)
    */
-  bool Contains(const Point& p) const {
+  [[nodiscard]] bool Contains(const Point& p) const {
     const double dist2 = DistanceSquared(center_, p);
-    const double r = radius_ + kEps;
+    const double r = radius_ + EPS;
     return dist2 <= r * r;
   }
 
   /**
    * @brief Test whether another circle lies entirely inside this circle.
    * @param other Circle to test
-   * @return true if other's center plus its radius <= this radius (within kEps)
+   * @return true if other's center plus its radius <= this radius (within EPS)
    */
-  bool Contains(const Circle& other) const {
-    const double center_dist = DistanceTo(other);
-    return center_dist + other.radius_ <= radius_ + kEps;
+  [[nodiscard]] bool Contains(const Circle& other) const {
+    const double center_dist = CenterDistanceTo(other);
+    return center_dist + other.radius_ <= radius_ + EPS;
   }
 
   /**
    * @brief Test whether a point lies on the circle boundary.
    * @param p Point to test
-   * @param eps Tolerance for |distance - radius| (default: kEps)
+   * @param eps Tolerance for |distance - radius| (default: EPS)
    * @return true if distance from center to p equals radius within eps
    */
-  bool OnBoundary(const Point& p, double eps = kEps) const {
+  [[nodiscard]] bool OnBoundary(const Point& p, double eps = EPS) const {
     const double dist = DistanceTo(p);
     return std::fabs(dist - radius_) <= eps;
   }
@@ -124,7 +138,7 @@ class Circle {
    * @param p Point to evaluate
    * @return distance(p, center) - radius (negative inside, zero on boundary, positive outside)
    */
-  double SignedDistanceToBoundary(const Point& p) const {
+  [[nodiscard]] double SignedDistanceToBoundary(const Point& p) const {
     return DistanceTo(p) - radius_;
   }
 
@@ -133,7 +147,7 @@ class Circle {
    * @param p Point to measure to
    * @return Euclidean distance from center to p
    */
-  double DistanceTo(const Point& p) const {
+  [[nodiscard]] double DistanceTo(const Point& p) const {
     return std::sqrt(DistanceSquared(center_, p));
   }
 
@@ -142,17 +156,26 @@ class Circle {
    * @param other Other circle
    * @return Euclidean distance between centers
    */
-  double DistanceTo(const Circle& other) const {
+  [[nodiscard]] double CenterDistanceTo(const Circle& other) const {
     return std::sqrt(DistanceSquared(center_, other.center_));
+  }
+
+  /**
+   * @brief Backward-compatible alias for center-to-center distance.
+   * @param other Other circle
+   * @return Euclidean distance between centers
+   */
+  [[nodiscard]] double DistanceTo(const Circle& other) const {
+    return CenterDistanceTo(other);
   }
 
   /**
    * @brief Test whether this circle overlaps another (tangency counts as overlap).
    * @param other Circle to test
-   * @return true if distance between centers <= sum of radii (within kEps)
+   * @return true if distance between centers <= sum of radii (within EPS)
    */
-  bool Overlaps(const Circle& other) const {
-    const double sum = radius_ + other.radius_ + kEps;
+  [[nodiscard]] bool Overlaps(const Circle& other) const {
+    const double sum = radius_ + other.radius_ + EPS;
     const double dist2 = DistanceSquared(center_, other.center_);
     return dist2 <= sum * sum;
   }
@@ -160,45 +183,46 @@ class Circle {
   /**
    * @brief Test whether this circle and another are disjoint (no overlap).
    * @param other Circle to test
-   * @return true if SeparationDistance(other) > 0
+   * @return true if the circles do not overlap
    */
-  bool IsDisjoint(const Circle& other) const {
-    return SeparationDistance(other) > 0.0;
+  [[nodiscard]] bool IsDisjoint(const Circle& other) const {
+    return !Overlaps(other);
   }
 
   /**
    * @brief Test whether this circle is tangent to another (external or internal).
    * @param other Circle to test
-   * @param eps Tolerance (default: kEps)
+   * @param eps Tolerance (default: EPS)
    * @return true if distance equals sum or |difference| of radii within eps
    */
-  bool IsTangentTo(const Circle& other, double eps = kEps) const {
-    const double dist = DistanceTo(other);
+  [[nodiscard]] bool IsTangentTo(const Circle& other, double eps = EPS) const {
+    const double dist = CenterDistanceTo(other);
     const double ext_tangent = std::fabs(dist - (radius_ + other.radius_));
     const double int_tangent = std::fabs(dist - std::fabs(radius_ - other.radius_));
     return ext_tangent <= eps || int_tangent <= eps;
   }
 
   /** @brief Diameter (2 * radius). */
-  double Diameter() const { return 2.0 * radius_; }
+  [[nodiscard]] double Diameter() const { return 2.0 * radius_; }
 
   /** @brief Circumference (2 * pi * radius). */
-  double Circumference() const { return 2.0 * kPi * radius_; }
+  [[nodiscard]] double Circumference() const { return 2.0 * PI * radius_; }
 
   /** @brief Area (pi * radius^2). */
-  double Area() const { return kPi * radius_ * radius_; }
+  [[nodiscard]] double Area() const { return PI * radius_ * radius_; }
 
 
   /**
    * @brief Compute intersection points of this circle with another.
    * @param other Other circle
-   * @param eps Tolerance for degenerate cases (default: kEps)
+   * @param eps Tolerance for degenerate cases (default: EPS)
    * @return Vector of 0, 1 (tangent), or 2 intersection points; empty for coincident circles
    */
-  std::vector<Point> IntersectionPoints(const Circle& other, double eps = kEps) const {
+  [[nodiscard]] std::vector<Point> IntersectionPoints(const Circle& other,
+                                                      double eps = EPS) const {
     std::vector<Point> points;
 
-    const double d = DistanceTo(other);
+    const double d = CenterDistanceTo(other);
     const double r0 = radius_;
     const double r1 = other.radius_;
 
@@ -213,10 +237,10 @@ class Circle {
     if (h2 < 0.0) return points;
 
     const double h = std::sqrt(h2);
-    const double x0 = center_.x();
-    const double y0 = center_.y();
-    const double x1 = other.center_.x();
-    const double y1 = other.center_.y();
+    const double x0 = center_.getX();
+    const double y0 = center_.getY();
+    const double x1 = other.center_.getX();
+    const double y1 = other.center_.getY();
 
     const double px = x0 + a * (x1 - x0) / d;
     const double py = y0 + a * (y1 - y0) / d;
@@ -224,7 +248,9 @@ class Circle {
     const double ry = (x1 - x0) * (h / d);
 
     points.emplace_back(px + rx, py + ry);
-    if (h > eps) points.emplace_back(px - rx, py - ry);
+    if (h > eps) {
+      points.emplace_back(px - rx, py - ry);
+    }
     return points;
   }
 
@@ -236,10 +262,12 @@ class Circle {
 
   /**
    * @brief Scale the radius by a non-negative factor.
-   * @param factor Scale factor (asserted >= 0)
+   * @param factor Scale factor
    */
   void Scale(double factor) {
-    assert(factor >= 0.0);
+    if (factor < 0.0) {
+      throw std::invalid_argument("Circle scale factor must be non-negative.");
+    }
     radius_ *= factor;
   }
 
@@ -248,11 +276,28 @@ class Circle {
    * @param other Other circle
    * @return max(0, center_distance - radius - other.radius)
    */
-  double SeparationDistance(const Circle& other) const {
-    const double dist = DistanceTo(other);
+  [[nodiscard]] double SeparationDistance(const Circle& other) const {
+    const double dist = CenterDistanceTo(other);
     const double sep = dist - (radius_ + other.radius_);
     return sep > 0.0 ? sep : 0.0;
   }
+
+  /**
+   * @brief Compare circles using tolerant floating-point equality.
+   * @param other Circle to compare
+   * @return true if centers and radii are equal within EPS
+   */
+  [[nodiscard]] bool operator==(const Circle& other) const {
+    return DistanceSquared(center_, other.center_) <= (EPS * EPS) &&
+           std::fabs(radius_ - other.radius_) <= EPS;
+  }
+
+  /**
+   * @brief Compare circles for inequality.
+   * @param other Circle to compare
+   * @return true if circles are not equal within EPS
+   */
+  [[nodiscard]] bool operator!=(const Circle& other) const { return !(*this == other); }
 
  private:
   Point center_;   ///< Center of the circle
@@ -261,9 +306,9 @@ class Circle {
   /**
    * @brief Squared distance between two points (avoids sqrt when comparing).
    */
-  static double DistanceSquared(const Point& a, const Point& b) {
-    const double dx = a.x() - b.x();
-    const double dy = a.y() - b.y();
+  [[nodiscard]] static double DistanceSquared(const Point& a, const Point& b) {
+    const double dx = a.getX() - b.getX();
+    const double dy = a.getY() - b.getY();
     return dx * dx + dy * dy;
   }
 };
@@ -275,7 +320,7 @@ class Circle {
  * @return Reference to the stream
  */
 inline std::ostream& operator<<(std::ostream& os, const Circle& c) {
-  os << "Circle(center=(" << c.GetCenter().x() << ", " << c.GetCenter().y()
+  os << "Circle(center=(" << c.GetCenter().getX() << ", " << c.GetCenter().getY()
      << "), radius=" << c.GetRadius() << ")";
   return os;
 }
