@@ -277,8 +277,6 @@ namespace cse498 {
         return std::unexpected(SchedulerError::EmptyScheduler);
       }
       
-      // Find process with maximum current weight
-      // In case of tie, use insertion order (FCFS)
       struct BestCandidate 
       {
         ID_TYPE id;
@@ -296,8 +294,6 @@ namespace cse498 {
        
         double effective_weight = GetEffectiveWeight(info);
         info.current_weight += effective_weight;
-        
-        // Check if this is the new maximum
         bool is_better = !best ||
                         (info.current_weight > best->weight) ||
                         (info.current_weight == best->weight && info.insertion_order < best->order);
@@ -308,7 +304,6 @@ namespace cse498 {
         }
       }
       
-      // If no schedulable process found, return error
       if (!best) 
       {
         return std::unexpected(SchedulerError::NoSchedulableProcesses);
@@ -463,10 +458,7 @@ namespace cse498 {
         return std::unexpected(SchedulerError::EmptyScheduler);
       }
       
-      // Increment scheduling cycle
       scheduling_cycle++;
-      
-      // Update backoff counters
       UpdateBackoffCounters();
       
       std::expected<ID_TYPE, SchedulerError> selected;
@@ -480,7 +472,6 @@ namespace cse498 {
         selected = GetNextProbabilistic();
       }
       
-      // Propagate error if selection failed
       if (!selected) 
       {
         return selected;
@@ -489,8 +480,6 @@ namespace cse498 {
       ID_TYPE selected_id = *selected;
       
       process_map.find(selected_id)->second.execution_count++;
-      
-      // Apply dynamic weight adjustments
       ApplyDynamicAdjustments(selected_id);
       
       return selected_id;
@@ -575,7 +564,6 @@ namespace cse498 {
       
       for (const auto& [id, info] : process_map) 
       {
-        // Only consider schedulable processes
         if (IsSchedulable(info)) 
         {
           double effective_weight = GetEffectiveWeight(info);
@@ -641,12 +629,8 @@ namespace cse498 {
     void EnableAutoAdjustment(bool enable) noexcept 
     {
       auto_adjust_enabled = enable;
-      
-      // Reset dynamic weights to base weights when disabling
-      if (!enable) 
-      {
-        for (auto& [id, info] : process_map) 
-        {
+      if (!enable) {
+        for (auto& [id, info] : process_map) {
           info.dynamic_weight = info.base_weight;
           info.wait_cycles = 0;
         }
@@ -878,13 +862,10 @@ namespace cse498 {
       if (!failure_handling_enabled) return {};
       
       ProcessInfo& info = it->second;
-      
-      // Increment failure counters
       info.failure_count++;
       info.total_failures++;
-      info.success_count = 0;  // Reset success streak
+      info.success_count = 0;
       
-      // Apply exponential backoff
       size_t backoff = (info.backoff_cycles == 0)
           ? initial_backoff_cycles
           : static_cast<size_t>(std::min(
@@ -893,7 +874,6 @@ namespace cse498 {
       info.backoff_cycles = backoff;
       info.cycles_until_retry = backoff;
       
-      // Check if process should be disabled
       if (info.failure_count >= max_consecutive_failures) 
       {
         info.enabled = false;
@@ -922,11 +902,8 @@ namespace cse498 {
       if (!failure_handling_enabled) return {};
       
       ProcessInfo& info = it->second;
-      
-      // Increment success counter
       info.success_count++;
       
-      // Check for recovery: enough consecutive successes clears failures
       if (info.success_count >= recovery_success_threshold) 
       {
         info.ResetFailureState();
