@@ -357,19 +357,6 @@ namespace cse498 {
         }
       }
       
- 
-      if (!selected_id) 
-      {
-        for (const auto& [id, info] : process_map) 
-        {
-          if (IsSchedulable(info)) 
-          {
-            selected_id = id;
-            break;
-          }
-        }
-      }
-      
       if (!selected_id) 
       {
         return std::unexpected(SchedulerError::NoSchedulableProcesses);
