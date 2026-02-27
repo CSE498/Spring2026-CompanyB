@@ -3,7 +3,7 @@
 
 cmake_minimum_required(VERSION 3.16)
 
-project(QtInWSL VERSION 0.1 LANGUAGES CXX)
+project(QtApp VERSION 0.1 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -11,9 +11,9 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 find_package(Qt6 REQUIRED COMPONENTS Core)
 find_package(Qt6 REQUIRED COMPONENTS Widgets)
 
-qt_add_executable(QtInWSL
+qt_add_executable(QtApp
     source/Interfaces/gui/MadiQtTest.cpp
     source/Interfaces/gui/ImageGrid.cpp
 )
 
-target_link_libraries(QtInWSL PRIVATE Qt6::Core Qt6::Widgets)
+target_link_libraries(QtApp PRIVATE Qt6::Core Qt6::Widgets)
