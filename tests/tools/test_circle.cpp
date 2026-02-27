@@ -1,7 +1,7 @@
 /**
  * @file test_circle.cpp
  * @brief Unit tests for the Circle class (source/tools/Circle.hpp).
- * @author Group-13 (Lemuel). Developed with AI assistance (Cursor).
+ * @author Group-13 (Lemuel). Developed with AI assistance.
  *
  * Test files for company C++ classes live in tests/tools/, parallel to source/tools/.
  */
