@@ -25,6 +25,8 @@
 
 #include "../../source/tools/RobinHoodMap.hpp"
 
+using cse498::RobinHoodMap;
+
 // ============================================================================
 // COMPILE-TIME ASSERTIONS
 // ============================================================================
@@ -60,15 +62,12 @@ static_assert(std::is_default_constructible<RobinHoodMap<std::string, double>>::
 static_assert(std::is_default_constructible<RobinHoodMap<char, std::string>>::value,
               "RobinHoodMap should work with char keys and string values");
 
-// helper class to be able to acess private functions and members
+// helper class to be able to access private functions and members
 class RobinHoodMapTest {
 public:
     template<typename K, typename V>
     static void callResize(RobinHoodMap<K, V>& map) { map._resize(); }
-    
-    template<typename K, typename V>
-    static auto callFindFirstElement(RobinHoodMap<K, V>& map) { return map._findFirstElement(); }
-    
+        
     template<typename K, typename V>
     static void callInsertWithHash(RobinHoodMap<K, V>& map, K key, V value, size_t hash) {
         map._insertWithHash(std::move(key), std::move(value), hash);
@@ -264,18 +263,6 @@ TEST_CASE("Resize preserves elements", "[resize]") {
     auto value2 = map.at(2);
     REQUIRE(value1.has_value());
     REQUIRE(value2.has_value());
-}
-
-// finding first element (private)
-
-TEST_CASE("Find first element empty and non-empty", "[find-first]") {
-    RobinHoodMap<int, int> map;
-    auto key1 = RobinHoodMapTest::callFindFirstElement(map);
-    REQUIRE_FALSE(key1.has_value());
-    
-    map.insert(42, 100);
-    auto key2 = RobinHoodMapTest::callFindFirstElement(map);
-    REQUIRE(key2.has_value());
 }
 
 // internal state
