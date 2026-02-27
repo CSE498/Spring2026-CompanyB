@@ -214,8 +214,28 @@ TEST_CASE("WebLayout can add and remove children", "[WebLayout]") {
   TEST_REMOVE_ELEMENT(layout, elem2);
 }
 
-TEST_CASE("WebLayout: adding element twice is error", "[WebLayout]") {
-  // TODO: Implement test
+TEST_CASE("WebLayout: adding or removing null pointers is an error", "[WebLayout]") {
+  SetupMockDOMWebLayout mock;
+  WebLayout layout("layout1");
+
+  auto elem1 = std::make_shared<WebElement>("elem1");
+  auto elem2 = std::shared_ptr<WebElement>();
+
+  TEST_ADD_ELEMENT(layout, elem1);
+
+  REQUIRE(layout.AddChild(elem2).error() == WebLayout::Error::NullPtr);
+  REQUIRE(layout.RemoveChild(elem2).error() == WebLayout::Error::NullPtr);
+}
+
+TEST_CASE("WebLayout: adding the same element twice gives an error", "[WebLayout]") {
+  SetupMockDOMWebLayout mock;
+  WebLayout layout("layout1");
+
+  auto elem1 = std::make_shared<WebElement>("elem1");
+
+  TEST_ADD_ELEMENT(layout, elem1);
+
+  REQUIRE(layout.AddChild(elem1).error() == WebLayout::Error::ElementAlreadyMember);
 }
 
 TEST_CASE("WebLayout can set properties with chained function calls",
