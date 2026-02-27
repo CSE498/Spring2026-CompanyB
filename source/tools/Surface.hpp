@@ -13,8 +13,8 @@
 #include <variant>
 #include <algorithm>
 
-#include "Circle.h"
-#include "Box.h"
+#include "Circle.hpp"
+#include "Box.hpp"
 
 /**
  * @brief Surface that stores Circle or Box shapes and detects overlaps.

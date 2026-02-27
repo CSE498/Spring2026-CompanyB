@@ -64,7 +64,7 @@ bool operator==(const Point& lhs, const Point& rhs){
 
 // equality (==) between a point and a scalar
 bool operator==(const Point& lhs, double rhs){
-    return false;
+   return false;
 }
 
 //  equality (==) between a scalar and a point
