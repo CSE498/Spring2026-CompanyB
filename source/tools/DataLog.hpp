@@ -6,6 +6,7 @@
 #pragma once
 
 #include <cstddef>
+#include <set>
 #include <string>
 #include <vector>
 
@@ -19,7 +20,7 @@ namespace cse498 {
 class DataLog {
  private:
   /// @brief Vector storing all log entries as JSON objects
-  std::vector<nlohmann::json> mEntries;
+  std::vector<nlohmann::json> mEntries{};
 
   /// @brief Running sum for efficient mean calculation
   double mRunningSum = 0.0;
@@ -30,11 +31,19 @@ class DataLog {
   /// @brief Maximum recorded value from entry data
   double mMaxValue = 0.0;
 
-  /// @brief Total count of entries with "value" field
+  /// @brief Total count of entries with "duration" field
   size_t mCount = 0;
 
-  /// @brief Flag to track if any value entries have been logged
-  bool mHasData = false;
+  /// @brief Sorted container of durations for efficient median calculation (added after peer review).
+  /// Future: Can be refactored to std::map<std::string, std::multiset<double>> mFieldValues
+  /// to support median calculations for multiple fields (e.g., duration, infection thresholds etc).
+  std::multiset<double> mDurations{};
+
+  /// @brief Cached median value to avoid O(n) multiset traversal on frequent reads
+  mutable double mMedianCache = 0.0;
+
+  /// @brief Flag indicating whether median cache is valid (true = cache is up-to-date)
+  mutable bool mMedianIsValid = false;
 
  public:
   /// @brief Constructor (default)

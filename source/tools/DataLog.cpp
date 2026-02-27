@@ -1,13 +1,16 @@
 #include "DataLog.hpp"
 
 #include <algorithm>
-#include <cmath>
 
 #include "GlobalClock.hpp"
 
 namespace cse498 {
 
 // Took AI's assistance to help with the syntax of this function.
+
+// Currently, we're calculating stats based on "duration" 
+// field in the JSON data, but this can be easily modified to 
+// accommodate other fields as needed (will be included in new module specs)
 void DataLog::AddEntry(const nlohmann::json &data) {
   // Create log entry with automatic timestamp
   nlohmann::json logEntry = data;
@@ -37,7 +40,8 @@ void DataLog::AddEntry(const nlohmann::json &data) {
 
     // Increment count
     mCount++;
-    mHasData = true;
+    mDurations.insert(duration);
+    mMedianIsValid = false;  // Invalidate cache when new data is added
   }
 }
 
@@ -48,31 +52,41 @@ double DataLog::GetMean() const {
   return mRunningSum / static_cast<double>(mCount);
 }
 
+  // Post-Peer review optimization: Multiset keeps durations 
+  // sorted automatically (O(log n) insertion). However, O(n/2) 
+  // traversal via std::advance() is required to access middle 
+  // element(s).
+  // Solution: Cache the result to avoid O(n) cost on frequent 
+  // GetMedian() calls. The cache is invalidated whenever new 
+  // data is added (in AddEntry() function).
 double DataLog::GetMedian() const {
   if (mCount == 0) {
     return 0.0;
   }
 
-  // Create a vector of durations sorted for median calculation
-  std::vector<double> durations;
-  for (const auto &entry : mEntries) {
-    if (entry.contains("duration") && entry["duration"].is_number()) {
-      durations.push_back(entry["duration"].get<double>());
-    }
+  // Check if cached median is valid
+  if (mMedianIsValid) {
+    return mMedianCache;
   }
-
-  // Sort the durations
-  std::sort(durations.begin(), durations.end());
-
-  // Calculate median
-  size_t size = durations.size();
+  
+  size_t size = mDurations.size();
   if (size % 2 == 0) {
     // Even number of elements - return average of middle two
-    return (durations[size / 2 - 1] + durations[size / 2]) / 2.0;
+    auto it = mDurations.begin();
+    std::advance(it, size / 2 - 1);
+    double first = *it;
+    std::advance(it, 1);
+    double second = *it;
+    mMedianCache = (first + second) / 2.0;
   } else {
     // Odd number of elements - return middle element
-    return durations[size / 2];
+    auto it = mDurations.begin();
+    std::advance(it, size / 2);
+    mMedianCache = *it;
   }
+
+  mMedianIsValid = true;
+  return mMedianCache;
 }
 
 double DataLog::GetMin() const {
@@ -101,7 +115,9 @@ void DataLog::Reset() {
   mMinValue = 0.0;
   mMaxValue = 0.0;
   mCount = 0;
-  mHasData = false;
+  mDurations.clear();
+  mMedianCache = 0.0;
+  mMedianIsValid = false;
 }
 
 }  // namespace cse498
