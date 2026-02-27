@@ -261,6 +261,20 @@ TEST_CASE("Scheduler: Mode Switching", "[scheduler]") {
     CHECK(scheduler.GetMode() == Scheduler<size_t>::Mode::PROBABILISTIC);
   }
   
+  SECTION("Setting same mode does not reset round-robin state") {
+    
+    REQUIRE(scheduler.GetNext().has_value());
+    REQUIRE(scheduler.GetNext().has_value());
+    
+   
+    scheduler.SetMode(Scheduler<size_t>::Mode::DETERMINISTIC);
+    
+    
+    auto next = scheduler.GetNext();
+    REQUIRE(next.has_value());
+    CHECK(*next == 2);
+  }
+  
   SECTION("Switching back to DETERMINISTIC resets current weights") {
     for (int i = 0; i < 5; ++i) {
       REQUIRE(scheduler.GetNext().has_value());

@@ -477,12 +477,14 @@ namespace cse498 {
      */
     void SetMode(Mode mode) 
     {
+      if (mode == scheduling_mode) return;
+      
       scheduling_mode = mode;
       if (mode == Mode::DETERMINISTIC) 
       {
         for (auto& [id, info] : process_map) 
         {
-          info.current_weight = info.base_weight;
+          info.current_weight = GetEffectiveWeight(info);
         }
       }
     }
