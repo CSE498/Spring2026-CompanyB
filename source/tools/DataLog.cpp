@@ -20,28 +20,34 @@ void DataLog::AddEntry(const nlohmann::json &data) {
   mEntries.push_back(logEntry);
 
   // Update statistics based on duration field
+  // Note: Only non-negative durations are included in statistics, as negative
+  // durations do not make physical sense in a simulation context.
   if (data.contains("duration") && data["duration"].is_number()) {
     double duration = data["duration"].get<double>();
-    mRunningSum += duration;
+    
+    // Only process non-negative durations
+    if (duration >= 0.0) {
+      mRunningSum += duration;
 
-    if (mCount == 0) {
-      // First entry with duration
-      mMinValue = duration;
-      mMaxValue = duration;
-    } else {
-      // Subsequent entries
-      if (duration < mMinValue) {
+      if (mCount == 0) {
+        // First entry with duration
         mMinValue = duration;
-      }
-      if (duration > mMaxValue) {
         mMaxValue = duration;
+      } else {
+        // Subsequent entries
+        if (duration < mMinValue) {
+          mMinValue = duration;
+        }
+        if (duration > mMaxValue) {
+          mMaxValue = duration;
+        }
       }
-    }
 
-    // Increment count
-    mCount++;
-    mDurations.insert(duration);
-    mMedianIsValid = false;  // Invalidate cache when new data is added
+      // Increment count
+      mCount++;
+      mDurations.insert(duration);
+      mMedianIsValid = false;  // Invalidate cache when new data is added
+    }
   }
 }
 

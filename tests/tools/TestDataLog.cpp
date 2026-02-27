@@ -79,3 +79,123 @@ TEST_CASE("DataLog Reset clears all entries and statistics", "[DataLog]") {
     REQUIRE(dataLog.GetEntries().empty());
     REQUIRE(!dataLog.GetMean().has_value());
 }
+
+TEST_CASE("DataLog handles entry without duration field", "[DataLog]") {
+    cse498::DataLog dataLog;
+    
+    nlohmann::json entryWithoutDuration = {
+        {"agentId", "agent_1"},
+        {"actionType", "move"},
+        {"summary", "No duration"}
+    };
+    
+    nlohmann::json entryWithDuration = {
+        {"agentId", "agent_2"},
+        {"actionType", "turn"},
+        {"duration", 5.0},
+        {"summary", "Has duration"}
+    };
+    
+    dataLog.AddEntry(entryWithoutDuration);
+    REQUIRE(dataLog.GetCount() == 0);  // Entry stored but not in statistics
+    REQUIRE(dataLog.GetEntries().size() == 1);  // Entry still in log
+    
+    dataLog.AddEntry(entryWithDuration);
+    REQUIRE(dataLog.GetCount() == 1);  // Only the one with duration is counted
+    REQUIRE(dataLog.GetEntries().size() == 2);  // Both entries in log
+}
+
+TEST_CASE("DataLog ignores non-numeric duration field", "[DataLog]") {
+    cse498::DataLog dataLog;
+    
+    nlohmann::json entryWithStringDuration = {
+        {"agentId", "agent_1"},
+        {"actionType", "move"},
+        {"duration", "five seconds"},
+        {"summary", "String duration"}
+    };
+    
+    nlohmann::json entryWithNumericDuration = {
+        {"agentId", "agent_2"},
+        {"actionType", "turn"},
+        {"duration", 5.0},
+        {"summary", "Numeric duration"}
+    };
+    
+    dataLog.AddEntry(entryWithStringDuration);
+    REQUIRE(dataLog.GetCount() == 0);  // String duration ignored
+    
+    dataLog.AddEntry(entryWithNumericDuration);
+    REQUIRE(dataLog.GetCount() == 1);  // Only numeric duration counted
+}
+
+TEST_CASE("DataLog calculates median correctly with even number of entries", "[DataLog]") {
+    cse498::DataLog dataLog;
+    
+    // Add 4 entries: [1.0, 2.0, 3.0, 4.0]
+    // Median should be average of middle two: (2.0 + 3.0) / 2.0 = 2.5
+    dataLog.AddEntry({{"duration", 1.0}});
+    dataLog.AddEntry({{"duration", 4.0}});
+    dataLog.AddEntry({{"duration", 2.0}});
+    dataLog.AddEntry({{"duration", 3.0}});
+    
+    REQUIRE(dataLog.GetCount() == 4);
+    REQUIRE(dataLog.GetMedian().has_value());
+    REQUIRE(dataLog.GetMedian().value() == 2.5);
+}
+
+TEST_CASE("DataLog handles zero duration", "[DataLog]") {
+    cse498::DataLog dataLog;
+    
+    nlohmann::json zeroEntry = {
+        {"agentId", "agent_1"},
+        {"actionType", "instant"},
+        {"duration", 0.0},
+        {"summary", "Instant action"}
+    };
+    
+    nlohmann::json normalEntry = {
+        {"agentId", "agent_2"},
+        {"actionType", "move"},
+        {"duration", 5.0},
+        {"summary", "Normal action"}
+    };
+    
+    dataLog.AddEntry(zeroEntry);
+    dataLog.AddEntry(normalEntry);
+    
+    REQUIRE(dataLog.GetCount() == 2);
+    REQUIRE(dataLog.GetMin().has_value());
+    REQUIRE(dataLog.GetMin().value() == 0.0);  // Zero is a valid minimum
+    REQUIRE(dataLog.GetMax().has_value());
+    REQUIRE(dataLog.GetMax().value() == 5.0);
+}
+
+TEST_CASE("DataLog ignores negative duration", "[DataLog]") {
+    cse498::DataLog dataLog;
+    
+    nlohmann::json negativeEntry = {
+        {"agentId", "agent_1"},
+        {"actionType", "rewind"},
+        {"duration", -2.0},
+        {"summary", "Negative duration"}
+    };
+    
+    nlohmann::json positiveEntry = {
+        {"agentId", "agent_2"},
+        {"actionType", "move"},
+        {"duration", 3.0},
+        {"summary", "Positive duration"}
+    };
+    
+    dataLog.AddEntry(negativeEntry);
+    REQUIRE(dataLog.GetCount() == 0);  // Negative duration ignored
+    REQUIRE(dataLog.GetEntries().size() == 1);  // Entry still stored in log
+    
+    dataLog.AddEntry(positiveEntry);
+    REQUIRE(dataLog.GetCount() == 1);  // Only positive duration counted
+    REQUIRE(dataLog.GetMin().has_value());
+    REQUIRE(dataLog.GetMin().value() == 3.0);
+    REQUIRE(dataLog.GetMax().has_value());
+    REQUIRE(dataLog.GetMax().value() == 3.0);
+}
