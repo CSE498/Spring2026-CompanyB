@@ -19,186 +19,186 @@
 TEST_CASE("Tokenize: Valid expressions", "[tokenize]") {
     
     SECTION("Simple expression") {
-        ExpressionParser parser("3 + 4 * x");
+        cse498::ExpressionParser parser("3 + 4 * x");
 
-        std::vector<Token> tokens = parser.getTokens();
+        std::vector<cse498::Token> tokens = parser.getTokens();
 
         REQUIRE(tokens.size() == 5);
 
-        REQUIRE(tokens[0].type == TokenType::Literal);
+        REQUIRE(tokens[0].type == cse498::TokenType::Literal);
         REQUIRE(tokens[0].value == "3");
 
-        REQUIRE(tokens[1].type == TokenType::Operator);
+        REQUIRE(tokens[1].type == cse498::TokenType::Operator);
         REQUIRE(tokens[1].value == "+");
 
-        REQUIRE(tokens[2].type == TokenType::Literal);
+        REQUIRE(tokens[2].type == cse498::TokenType::Literal);
         REQUIRE(tokens[2].value == "4");
 
-        REQUIRE(tokens[3].type == TokenType::Operator);
+        REQUIRE(tokens[3].type == cse498::TokenType::Operator);
         REQUIRE(tokens[3].value == "*");
 
-        REQUIRE(tokens[4].type == TokenType::Variable);
+        REQUIRE(tokens[4].type == cse498::TokenType::Variable);
         REQUIRE(tokens[4].value == "x");
     }
 
     SECTION("Expression with variable, parentheses, and index") {
-        ExpressionParser parser;
+        cse498::ExpressionParser parser;
         REQUIRE_NOTHROW(parser.setRawExpression("2 + (var1 + {0})"));
 
-        std::vector<Token> tokens = parser.getTokens();
+        std::vector<cse498::Token> tokens = parser.getTokens();
 
         REQUIRE(tokens.size() == 7);
-        REQUIRE(tokens[0].type == TokenType::Literal);
+        REQUIRE(tokens[0].type == cse498::TokenType::Literal);
         REQUIRE(tokens[0].value == "2");
 
-        REQUIRE(tokens[1].type == TokenType::Operator);
+        REQUIRE(tokens[1].type == cse498::TokenType::Operator);
         REQUIRE(tokens[1].value == "+");
 
-        REQUIRE(tokens[2].type == TokenType::Parenthesis);
+        REQUIRE(tokens[2].type == cse498::TokenType::Parenthesis);
         REQUIRE(tokens[2].value == "(");
 
-        REQUIRE(tokens[3].type == TokenType::Variable);
+        REQUIRE(tokens[3].type == cse498::TokenType::Variable);
         REQUIRE(tokens[3].value == "var1");
 
-        REQUIRE(tokens[4].type == TokenType::Operator);
+        REQUIRE(tokens[4].type == cse498::TokenType::Operator);
         REQUIRE(tokens[4].value == "+");
 
-        REQUIRE(tokens[5].type == TokenType::Index);
+        REQUIRE(tokens[5].type == cse498::TokenType::Index);
         REQUIRE(tokens[5].value == "0");
 
-        REQUIRE(tokens[6].type == TokenType::Parenthesis);
+        REQUIRE(tokens[6].type == cse498::TokenType::Parenthesis);
         REQUIRE(tokens[6].value == ")");
     }
 
     SECTION("Tokenize: Decimal/Floating point literals") {
-        ExpressionParser parser;
+        cse498::ExpressionParser parser;
         REQUIRE_NOTHROW(parser.setRawExpression("10.5 * 2"));
 
-        std::vector<Token> tokens = parser.getTokens();
+        std::vector<cse498::Token> tokens = parser.getTokens();
 
         REQUIRE(tokens.size() == 3);
 
-        REQUIRE(tokens[0].type == TokenType::Literal);
+        REQUIRE(tokens[0].type == cse498::TokenType::Literal);
         REQUIRE(tokens[0].value == "10.5");
 
-        REQUIRE(tokens[1].type == TokenType::Operator);
+        REQUIRE(tokens[1].type == cse498::TokenType::Operator);
         REQUIRE(tokens[1].value == "*");
 
-        REQUIRE(tokens[2].type == TokenType::Literal);
+        REQUIRE(tokens[2].type == cse498::TokenType::Literal);
         REQUIRE(tokens[2].value == "2");
     }
 
     SECTION("Multi-char relational operators part 1") {
-        ExpressionParser parser;
+        cse498::ExpressionParser parser;
         REQUIRE_NOTHROW(parser.setRawExpression("x >= 5 && y < 10"));
 
-        std::vector<Token> tokens = parser.getTokens();
+        std::vector<cse498::Token> tokens = parser.getTokens();
 
         REQUIRE(tokens.size() == 7);
 
-        REQUIRE(tokens[0].type == TokenType::Variable);
+        REQUIRE(tokens[0].type == cse498::TokenType::Variable);
         REQUIRE(tokens[0].value == "x");
 
-        REQUIRE(tokens[1].type == TokenType::Operator);
+        REQUIRE(tokens[1].type == cse498::TokenType::Operator);
         REQUIRE(tokens[1].value == ">=");
 
-        REQUIRE(tokens[2].type == TokenType::Literal);
+        REQUIRE(tokens[2].type == cse498::TokenType::Literal);
         REQUIRE(tokens[2].value == "5");
 
-        REQUIRE(tokens[3].type == TokenType::Operator);
+        REQUIRE(tokens[3].type == cse498::TokenType::Operator);
         REQUIRE(tokens[3].value == "&&");
 
-        REQUIRE(tokens[4].type == TokenType::Variable);
+        REQUIRE(tokens[4].type == cse498::TokenType::Variable);
         REQUIRE(tokens[4].value == "y");
 
-        REQUIRE(tokens[5].type == TokenType::Operator);
+        REQUIRE(tokens[5].type == cse498::TokenType::Operator);
         REQUIRE(tokens[5].value == "<");
 
-        REQUIRE(tokens[6].type == TokenType::Literal);
+        REQUIRE(tokens[6].type == cse498::TokenType::Literal);
         REQUIRE(tokens[6].value == "10");
     }
 
     SECTION("Multi-char relational operators part 2") {
-        ExpressionParser parser;
+        cse498::ExpressionParser parser;
         REQUIRE_NOTHROW(parser.setRawExpression("a||bx!=y > z"));
 
-        std::vector<Token> tokens = parser.getTokens();
+        std::vector<cse498::Token> tokens = parser.getTokens();
 
         REQUIRE(tokens.size() == 7);
         
-        REQUIRE(tokens[0].type == TokenType::Variable);
+        REQUIRE(tokens[0].type == cse498::TokenType::Variable);
         REQUIRE(tokens[0].value == "a");
 
-        REQUIRE(tokens[1].type == TokenType::Operator);
+        REQUIRE(tokens[1].type == cse498::TokenType::Operator);
         REQUIRE(tokens[1].value == "||");
 
-        REQUIRE(tokens[2].type == TokenType::Variable);
+        REQUIRE(tokens[2].type == cse498::TokenType::Variable);
         REQUIRE(tokens[2].value == "bx");
 
-        REQUIRE(tokens[3].type == TokenType::Operator);
+        REQUIRE(tokens[3].type == cse498::TokenType::Operator);
         REQUIRE(tokens[3].value == "!=");
 
-        REQUIRE(tokens[4].type == TokenType::Variable);
+        REQUIRE(tokens[4].type == cse498::TokenType::Variable);
         REQUIRE(tokens[4].value == "y");
 
-        REQUIRE(tokens[5].type == TokenType::Operator);
+        REQUIRE(tokens[5].type == cse498::TokenType::Operator);
         REQUIRE(tokens[5].value == ">");
 
-        REQUIRE(tokens[6].type == TokenType::Variable);
+        REQUIRE(tokens[6].type == cse498::TokenType::Variable);
         REQUIRE(tokens[6].value == "z");
     }
 
     SECTION("Math operators and parentheses") {
-        ExpressionParser parser;
+        cse498::ExpressionParser parser;
         REQUIRE_NOTHROW(parser.setRawExpression("(a + b) * c - d / e ^ f % g"));
 
-        std::vector<Token> tokens = parser.getTokens();
+        std::vector<cse498::Token> tokens = parser.getTokens();
 
         REQUIRE(tokens.size() == 15);
 
-        REQUIRE(tokens[0].type == TokenType::Parenthesis);
+        REQUIRE(tokens[0].type == cse498::TokenType::Parenthesis);
         REQUIRE(tokens[0].value == "(");
 
-        REQUIRE(tokens[1].type == TokenType::Variable);
+        REQUIRE(tokens[1].type == cse498::TokenType::Variable);
         REQUIRE(tokens[1].value == "a");
 
-        REQUIRE(tokens[2].type == TokenType::Operator);
+        REQUIRE(tokens[2].type == cse498::TokenType::Operator);
         REQUIRE(tokens[2].value == "+");
 
-        REQUIRE(tokens[3].type == TokenType::Variable);
+        REQUIRE(tokens[3].type == cse498::TokenType::Variable);
         REQUIRE(tokens[3].value == "b");
 
-        REQUIRE(tokens[4].type == TokenType::Parenthesis);
+        REQUIRE(tokens[4].type == cse498::TokenType::Parenthesis);
         REQUIRE(tokens[4].value == ")");
 
-        REQUIRE(tokens[5].type == TokenType::Operator);
+        REQUIRE(tokens[5].type == cse498::TokenType::Operator);
         REQUIRE(tokens[5].value == "*");
 
-        REQUIRE(tokens[6].type == TokenType::Variable);
+        REQUIRE(tokens[6].type == cse498::TokenType::Variable);
         REQUIRE(tokens[6].value == "c");
 
-        REQUIRE(tokens[7].type == TokenType::Operator);
+        REQUIRE(tokens[7].type == cse498::TokenType::Operator);
         REQUIRE(tokens[7].value == "-");
 
-        REQUIRE(tokens[8].type == TokenType::Variable);
+        REQUIRE(tokens[8].type == cse498::TokenType::Variable);
         REQUIRE(tokens[8].value == "d");
 
-        REQUIRE(tokens[9].type == TokenType::Operator);
+        REQUIRE(tokens[9].type == cse498::TokenType::Operator);
         REQUIRE(tokens[9].value == "/");
 
-        REQUIRE(tokens[10].type == TokenType::Variable);
+        REQUIRE(tokens[10].type == cse498::TokenType::Variable);
         REQUIRE(tokens[10].value == "e");
 
-        REQUIRE(tokens[11].type == TokenType::Operator);
+        REQUIRE(tokens[11].type == cse498::TokenType::Operator);
         REQUIRE(tokens[11].value == "^");
 
-        REQUIRE(tokens[12].type == TokenType::Variable);
+        REQUIRE(tokens[12].type == cse498::TokenType::Variable);
         REQUIRE(tokens[12].value == "f");
 
-        REQUIRE(tokens[13].type == TokenType::Operator);
+        REQUIRE(tokens[13].type == cse498::TokenType::Operator);
         REQUIRE(tokens[13].value == "%");
 
-        REQUIRE(tokens[14].type == TokenType::Variable);
+        REQUIRE(tokens[14].type == cse498::TokenType::Variable);
         REQUIRE(tokens[14].value == "g");
     }
 }
@@ -206,46 +206,46 @@ TEST_CASE("Tokenize: Valid expressions", "[tokenize]") {
 // Generated by Gemini 3 Pro 2026-2-16, but under the supervision of author
 TEST_CASE("Tokenize: Invalid expressions", "[tokenize]") {
     SECTION("Invalid character") {
-        REQUIRE_THROWS_AS(ExpressionParser("3 + 4 * x @"), ExpressionException);
+        REQUIRE_THROWS_AS(cse498::ExpressionParser("3 + 4 * x @"), cse498::ExpressionException);
     }
 
     SECTION("Unclosed index") {
-        REQUIRE_THROWS_AS(ExpressionParser("{0 + 1"), ExpressionException);
+        REQUIRE_THROWS_AS(cse498::ExpressionParser("{0 + 1"), cse498::ExpressionException);
     }
 
     SECTION("Empty index") {
-        REQUIRE_THROWS_AS(ExpressionParser("{} + 1"), ExpressionException);
+        REQUIRE_THROWS_AS(cse498::ExpressionParser("{} + 1"), cse498::ExpressionException);
     }
 
     SECTION("Single-character operator") {
-        REQUIRE_THROWS_AS(ExpressionParser("x = 5"), ExpressionException);
+        REQUIRE_THROWS_AS(cse498::ExpressionParser("x = 5"), cse498::ExpressionException);
     }
 
     SECTION("Invalid operator") {
-        REQUIRE_THROWS_AS(ExpressionParser("x $ 5"), ExpressionException);
+        REQUIRE_THROWS_AS(cse498::ExpressionParser("x $ 5"), cse498::ExpressionException);
     }
 
     SECTION("Invalid index format") {
-        REQUIRE_THROWS_AS(ExpressionParser("{abc} + 1"), ExpressionException);
+        REQUIRE_THROWS_AS(cse498::ExpressionParser("{abc} + 1"), cse498::ExpressionException);
     }
 
     SECTION("Inalid operator '!'") {
-        REQUIRE_THROWS_AS(ExpressionParser("!x + 1"), ExpressionException);
+        REQUIRE_THROWS_AS(cse498::ExpressionParser("!x + 1"), cse498::ExpressionException);
     }
 
     SECTION("Inalid operator '&'") {
-        REQUIRE_THROWS_AS(ExpressionParser("x & 1"), ExpressionException);
+        REQUIRE_THROWS_AS(cse498::ExpressionParser("x & 1"), cse498::ExpressionException);
     }
 
     SECTION("Inalid operator '|'") {
-        REQUIRE_THROWS_AS(ExpressionParser("x | 1"), ExpressionException);
+        REQUIRE_THROWS_AS(cse498::ExpressionParser("x | 1"), cse498::ExpressionException);
     }
 }
 
 
 // Validatior Tests
 TEST_CASE("ValidateExpr: Valid expressions", "[validate]") {
-    ExpressionParser parser;
+    cse498::ExpressionParser parser;
 
     SECTION("Simple valid expression") {
         parser.setRawExpression("3 + 4 * x");
@@ -277,7 +277,7 @@ TEST_CASE("ValidateExpr: Valid expressions", "[validate]") {
 }
 
 TEST_CASE("ValidateExpr: Invalid expressions", "[validate]") {
-    ExpressionParser parser;
+    cse498::ExpressionParser parser;
 
     SECTION("Invalid Operator order"){
         parser.setRawExpression("3 + * 4");
@@ -328,7 +328,7 @@ TEST_CASE("ValidateExpr: Invalid expressions", "[validate]") {
 
 // Parse Tests
 TEST_CASE("Parse: Valid expressions", "[parse]") {
-    ExpressionParser parser;
+    cse498::ExpressionParser parser;
     
     SECTION("Simple expression") {
         parser.setRawExpression("3 + 4 * x");
@@ -472,7 +472,7 @@ TEST_CASE("Parse: Valid expressions", "[parse]") {
 }
 
 TEST_CASE("Parse: Invalid expressions", "[parse]") {
-    ExpressionParser parser;
+    cse498::ExpressionParser parser;
 
     SECTION("Missing variables") {
         parser.setRawExpression("x + 5");
@@ -481,7 +481,7 @@ TEST_CASE("Parse: Invalid expressions", "[parse]") {
         std::vector<double> arr = {};
         std::map<std::string, double> vars = {};
 
-        REQUIRE_THROWS_AS(func(arr, vars), ExpressionException);
+        REQUIRE_THROWS_AS(func(arr, vars), cse498::ExpressionException);
 
         vars["x"] = 2;
         REQUIRE(func(arr, vars) == Approx(7.0));
@@ -490,7 +490,7 @@ TEST_CASE("Parse: Invalid expressions", "[parse]") {
         func = parser.parse();
 
         vars = {{"a", 2}, {"b", 3}};
-        REQUIRE_THROWS_AS(func(arr, vars), ExpressionException);
+        REQUIRE_THROWS_AS(func(arr, vars), cse498::ExpressionException);
 
         vars["c"] = 4;
         REQUIRE(func(arr, vars) == Approx(10.0));
@@ -503,7 +503,7 @@ TEST_CASE("Parse: Invalid expressions", "[parse]") {
         std::vector<double> arr = {};
         std::map<std::string, double> vars = {};
 
-        REQUIRE_THROWS_AS(func(arr, vars), ExpressionException);
+        REQUIRE_THROWS_AS(func(arr, vars), cse498::ExpressionException);
 
         arr.push_back(2);
         REQUIRE(func(arr, vars) == Approx(7.0));
@@ -512,7 +512,7 @@ TEST_CASE("Parse: Invalid expressions", "[parse]") {
         func = parser.parse();
 
         arr = {1.5};
-        REQUIRE_THROWS_AS(func(arr, vars), ExpressionException);
+        REQUIRE_THROWS_AS(func(arr, vars), cse498::ExpressionException);
 
         arr.push_back(2.5);
         REQUIRE(func(arr, vars) == Approx(7.5));
@@ -525,7 +525,7 @@ TEST_CASE("Parse: Invalid expressions", "[parse]") {
         std::vector<double> arr = {};
         std::map<std::string, double> vars = {{"x", 0}};
 
-        REQUIRE_THROWS_AS(func(arr, vars), ExpressionException);
+        REQUIRE_THROWS_AS(func(arr, vars), cse498::ExpressionException);
 
         vars["x"] = 2;
         REQUIRE(func(arr, vars) == Approx(5.0));
@@ -534,36 +534,36 @@ TEST_CASE("Parse: Invalid expressions", "[parse]") {
     // Generated by Gemini 3 Pro 2026-2-16, but under the supervision of author
     SECTION("Invalid operator usage") {
         parser.setRawExpression("3 + * 4");
-        REQUIRE_THROWS_AS(parser.parse(), ExpressionException);
+        REQUIRE_THROWS_AS(parser.parse(), cse498::ExpressionException);
 
         parser.setRawExpression("x / / y");
-        REQUIRE_THROWS_AS(parser.parse(), ExpressionException);
+        REQUIRE_THROWS_AS(parser.parse(), cse498::ExpressionException);
 
         parser.setRawExpression("a && || b");
-        REQUIRE_THROWS_AS(parser.parse(), ExpressionException);
+        REQUIRE_THROWS_AS(parser.parse(), cse498::ExpressionException);
 
         parser.setRawExpression("* x + 1");
-        REQUIRE_THROWS_AS(parser.parse(), ExpressionException);
+        REQUIRE_THROWS_AS(parser.parse(), cse498::ExpressionException);
 
         parser.setRawExpression("x + 1 -");
-        REQUIRE_THROWS_AS(parser.parse(), ExpressionException);
+        REQUIRE_THROWS_AS(parser.parse(), cse498::ExpressionException);
     }
 
     // Generated by Gemini 3 Pro 2026-2-16, but under the supervision of author
     SECTION("Mismatched parentheses") {
         parser.setRawExpression("((x + 2)");
-        REQUIRE_THROWS_AS(parser.parse(), ExpressionException);
+        REQUIRE_THROWS_AS(parser.parse(), cse498::ExpressionException);
 
         parser.setRawExpression("x + 2))");
-        REQUIRE_THROWS_AS(parser.parse(), ExpressionException);
+        REQUIRE_THROWS_AS(parser.parse(), cse498::ExpressionException);
 
         parser.setRawExpression("((x + 2)) + (y * 3");
-        REQUIRE_THROWS_AS(parser.parse(), ExpressionException);
+        REQUIRE_THROWS_AS(parser.parse(), cse498::ExpressionException);
 
         parser.setRawExpression("() + 5");
-        REQUIRE_THROWS_AS(parser.parse(), ExpressionException);
+        REQUIRE_THROWS_AS(parser.parse(), cse498::ExpressionException);
 
         parser.setRawExpression(")(");
-        REQUIRE_THROWS_AS(parser.parse(), ExpressionException);
+        REQUIRE_THROWS_AS(parser.parse(), cse498::ExpressionException);
     }
 }
