@@ -14,8 +14,7 @@
 #include "../../source/tools/PointClass.hpp"
 #include "../../source/tools/Circle.hpp"
 
-using cse498::Circle;
-using cse498::Point;
+using namespace cse498;
 
 TEST_CASE("Circle default constructor") {
   Circle c;
