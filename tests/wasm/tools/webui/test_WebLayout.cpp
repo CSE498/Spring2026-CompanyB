@@ -1,5 +1,6 @@
 #include <emscripten.h>
 #include <memory>
+#include <print>
 
 #include <catch2/catch_test_macros.hpp>
 
@@ -38,6 +39,7 @@ struct SetupMockDOMWebLayout {
         elem.appendChild = function(child) {
           if (!elem.childNodes.includes(child)) {
             elem.childNodes.push(child);
+            child.parentElement = elem;
           }
         };
         elem.removeChild = function(child) {
@@ -89,71 +91,141 @@ struct SetupMockDOMWebLayout {
     }
     ;
 
-    using namespace cse498;
+using namespace cse498;
 
-    TEST_CASE("WebLayout constructor creates DOM element with ID",
-              "[WebLayout]") {
-      SetupMockDOMWebLayout mock;
-      WebLayout layout("layout1");
+// -------- Utilities for testing WebLayout --------
 
-      REQUIRE(layout.GetId() == "layout1");
-
-      int layoutPresent = EM_ASM_INT(
-          {
-            const id = UTF8ToString($0);
-            const elem = document.getElementById(id);
-            if (elem) {
-              return 1;
-            } else
-              return 0;
-          },
-          layout.GetId().c_str());
-
-      REQUIRE(layoutPresent == 1);
-    }
-
-    TEST_CASE("WebLayout DOM element is removed on object being destructed",
-              "[WebLayout]") {
-      SetupMockDOMWebLayout mock;
+/**
+ * Helper function that checks if an element of given ID is present in the DOM
+ */
+int ELEMENT_PRESENT(std::string elemId) {
+  int elementPresent = EM_ASM_INT(
       {
-        WebLayout layout("layout1");
-      }
+        const id = UTF8ToString($0);
+        const elem = document.getElementById(id);
+        if (elem) {
+          return 1;
+        } else
+          return 0;
+      },
+      elemId.c_str());
 
-      std::string id = "layout1";
+  return elementPresent;
+}
 
-      int layoutPresent = EM_ASM_INT(
-          {
-            const id = UTF8ToString($0);
-            const elem = document.getElementById(id);
-            if (elem) {
-              return 1;
-            } else
-              return 0;
-          },
-          id.c_str());
+/**
+ * Checks all invariants after adding an element to a WebLayout
+ */
+void TEST_ADD_ELEMENT(WebLayout& layout, std::shared_ptr<WebElement> elem) {
+  auto lengthBefore = layout.GetNumChildren();
 
-      REQUIRE(layoutPresent == 0);
-    }
+  REQUIRE_NOTHROW(layout.AddChild(elem));
 
-    TEST_CASE("WebLayout can add and remove children", "[WebLayout]") {
-      SetupMockDOMWebLayout mock;
-      WebLayout layout("layout1");
+  REQUIRE(layout.GetNumChildren() == lengthBefore+1);
 
-      auto elem1 = std::make_shared<WebElement>("elem1");
-      auto elem2 = std::make_shared<WebElement>("elem2");
+  // Check that element is in the DOM, and it's parent is the layout
+  std::string layoutId = layout.GetId();
+  std::string elemId = elem->GetId();
+  int domCheck = EM_ASM_INT(
+      {
+        const layoutId = UTF8ToString($0);
+        const elemId = UTF8ToString($1);
+        
+        const elem = document.getElementById(elemId);
 
-      REQUIRE_NOTHROW(layout.AddChild(elem1));
-      REQUIRE_NOTHROW(layout.AddChild(elem2));
-    }
+        if (!elem) return 0;
+        if (elem.parentElement?.id != layoutId) return 0;
 
-    TEST_CASE("WebLayout can set properties with chained function calls",
-              "[WebLayout]") {
-      SetupMockDOMWebLayout mock;
-      WebLayout layout("layout1");
+        return 1;
+      },
+      layoutId.c_str(),
+      elemId.c_str());
 
-      REQUIRE_NOTHROW(layout.SetDirection("column")
-                          .SetJustifyContent("flex-start")
-                          .SetAlignItems("center")
-                          .SetAlignContent("center")
-                          .SetGap("5px"));
-    }
+  REQUIRE(domCheck == 1);
+}
+
+/**
+ * Checks all invariants after removing an element from a WebLayout
+ */
+void TEST_REMOVE_ELEMENT(WebLayout& layout, std::shared_ptr<WebElement> elem) {
+  auto lengthBefore = layout.GetNumChildren();
+
+  // Print elements of WebLayout
+  // std::println("Elements before: ");
+  // for (auto& elem : layout.elements) {
+  //   std::println("{}", elem->GetId());
+  // }
+
+  REQUIRE_NOTHROW(layout.RemoveChild(elem));
+
+  REQUIRE(layout.GetNumChildren() == lengthBefore-1);
+  
+  // Child should not be in the DOM anymore 
+  // REQUIRE(ELEMENT_PRESENT(elem->GetId()) == 0);
+}
+
+// -------- Tests for WebLayout --------
+
+TEST_CASE("WebLayout constructor creates DOM element with ID",
+          "[WebLayout]") {
+  SetupMockDOMWebLayout mock;
+  WebLayout layout("layout1");
+
+  REQUIRE(layout.GetId() == "layout1");
+
+  int layoutPresent = EM_ASM_INT(
+      {
+        const id = UTF8ToString($0);
+        const elem = document.getElementById(id);
+
+        if (elem) {
+          return 1;
+        } else
+          return 0;
+      },
+      layout.GetId().c_str());
+
+  REQUIRE(layoutPresent == 1);
+}
+
+TEST_CASE("WebLayout DOM element is removed on object being destructed",
+          "[WebLayout]") {
+  SetupMockDOMWebLayout mock;
+  {
+    WebLayout layout("layout1");
+  }
+
+  std::string id = "layout1";
+
+  REQUIRE(ELEMENT_PRESENT("layout1") == 0);
+}
+
+TEST_CASE("WebLayout can add and remove children", "[WebLayout]") {
+  SetupMockDOMWebLayout mock;
+  WebLayout layout("layout1");
+
+  auto elem1 = std::make_shared<WebElement>("elem1");
+  auto elem2 = std::make_shared<WebElement>("elem2");
+
+  TEST_ADD_ELEMENT(layout, elem1);
+  TEST_ADD_ELEMENT(layout, elem2);
+
+  TEST_REMOVE_ELEMENT(layout, elem1);
+  TEST_REMOVE_ELEMENT(layout, elem2);
+}
+
+TEST_CASE("WebLayout: adding element twice is error", "[WebLayout]") {
+  // TODO: Implement test
+}
+
+TEST_CASE("WebLayout can set properties with chained function calls",
+          "[WebLayout]") {
+  SetupMockDOMWebLayout mock;
+  WebLayout layout("layout1");
+
+  REQUIRE_NOTHROW(layout.SetDirection("column")
+                      .SetJustifyContent("flex-start")
+                      .SetAlignItems("center")
+                      .SetAlignContent("center")
+                      .SetGap("5px"));
+}
