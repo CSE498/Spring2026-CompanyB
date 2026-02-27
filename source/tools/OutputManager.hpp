@@ -55,7 +55,8 @@ class OutputManager {
 
   /// @brief Sets the output file path and closes any previously open file.
   /// @param path Path for the JSON log file.
-  void SetOutputFile(const std::string& path);
+  /// @return true on success, false if closing the previous file failed.
+  bool SetOutputFile(const std::string& path);
 
   /// @brief Records a log message at the given level; writes to file and/or
   /// console per current log level.
@@ -65,13 +66,18 @@ class OutputManager {
 
   /// @brief Sets the active log level (e.g. at start of a simulation run).
   /// @param level New log level.
-  void SetLogLevel(LogLevel level);
+  void SetLogLevel(LogLevel level) noexcept;
 
   /// @brief Writes the complete log and computed statistics from DataLog to
   /// JSON file and console. Called by DataLog::WriteToOutput() at the end of a
   /// simulation run.
   /// @param dataLog DataLog instance containing entries and statistics.
   void WriteSimulationOutput(const DataLog& dataLog);
+
+  /// @brief Returns the in-memory buffered log (for unit testing).
+  /// @return Const reference to the accumulated JSON (messages, entries,
+  /// statistics).
+  [[nodiscard]] const nlohmann::json& GetBufferedLog() const noexcept;
 };
 
 }  // namespace cse498
