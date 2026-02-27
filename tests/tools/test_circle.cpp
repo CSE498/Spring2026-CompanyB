@@ -75,7 +75,11 @@ TEST_CASE("Circle distance to point and circle") {
 
   Circle other(Point(6.0, 8.0), 1.0);
   REQUIRE(std::fabs(c.CenterDistanceTo(other) - 10.0) < 1e-9);
+<<<<<<< HEAD
   REQUIRE(std::fabs(c.DistanceTo(other) - 10.0) < 1e-9);  // backward-compatible alias
+=======
+  REQUIRE(std::fabs(c.DistanceTo(other) - 10.0) < 1e-9);
+>>>>>>> 9b0363226cd6092e5000c51a531f4038afcedfc0
 }
 
 TEST_CASE("Circle overlap when one is inside another") {

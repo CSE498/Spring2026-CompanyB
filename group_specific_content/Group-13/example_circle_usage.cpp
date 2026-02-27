@@ -86,7 +86,7 @@ static void DemonstrateDistances() {
 
   Circle other(Point(6.0, 8.0), 1.0);
   std::cout << "Other circle center (6, 8), radius 1\n";
-  std::cout << "  Center-to-center distance: " << c.DistanceTo(other) << " (expect 10)\n\n";
+  std::cout << "  Center-to-center distance: " << c.CenterDistanceTo(other) << " (expect 10)\n\n";
 }
 
 static void DemonstrateCircleContainment() {

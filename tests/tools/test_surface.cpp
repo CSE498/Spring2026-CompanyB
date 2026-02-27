@@ -1,14 +1,14 @@
 // test_surface_catch2.cpp
-#include <catch2/catch.hpp>
+#include "../../third-party/Catch/single_include/catch2/catch.hpp"               
 
 #include <set>
 #include <vector>
 #include <tuple>
 
-#include "Point.h"
-#include "Circle.h"
-#include "Box.h"
-#include "Surface.h"
+#include "../../source/tools/PointClass.hpp"
+#include "../../source/tools/Circle.hpp"
+#include "../../source/tools/Box.hpp"
+#include "../../source/tools/Surface.hpp"
 
 TEST_CASE("Surface; add shapes and detect overlap", "surface circle") {
   Surface::Config cfg;
