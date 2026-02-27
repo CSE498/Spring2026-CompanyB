@@ -40,8 +40,8 @@ using HeuristicFunc = std::function<double(const Point &, const Point &)>;
  */
 class PathGenerator {
 public:
-  // Tolerance for treating two points as coincident (floating-point comparison)
-  static constexpr double kPointCoincidentTolerance = 0.01;
+  // Fraction of step_size_ below which two points are treated as coincident
+  static constexpr double kPointCoincidentFraction = 0.01;
   // Fraction of step_size_ within which a node is considered to have reached
   // the goal
   static constexpr double kGoalReachedFraction = 0.6;
@@ -69,8 +69,8 @@ public:
     assert(canMove && "WorldQueryFunc cannot be null");
 
     // Handle degenerate case: start == goal
-    if (std::abs(start.x() - goal.x()) < kPointCoincidentTolerance &&
-        std::abs(start.y() - goal.y()) < kPointCoincidentTolerance) {
+    if (std::abs(start.x() - goal.x()) < step_size_ * kPointCoincidentFraction &&
+        std::abs(start.y() - goal.y()) < step_size_ * kPointCoincidentFraction) {
       WorldPath path;
       path.addPoint(start);
       return path;
@@ -115,7 +115,7 @@ public:
       double distToGoal = heuristic_(current, goal);
       if (distToGoal < step_size_ * kGoalReachedFraction) {
         // Close enough to goal - add goal point and return
-        if (distToGoal > kPointCoincidentTolerance) {
+        if (distToGoal > step_size_ * kPointCoincidentFraction) {
           cameFrom[goal] = current;
           return ReconstructPath(cameFrom, goal);
         } else {
