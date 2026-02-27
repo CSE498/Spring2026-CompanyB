@@ -63,12 +63,12 @@ bool operator==(const Point& lhs, const Point& rhs){
 }
 
 // equality (==) between a point and a scalar
-bool operator==(const Point& lhs, double rhs){
-   return false;
+bool operator==(const Point& lhs [[maybe_unused]], double rhs [[maybe_unused]] ){
+    return false;
 }
 
 //  equality (==) between a scalar and a point
-bool operator==(double lhs, const Point& rhs){
+bool operator==(double lhs [[maybe_unused]], const Point& rhs [[maybe_unused]]){
     return false;
 }
 
@@ -79,15 +79,15 @@ bool operator!=(const Point& lhs, const Point& rhs){
         return true;
     return false;
 }
-bool operator!=(const Point& lhs, double rhs){
-    //std::cout << "You cannot compare a scalar and a Point" << std::endl;
-    return false;
-}
-bool operator!=(double lhs, const Point& rhs){
-    //std::cout << "You cannot compare a scalar and a Point" << std::endl;
-    return false;
+
+
+bool operator!=(const Point& lhs [[maybe_unused]], double rhs [[maybe_unused]]){
+    return true;
 }
 
+bool operator!=( double lhs [[maybe_unused]], const Point& rhs [[maybe_unused]] ) {
+    return true;
+}
 
 double dot(const Point& A, const Point& B){
     return (( A.getX() * B.getX()) + (A.getY() * B.getY() ));

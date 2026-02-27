@@ -148,8 +148,8 @@ TEST_CASE("Testing equality operator", "[Point][equal==]"){
 
     double s = 12;
 
-    CHECK_FALSE(A != s);
-    CHECK_FALSE(s == A);
+    CHECK(A != s);
+    CHECK(s != A);
 };
 
 TEST_CASE("Testing dot method", "[Point][dot]"){

@@ -162,7 +162,7 @@ Point operator*(double lhs, const Point& rhs);
 
 // The equality "operators"
 bool operator==(const Point& lhs, const Point& rhs);
-bool operator==(const Point& lhs, double rhs);
+bool operator==(const Point& lhs, double rhs );
 bool operator==(double lhs, const Point& rhs);
 
 
