@@ -1,8 +1,0 @@
-{
-	"InstallScripts" : 
-	[
-		"/Users/rancho/Desktop/capstone/Spring2026-CompanyB/build/cmake_install.cmake",
-		"/Users/rancho/Desktop/capstone/Spring2026-CompanyB/build/third-party/Catch/cmake_install.cmake"
-	],
-	"Parallel" : false
-}
