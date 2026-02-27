@@ -11,6 +11,8 @@
 #include <vector>
 #include <expected>
 
+#include <emscripten/val.h>
+
 #include "WebElement.hpp"
 
 namespace cse498 {
@@ -22,6 +24,8 @@ namespace cse498 {
 class WebLayout : public WebElement {
  protected:
   std::vector<std::shared_ptr<WebElement>> elements;
+  /// The DOM layout element
+  emscripten::val dom_element = emscripten::val::null();
 
  public:
   enum class Error {

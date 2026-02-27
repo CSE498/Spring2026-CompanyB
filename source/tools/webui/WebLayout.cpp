@@ -10,31 +10,27 @@
 #include <emscripten/html5.h>
 #include <algorithm>
 
+using emscripten::val;
+
 namespace cse498 {
 
-WebLayout::WebLayout(std::string id) : WebElement(id) {
-  EM_ASM(
-      {
-        let layoutId = UTF8ToString($0);
-        let layout = document.getElementById(layoutId);
-        if (!layout) {
-          layout = document.createElement('div');
-        }
-        layout.id = layoutId;
-        layout.style.display = 'flex';
-        document.body.appendChild(layout);
-      },
-      id.c_str());
+WebLayout::WebLayout(std::string id) : WebElement(id, false) {
+  val document = val::global("document");
+  val existing = document.call<val>("getElementById", id);
+
+  assert((existing.isNull() || existing.isUndefined()) &&
+         "Element with this ID already exists in the DOM");
+
+  dom_element = document.call<val>("createElement", std::string("div"));
+  dom_element["style"].set("display", "flex");
+  dom_element.set("id", id);
+  document["body"].call<void>("appendChild", dom_element);
 }
 
 WebLayout::~WebLayout() {
-  EM_ASM(
-      {
-        let layoutId = UTF8ToString($0);
-        let layout = document.getElementById(layoutId);
-        layout.remove();
-      },
-      id.c_str());
+  if (!dom_element.isNull() && !dom_element.isUndefined()) {
+    dom_element.call<void>("remove");
+  }
 }
 
 std::expected<void, WebLayout::Error> WebLayout::AddChild(std::shared_ptr<WebElement> elem) {
