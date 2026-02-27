@@ -11,7 +11,7 @@ namespace cse498 {
 // Currently, we're calculating stats based on "duration" 
 // field in the JSON data, but this can be easily modified to 
 // accommodate other fields as needed (will be included in new module specs)
-void DataLog::AddEntry(const nlohmann::json &data) {
+void DataLog::AddEntry(const nlohmann::json& data) {
   // Create log entry with automatic timestamp
   nlohmann::json logEntry = data;
   logEntry["timestamp"] = GlobalClock::GetTime();
@@ -20,12 +20,11 @@ void DataLog::AddEntry(const nlohmann::json &data) {
   mEntries.push_back(logEntry);
 
   // Update statistics based on duration field
-  // Note: Only non-negative durations are included in statistics, as negative
-  // durations do not make physical sense in a simulation context.
   if (data.contains("duration") && data["duration"].is_number()) {
     double duration = data["duration"].get<double>();
     
-    // Only process non-negative durations
+    // Note: Only non-negative durations are included in statistics, as negative
+    // durations do not make physical sense in a simulation context.
     if (duration >= 0.0) {
       mRunningSum += duration;
 
