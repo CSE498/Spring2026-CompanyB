@@ -12,6 +12,7 @@
 #include <limits>
 #include <variant>
 #include <algorithm>
+#include <tuple>
 
 #include "Circle.hpp"
 #include "Box.hpp"
@@ -35,10 +36,11 @@ public:
 
   struct Config {
     double sector_size = 10.0;
-    Config() = default;
   };
 
-  Surface(const Config& cfg = Config())
+  Surface() : Surface(Config{}) {}
+
+  explicit Surface(const Config& cfg)
     : cfg_(cfg), next_id_(1) {
     assert(cfg_.sector_size > 0.0);
   }
@@ -120,10 +122,10 @@ public:
   std::vector<ShapeID> QueryRadius(const Point& center, double radius) const {
     std::vector<ShapeID> out;
     if (entries_.empty()) return out;
-    int minx = CellX(center.x() - radius);
-    int maxx = CellX(center.x() + radius);
-    int miny = CellY(center.y() - radius);
-    int maxy = CellY(center.y() + radius);
+    int minx = CellX(center.getX() - radius);
+    int maxx = CellX(center.getX() + radius);
+    int miny = CellY(center.getY() - radius);
+    int maxy = CellY(center.getY() + radius);
 
     std::unordered_set<ShapeID> seen;
     for (int cx = minx; cx <= maxx; ++cx) {
@@ -274,16 +276,16 @@ private:
       const Circle& c = std::get<Circle>(e.shape);
       const Point& center = c.GetCenter();
       double r = c.GetRadius();
-      minx_d = center.x() - r;
-      maxx_d = center.x() + r;
-      miny_d = center.y() - r;
-      maxy_d = center.y() + r;
+      minx_d = center.getX() - r;
+      maxx_d = center.getX() + r;
+      miny_d = center.getY() - r;
+      maxy_d = center.getY() + r;
     } else {
       const Box& b = std::get<Box>(e.shape);
-      minx_d = b.GetMin().x();
-      miny_d = b.GetMin().y();
-      maxx_d = b.GetMax().x();
-      maxy_d = b.GetMax().y();
+      minx_d = b.GetBottomLeft().getX();
+      miny_d = b.GetBottomLeft().getY();
+      maxx_d = b.GetTopRight().getX();
+      maxy_d = b.GetTopRight().getY();
     }
     int minx = CellX(minx_d);
     int maxx = CellX(maxx_d);
@@ -347,18 +349,18 @@ private:
     if (std::holds_alternative<Box>(va) && std::holds_alternative<Box>(vb)) {
       const Box& ba = std::get<Box>(va);
       const Box& bb = std::get<Box>(vb);
-      return ba.Intersects(bb);
+      return ba.Overlaps(bb);
     }
     // one circle, one box:
     if (std::holds_alternative<Circle>(va) && std::holds_alternative<Box>(vb)) {
       const Circle& ca = std::get<Circle>(va);
       const Box& bb = std::get<Box>(vb);
-      return bb.Intersects(ca);
+      return bb.Overlaps(ca);
     }
     if (std::holds_alternative<Box>(va) && std::holds_alternative<Circle>(vb)) {
       const Box& ba = std::get<Box>(va);
       const Circle& cb = std::get<Circle>(vb);
-      return ba.Intersects(cb);
+      return ba.Overlaps(cb);
     }
     return false;
   }
@@ -372,10 +374,12 @@ private:
     } else {
       const Box& b = std::get<Box>(e.shape);
       // nearest point on AABB to center
-      double cx = center.x();
-      double cy = center.y();
-      double closestX = std::clamp(cx, b.GetMin().x(), b.GetMax().x());
-      double closestY = std::clamp(cy, b.GetMin().y(), b.GetMax().y());
+      double cx = center.getX();
+      double cy = center.getY();
+      double closestX =
+          std::clamp(cx, b.GetBottomLeft().getX(), b.GetTopRight().getX());
+      double closestY =
+          std::clamp(cy, b.GetBottomLeft().getY(), b.GetTopRight().getY());
       double dx = cx - closestX;
       double dy = cy - closestY;
       return (dx*dx + dy*dy) <= (radius + Circle::kEps) * (radius + Circle::kEps);

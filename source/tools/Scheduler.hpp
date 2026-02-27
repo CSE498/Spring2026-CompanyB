@@ -80,6 +80,9 @@ namespace cse498 {
    * 
    * Scheduler maintains a collection of processes with associated weights and
    * determines execution order based on those weights. 
+   * 
+   * @note This class is NOT thread-safe. use external synchronization like 
+   * std::mutex or std::shared_mutex if the scheduler is accessed from multiple threads.
    */
   template<typename ID_TYPE = size_t>
   class Scheduler {
@@ -445,6 +448,16 @@ namespace cse498 {
       }
       process_map.erase(it);
       return {};  // Success
+    }
+    
+    /**
+     * @brief Remove all processes and reset scheduler state
+     */
+    void Clear() noexcept
+    {
+      process_map.clear();
+      next_insertion_order = 0;
+      scheduling_cycle = 0;
     }
     
     /**
@@ -1175,4 +1188,4 @@ namespace cse498 {
     }
   };
 
-} 
+} // closing namespace

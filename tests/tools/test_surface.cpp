@@ -10,6 +10,8 @@
 #include "../../source/tools/Box.hpp"
 #include "../../source/tools/Surface.hpp"
 
+using namespace cse498;
+
 TEST_CASE("Surface; add shapes and detect overlap", "surface circle") {
   Surface::Config cfg;
   cfg.sector_size = 5.0;
@@ -47,9 +49,9 @@ TEST_CASE("Surface; add boxes and detect overlap", "surface box") {
   Surface s(cfg);
 
 
-  Box b1(Point(-1.0, -1.0), Point(1.0, 1.0));
-  Box b2(Point(0.5, 0.5), Point(2.0, 2.0)); // overlaps b1
-  Box b3(Point(5.0, 5.0), Point(6.0, 6.0)); // far away
+  Box b1 = Box::FromCorners(Point(-1.0, -1.0), Point(1.0, 1.0));
+  Box b2 = Box::FromCorners(Point(0.5, 0.5), Point(2.0, 2.0)); // overlaps b1
+  Box b3 = Box::FromCorners(Point(5.0, 5.0), Point(6.0, 6.0)); // far away
 
   auto idb1 = s.AddBox(b1);
   auto idb2 = s.AddBox(b2);
@@ -74,8 +76,8 @@ TEST_CASE("overlap detection and QueryRadius", "surface mixed query") {
   Surface s(cfg);
 
   Circle c(Point(0.0, 0.0), 1.0);
-  Box b(Point(-0.5, -0.5), Point(0.5, 0.5));
-  Box b_far(Point(10.0, 10.0), Point(11.0, 11.0));
+  Box b = Box::FromCorners(Point(-0.5, -0.5), Point(0.5, 0.5));
+  Box b_far = Box::FromCorners(Point(10.0, 10.0), Point(11.0, 11.0));
 
   auto idc = s.AddCircle(c);
   auto idb = s.AddBox(b);
@@ -167,4 +169,29 @@ TEST_CASE("Remove shape", "surface remove") {
   auto id1 = s.AddCircle(c);
   auto id2 = s.AddCircle(c2);
 
+  auto pairs_before = s.DetectAllOverlaps();
+  auto contains_pair = [&](Surface::ShapeID a, Surface::ShapeID b) {
+    for (const auto& p : pairs_before) {
+      if ((p.first == a && p.second == b) || (p.first == b && p.second == a)) return true;
+    }
+    return false;
+  };
+  REQUIRE(contains_pair(id1, id2));
 
+  REQUIRE(s.RemoveShape(id1));
+  REQUIRE_FALSE(s.RemoveShape(id1));
+
+  auto pairs_after = s.DetectAllOverlaps();
+  bool still_overlapping = false;
+  for (const auto& p : pairs_after) {
+    if ((p.first == id1 && p.second == id2) || (p.first == id2 && p.second == id1)) {
+      still_overlapping = true;
+      break;
+    }
+  }
+  REQUIRE_FALSE(still_overlapping);
+
+  auto ids = s.AllShapeIDs();
+  REQUIRE(ids.size() == 1);
+  REQUIRE(ids[0] == id2);
+}
