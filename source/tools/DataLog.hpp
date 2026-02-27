@@ -16,6 +16,10 @@ namespace cse498 {
 /* Class Description:
  *  DataLog is the center of data aggregation and storage for the simulation.
  *  It collects, organizes, and analyzes real-time action data from agents.
+ *  DataLog is a non-copyable (copy constructor and assignment operator
+ *  are deleted) class intentionally to ensure it acts as a unique "global" aggregator
+ *  and logging system. It's a singleton according to our current design pattern. 
+ 
  */
 class DataLog {
  private:
