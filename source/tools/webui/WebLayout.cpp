@@ -8,6 +8,7 @@
 
 #include <emscripten.h>
 #include <emscripten/html5.h>
+#include <algorithm>
 
 namespace cse498 {
 
@@ -37,8 +38,13 @@ WebLayout::~WebLayout() {
 }
 
 WebLayout& WebLayout::AddChild(std::shared_ptr<WebElement> elem) {
+  if (ContainsChild(elem)) {
+    // TODO: handle error case
+  }
+
   // Implementation to add child element to the layout
   auto childId = elem->GetId();
+  // TODO: Handle error case
   EM_ASM(
       {
         let layoutId = UTF8ToString($0);
@@ -49,6 +55,9 @@ WebLayout& WebLayout::AddChild(std::shared_ptr<WebElement> elem) {
 
         if (layout && child) {
           layout.appendChild(child);
+        } else {
+          if (!layout) throw `Layout with id ${layoutId} not found!`;
+          else if (!child) throw `Child with id ${childId} not found!`;
         }
       },
       id.c_str(), childId.c_str());
@@ -57,6 +66,10 @@ WebLayout& WebLayout::AddChild(std::shared_ptr<WebElement> elem) {
 }
 
 WebLayout& WebLayout::RemoveChild(std::shared_ptr<WebElement> elem) {
+  if (!ContainsChild(elem)) {
+    // TODO: handle error case
+  }
+
   // Implementation to remove child element from the layout
   auto childId = elem->GetId();
   EM_ASM(
@@ -71,9 +84,16 @@ WebLayout& WebLayout::RemoveChild(std::shared_ptr<WebElement> elem) {
         }
       },
       id.c_str(), childId.c_str());
-  elements.erase(std::remove(elements.begin(), elements.end(), elem),
-                 elements.end());
+  std::erase(elements, elem);
   return *this;
+}
+
+size_t WebLayout::GetNumChildren() const {
+  return elements.size();
+}
+
+bool WebLayout::ContainsChild(std::shared_ptr<WebElement> elem) const {
+  return std::find(elements.begin(), elements.end(), elem) != elements.end();
 }
 
 WebLayout& WebLayout::SetDirection(std::string dir) {

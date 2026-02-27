@@ -49,6 +49,10 @@ class WebLayout : public WebElement {
    */
   WebLayout& RemoveChild(std::shared_ptr<WebElement> elem);
 
+  size_t GetNumChildren() const;
+
+  bool ContainsChild(std::shared_ptr<WebElement> elem) const;
+
   /**
    * @brief Sets the flex-direction CSS property of the layout container.
    * @param dir The flex direction value (e.g., "row", "column").
