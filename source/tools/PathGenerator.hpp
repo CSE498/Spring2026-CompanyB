@@ -394,22 +394,18 @@ private:
   [[nodiscard]] WorldPath ReconstructPath(
       const std::unordered_map<Point, Point, Math::PointHash> &came_from,
       const Point &current) const {
+    std::vector<Point> points;
+    for (Point node = current;;) {
+      points.push_back(node);
+      auto it = came_from.find(node);
+      if (it == came_from.end())
+        break;
+      node = it->second;
+    }
+    std::reverse(points.begin(), points.end());
     WorldPath path;
-    std::vector<Point> reversePath;
-
-    Point node = current;
-    reversePath.push_back(node);
-
-    while (came_from.find(node) != came_from.end()) {
-      node = came_from.at(node);
-      reversePath.push_back(node);
-    }
-
-    // Reverse to get path from start to goal
-    for (auto it = reversePath.rbegin(); it != reversePath.rend(); ++it) {
-      path.addPoint(*it);
-    }
-
+    for (const auto &p : points)
+      path.addPoint(p);
     return path;
   }
 };
