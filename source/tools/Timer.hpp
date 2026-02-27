@@ -32,7 +32,7 @@ namespace cse498 {
         void Resume();
         // Reset the internal variables of the stopwatch for the object
         void Reset();
-        /// @return total calculated time while the stopwatch is running
+        /// @return total calculated time in ticks
         double GetTotalTime() const;
         /// @return  total calculated time in seconds
         double GetTimeInSeconds() const;
