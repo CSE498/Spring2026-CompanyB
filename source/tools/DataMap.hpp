@@ -118,21 +118,36 @@ class DataMap {
                  */
                 const std::any& Value() const { return mIt->second; }
 
+                /**
+                 * Convenience: cast the value to the specified type.
+                 */
                 template <typename V>
                 V As() const { return std::any_cast<V>(mIt->second); }
         };
 
-        // --- Iterator access ---
-        Iterator begin() { return Iterator(mData.begin()); }
-        Iterator end() { return Iterator(mData.end()); }
-        ConstIterator begin() const { return ConstIterator(mData.cbegin()); }
-        ConstIterator end() const { return ConstIterator(mData.cend()); }
-        ConstIterator cbegin() const { return ConstIterator(mData.cbegin()); }
-        ConstIterator cend() const { return ConstIterator(mData.cend()); }
+        
+        Iterator begin() { return Iterator(mData.begin()); } //< Returns an iterator to the beginning of the map
+        Iterator end() { return Iterator(mData.end()); } //< Returns an iterator to the end of the map
+        ConstIterator begin() const { return ConstIterator(mData.cbegin()); } //< Returns a const iterator to the beginning of the map
+        ConstIterator end() const { return ConstIterator(mData.cend()); } //< Returns a const iterator to the end of the map
+        ConstIterator cbegin() const { return ConstIterator(mData.cbegin()); } //< Returns a const iterator to the beginning of the map
+        ConstIterator cend() const { return ConstIterator(mData.cend()); } //< Returns a const iterator to the end of the map
 
+        /**
+         * Associates the given value with the specified key. If the key already exists, its value is overwritten.
+         * @tparam V The type of the value to store.
+         * @param name The key to associate with the value.
+         * @param value The value to store in the map.
+         */
         template <typename V>
         void Set(const std::string& name, const V& value) { mData[name] = value;}
 
+        /**
+         * Returns the value associated with the given key if it exists and can be cast to the specified type; otherwise, returns an error message.
+         * @tparam V The expected type of the value.
+         * @param name The key associated with the value.
+         * @return The value if the key exists and the type matches; otherwise, an error
+         */
         template <typename V>
         std::expected<V, std::string> Get(const std::string& name) const
         {
@@ -146,6 +161,12 @@ class DataMap {
             return std::any_cast<V>(it->second);
         }
 
+        /**
+         * Returns a reference to the stored value of the specified type.
+         * @tparam V The expected type of the value.
+         * @param name The key associated with the value.
+         * @return A reference to the value if the key exists and the type matches; otherwise
+         */
         template <typename V>
         V& GetRef(const std::string& name)
         {
@@ -156,9 +177,27 @@ class DataMap {
             return *p;
         }
 
+        /**
+         * Checks if the map contains a key.
+         * @param name The key to check for.
+         * @return true if the key exists, false otherwise.
+         */
         bool Contains(const std::string& name) const { return mData.find(name) != mData.end(); }
+        /**
+         * Checks if the map is empty.
+         * @return true if the map is empty, false otherwise.
+         */
         bool IsEmpty() const noexcept { return mData.empty(); }
+        /** 
+         * Returns the number of key-value pairs in the map.
+         * @return The size of the map.
+         */
         int Size() const { return mData.size(); }
+        /**
+         * Removes all key-value pairs from the map, leaving it empty.
+         */
         void Clear() { mData.clear(); }
+
 };
-}
+
+} // namespace cse498
