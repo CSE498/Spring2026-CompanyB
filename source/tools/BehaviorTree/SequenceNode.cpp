@@ -6,10 +6,12 @@ Status SequenceNode::tick()
 
     bool isRunning = false;
 
-    // Check status of active child
+    // Check if children are empty
     auto& children = this->getChildren();
+    if (children.empty()) return Status::Running;
+    
+    // Check status of active child
     auto& child = (*(children.begin() + m_index)) ? *(children.begin() + m_index) : *(children.end() - 1);
-
     Status status = child->tick();
 
     // Short Circuit if m_status is Status::Success or Status::Failure
@@ -41,8 +43,9 @@ std::string SequenceNode::getActivePath()
 { 
     auto& children = this->getChildren();
 
+    if (children.empty()) return m_name;
+
     // Check if child is empty
     auto& child = (*(children.begin() + m_index)) ? *(children.begin() + m_index) : *(children.end() - 1);
-
     return m_name + " - " + child->getActivePath();
 }

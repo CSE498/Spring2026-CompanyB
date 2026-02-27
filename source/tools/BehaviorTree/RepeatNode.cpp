@@ -6,6 +6,8 @@ Status RepeatNode::tick()
 
     // Check status of active child
     auto& child = this->getChild();
+    if (!child) return Status::Running;
+
     Status status = child->tick();
 
     m_status = (status != Status::Failure) ? Status::Running : Status::Failure;
@@ -17,5 +19,5 @@ std::string RepeatNode::getActivePath()
 { 
     auto& child = this->getChild();
 
-    return m_name + " - " + child->getActivePath();
+    return (child) ? m_name + " - " + child->getActivePath() : m_name;
 }

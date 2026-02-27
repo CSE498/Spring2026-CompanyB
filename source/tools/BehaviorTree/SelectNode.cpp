@@ -6,10 +6,12 @@ Status SelectNode::tick()
 
     bool isRunning = false;
 
-    // Check status of active child
+    // Check if children are empty
     auto& children = this->getChildren();
-    auto& child = (*(children.begin() + m_index)) ? *(children.begin() + m_index) : *(children.end() - 1);
+    if (children.empty()) return Status::Running;
 
+    // Check status of active child
+    auto& child = (*(children.begin() + m_index)) ? *(children.begin() + m_index) : *(children.end() - 1);
     Status status = child->tick();
 
     // Short Circuit if m_status is Status::Success or Status::Failure
@@ -40,7 +42,8 @@ Status SelectNode::tick()
 std::string SelectNode::getActivePath()
 { 
     auto& children = this->getChildren();
-    auto& child = (*(children.begin() + m_index)) ? *(children.begin() + m_index) : *(children.end() - 1);
+    if (children.empty()) return m_name;
 
+    auto& child = (*(children.begin() + m_index)) ? *(children.begin() + m_index) : *(children.end() - 1);
     return m_name + " - " + child->getActivePath();
 }

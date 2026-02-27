@@ -3,9 +3,11 @@
 Status InvertNode::tick()
 {
     ++m_tickCount;
-    
-    // Check status of active child
+
     auto& child = this->getChild();
+    if (!child) return Status::Running;
+
+    // Check status of active child
     Status status = child->tick();
 
     if (status == Status::Running) 
@@ -23,5 +25,5 @@ std::string InvertNode::getActivePath()
 { 
     auto& child = this->getChild();
 
-    return m_name + " - " + child->getActivePath();
+    return (child) ? m_name + " - " + child->getActivePath() : m_name;
 }

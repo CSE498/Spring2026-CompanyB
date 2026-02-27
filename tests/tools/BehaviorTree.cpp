@@ -4,7 +4,7 @@
 
 // ATTRIBUTIONS: Used ChatGPT to create initial test cases. Further modifications come from my input
 
-TEST_CASE("BehaviorTree construction and node insertion", "[tree][insert]") {
+TEST_CASE("BehaviorTree Construction and Node Insertion", "[tree][insert]") {
 
     auto root = std::make_unique<SequenceNode>("SeqRoot");
     SequenceNode* rootPtr = root.get();
@@ -17,6 +17,54 @@ TEST_CASE("BehaviorTree construction and node insertion", "[tree][insert]") {
     rootPtr->addNode(std::move(node1));
     rootPtr->addNode(std::move(node2));
     rootPtr->addNode(std::move(node1));
+}
+
+TEST_CASE("Accessing Empty Children in Sequence Node", "[sequence]") {
+
+    auto root = std::make_unique<SequenceNode>("SeqRoot");
+
+    cse498::BehaviorTree tree(std::move(root));
+
+    // tick #1
+    REQUIRE(tree.getActivePath() == "SeqRoot");
+    REQUIRE(tree.tick() == Status::Running);
+    REQUIRE(tree.tickCount() == 1);
+}
+
+TEST_CASE("Accessing Empty Children in Select Node", "[select]") {
+
+    auto root = std::make_unique<SelectNode>("SelRoot");
+
+    cse498::BehaviorTree tree(std::move(root));
+
+    // tick #1
+    REQUIRE(tree.getActivePath() == "SelRoot");
+    REQUIRE(tree.tick() == Status::Running);
+    REQUIRE(tree.tickCount() == 1);
+}
+
+TEST_CASE("Accessing Empty Child in Repeat Node", "[repeat]") {
+
+    auto root = std::make_unique<RepeatNode>("RepRoot");
+
+    cse498::BehaviorTree tree(std::move(root));
+
+    // tick #1
+    REQUIRE(tree.getActivePath() == "RepRoot");
+    REQUIRE(tree.tick() == Status::Running);
+    REQUIRE(tree.tickCount() == 1);
+}
+
+TEST_CASE("Accessing Empty Child in Invert Node", "[invert]") {
+
+    auto root = std::make_unique<InvertNode>("InvRoot");
+
+    cse498::BehaviorTree tree(std::move(root));
+
+    // tick #1
+    REQUIRE(tree.getActivePath() == "InvRoot");
+    REQUIRE(tree.tick() == Status::Running);
+    REQUIRE(tree.tickCount() == 1);
 }
 
 TEST_CASE("Decorator accepts single child and prevents duplicates", "[decorator]") {
@@ -41,7 +89,7 @@ TEST_CASE("Decorator accepts single child and prevents duplicates", "[decorator]
     invPtr->addNode(std::move(act2));
 }
 
-TEST_CASE("Tick propagates correctly through tree (Action)", "[tick]") {
+TEST_CASE("Tick propagates correctly through tree (Action)", "[tree][action][tick]") {
     /*
     Tree:
         SelRoot
@@ -80,7 +128,7 @@ TEST_CASE("Tick propagates correctly through tree (Action)", "[tick]") {
     REQUIRE(act1Ptr->tickCount() == 3);
 }
 
-TEST_CASE("Tick propagates correctly through tree (Simple Sequence)", "[tick]") {
+TEST_CASE("Tick propagates correctly through tree (Simple Sequence)", "[tree][sequence][tick]") {
     /*
     Tree:
         SeqRoot
@@ -148,7 +196,7 @@ TEST_CASE("Tick propagates correctly through tree (Simple Sequence)", "[tick]") 
     // REQUIRE(act2Ptr->tickCount() == 3);
 }
 
-TEST_CASE("Tick propagates correctly through tree (Simple Select)", "[tick]") {
+TEST_CASE("Tick propagates correctly through tree (Simple Select)", "[tree][select][tick]") {
     /*
     Tree:
         SeqRoot
@@ -228,7 +276,7 @@ TEST_CASE("Tick propagates correctly through tree (Simple Select)", "[tick]") {
     REQUIRE(act2Ptr->tickCount() == 3);
 }
 
-TEST_CASE("Tick propagates correctly through tree (Sequence Running)", "[tick]") {
+TEST_CASE("Tick propagates correctly through tree (Sequence Running)", "[tree][sequence][tick]") {
     /*
     Tree:
         SeqRoot
@@ -308,7 +356,7 @@ TEST_CASE("Tick propagates correctly through tree (Sequence Running)", "[tick]")
     REQUIRE(act2Ptr->tickCount() == 3);
 }
 
-TEST_CASE("Tick propagates correctly through tree (Select Running)", "[tick]") {
+TEST_CASE("Tick propagates correctly through tree (Select Running)", "[tree][select][tick]") {
     /*
     Tree:
         SelRoot
@@ -397,7 +445,7 @@ TEST_CASE("Tick propagates correctly through tree (Select Running)", "[tick]") {
     REQUIRE(act2Ptr->tickCount() == 3);
 }
 
-TEST_CASE("Tick propagates correctly through tree (Select Fail)", "[tick]") {
+TEST_CASE("Tick propagates correctly through tree (Select Fail)", "[tree][select][tick]") {
     /*
     Tree:
         SelRoot
