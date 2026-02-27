@@ -8,8 +8,9 @@
 
 #include <catch2/catch.hpp>
 #include <cmath>
+#include <stdexcept>
 
-#include "Point.hpp"
+#include "PointClass.hpp"
 #include "Circle.hpp"
 
 using namespace cse498;
@@ -18,6 +19,22 @@ TEST_CASE("Circle default constructor") {
   Circle c;
   REQUIRE(c.GetCenter() == Point(0.0, 0.0));
   REQUIRE(c.GetRadius() == 0.0);
+}
+
+TEST_CASE("Circle setters update center and radius") {
+  Circle c;
+  c.SetCenter(Point(4.0, -2.0));
+  c.SetRadius(3.5);
+  REQUIRE(c.GetCenter() == Point(4.0, -2.0));
+  REQUIRE(std::fabs(c.GetRadius() - 3.5) < 1e-9);
+}
+
+TEST_CASE("Circle rejects negative radius and negative scale") {
+  REQUIRE_THROWS_AS(Circle(Point(0.0, 0.0), -1.0), std::invalid_argument);
+
+  Circle c(Point(0.0, 0.0), 2.0);
+  REQUIRE_THROWS_AS(c.SetRadius(-0.1), std::invalid_argument);
+  REQUIRE_THROWS_AS(c.Scale(-2.0), std::invalid_argument);
 }
 
 TEST_CASE("Circle contains and boundary checks") {
@@ -56,6 +73,7 @@ TEST_CASE("Circle distance to point and circle") {
   REQUIRE(std::fabs(c.DistanceTo(Point(3.0, 4.0)) - 5.0) < 1e-9);
 
   Circle other(Point(6.0, 8.0), 1.0);
+  REQUIRE(std::fabs(c.CenterDistanceTo(other) - 10.0) < 1e-9);
   REQUIRE(std::fabs(c.DistanceTo(other) - 10.0) < 1e-9);
 }
 
@@ -84,8 +102,8 @@ TEST_CASE("Circle scale by zero") {
 TEST_CASE("Circle scalar properties") {
   Circle c(Point(0.0, 0.0), 2.0);
   REQUIRE(std::fabs(c.Diameter() - 4.0) < 1e-9);
-  REQUIRE(std::fabs(c.Circumference() - (4.0 * Circle::kPi)) < 1e-9);
-  REQUIRE(std::fabs(c.Area() - (4.0 * Circle::kPi)) < 1e-9);
+  REQUIRE(std::fabs(c.Circumference() - (4.0 * Circle::PI)) < 1e-9);
+  REQUIRE(std::fabs(c.Area() - (4.0 * Circle::PI)) < 1e-9);
 }
 
 TEST_CASE("Circle circle-containment and relationship checks") {
@@ -135,4 +153,22 @@ TEST_CASE("Circle intersection points tangent and disjoint") {
 
   const auto disjoint_pts = a.IntersectionPoints(disjoint);
   REQUIRE(disjoint_pts.empty());
+}
+
+TEST_CASE("Circle intersection points concentric circles return empty") {
+  Circle a(Point(0.0, 0.0), 3.0);
+  Circle same(Point(0.0, 0.0), 3.0);
+  Circle different_radius(Point(0.0, 0.0), 5.0);
+
+  REQUIRE(a.IntersectionPoints(same).empty());
+  REQUIRE(a.IntersectionPoints(different_radius).empty());
+}
+
+TEST_CASE("Circle equality operator") {
+  Circle a(Point(1.0, 2.0), 3.0);
+  Circle b(Point(1.0, 2.0), 3.0);
+  Circle c(Point(1.0, 2.0), 4.0);
+
+  REQUIRE(a == b);
+  REQUIRE(a != c);
 }
