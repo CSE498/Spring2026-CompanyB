@@ -7,14 +7,13 @@
 
 #include <vector>
 #include <string>
-#include "ImageManager.hpp"
 #include "../../core/WorldGrid.hpp"
 #include "../../core/WorldBase.hpp"
-#include "../../../third-party/qt/include/QtWidgets/QApplication"
-#include "../../../third-party/qt/include/QtWidgets/QGraphicsView"
-#include "../../../third-party/qt/include/QtWidgets/QGraphicsScene"
-#include "../../../third-party/qt/include/QtWidgets/QGraphicsPixmapItem"
-#include "../../../third-party/qt/include/QtGui/QPixmap"
+#include <QApplication>
+#include <QGraphicsView>
+#include <QGraphicsScene>
+#include <QGraphicsPixmapItem>
+#include <QPixmap>
 
 namespace cse498
 {

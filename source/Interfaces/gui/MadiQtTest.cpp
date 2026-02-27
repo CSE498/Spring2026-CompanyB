@@ -1,9 +1,3 @@
-#include "../../../third-party/qt/include/QtWidgets/QApplication"
-#include "../../../third-party/qt/include/QtWidgets/QGraphicsView"
-#include "../../../third-party/qt/include/QtWidgets/QGraphicsScene"
-#include "../../../third-party/qt/include/QtWidgets/QGraphicsPixmapItem"
-#include "../../../third-party/qt/include/QtGui/QPixmap"
-
 #include "../../Worlds/MazeWorld.hpp"
 #include "ImageGrid.hpp"
 
