@@ -12,7 +12,7 @@
 //
 // Author: ChatGPT 5.2
 
-#include "../../../third-party/Catch/single_include/catch2/catch.hpp"
+#include "catch2/catch.hpp"
 
 
 #include <algorithm>
