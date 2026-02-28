@@ -10,82 +10,22 @@ struct SetupMockDOMWebLayout {
   SetupMockDOMWebLayout() {
     // clang-format off
     EM_ASM({
-      /// creates a document if it doesn't exist
+      /// Creates a document if it doesn't exist
       if (typeof document === 'undefined') {
-        globalThis.document = {};
+        const dom = new jsdom.JSDOM("<!DOCTYPE html> <html><head></head><body></body></html>");
+        globalThis.window = dom.window;
+        globalThis.document = dom.window.document;
       }
-
-      /// Store created DOM elements for retrieval by ID
-      var elements = {};
-
-      /// Mock implementation of document.getElementById and
-      /// document.createElement
-      document.getElementById = function(id) { return elements[id] || null; };
-
-      document.createElement = function(tag) {
-        var elem = {};
-
-        /// Create style object
-        elem.style = {};
-        elem.style.position = "";
-        elem.style.width = "";
-        elem.style.height = "";
-        elem.style.left = "";
-        elem.style.top = "";
-        elem.style.display = "";
-
-        // Allow appending children to other elements
-        elem.childNodes = [];
-        elem.appendChild = function(child) {
-          if (!elem.childNodes.includes(child)) {
-            elem.childNodes.push(child);
-            child.parentElement = elem;
-          }
-        };
-        elem.removeChild = function(child) {
-          const index = elem.childNodes.indexOf(child);
-          if (index > -1) { 
-            elem.childNodes.splice(index, 1);
-          }
-        };
-
-        /// Define getters/setters for id to manage the elements map
-        Object.defineProperty(elem, 'id', {
-          get: function() { return elem._id; },
-          set : function(v) {
-            elem._id = v;
-            elements[v] = elem;
-          }
-        });
-
-        /// Define a remove method to clean up the elements map when an element is
-        /// removed
-        elem.remove = function() {
-          if (elem._id && elements[elem._id]) {
-            delete elements[elem._id];
-          }
-        };
-
-        return elem;
-      };
-
-      /// Mock implementation of document.body and appendChild
-      if (!document.body) {
-        document.body = {};
-      }
-
-      document.body.appendChild = function(elem) { return elem; };
     });
     // clang-format on
     }
 
     ~SetupMockDOMWebLayout() {
       // clang-format off
-    EM_ASM({
-      delete globalThis.document;
-      delete globalThis.window;
-      delete globalThis.Image;
-    });
+      EM_ASM({
+        delete globalThis.document;
+        delete globalThis.window;
+      });
       // clang-format on
     }
     }
