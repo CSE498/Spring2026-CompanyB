@@ -20,6 +20,16 @@ RUN mkdir -p /app/source /app/build /app/output && chmod +x /app/docker-entrypoi
 # Copy source code
 COPY source/ /app/source/
 
+# Install and minify jsdom library for use in WASM Emscripten tests
+RUN npm install -g esbuild && \
+    npm install jsdom && \
+    npx esbuild --bundle --minify --platform=node \
+        --format=iife \
+        --global-name=jsdom \
+        --outfile=/app/jsdom.min.js \
+        --external:./xhr-sync-worker.js \
+        node_modules/jsdom/lib/api.js
+
 WORKDIR /app
 
 # Expose port for emrun web server

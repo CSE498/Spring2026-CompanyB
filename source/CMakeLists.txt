@@ -62,13 +62,22 @@ if(BUILD_WASM_TESTS)
     # Emscripten compatibility: disable POSIX signals
     target_compile_definitions(tests PRIVATE CATCH_CONFIG_NO_POSIX_SIGNALS)
 
+    # Copy over the files needed by jsdom
+    file(COPY "/src/node_modules/jsdom/lib/jsdom/"
+        DESTINATION "/app/build/")
+    file(COPY "/src/node_modules/jsdom/lib/jsdom/living/xhr/xhr-sync-worker.js"
+     DESTINATION "${CMAKE_BINARY_DIR}/")
+
     # Output as a js file for Node.js execution
     set_target_properties(tests PROPERTIES SUFFIX ".js")
+    message(STATUS "Source directory: ${CMAKE_SOURCE_DIR}")
     target_link_options(tests PRIVATE
         -sNODERAWFS=1
         -sALLOW_MEMORY_GROWTH=1
         -lembind
         -sNO_DISABLE_EXCEPTION_CATCHING
+        # --pre-js "${CMAKE_CURRENT_SOURCE_DIR}/../third-party/jsdom/jsdom.min.js"
+        --pre-js /app/jsdom.min.js
     )
 
 elseif(BUILD_TESTS)
