@@ -247,6 +247,9 @@ TEST_CASE("Menu selection navigation functions called", "[gui][menu]")
     auto id2 = m.addItem("b", "B", [&]{ b++; }, true, true);
     auto id3 = m.addItem("c", "C", [&]{ c++; }, true, true);
 
+    (void)id2;
+    (void)id3;
+
     CHECK(m.selectFirst());
     CHECK(m.activateSelected());
     CHECK(a == 1);
