@@ -8,13 +8,23 @@
 #include <vector>
 #include <string>
 #include <expected>
+
 #include "../../core/WorldGrid.hpp"
 #include "../../core/WorldBase.hpp"
-#include <QApplication>
-#include <QGraphicsView>
-#include <QGraphicsScene>
-#include <QGraphicsPixmapItem>
-#include <QPixmap>
+
+// needed when using cmake
+// #include <QApplication>
+// #include <QGraphicsView>
+// #include <QGraphicsScene>
+// #include <QGraphicsPixmapItem>
+// #include <QPixmap>
+
+// needed when using make ;-;
+#include "../../../third-party/qt/include/QtWidgets/QApplication"
+#include "../../../third-party/qt/include/QtWidgets/QGraphicsView"
+#include "../../../third-party/qt/include/QtWidgets/QGraphicsScene"
+#include "../../../third-party/qt/include/QtWidgets/QGraphicsPixmapItem"
+#include "../../../third-party/qt/include/QtGui/QPixmap"
 
 namespace cse498
 {

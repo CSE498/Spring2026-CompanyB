@@ -2,6 +2,7 @@
 #include "ImageGrid.hpp"
 
 #include <vector>
+#include <unordered_map>
 #include <string>
 #include <unordered_map>
 
@@ -22,6 +23,9 @@ int main(int argc, char *argv[])
     const int tileSize = 64;
 
     std::vector<QString> imagePaths = {"images/test1.png", "images/test2.png"};
+
+    // TODO: suggestion from peer review to use map
+    // std::unordered_map<std::string, QString> imageMap = {{"floor", "images/test1.png"}, {"wall", "images/test2.png"}};
 
     // create ImageGrid
     ImageGrid imageGrid(world, scene, tileSize);
