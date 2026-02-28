@@ -12,7 +12,7 @@
 //
 // Author: ChatGPT 5.2
 
-#include "../../third-party/Catch/single_include/catch2/catch.hpp"
+#include "../../../third-party/Catch/single_include/catch2/catch.hpp"
 
 
 #include <algorithm>
@@ -24,7 +24,7 @@
 #include "../../source/tools/AnnotationSet.hpp"
 
 
-// g++ -std=c++23 -Wall -I../../../third-party/Catch/single_include AnnotationSet.cpp TagManager.cpp TagManagerTest.cpp -o TagManagerTest.exe
+// g++ -std=c++23 -Wall -I../../../third-party/Catch/single_include Tools/AnnotationSet.cpp Tools/TagManager.cpp Tools/TagManagerTest.cpp -o TagManagerTest.exe
 
 using namespace cse498;
 

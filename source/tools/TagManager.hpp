@@ -14,6 +14,8 @@
 
 #include "AnnotationSet.hpp"
 
+namespace cse498 {
+
 // TagManager maintains a bidirectional mapping between object IDs and their associated tags,
 // allowing for efficient registration, unregistration, and querying of objects based on their tags.
 // It ensures that the internal state remains consistent when objects are modified or removed,
@@ -44,13 +46,16 @@ class TagManager {
         // Clears all tags from the object's AnnotationSet and updates the index accordingly.
         void ClearTags(ObjectId object_id, cse498::AnnotationSet& set);
 
-        // Returns a list of object_ids that have all the tags in must_have and none of the tags in must_not_have.
+        // Returns a list of object_ids that have all the tags in must_have and none of the tags in must_not_have, sends a compiler warning if the value returned is never used.
+        [[nodiscard]]
         std::vector<ObjectId> QueryMultiTags(const std::vector<cse498::tag>& must_have, const std::vector<cse498::tag>& must_not_have = {}) const;
 
-        // Returns a list of object_ids that have the specified tag.
+        // Returns a list of object_ids that have the specified tag, sends a compiler warning if the value returned is never used.
+        [[nodiscard]]
         std::vector<ObjectId> QueryOneTag(const cse498::tag& tag) const;
 
-        // Checks if an object_id is registered.
+        // Checks if an object_id is registered, sends a compiler warning if the value returned is never used.
+        [[nodiscard]]
         bool IsRegistered(ObjectId object_id) const;
 
         private:
@@ -67,3 +72,5 @@ class TagManager {
         static void NotQueryHelper(std::unordered_set<ObjectId>& result, const std::unordered_set<ObjectId>& remove);
 
 };
+
+}
