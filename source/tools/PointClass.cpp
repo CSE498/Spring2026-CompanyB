@@ -55,10 +55,6 @@ Point operator*(double lhs, const Point& rhs){
 /* Equality */
 // equality (==) between two points
 bool operator==(const Point& lhs, const Point& rhs){
-    //return (std::abs(lhs.getX() - rhs.getX()) <= EPSILON && 
-        //std::abs(lhs.getY() - rhs.getY()) <= EPSILON );
-
-   //return (lhs.getX() == rhs.getX() && lhs.getY() == rhs.getY()); 
     return ( tol_equal(lhs.getX(), rhs.getX()) && tol_equal(lhs.getY(), rhs.getY()) );
 }
 

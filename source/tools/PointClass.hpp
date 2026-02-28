@@ -1,4 +1,4 @@
-// PointClass.h
+// PointClass.hpp
 #pragma once 
 
 #include <iostream>
@@ -9,6 +9,7 @@
 
 namespace cse498 {
 
+// this block creates a function to safely compare doubles
 constexpr double EPSILON = 1e-9;
 constexpr double RELATIVE_TOLERANCE= 1e-12;
 inline bool tol_equal(double a, double b){
@@ -55,31 +56,8 @@ public:
         return *this;
     }
 
-    // product (*)
-    //Point& operator*(const Point& other){
-    //    this->x *= other.x;
-    //    this->y *= other.y;
-    //    return *this;
-    //}
-
-    // equality (==)
-    //bool operator==(const Point& other){
-    //    if (this->y == other.y && this->x == other.x)
-    //        return true;
-    //    else
-    //        return false;
-    //}
-    // equality (!=)
-
-    //bool operator!=(const Point& other){
-    //    if (this->y != other.y || this->x != other.x)
-    //        return true;
-    //    else
-    //        return false;
-    //}
-
     //3. Geometry: dot and cross product, magnitude, normalize(return unit vector),
-    double dot(const Point& A){
+    double dot(const Point& A) const{
         return (( this->x* A.getX() ) + ( this->y * A.getY() ));
     }
 
