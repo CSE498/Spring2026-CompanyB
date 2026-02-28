@@ -19,7 +19,7 @@
 namespace cse498
 {
     // find example usage at Group-21/MadiQtTest.cpp
-    class ImageGrid : public WorldGrid
+    class ImageGrid
     {
     private:
         WorldBase &mWorld;
