@@ -1,66 +1,69 @@
 #include "ImageGrid.hpp"
+#include <expected>
+#include <stdexcept>
 
 namespace cse498
 {
 
-    ImageGrid::ImageGrid(WorldBase &world, QGraphicsScene &scene, int tileSize, std::vector<QString> &mImagePaths)
+    ImageGrid::ImageGrid(WorldBase &world, QGraphicsScene &scene, int tileSize)
         : mWorld(world), mScene(scene), mTileSize(tileSize)
     {
-        if (!LoadImages(mImagePaths))
-        {
-            qWarning() << "Failed to load images!";
-        }
-        else
-        {
-            MapImages();
-        }
     }
 
+    // helper for MapImages
     // load images into an image list
-    bool ImageGrid::LoadImages(const std::vector<QString> &mImagePaths)
+    std::expected<std::vector<QPixmap>, bool> ImageGrid::LoadImages(const std::vector<QString> &imagePaths)
     {
-        mImageList.clear();
-        for (const QString &imagePath : mImagePaths)
+        std::vector<QPixmap> imageList;
+        for (const QString &imagePath : imagePaths)
         {
             QPixmap pixmap(imagePath);
             if (pixmap.isNull())
             {
                 qWarning() << "Failed to load image:" << imagePath;
-                return false;
+                return std::unexpected(false);
             }
-            mImageList.push_back(pixmap);
+            imageList.push_back(pixmap);
         }
-        return true;
+        return imageList;
     }
 
     // set images to cell type in the same order the cell types were added
-    void ImageGrid::MapImages()
+    void ImageGrid::MapImages(const std::vector<QString> &imagePaths)
     {
+
+        auto expectedImageList = LoadImages(imagePaths);
+
         WorldGrid &grid = mWorld.GetGrid();
         const std::vector<CellType> &cellTypes = grid.GetCellTypes();
 
-        // check if amount of images is the same as amount of cell types (-1 because the first cell type is reserved for errors)
-        if (mImageList.size() != cellTypes.size() - 1)
+        if (expectedImageList.has_value())
         {
-            qWarning() << "Number of images and number of cell types must be the same!";
-            qWarning() << "Number of images: " << mImageList.size() << " Number of cell types: " << cellTypes.size();
-            for (const auto &cellType : cellTypes)
-            {
-                qWarning() << QString::fromStdString(cellType.name);
-            }
-            return;
-        }
+            std::vector<QPixmap> &imageList = expectedImageList.value();
 
-        // map each cell type to corresponding images
-        // i = 1 to account for 'Unknown' cell type
-        for (size_t i = 1; i < cellTypes.size(); i++)
-        {
-            // std::unordered_map<size_t, QPixmap> tilePixmaps;
-            // map each cell type to images in mImageList (std::vector<QPixmap> mImageList;)
-            size_t cellTypeID = i;
-            mTilePixmaps[cellTypeID] = mImageList[i - 1];
+            // check if amount of images is the same as amount of cell types (-1 because the first cell type is reserved for errors)
+            if (imageList.size() != cellTypes.size() - 1)
+            {
+                qWarning() << "Number of images and number of cell types must be the same!";
+                qWarning() << "Number of images: " << imageList.size() << " Number of cell types: " << cellTypes.size();
+                for (const auto &cellType : cellTypes)
+                {
+                    qWarning() << QString::fromStdString(cellType.name);
+                }
+                return;
+            }
+
+            // map each cell type to corresponding images
+            // i = 1 to account for 'Unknown' cell type
+            for (size_t i = 1; i < cellTypes.size(); i++)
+            {
+                // std::unordered_map<size_t, QPixmap> tilePixmaps;
+                // map each cell type to images in mImageList (std::vector<QPixmap> mImageList;)
+                size_t cellTypeID = i;
+                mTilePixmaps[cellTypeID] = imageList[i - 1];
+            }
+            qDebug() << "Images successfully mapped to cell types! Yippee!";
         }
-        qDebug() << "Images successfully mapped to cell types! Yippee!";
     }
 
     void ImageGrid::RenderGrid()
@@ -92,7 +95,7 @@ namespace cse498
     void ImageGrid::SetSceneAndView(QGraphicsView &view)
     {
         // set up the scene rect based on the grid dimensions
-        WorldGrid &grid = mWorld.GetGrid();
+        const WorldGrid &grid = mWorld.GetGrid();
         mScene.setSceneRect(0, 0, grid.GetWidth() * mTileSize, grid.GetHeight() * mTileSize);
 
         // set up the view size and scene

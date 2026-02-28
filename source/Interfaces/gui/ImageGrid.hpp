@@ -7,6 +7,7 @@
 
 #include <vector>
 #include <string>
+#include <expected>
 #include "../../core/WorldGrid.hpp"
 #include "../../core/WorldBase.hpp"
 #include <QApplication>
@@ -25,16 +26,16 @@ namespace cse498
         QGraphicsScene &mScene;
         int mTileSize;
         std::unordered_map<size_t, QPixmap> mTilePixmaps;
-        std::vector<QString> mImagePaths;
-        std::vector<QPixmap> mImageList;
+        // std::vector<QPixmap> mImageList;
 
     public:
         ImageGrid() = delete;
         virtual ~ImageGrid() = default;
 
-        ImageGrid(WorldBase &world, QGraphicsScene &scene, int tileSize, std::vector<QString> &mImagePaths);
-        bool LoadImages(const std::vector<QString> &mImagePaths);
-        void MapImages();
+        ImageGrid(WorldBase &world, QGraphicsScene &scene, int tileSize);
+        std::expected<std::vector<QPixmap>, bool> LoadImages(const std::vector<QString> &mImagePaths);
+        // bool LoadImages(const std::vector<QString> &mImagePaths);
+        void MapImages(const std::vector<QString> &imagePaths);
         void RenderGrid();
         void SetSceneAndView(QGraphicsView &view);
     };

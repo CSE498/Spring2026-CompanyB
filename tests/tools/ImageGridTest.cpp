@@ -1,12 +1,8 @@
-#include "../../third-party/Catch/single_include/catch2/catch.hpp"
+#include <catch2/catch.hpp>
 
 #include "../../source/Interfaces/gui/ImageGrid.hpp"
 #include "../../source/core/WorldBase.hpp"
 #include "../../source/Worlds/MazeWorld.hpp"
-
-#include "../../../third-party/qt/include/QtWidgets/QApplication"
-#include "../../../third-party/qt/include/QtWidgets/QGraphicsView"
-#include "../../../third-party/qt/include/QtWidgets/QGraphicsScene"
 
 TEST_CASE("Test ImageGrid Constructor", "[Interfaces]")
 {
