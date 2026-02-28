@@ -1,6 +1,7 @@
 ## Build Notes
 
 #### ImageGrid
+*make sure to swap the block of commented #include statements in ImageGrid.hpp*
 On WSL with Qt installed, use cmake and run ./build/QtApp:
 * (make build directory and cd into it)
 * cmake ..
