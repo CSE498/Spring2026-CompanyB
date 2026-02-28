@@ -29,6 +29,7 @@
  * Uses a uniform grid (square sectors) for partitioning.
  */
 namespace cse498 {
+
 class Surface {
 public:
   using ShapeID = uint64_t;
@@ -56,22 +57,22 @@ public:
   };
 
 
-  ShapeID AddCircle(const Circle& c) {
+  ShapeID AddCircle(const Circle& circle) {
     ShapeID id = next_id_++;
-    Entry e;
-    e.shape = c;
-    e.id = id;
-    entries_.emplace(id, std::move(e));
+    Entry entry;
+    entry.shape = circle;
+    entry.id = id;
+    entries_.emplace(id, std::move(entry));
     InsertIntoSectors(id);
     return id;
   }
 
   ShapeID AddBox(const Box& b) {
     ShapeID id = next_id_++;
-    Entry e;
-    e.shape = b;
-    e.id = id;
-    entries_.emplace(id, std::move(e));
+    Entry entry;
+    entry.shape = b;
+    entry.id = id;
+    entries_.emplace(id, std::move(entry));
     InsertIntoSectors(id);
     return id;
   }
@@ -85,11 +86,11 @@ public:
     return true;
   }
 
-  bool UpdateCircle(ShapeID id, const Circle& c) {
+  bool UpdateCircle(ShapeID id, const Circle& circle) {
     auto it = entries_.find(id);
     if (it == entries_.end()) return false;
     RemoveFromSectors(id);
-    it->second.shape = c;
+    it->second.shape = circle;
     InsertIntoSectors(id);
     return true;
   }
@@ -135,8 +136,8 @@ public:
         if (itr == sectors_.end()) continue;
         for (ShapeID id : itr->second) {
           if (seen.emplace(id).second) {
-            const Entry& e = entries_.at(id);
-            if (ShapeOverlapsCircle(e, center, radius)) {
+            const Entry& entry = entries_.at(id);
+            if (ShapeOverlapsCircle(entry, center, radius)) {
               out.push_back(id);
             }
           }
