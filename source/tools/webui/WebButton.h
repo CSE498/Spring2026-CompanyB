@@ -2,7 +2,13 @@
 
 #include <functional>
 #include <string>
+#include <stdexcept>
 
+#ifdef __EMSCRIPTEN__
+#include <emscripten/val.h>
+#endif
+
+namespace cse498 {
 /**
  * @brief C++ wrapper for a web UI button (HTML <button>) in the Emscripten
  * interface.
@@ -13,17 +19,26 @@
 class WebButton {
  public:
   /// Construct a WebButton with a label
-  explicit WebButton(const std::string& label, const std::string& id = "");
+  explicit WebButton(const std::string& label, const std::string& id);
 
   /// Get/Set the label
   const std::string& GetLabel() const;
   void SetLabel(const std::string& label);
 
-  /// Get/Set an optional DOM id
+  /// Get/Set the DOM id
   const std::string& GetId() const;
   void SetId(const std::string& id);
 
-  /// Show/Hide  button is visible.
+  /// Get/Set the color
+  const std::string& GetColor() const;
+  void SetColor(const std::string& color);
+
+  /// Get/Set the size
+  int GetWidth() const;
+  int GetHeight() const;
+  void SetSize(int width, int height);
+
+  /// Show/Hide controls whether the button is visible.
   void Show();
   void Hide();
   bool IsVisible() const;
@@ -47,7 +62,12 @@ class WebButton {
  private:
   std::string label_;
   std::string id_;
+  std::string color_{"black"};
+  int width_{100};
+  int height_{50};
   bool visible_{true};
   bool enabled_{true};
   std::function<void()> on_click_{};
 };
+
+}

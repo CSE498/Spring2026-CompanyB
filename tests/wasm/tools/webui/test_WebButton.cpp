@@ -1,10 +1,8 @@
-
 #include <catch2/catch_test_macros.hpp>
-
 #include "tools/webui/WebButton.h"
 
 TEST_CASE("WebButton basics") {
-  WebButton b("Start", "startBtn");
+  cse498::WebButton b("Start", "startBtn");
 
   SECTION("Label set/get works") {
     REQUIRE(b.GetLabel() == "Start");
