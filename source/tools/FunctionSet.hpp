@@ -75,7 +75,7 @@ namespace cse498 {
          * @param args Arguments to pass to each function.
          * @return std::expected<void, std::vector<size_t>>
          */
-        constexpr std::expected<void, std::vector<size_t>> invoke_all(Params... args) const noexcept {
+        constexpr std::expected<void, std::vector<size_t>> invoke_all(Params... args) const {
             std::vector<size_t> error_funcs;
 	    // std::views::enumerate doesnt work on apple clang so we do old style for loop instead
             for (size_t index{0}; index < functions.size(); ++index) {
