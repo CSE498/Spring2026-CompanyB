@@ -77,7 +77,9 @@ namespace cse498 {
          */
         constexpr std::expected<void, std::vector<size_t>> invoke_all(Params... args) const noexcept {
             std::vector<size_t> error_funcs;
-            for (auto&& [index, func] : std::views::enumerate(functions)) {
+	    // std::views::enumerate doesnt work on apple clang so we do old style for loop instead
+            for (size_t index{0}; index < functions.size(); ++index) {
+		auto func = functions[index];
                 try {
                     func(args...);
                 } catch (...) {
@@ -155,7 +157,7 @@ namespace cse498 {
          */
         constexpr void pop_at(size_t index) {
             if (index >= functions.size())
-                throw std::out_of_range("FunctionSet::pop");
+                throw std::out_of_range("FunctionSet::pop_at");
             functions.erase(functions.begin() + index);
         }
 
