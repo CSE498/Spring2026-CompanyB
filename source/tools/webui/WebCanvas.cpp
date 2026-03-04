@@ -79,9 +79,7 @@ void WebCanvas::ApplyState() {
   }
 }
 
-void WebCanvas::Clear() {
-  ctx.call<void>("clearRect", 0, 0, width, height);
-}
+void WebCanvas::Clear() { ctx.call<void>("clearRect", 0, 0, width, height); }
 
 void WebCanvas::SetBackgroundColor(std::tuple<int, int, int> rgb) {
   auto [r, g, b] = rgb;
@@ -100,7 +98,8 @@ void WebCanvas::DrawLine(std::pair<double, double> start,
   ctx.call<void>("stroke");
 }
 
-void WebCanvas::DrawRect(double x_top_l, double y_top_l, double w, double h, bool filled) {
+void WebCanvas::DrawRect(double x_top_l, double y_top_l, double w, double h,
+                         bool filled) {
   assert(w >= 0 && "Rectangle width must be non-negative");
   assert(h >= 0 && "Rectangle height must be non-negative");
   if (filled) {
@@ -198,7 +197,7 @@ void WebCanvas::DrawImage(const std::string& path, double x, double y, double w,
 }
 
 void WebCanvas::SetPenColor(std::tuple<int, int, int> rgb) {
-    auto [r, g, b] = rgb;
+  auto [r, g, b] = rgb;
   assert(r >= 0 && r <= 255 && "Red value must be 0-255");
   assert(g >= 0 && g <= 255 && "Green value must be 0-255");
   assert(b >= 0 && b <= 255 && "Blue value must be 0-255");
@@ -207,7 +206,7 @@ void WebCanvas::SetPenColor(std::tuple<int, int, int> rgb) {
 }
 
 void WebCanvas::SetFillColor(std::tuple<int, int, int> rgb) {
-    auto [r, g, b] = rgb;
+  auto [r, g, b] = rgb;
   assert(r >= 0 && r <= 255 && "Red value must be 0-255");
   assert(g >= 0 && g <= 255 && "Green value must be 0-255");
   assert(b >= 0 && b <= 255 && "Blue value must be 0-255");
