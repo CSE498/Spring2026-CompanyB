@@ -92,10 +92,10 @@ TEST_CASE("WebTextbox: Numeric Extremes", "[limits]") {
   WebTextbox box("limit_box");
   TextStyle style;
 
-  style.fontSize = std::numeric_limits<int>::max();
+  style.font_size = std::numeric_limits<int>::max();
   REQUIRE_NOTHROW(box.SetStyle(style));
 
-  style.fontSize = std::numeric_limits<int>::min();
+  style.font_size = std::numeric_limits<int>::min();
   REQUIRE_NOTHROW(box.SetStyle(style));
 
   REQUIRE_NOTHROW(box.SetPosition(-1000, -1000));

@@ -36,6 +36,8 @@ WebCanvas::WebCanvas(int width, int height, const std::string& id)
   canvas_element.set("id", id);
   document["body"].call<void>("appendChild", canvas_element);
 
+  ctx = canvas_element.call<val>("getContext", std::string("2d"));
+  transform_matrix = ctx.call<val>("getTransform");
   Resize(width, height);
 }
 
@@ -52,10 +54,32 @@ void WebCanvas::Resize(int new_width, int new_height) {
   height = new_height;
   canvas_element.set("width", width);
   canvas_element.set("height", height);
+  ApplyState();
+}
+
+std::string WebCanvas::RgbString(std::tuple<int, int, int> rgb) {
+  auto [r, g, b] = rgb;
+  return "rgb(" + std::to_string(r) + "," + std::to_string(g) + "," +
+         std::to_string(b) + ")";
+}
+
+void WebCanvas::ApplyState() {
+  ctx.set("strokeStyle", RgbString(pen_color));
+  ctx.set("fillStyle", RgbString(fill_color));
+
+  ctx.set("globalAlpha", alpha);
+  ctx.set("lineWidth", line_width);
+
+  if (!font.empty()) {
+    ctx.set("font", font);
+  }
+
+  if (!transform_matrix.isUndefined()) {
+    ctx.call<void>("setTransform", transform_matrix);
+  }
 }
 
 void WebCanvas::Clear() {
-  val ctx = canvas_element.call<val>("getContext", std::string("2d"));
   ctx.call<void>("clearRect", 0, 0, width, height);
 }
 
@@ -65,34 +89,29 @@ void WebCanvas::SetBackgroundColor(std::tuple<int, int, int> rgb) {
   assert(g >= 0 && g <= 255 && "Green value must be 0-255");
   assert(b >= 0 && b <= 255 && "Blue value must be 0-255");
   background_color = rgb;
-  std::string color = "rgb(" + std::to_string(r) + "," + std::to_string(g) +
-                      "," + std::to_string(b) + ")";
-  canvas_element["style"].set("backgroundColor", color);
+  canvas_element["style"].set("backgroundColor", RgbString(rgb));
 }
 
-void WebCanvas::DrawLine(std::pair<double, double> x,
-                         std::pair<double, double> y) {
-  val ctx = canvas_element.call<val>("getContext", std::string("2d"));
+void WebCanvas::DrawLine(std::pair<double, double> start,
+                         std::pair<double, double> end) {
   ctx.call<void>("beginPath");
-  ctx.call<void>("moveTo", x.first, x.second);
-  ctx.call<void>("lineTo", y.first, y.second);
+  ctx.call<void>("moveTo", start.first, start.second);
+  ctx.call<void>("lineTo", end.first, end.second);
   ctx.call<void>("stroke");
 }
 
-void WebCanvas::DrawRect(double x, double y, double w, double h, bool filled) {
+void WebCanvas::DrawRect(double x_top_l, double y_top_l, double w, double h, bool filled) {
   assert(w >= 0 && "Rectangle width must be non-negative");
   assert(h >= 0 && "Rectangle height must be non-negative");
-  val ctx = canvas_element.call<val>("getContext", std::string("2d"));
   if (filled) {
-    ctx.call<void>("fillRect", x, y, w, h);
+    ctx.call<void>("fillRect", x_top_l, y_top_l, w, h);
   } else {
-    ctx.call<void>("strokeRect", x, y, w, h);
+    ctx.call<void>("strokeRect", x_top_l, y_top_l, w, h);
   }
 }
 
 void WebCanvas::DrawCircle(double x, double y, double radius, bool filled) {
   assert(radius >= 0 && "Circle radius must be non-negative");
-  val ctx = canvas_element.call<val>("getContext", std::string("2d"));
   ctx.call<void>("beginPath");
   ctx.call<void>("arc", x, y, radius, 0, 2 * M_PI);
   if (filled) {
@@ -106,7 +125,6 @@ void WebCanvas::DrawPolygon(
     const std::vector<std::pair<double, double>>& points, bool filled) {
   assert(points.size() >= 3 && "Polygon must have at least 3 points");
 
-  val ctx = canvas_element.call<val>("getContext", std::string("2d"));
   ctx.call<void>("beginPath");
   ctx.call<void>("moveTo", points[0].first, points[0].second);
 
@@ -124,7 +142,6 @@ void WebCanvas::DrawPolygon(
 }
 
 void WebCanvas::DrawText(const std::string& text, double x, double y) {
-  val ctx = canvas_element.call<val>("getContext", std::string("2d"));
   ctx.call<void>("fillText", text, x, y);
 }
 
@@ -181,39 +198,32 @@ void WebCanvas::DrawImage(const std::string& path, double x, double y, double w,
 }
 
 void WebCanvas::SetPenColor(std::tuple<int, int, int> rgb) {
-  auto [r, g, b] = rgb;
+    auto [r, g, b] = rgb;
   assert(r >= 0 && r <= 255 && "Red value must be 0-255");
   assert(g >= 0 && g <= 255 && "Green value must be 0-255");
   assert(b >= 0 && b <= 255 && "Blue value must be 0-255");
   pen_color = rgb;
-  val ctx = canvas_element.call<val>("getContext", std::string("2d"));
-  std::string color = "rgb(" + std::to_string(r) + "," + std::to_string(g) +
-                      "," + std::to_string(b) + ")";
-  ctx.set("strokeStyle", color);
+  ctx.set("strokeStyle", RgbString(rgb));
 }
 
 void WebCanvas::SetFillColor(std::tuple<int, int, int> rgb) {
-  auto [r, g, b] = rgb;
+    auto [r, g, b] = rgb;
   assert(r >= 0 && r <= 255 && "Red value must be 0-255");
   assert(g >= 0 && g <= 255 && "Green value must be 0-255");
   assert(b >= 0 && b <= 255 && "Blue value must be 0-255");
   fill_color = rgb;
-  val ctx = canvas_element.call<val>("getContext", std::string("2d"));
-  std::string color = "rgb(" + std::to_string(r) + "," + std::to_string(g) +
-                      "," + std::to_string(b) + ")";
-  ctx.set("fillStyle", color);
+  ctx.set("fillStyle", RgbString(rgb));
 }
 
 void WebCanvas::SetLineWidth(double w) {
   assert(w >= 0 && "Line width must be non-negative");
   line_width = w;
-  val ctx = canvas_element.call<val>("getContext", std::string("2d"));
+
   ctx.set("lineWidth", line_width);
 }
 
 void WebCanvas::SetFont(const std::string& new_font) {
   font = new_font;
-  val ctx = canvas_element.call<val>("getContext", std::string("2d"));
   ctx.set("font", font);
 }
 
@@ -221,31 +231,29 @@ void WebCanvas::SetAlpha(double new_alpha) {
   assert(new_alpha >= 0.0 && new_alpha <= 1.0 &&
          "Alpha must be between 0 and 1");
   alpha = new_alpha;
-  val ctx = canvas_element.call<val>("getContext", std::string("2d"));
   ctx.set("globalAlpha", alpha);
 }
 
 void WebCanvas::Translate(std::pair<double, double> point) {
   location = point;
-  val ctx = canvas_element.call<val>("getContext", std::string("2d"));
   ctx.call<void>("translate", point.first, point.second);
+  transform_matrix = ctx.call<val>("getTransform");
 }
 
 void WebCanvas::Rotate(double angle, bool clockwise) {
   double directed_angle = clockwise ? angle : -angle;
-  val ctx = canvas_element.call<val>("getContext", std::string("2d"));
   ctx.call<void>("rotate", directed_angle);
+  transform_matrix = ctx.call<val>("getTransform");
 }
 
 void WebCanvas::Scale(double x, double y) {
-  val ctx = canvas_element.call<val>("getContext", std::string("2d"));
   ctx.call<void>("scale", x, y);
+  transform_matrix = ctx.call<val>("getTransform");
 }
 
 void WebCanvas::Save() {
   saved_states.push_back(
       {pen_color, fill_color, alpha, line_width, font, location});
-  val ctx = canvas_element.call<val>("getContext", std::string("2d"));
   ctx.call<void>("save");
 }
 
@@ -259,8 +267,8 @@ void WebCanvas::Restore() {
   line_width = state.line_width;
   font = state.font;
   location = state.location;
-  val ctx = canvas_element.call<val>("getContext", std::string("2d"));
   ctx.call<void>("restore");
+  transform_matrix = ctx.call<val>("getTransform");
 }
 
 int WebCanvas::GetWidth() const { return width; }

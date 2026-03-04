@@ -37,6 +37,8 @@ struct SetupMockCanvas {
         ctx.scale = function(){};
         ctx.save = function(){};
         ctx.restore = function(){};
+        ctx.getTransform = function() { var m = {}; m.a = 1; m.b = 0; m.c = 0; m.d = 1; m.e = 0; m.f = 0; return m; };
+        ctx.setTransform = function() { window._setTransformCount = (window._setTransformCount || 0) + 1; };
         return ctx;
       }
 
@@ -147,6 +149,14 @@ TEST_CASE("Resize", "[web_canvas]") {
     canvas.Resize(300, 400);
     REQUIRE(canvas.GetWidth() == 300);
     REQUIRE(canvas.GetHeight() == 400);
+  }
+
+  SECTION("resize reapplies transform after state wipe") {
+    canvas.Translate({10.0, 20.0});
+    int before = EM_ASM_INT({ return window._setTransformCount || 0; });
+    canvas.Resize(300, 300);
+    int after = EM_ASM_INT({ return window._setTransformCount || 0; });
+    REQUIRE(after > before);
   }
 }
 

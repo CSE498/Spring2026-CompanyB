@@ -74,6 +74,22 @@ class WebCanvas : public WebElement {
   /// The DOM canvas element
   emscripten::val canvas_element = emscripten::val::null();
 
+  /// The cached 2D rendering context
+  emscripten::val ctx = emscripten::val::null();
+
+  /// The current transform matrix
+  emscripten::val transform_matrix = emscripten::val::undefined();
+
+  /**
+   * @brief Reapplies all tracked C++ state to the 2D context
+   **/
+  void ApplyState();
+
+  /**
+   * @brief Converts an RGB tuple to a CSS rgb() string
+   **/
+  static std::string RgbString(std::tuple<int, int, int> rgb);
+
  public:
   /**
    * @brief Construct a WebCanvas, creating the canvas element in the DOM if
@@ -118,7 +134,7 @@ class WebCanvas : public WebElement {
    * @param x The starting point as (x, y).
    * @param y The ending point as (x, y).
    **/
-  void DrawLine(std::pair<double, double> x, std::pair<double, double> y);
+  void DrawLine(std::pair<double, double> start, std::pair<double, double> end);
 
   /**
    * @brief Draw a rectangle on the canvas.
@@ -128,7 +144,7 @@ class WebCanvas : public WebElement {
    * @param height The height of the rectangle. Must be non-negative.
    * @param filled If true, fill the rectangle; otherwise, stroke the outline.
    **/
-  void DrawRect(double x, double y, double width, double height,
+  void DrawRect(double x_top_l, double y_top_l, double width, double height,
                 bool filled = true);
 
   /**
