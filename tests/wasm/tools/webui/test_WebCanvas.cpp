@@ -10,79 +10,25 @@ struct SetupMockCanvas {
   SetupMockCanvas() {
     // clang-format off
     EM_ASM({
+      /// Creates a document if it doesn't exist
       if (typeof document === 'undefined') {
-        globalThis.document = {};
+        const { JSDOM } = jsdom;
+        const dom = new JSDOM("<!DOCTYPE html> <html><head></head><body></body></html>");
+        globalThis.window = dom.window;
+        globalThis.document = dom.window.document;
       }
 
-      // Contain DOM elements
-      var elements = {};
-
-      // Create a fresh 2D context stub
-      function makeCtx() {
-        var ctx = {};
-        ctx.clearRect = function(){};
-        ctx.fillRect = function(){};
-        ctx.strokeRect = function(){};
-        ctx.beginPath = function(){};
-        ctx.moveTo = function(){};
-        ctx.lineTo = function(){};
-        ctx.closePath = function(){};
-        ctx.arc = function(){};
-        ctx.fill = function(){};
-        ctx.stroke = function(){};
-        ctx.fillText = function(){};
-        ctx.drawImage = function(){};
-        ctx.translate = function(){};
-        ctx.rotate = function(){};
-        ctx.scale = function(){};
-        ctx.save = function(){};
-        ctx.restore = function(){};
-        return ctx;
+      // Support for RequestAnimationFrame
+      if (typeof globalThis.requestAnimationFrame === 'undefined') {
+        globalThis.requestAnimationFrame = function(cb) { return 0; };
       }
 
-      document.getElementById = function(id) { return elements[id] || null; };
-
-      // Creates a mock element. Setting the ID registers the element.
-      document.createElement = function() {
-        var ctx = makeCtx();
-        var elem = {};
-        elem.width = 0;
-        elem.height = 0;
-        elem.style = {};
-        elem.getContext = function() { return ctx; };
-        elem.remove = function() {
-          if (elem._id && elements[elem._id]) {
-            delete elements[elem._id];
-          }
-        };
-        elem._id = "";
-      Object.defineProperty(elem, 'id', {
-        get: function() { return elem._id;
+      // Support for LoadImage or DrawImage
+      if (typeof window === 'undefined') {
+        globalThis.window = globalThis;
       }
-      , set : function(v) {
-        elem._id = v;
-        elements[v] = elem;
-      }
-    });
-    return elem;
-  };
-
-  if (!document.body) {
-    document.body = {};
-  }
-  document.body.appendChild = function(){};
-
-  // Support for LoadImage or DrawImage
-  if (typeof window === 'undefined') {
-    globalThis.window = globalThis;
-  }
-  globalThis.Image = function() { this.complete = false; };
-  window._imageCache = {};
-
-  // Support for RequestAnimationFrame
-  if (typeof globalThis.requestAnimationFrame === 'undefined') {
-    globalThis.requestAnimationFrame = function(cb) { return 0; };
-  }
+      globalThis.Image = function() { this.complete = false; };
+      window._imageCache = {};
 });
 // clang-format on
 }
