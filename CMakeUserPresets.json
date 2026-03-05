@@ -1,0 +1,12 @@
+{
+    "version": 6,
+    "configurePresets": [
+        {
+            "name": "wsl1",
+            "inherits": "wsl",
+            "environment": {
+                "QT_ROOT": "/opt/Qt/6.10.2/gcc_64"
+            }
+        }
+    ]
+}

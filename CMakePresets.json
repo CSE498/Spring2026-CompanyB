@@ -1,0 +1,44 @@
+{
+    "version": 6,
+    "configurePresets": [
+        {
+            "name": "windows",
+            "condition": {
+                "type": "equals",
+                "lhs": "${hostSystemName}",
+                "rhs": "Windows"
+            },
+            "generator": "Ninja",
+            "binaryDir": "${sourceDir}/build",
+            "toolchainFile": "$env{QT_ROOT}/lib/cmake/Qt6/qt.toolchain.cmake",
+            "cacheVariables": {
+                "CMAKE_PREFIX_PATH": "$env{QT_ROOT}",
+                "CMAKE_C_COMPILER": "$env{MINGW_ROOT}/bin/gcc.exe",
+                "CMAKE_CXX_COMPILER": "$env{MINGW_ROOT}/bin/g++.exe"
+            }
+        },
+        {
+            "name": "wsl",
+            "condition": {
+                "type": "equals",
+                "lhs": "${hostSystemName}",
+                "rhs": "Linux"
+            },
+            "generator": "Ninja",
+            "binaryDir": "${sourceDir}/build",
+            "cacheVariables": {
+                "CMAKE_PREFIX_PATH": "$env{QT_ROOT}"
+            }
+        }
+    ],
+    "buildPresets": [
+        {
+            "name": "windows",
+            "configurePreset": "windows"
+        },
+        {
+            "name": "wsl",
+            "configurePreset": "wsl"
+        }
+    ]
+}

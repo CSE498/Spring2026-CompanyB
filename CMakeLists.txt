@@ -16,4 +16,8 @@ qt_add_executable(QtApp
     source/Interfaces/gui/ImageGrid.cpp
 )
 
+if(MSVC)
+    target_compile_options(QtApp PUBLIC "/Zc:__cplusplus")
+endif()
+
 target_link_libraries(QtApp PRIVATE Qt6::Core Qt6::Widgets)
