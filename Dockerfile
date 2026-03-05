@@ -30,6 +30,15 @@ RUN npm install -g esbuild && \
         --external:./xhr-sync-worker.js \
         node_modules/jsdom/lib/api.js
 
+# Install the canvas peer dependency for jsdom
+RUN npm install canvas && \
+    npx esbuild --bundle --minify --platform=node \
+          --format=iife \
+          --global-name=canvas \
+          --loader:.node=file \
+          --outfile=/app/canvas.min.js \
+          node_modules/canvas/index.js
+
 WORKDIR /app
 
 # Expose port for emrun web server

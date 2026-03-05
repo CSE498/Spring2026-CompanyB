@@ -68,6 +68,16 @@ if(BUILD_WASM_TESTS)
     file(COPY "/src/node_modules/jsdom/lib/jsdom/living/xhr/xhr-sync-worker.js"
      DESTINATION "${CMAKE_BINARY_DIR}/")
 
+    # Copy over files needed by canvas peer dependency
+    file(GLOB CANVAS_NODE_FILES "/app/canvas-*.node")
+    file(COPY ${CANVAS_NODE_FILES}
+    DESTINATION "${CMAKE_BINARY_DIR}/")
+
+    # Read in libraries into a concatenated file for --pre-js inclusion
+    file(READ "/app/jsdom.min.js" JSDOM_CONTENT)
+    file(READ "/app/canvas.min.js" CANVAS_CONTENT)
+    file(WRITE "${CMAKE_BINARY_DIR}/pre.js" "${JSDOM_CONTENT}\n${CANVAS_CONTENT}")
+
     # Output as a js file for Node.js execution
     set_target_properties(tests PROPERTIES SUFFIX ".js")
     message(STATUS "Source directory: ${CMAKE_SOURCE_DIR}")
@@ -77,7 +87,8 @@ if(BUILD_WASM_TESTS)
         -lembind
         -sNO_DISABLE_EXCEPTION_CATCHING
         # --pre-js "${CMAKE_CURRENT_SOURCE_DIR}/../third-party/jsdom/jsdom.min.js"
-        --pre-js /app/jsdom.min.js
+        # Link JS libraries
+        --pre-js "${CMAKE_BINARY_DIR}/pre.js"
     )
 
 elseif(BUILD_TESTS)
