@@ -14,6 +14,10 @@ find_package(Qt6 REQUIRED COMPONENTS Widgets)
 qt_add_executable(QtApp
     source/Interfaces/gui/MadiQtTest.cpp
     source/Interfaces/gui/ImageGrid.cpp
+    source/Interfaces/gui/ImageManager.cpp
+    source/Interfaces/gui/ErrorManager.cpp
+    source/Interfaces/gui/Menu.cpp
+    source/Interfaces/gui/Text.cpp
 )
 
 if(MSVC)
