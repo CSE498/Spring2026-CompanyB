@@ -1,9 +1,9 @@
 #pragma once 
 
-#include "../../../third-party/qt/include/QtCore/QString"
-#include "../../../third-party/qt/include/QtGui/QFont"
-#include "../../../third-party/qt/include/QtGui/QColor"
-#include "../../../third-party/qt/include/QtWidgets/QGraphicsScene"
+#include <QString>
+#include <QFont>
+#include <QColor>
+#include <QGraphicsScene>
 
 namespace cse498 {
 

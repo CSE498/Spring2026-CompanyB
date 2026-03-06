@@ -2,16 +2,16 @@
 
 #include <cassert>
 
-#include "../../../third-party/qt/include/QtCore/QString"
-#include "../../../third-party/qt/include/QtGui/QFont"
-#include "../../../third-party/qt/include/QtGui/QColor"
+#include <QString>
+#include <QFont>
+#include <QColor>
 
 // for sample display
-#include "../../../third-party/qt/include/QtWidgets/QApplication"
-#include "../../../third-party/qt/include/QtWidgets/QPushButton"
-#include "../../../third-party/qt/include/QtWidgets/QGraphicsScene"
-#include "../../../third-party/qt/include/QtWidgets/QGraphicsTextItem"
-#include "../../../third-party/qt/include/QtWidgets/QGraphicsView"
+#include <QApplication>
+#include <QPushButton>
+#include <QGraphicsScene>
+#include <QGraphicsTextItem>
+#include <QGraphicsView>
 
 namespace cse498 {
 

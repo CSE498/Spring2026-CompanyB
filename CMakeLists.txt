@@ -8,8 +8,7 @@ project(QtApp VERSION 0.1 LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-find_package(Qt6 REQUIRED COMPONENTS Core)
-find_package(Qt6 REQUIRED COMPONENTS Widgets)
+find_package(Qt6 REQUIRED COMPONENTS Core Gui Widgets)
 
 qt_add_executable(QtApp
     source/Interfaces/gui/MadiQtTest.cpp
@@ -24,4 +23,4 @@ if(MSVC)
     target_compile_options(QtApp PUBLIC "/Zc:__cplusplus")
 endif()
 
-target_link_libraries(QtApp PRIVATE Qt6::Core Qt6::Widgets)
+target_link_libraries(QtApp PRIVATE Qt6::Core Qt::Gui Qt6::Widgets)

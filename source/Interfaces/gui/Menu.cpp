@@ -87,6 +87,7 @@ bool Menu::removeItem(ItemId id)
         }
     }
     m_items.erase(item);
+    return true;
 }
 
 /**
