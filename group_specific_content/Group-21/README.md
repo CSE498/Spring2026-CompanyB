@@ -1,16 +1,27 @@
 ## Build Notes
 
 #### ImageGrid
-*make sure to swap the block of commented #include statements in ImageGrid.hpp*
-On WSL with Qt installed, use cmake and run ./build/QtApp:
-* (make build directory and cd into it)
-* cmake ..
-* cmake --build .
-* (cd back to parent)
-* ./build/QtApp
+CMake instructions:
 
-(Previously used this at and before commit 793df6d3ed51bd34fcccee51591ce4bd4635fe1d, but it only worked on my PC and not my laptop, and a peer review had the same problem)
-g++ -std=c++23  ./source/Interfaces/gui/MadiQtTest.cpp     -o TestingQt     -I./third-party/qt/include     -L./third-party/qt/lib     -lQt6Core     -lQt6Gui     -lQt6Widgets     -fPIC
+WSL:
+1. mkdir build
+2. cd build
+3. cmake ..
+4. cmake --build .
+5. cd ..
+6. ./build/QtApp
+
+Windows:
+1. mkdir build
+2. cd build
+3. cmake -G "MinGW Makefiles" .. 
+    (The -G option specifies which generator to use, and to my knowledge everyone in our group that is on Windows is using MinGW. Without it, CMake defaults to MSVC and causes a bunch of linker errors and this was the only solution I found.)
+4. cmake --build .
+5. cd ..
+6. ./build/QtApp.exe
+
+Mac:
+- TBD
 
 #### Text
 
