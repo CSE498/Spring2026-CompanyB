@@ -16,13 +16,27 @@ BUILD_DIR := ../tests/build/
 BIN       := $(BUILD_DIR)/run_tests
 
 CATCH_INC := ../third-party/Catch/single_include
-QT_INC := ../third-party/qt/include
 
 CXXFLAGS ?= -O2 -g
 WARNFLAGS ?= -Wall -Wextra -Wpedantic
-CPPFLAGS += -I$(SRC_DIR) -I$(CATCH_INC) -I$(QT_INC)
+CPPFLAGS += -I$(SRC_DIR) -I$(CATCH_INC)
 LDFLAGS  ?=
 LDLIBS   ?=
+
+QMAKE := $(shell which qmake 2>/dev/null || which qmake6 2>/dev/null)
+ifdef QMAKE
+	QT_INC    := $(shell $(QMAKE) -query QT_INSTALL_HEADERS)
+  	QT_LIB    := $(shell $(QMAKE) -query QT_INSTALL_LIBS)
+  	CPPFLAGS  += -I$(QT_INC) -I$(QT_INC)/QtCore -I$(QT_INC)/QtGui -I$(QT_INC)/QtWidgets
+  	ifeq ($(shell uname 2>/dev/null),Darwin)
+    	LDLIBS  += -F$(QT_LIB) -framework QtCore -framework QtGui -framework QtWidgets
+  	else
+    	LDLIBS  += -L$(QT_LIB) -lQt6Core -lQt6Gui -lQt6Widgets
+  	endif
+	else
+  	$(warning WARNING: QMake not found. Qt-dependent tests will fail.)
+  	$(warning Add qmake to PATH, e.g.)
+endif
 
 # Pick up .cpp from tests/
 TEST_FILES := $(shell find $(TEST_DIR) -type f -name '*.cpp')

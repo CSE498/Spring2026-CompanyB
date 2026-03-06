@@ -5,9 +5,7 @@
 //To run 'g++ ImageManagerTest.cpp ..\..\source\Interfaces\gui\ImageManager.cpp -o ImageManagerTest'
 //To run test write  './ImageManagerTest'
 
-
-#define CATCH_CONFIG_MAIN
-#include "../../third-party/Catch/single_include/catch2/catch.hpp"
+#include "catch2/catch.hpp"
 
 #include "../../source/Interfaces/gui/ImageManager.hpp"
 
