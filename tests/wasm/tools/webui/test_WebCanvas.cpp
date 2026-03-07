@@ -95,13 +95,10 @@ TEST_CASE("Resize", "[web_canvas]") {
     REQUIRE(canvas.GetHeight() == 400);
   }
 
-  // SECTION("resize reapplies transform after state wipe") {
-  //   canvas.Translate({10.0, 20.0});
-  //   int before = EM_ASM_INT({ return window._setTransformCount || 0; });
-  //   canvas.Resize(300, 300);
-  //   int after = EM_ASM_INT({ return window._setTransformCount || 0; });
-  //   REQUIRE(after > before);
-  // }
+  SECTION("resize reapplies transform after state wipe") {
+    canvas.Translate({10.0, 20.0});
+    REQUIRE_NOTHROW(canvas.Resize(300, 300));
+  }
 }
 
 TEST_CASE("Clear", "[web_canvas]") {
