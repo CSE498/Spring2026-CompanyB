@@ -54,12 +54,12 @@ class WeightedSet {
      * once we've stored the value there, it would be a waste to duplicate it in
      * the node.
      */
-    const T* value_ptr;
-    double weight;          ///< This element's weight (nonnegative)
-    double subtree_weight;  ///< Total weight of subtree rooted at this node
-    std::unique_ptr<Node> left;   ///< Left child (owning)
-    std::unique_ptr<Node> right;  ///< Right child (owning)
-    Node* parent;                 ///< Parent (non-owning)
+    const T* value_ptr{};
+    double weight{};          ///< This element's weight (nonnegative)
+    double subtree_weight{};  ///< Total weight of subtree rooted at this node
+    std::unique_ptr<Node> left{};   ///< Left child (owning)
+    std::unique_ptr<Node> right{};  ///< Right child (owning)
+    Node* parent{};                 ///< Parent (non-owning)
 
     /**
      * @brief Constructs a new node.
@@ -76,7 +76,7 @@ class WeightedSet {
           parent(par) {}
   };
 
-  std::unique_ptr<Node> root_;  ///< Root of the tree
+  std::unique_ptr<Node> root_{};  ///< Root of the tree
   std::random_device rd_{};  ///< Random device.
 
   /**
@@ -91,7 +91,7 @@ class WeightedSet {
    * @remark Keys are elements stored in the WeightedSet; values are non-owning
    *         pointers to the nodes in the tree representing that element.
    */
-  std::unordered_map<T, Node*> element_to_node_;
+  std::unordered_map<T, Node*> element_to_node_{};
 
   /** @brief Check if a node is a leaf (has no children). */
   bool IsLeaf(Node* node) const {
