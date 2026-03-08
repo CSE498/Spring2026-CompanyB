@@ -94,7 +94,7 @@ class WeightedSet {
   std::unordered_map<T, Node*> element_to_node_{};
 
   /** @brief Check if a node is a leaf (has no children). */
-  bool IsLeaf(Node* node) const {
+  [[nodiscard]] bool IsLeaf(Node* node) const {
     assert(node != nullptr);
     return node->left == nullptr && node->right == nullptr;
   }
@@ -106,7 +106,7 @@ class WeightedSet {
    * left/right child pointer).
    * @remark Written by Claude as part of a refactor to use unique_ptr.
    */
-  std::unique_ptr<Node>& OwningPointer(Node* node) {
+  [[nodiscard]] std::unique_ptr<Node>& OwningPointer(Node* node) {
     if (node->parent == nullptr) return root_;
     if (node->parent->left.get() == node) return node->parent->left;
     return node->parent->right;
@@ -118,7 +118,7 @@ class WeightedSet {
    * @param parent The parent node for the copied subtree.
    * @return A unique pointer to the copy of src it creates.
    */
-  std::unique_ptr<Node> CopyTree(const Node* src, Node* parent) {
+  [[nodiscard]] std::unique_ptr<Node> CopyTree(const Node* src, Node* parent) {
     if (!src) return nullptr;
 
     auto element = *(src->value_ptr);
@@ -135,13 +135,13 @@ class WeightedSet {
 
   /** @brief Returns the total weight of the left subtree, or 0 if there is no
    * left child. */
-  double LeftSubtreeWeight(const Node* const node) const {
+  [[nodiscard]] double LeftSubtreeWeight(const Node* const node) const {
     return node->left ? node->left->subtree_weight : 0.0;
   }
 
   /** @brief Returns the total weight of the right subtree, or 0 if there is no
    * right child. */
-  double RightSubtreeWeight(const Node* const node) const {
+  [[nodiscard]] double RightSubtreeWeight(const Node* const node) const {
     return node->right ? node->right->subtree_weight : 0.0;
   }
   /**
@@ -197,7 +197,7 @@ class WeightedSet {
   }
 
   /** @brief Check if child is a direct child of parent (left or right). */
-  bool IsDirectChild(const Node* const parent, const Node* const child) const {
+  [[nodiscard]] bool IsDirectChild(const Node* const parent, const Node* const child) const {
     return (parent->left.get() == child) || (parent->right.get() == child);
   }
 
@@ -209,7 +209,7 @@ class WeightedSet {
    * least one child. Favors the heavier subtree, which should help Remove
    * balance the tree.
    */
-  Node* FindLeaf(Node* const current) const {
+  [[nodiscard]] Node* FindLeaf(Node* const current) const {
     if (IsLeaf(current)) {
       return current;
     }
@@ -388,7 +388,7 @@ class WeightedSet {
    * interval will be equal to the weight of the element--which is needed for
    * GetRandomElement to work properly.
    */
-  std::optional<T> GetElementAt(const double index) const {
+  [[nodiscard]] std::optional<T> GetElementAt(const double index) const {
     Node* current_node = root_.get();
     double total = total_weight();
     if (index < 0 || index >= total) {
@@ -428,7 +428,7 @@ class WeightedSet {
    * @remark Each element's probability of being chosen is (weight of element) /
    * (total weight).
    */
-  std::optional<T> GetRandomElement() const {
+  [[nodiscard]] std::optional<T> GetRandomElement() const {
     if (!root_) {
       return std::nullopt;
     }
@@ -482,20 +482,20 @@ class WeightedSet {
   }
 
   /** @brief Returns the total number of elements in the set. */
-  size_t size() const { return element_to_node_.size(); }
+  [[nodiscard]] size_t size() const { return element_to_node_.size(); }
 
   /** @brief Returns whether the set is empty. */
-  bool empty() const { return size() == 0; }
+  [[nodiscard]] bool empty() const { return size() == 0; }
 
   /** @brief Returns the total weight of all the elements in the set. */
-  double total_weight() const { return root_ ? root_->subtree_weight : 0.0; }
+  [[nodiscard]] double total_weight() const { return root_ ? root_->subtree_weight : 0.0; }
 
   /**
    * @brief Returns whether the set contains the given element.
    * @param element The element to check for.
    * @return True if the element is in the set, false otherwise.
    */
-  bool Contains(const T& element) const {
+  [[nodiscard]] bool Contains(const T& element) const {
     return element_to_node_.find(element) != element_to_node_.end();
   }
 
@@ -517,7 +517,7 @@ class WeightedSet {
    * @return String representation of the tree.
    * @remark Claude-written.
    */
-  std::string DebugString() const {
+  [[nodiscard]] std::string DebugString() const {
     std::ostringstream oss;
     DebugPrint(oss);
     return oss.str();
