@@ -1,6 +1,6 @@
 FLAGS_version = -std=c++23
 FLAGS_warn    = -Wall -Wextra -Wcast-align -Wnon-virtual-dtor -Woverloaded-virtual -pedantic
-INCLUDE_PATH = -I$(CURDIR)/../third-party/include
+INCLUDE_PATH = -I "$(CURDIR)/../third-party/include"
 FLAGS_all     = $(FLAGS_version) $(FLAGS_warn) $(INCLUDE_PATH)
 
 FLAGS_debug   = $(FLAGS_all) -g                     # Setup for running a debugger
