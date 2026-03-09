@@ -371,7 +371,7 @@ private:
     if (std::holds_alternative<Circle>(e.shape)) {
       const Circle& c = std::get<Circle>(e.shape);
       double d = c.DistanceTo(center);
-      return d <= (c.GetRadius() + radius + Circle::kEps);
+      return d <= (c.GetRadius() + radius + Circle::EPS);
     } else {
       const Box& b = std::get<Box>(e.shape);
       // nearest point on AABB to center
@@ -383,7 +383,7 @@ private:
           std::clamp(cy, b.GetBottomLeft().getY(), b.GetTopRight().getY());
       double dx = cx - closestX;
       double dy = cy - closestY;
-      return (dx*dx + dy*dy) <= (radius + Circle::kEps) * (radius + Circle::kEps);
+      return (dx*dx + dy*dy) <= (radius + Circle::EPS) * (radius + Circle::EPS);
     }
   }
 };

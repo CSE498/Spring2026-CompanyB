@@ -14,7 +14,9 @@
 #pragma once
 
 #include <cstddef>
+#include <cassert>
 #include <cmath>
+#include <optional>
 #include <ostream>
 #include <stdexcept>
 #include <vector>
@@ -51,13 +53,11 @@ class Circle {
 #else
   static constexpr double PI = 3.14159265358979323846;  ///< Pi constant
 #endif
-  static constexpr double kEps = EPS;  ///< Legacy alias for compatibility
-  static constexpr double kPi = PI;    ///< Legacy alias for compatibility
 
   /**
    * @brief Default constructor: center at origin, radius zero.
    */
-  Circle() : center_(Point{}), radius_(0.0) {}
+  Circle() = default;
 
   /**
    * @brief Construct circle from center and radius.
@@ -65,9 +65,7 @@ class Circle {
    * @param radius Non-negative radius
    */
   Circle(const Point& center, double radius) : center_(center), radius_(radius) {
-    if (radius_ < 0.0) {
-      throw std::invalid_argument("Circle radius must be non-negative.");
-    }
+    ValidateNonNegativeRadius(radius_);
   }
 
 
@@ -94,9 +92,7 @@ class Circle {
    * @param radius Non-negative radius
    */
   void SetRadius(double radius) {
-    if (radius < 0.0) {
-      throw std::invalid_argument("Circle radius must be non-negative.");
-    }
+    ValidateNonNegativeRadius(radius);
     radius_ = radius;
   }
 
@@ -119,7 +115,7 @@ class Circle {
    */
   [[nodiscard]] bool Contains(const Circle& other) const {
     const double center_dist = CenterDistanceTo(other);
-    return center_dist + other.radius_ <= radius_ + EPS;
+    return (center_dist + other.radius_) <= (radius_ + EPS);
   }
 
   /**
@@ -216,25 +212,27 @@ class Circle {
    * @brief Compute intersection points of this circle with another.
    * @param other Other circle
    * @param eps Tolerance for degenerate cases (default: EPS)
-   * @return Vector of 0, 1 (tangent), or 2 intersection points; empty for coincident circles
+   * @return std::nullopt for no intersections; vector of 1 (tangent) or 2 points otherwise
    */
-  [[nodiscard]] std::vector<Point> IntersectionPoints(const Circle& other,
-                                                      double eps = EPS) const {
+  [[nodiscard]] std::optional<std::vector<Point>> TryIntersectionPoints(
+      const Circle& other, double eps = EPS) const {
     std::vector<Point> points;
 
     const double d = CenterDistanceTo(other);
     const double r0 = radius_;
     const double r1 = other.radius_;
 
-    if (d <= eps && std::fabs(r0 - r1) <= eps) return points;
-    if (d > r0 + r1 + eps) return points;
-    if (d < std::fabs(r0 - r1) - eps) return points;
-    if (d <= eps) return points;
+    if (d <= eps && std::fabs(r0 - r1) <= eps) return std::nullopt;
+    if (d > (r0 + r1 + eps)) return std::nullopt;
+    if (d < (std::fabs(r0 - r1) - eps)) return std::nullopt;
+    if (d <= eps) return std::nullopt;
 
+    // Distance from this center to the chord midpoint along the center-to-center line.
     const double a = (r0 * r0 - r1 * r1 + d * d) / (2.0 * d);
+    // Squared half-chord length. Clamp tiny negative noise from floating-point arithmetic.
     double h2 = r0 * r0 - a * a;
     if (h2 < 0.0 && std::fabs(h2) <= eps) h2 = 0.0;
-    if (h2 < 0.0) return points;
+    if (h2 < 0.0) return std::nullopt;
 
     const double h = std::sqrt(h2);
     const double x0 = center_.getX();
@@ -242,8 +240,10 @@ class Circle {
     const double x1 = other.center_.getX();
     const double y1 = other.center_.getY();
 
+    // Chord midpoint on the line between circle centers.
     const double px = x0 + a * (x1 - x0) / d;
     const double py = y0 + a * (y1 - y0) / d;
+    // Perpendicular offset from midpoint to each intersection point.
     const double rx = -(y1 - y0) * (h / d);
     const double ry = (x1 - x0) * (h / d);
 
@@ -255,19 +255,28 @@ class Circle {
   }
 
   /**
+   * @brief Compute intersection points of this circle with another.
+   * @param other Other circle
+   * @param eps Tolerance for degenerate cases (default: EPS)
+   * @return Vector of 0, 1 (tangent), or 2 intersection points; empty for coincident circles
+   */
+  [[nodiscard]] std::vector<Point> IntersectionPoints(const Circle& other,
+                                                      double eps = EPS) const {
+    return TryIntersectionPoints(other, eps).value_or(std::vector<Point>{});
+  }
+
+  /**
    * @brief Translate the circle by a delta vector.
    * @param delta Point to add to the center
    */
   void Translate(const Point& delta) { center_ = center_ + delta; }
 
   /**
-   * @brief Scale the radius by a non-negative factor.
+   * @brief Scale the radius by a positive factor.
    * @param factor Scale factor
    */
   void Scale(double factor) {
-    if (factor < 0.0) {
-      throw std::invalid_argument("Circle scale factor must be non-negative.");
-    }
+    ValidatePositiveScaleFactor(factor);
     radius_ *= factor;
   }
 
@@ -300,8 +309,8 @@ class Circle {
   [[nodiscard]] bool operator!=(const Circle& other) const { return !(*this == other); }
 
  private:
-  Point center_;   ///< Center of the circle
-  double radius_;  ///< Non-negative radius
+  Point center_{};   ///< Center of the circle
+  double radius_{};  ///< Non-negative radius
 
   /**
    * @brief Squared distance between two points (avoids sqrt when comparing).
@@ -310,6 +319,26 @@ class Circle {
     const double dx = a.getX() - b.getX();
     const double dy = a.getY() - b.getY();
     return dx * dx + dy * dy;
+  }
+
+  static void ValidateNonNegativeRadius(double radius) {
+#if defined(CSE498_USE_ASSERTS)
+    assert(radius >= 0.0 && "Circle radius must be non-negative.");
+#else
+    if (radius < 0.0) {
+      throw std::invalid_argument("Circle radius must be non-negative.");
+    }
+#endif
+  }
+
+  static void ValidatePositiveScaleFactor(double factor) {
+#if defined(CSE498_USE_ASSERTS)
+    assert(factor > 0.0 && "Circle scale factor must be positive.");
+#else
+    if (factor <= 0.0) {
+      throw std::invalid_argument("Circle scale factor must be positive.");
+    }
+#endif
   }
 };
 
