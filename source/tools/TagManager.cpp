@@ -6,6 +6,7 @@
 
  #include "TagManager.hpp"
 
+namespace cse498 {
 
   // Registers the object, indexes all the tags that are in the AnnotationSet.
   // If the object_id is already registered, it will be unregistered first to prevent duplicates.
@@ -29,8 +30,10 @@
         return false;
     }
 
+    auto& tagsForObject = it->second;
+
     // Remove object_id from all tag buckets in tag_index and clean up empty buckets.
-    for (const auto& tag : it->second) {
+    for (const auto& tag : tagsForObject) {
         tag_index[tag].erase(object_id);
         if (tag_index[tag].empty()) {
             tag_index.erase(tag);
@@ -87,7 +90,9 @@
   void TagManager::ClearTags(ObjectId object_id, cse498::AnnotationSet& set) {
     auto it = object_tags.find(object_id);
     if (it != object_tags.end()) {
-        for (const auto& t : it->second) {
+        auto& tagsForObject = it->second;
+
+        for (const auto& t : tagsForObject) {
             auto ti = tag_index.find(t);
             if (ti != tag_index.end()) {
                 ti->second.erase(object_id);
@@ -101,13 +106,9 @@
 
   // Helper function to perform AND operation on result set with another set of object_ids.
   void TagManager::AndQueryHelper(std::unordered_set<ObjectId>& result, const std::unordered_set<ObjectId>& other) {
-    for (auto i = result.begin(); i != result.end();) {
-        if (other.find(*i) == other.end()) {
-            i = result.erase(i);
-        } else {
-            ++i;
-        }
-    }
+    std::erase_if(result, [&other](const ObjectId& id) {
+        return other.find(id) == other.end();
+    });
   }
 
     // Helper function to perform NOT operation on result set with another set of object_ids.
@@ -176,3 +177,4 @@
 
         return std::vector<ObjectId>(result.begin(), result.end());
     }
+}
