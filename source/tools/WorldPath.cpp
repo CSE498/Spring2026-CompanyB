@@ -4,7 +4,6 @@
 #include <cassert>
 #include <cmath>
 #include <ranges>
-#include <stdexcept>
 #include <utility>
 
 namespace cse498 {
@@ -57,12 +56,15 @@ bool WorldPath::segmentsIntersect(const Point& a1,
                                   double eps) {
   int d1 = orient(a1, a2, b1, eps);
   int d2 = orient(a1, a2, b2, eps);
+
+  // Quick strict-intersection check before collinear work
   int d3 = orient(b1, b2, a1, eps);
   int d4 = orient(b1, b2, a2, eps);
+
   if (d1 != d2 && d3 != d4)
     return true;  // Strictly intersect
 
-  // Check for collinear overlaps
+  // Collinear overlap checks (only reached when orientations match)
   if (d1 == 0 && onSegment(a1, b1, a2, eps))
     return true;
   if (d2 == 0 && onSegment(a1, b2, a2, eps))
@@ -71,6 +73,7 @@ bool WorldPath::segmentsIntersect(const Point& a1,
     return true;
   if (d4 == 0 && onSegment(b1, a2, b2, eps))
     return true;
+
   return false;
 }
 
@@ -154,6 +157,8 @@ Point WorldPath::pointAtDistance(double distance_along_path) const {
 
 bool WorldPath::selfIntersects() const {
   const std::size_t n = points_.size();
+  // Need at least 4 points (3 segments) for any non-adjacent segment pair to
+  // exist.
   if (n < 4)
     return false;
   bool closed = samePoint(points_.front(), points_.back(), kDefaultEps);

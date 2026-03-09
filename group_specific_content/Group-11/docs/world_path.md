@@ -26,11 +26,7 @@ The following are implemented:
 - `bool empty() const;`  
   **Returns:** `true` if no points exist.
 
-- `bool popBack();`  
-  **Behavior:** Removes last point.  
-  **Returns:** `false` if already empty.
-
-- `std::optional<Point> popBackPoint();`  
+- `std::optional<Point> popBack();`  
   **Behavior:** Removes last point and returns it.  
   **Returns:** `std::nullopt` if already empty.
 
