@@ -70,16 +70,25 @@ TEST_CASE("WorldPath operator[] access", "[worldpath]") {
   REQUIRE(path[1].y() == Approx(4.0));
 }
 
-TEST_CASE("WorldPath at throws out_of_range", "[worldpath]") {
+TEST_CASE("WorldPath get checked access", "[worldpath]") {
   WorldPath path;
   path.addPoint({0.0, 0.0});
 
-  SECTION("valid index returns the point") {
-    REQUIRE(path.at(0).x() == Approx(0.0));
+  SECTION("valid index returns non-null pointer") {
+    auto* p = path.get(0);
+    REQUIRE(p != nullptr);
+    REQUIRE(p->x() == Approx(0.0));
   }
 
-  SECTION("out-of-range index throws") {
-    REQUIRE_THROWS_AS(path.at(1), std::out_of_range);
+  SECTION("out-of-range index returns nullptr") {
+    REQUIRE(path.get(1) == nullptr);
+  }
+
+  SECTION("const overload works") {
+    const WorldPath& cpath = path;
+    const auto* cp = cpath.get(0);
+    REQUIRE(cp != nullptr);
+    REQUIRE(cp->x() == Approx(0.0));
   }
 }
 
@@ -98,6 +107,21 @@ TEST_CASE("WorldPath popBack", "[worldpath]") {
     REQUIRE(popped->x() == Approx(5.0));
     REQUIRE(popped->y() == Approx(6.0));
     REQUIRE(path.empty());
+  }
+
+  SECTION("multiple pops return correct values in LIFO order") {
+    path.addPoint({1.0, 2.0});
+    path.addPoint({3.0, 4.0});
+    path.addPoint({5.0, 6.0});
+
+    auto p3 = path.popBack();
+    REQUIRE(p3->x() == Approx(5.0));
+    auto p2 = path.popBack();
+    REQUIRE(p2->x() == Approx(3.0));
+    auto p1 = path.popBack();
+    REQUIRE(p1->x() == Approx(1.0));
+    REQUIRE(path.empty());
+    REQUIRE_FALSE(path.popBack().has_value());
   }
 }
 
@@ -289,6 +313,17 @@ TEST_CASE("WorldPath append", "[worldpath]") {
     REQUIRE(a.size() == 2);
     REQUIRE(a.front().x() == Approx(1.0));
   }
+
+  SECTION("append path to itself") {
+    WorldPath a;
+    a.addPoint({1.0, 0.0});
+    a.addPoint({2.0, 0.0});
+
+    a.append(a);
+    REQUIRE(a.size() == 4);
+    REQUIRE(a[0].x() == Approx(1.0));
+    REQUIRE(a[2].x() == Approx(1.0));
+  }
 }
 
 TEST_CASE("WorldPath reversed", "[worldpath]") {
@@ -306,6 +341,16 @@ TEST_CASE("WorldPath reversed", "[worldpath]") {
     REQUIRE(r.size() == 1);
     REQUIRE(r.front().x() == Approx(7.0));
     REQUIRE(r.front().y() == Approx(-2.0));
+  }
+
+  SECTION("two-point path swaps start and end") {
+    WorldPath path;
+    path.addPoint({0.0, 0.0});
+    path.addPoint({5.0, 5.0});
+
+    WorldPath r = path.reversed();
+    REQUIRE(r.front().x() == Approx(5.0));
+    REQUIRE(r.back().x() == Approx(0.0));
   }
 
   SECTION("multi-point path") {
@@ -434,6 +479,17 @@ TEST_CASE("WorldPath selfIntersects", "[worldpath]") {
     path.addPoint({0.0, 0.0});  // returns to start
     path.addPoint({0.0, 2.0});  // continues
     REQUIRE(path.selfIntersects());
+  }
+
+  SECTION("longer clean path does not false-positive") {
+    WorldPath path;
+    path.addPoint({0.0, 0.0});
+    path.addPoint({1.0, 0.0});
+    path.addPoint({2.0, 1.0});
+    path.addPoint({3.0, 0.0});
+    path.addPoint({4.0, 0.0});
+    path.addPoint({5.0, 1.0});
+    REQUIRE_FALSE(path.selfIntersects());
   }
 }
 

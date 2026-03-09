@@ -40,9 +40,12 @@ The following are implemented:
 - `Point& operator[](size_t index);` / `const Point& operator[](size_t index) const;`  
   **Behavior:** Unchecked access (like `std::vector`).
 
-- `Point& at(size_t index);` / `const Point& at(size_t index) const;`  
-  **Returns:** Reference to that point.  
-  **Throws:** `std::out_of_range` if invalid.
+- `Point* get(size_t index);` / `const Point* get(size_t index) const;`  
+  **Returns:** Pointer to the point, or `nullptr` if out of range.  
+  **Note:** `noexcept`, no exceptions thrown.
+
+- ~~`Point& at(size_t index);`~~ **(deprecated)**  
+  **Use `get()` for checked access or `operator[]` for unchecked access.**
 
 - `Point& front();` / `const Point& front() const;`  
   **Assert:** Path not empty.  
@@ -110,7 +113,7 @@ The following are implemented:
 
 #### (2) Recoverable Error — Exceptions / Optional
 * **File Loading:** If we implement `LoadFromFile` and it fails, we'll throw a `std::runtime_error` because the program shouldn't keep going if it can't load the file.
-* **Invalid Index:** `at(i)` throws `std::out_of_range` when `i` is invalid.
+* **Invalid Index:** `get(i)` returns `nullptr` when `i` is out of range. `at(i)` is deprecated.
 * **Invalid Queries:** `segmentLength(i)` on the last point returns `std::nullopt`, so the caller can deal with it.
 
 #### (3) User-Level / Soft Errors — Return Condition

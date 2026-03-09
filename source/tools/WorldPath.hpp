@@ -44,17 +44,25 @@ class WorldPath {
    * @return Reference to the point at index i.
    * @throws std::out_of_range if i >= size().
    */
-  Point& at(std::size_t i) {
+  [[deprecated("Exceptions are disallowed. Use get() for checked access or [] for unchecked access.")]] Point& at(std::size_t i) {
     if (i >= points_.size())
       throw std::out_of_range("WorldPath::at");
     return points_[i];
   }
 
   /** @copydoc at(std::size_t) */
-  const Point& at(std::size_t i) const {
+  [[deprecated("Exceptions are disallowed. Use get() for checked access or [] for unchecked access.")]] const Point& at(std::size_t i) const {
     if (i >= points_.size())
       throw std::out_of_range("WorldPath::at");
     return points_[i];
+  }
+
+  [[nodiscard]] Point* get(std::size_t i) noexcept {
+    return i < points_.size() ? &points_[i] : nullptr;
+  }
+
+  [[nodiscard]] const Point* get(std::size_t i) const noexcept {
+    return i < points_.size() ? &points_[i] : nullptr;
   }
 
   Point& front() {
@@ -114,7 +122,9 @@ class WorldPath {
    *   }
    * @endcode
    */
-  [[nodiscard]] auto segments() const { return points_ | std::views::pairwise; }
+  [[nodiscard]] auto segments() const {
+    return points_ | std::views::pairwise;
+  }
 
   /**
    * @brief Checks that every point has finite coordinates.
@@ -141,9 +151,8 @@ class WorldPath {
    * @brief Brute-force O(n^2) search for the two most distant points.
    * @return The two points with the greatest Euclidean distance.
    *
-   * @note For large paths (millions of points), we will implement a more
-   * efficient algorithm such as rotating calipers on the convex hull (O(n log
-   * n)) ASAP.
+   * @note For large paths (millions of points), we will implement a more efficient
+   *       algorithm such as rotating calipers on the convex hull (O(n log n)) ASAP.
    */
   [[nodiscard]] std::pair<Point, Point> furthestPair() const;
 
@@ -196,8 +205,7 @@ class WorldPath {
   [[nodiscard]] static double dist(const Point& a, const Point& b);
 
   /// @brief Checks if two doubles are equal within a small tolerance.
-  [[nodiscard]] static bool nearlyEq(double a,
-                                     double b,
+  [[nodiscard]] static bool nearlyEq(double a, double b,
                                      double eps = kDefaultEps);
 
   /// @brief Checks if two points share the exact same coordinates (within eps).
