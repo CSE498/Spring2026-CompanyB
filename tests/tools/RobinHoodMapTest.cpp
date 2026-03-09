@@ -22,6 +22,13 @@
 #include <string>
 #include <climits>
 #include <type_traits>
+#include <vector>
+#include <list>
+#include <map>
+#include <set>
+#include <deque>
+#include <array>
+#include <unordered_set>
 
 #include "../../source/tools/RobinHoodMap.hpp"
 
@@ -87,6 +94,17 @@ public:
     template<typename K, typename V>
     static bool isSlotFilled(const RobinHoodMap<K, V>& map, size_t index) {
         return map.mTable[index].filled;
+    }
+
+    template<typename K, typename V>
+    static size_t getVectorSize(const RobinHoodMap<K, V>& map) {
+        return map.mTable.size();
+    }
+
+    static void addMoreItems(RobinHoodMap<int, int>& map, const int& start, const int& end) {
+        for (int i = start; i < end; ++i) {
+            map.insert(i, i * 100);
+        }
     }
 };
 
@@ -240,6 +258,123 @@ TEST_CASE("Assignment operator creates independent copy", "[assignment]") {
     REQUIRE(value.value() == 100);
 }
 
+// verifying resize values (default values start at 8 with load factor of 0.5)
+
+TEST_CASE("Checking default resizing does get called", "[resize]") {
+    RobinHoodMap<int, int> map;
+
+    map.insert(1, 100);
+    map.insert(2, 200);
+    map.insert(3, 300);
+    map.insert(4, 400);
+
+
+    // should not have resized yet since we are at 3/8 capacity, but should have resized after the 4th insert
+    REQUIRE(map.size() == 4u);
+    REQUIRE(RobinHoodMapTest::getVectorSize(map) == 8u);
+
+    map.insert(5, 500);
+ 
+    REQUIRE(map.size() == 5u);
+    REQUIRE(RobinHoodMapTest::getVectorSize(map) == 16u);
+
+    map.insert(6, 600);
+    map.insert(7, 700);
+    map.insert(8, 800);
+
+    REQUIRE(map.size() == 8u);
+    REQUIRE(RobinHoodMapTest::getVectorSize(map) == 16u);
+
+    map.insert(9, 900);
+
+    REQUIRE(map.size() == 9u);
+    REQUIRE(RobinHoodMapTest::getVectorSize(map) == 32u);
+
+    // for (int i = 10; i < 17; ++i) {
+    //     map.insert(i, i * 100);
+    // }
+    RobinHoodMapTest::addMoreItems(map, 10, 17);
+
+    REQUIRE(map.size() == 16u);
+    REQUIRE(RobinHoodMapTest::getVectorSize(map) == 32u);
+
+    map.insert(17, 1700);
+
+    REQUIRE(map.size() == 17u);
+    REQUIRE(RobinHoodMapTest::getVectorSize(map) == 64u);
+
+    // for (int i = 18; i < 33; ++i) {
+    //     map.insert(i, i * 100);
+    // }
+    RobinHoodMapTest::addMoreItems(map, 18, 33);
+
+    REQUIRE(map.size() == 32u);
+    REQUIRE(RobinHoodMapTest::getVectorSize(map) == 64u);
+
+    map.insert(33, 3300);
+
+    REQUIRE(map.size() == 33u);
+    REQUIRE(RobinHoodMapTest::getVectorSize(map) == 128u);
+
+    // for (int i = 34; i < 65; ++i) {
+    //     map.insert(i, i * 100);
+    // }
+    RobinHoodMapTest::addMoreItems(map, 34, 65);
+
+    REQUIRE(map.size() == 64u);
+    REQUIRE(RobinHoodMapTest::getVectorSize(map) == 128u);
+
+    map.insert(65, 6500);
+
+    REQUIRE(map.size() == 65u);
+    REQUIRE(RobinHoodMapTest::getVectorSize(map) == 256u);
+
+    // for (int i = 66; i < 129; ++i) {
+    //     map.insert(i, i * 100);
+    // }
+
+    RobinHoodMapTest::addMoreItems(map, 66, 129);
+
+    REQUIRE(map.size() == 128u);
+    REQUIRE(RobinHoodMapTest::getVectorSize(map) == 256u);
+
+    map.insert(129, 12900);
+
+    REQUIRE(map.size() == 129u);
+    REQUIRE(RobinHoodMapTest::getVectorSize(map) == 512u);
+
+    RobinHoodMapTest::addMoreItems(map, 130, 257);
+
+    REQUIRE(map.size() == 256u);
+    REQUIRE(RobinHoodMapTest::getVectorSize(map) == 512u);
+
+    map.insert(257, 25700);
+
+    REQUIRE(map.size() == 257u);
+    REQUIRE(RobinHoodMapTest::getVectorSize(map) == 1024u);
+
+    RobinHoodMapTest::addMoreItems(map, 258, 513);
+
+    REQUIRE(map.size() == 512u);
+    REQUIRE(RobinHoodMapTest::getVectorSize(map) == 1024u);
+
+    map.insert(513, 51300);
+
+    REQUIRE(map.size() == 513u);
+    REQUIRE(RobinHoodMapTest::getVectorSize(map) == 2048u);
+
+    RobinHoodMapTest::addMoreItems(map, 514, 1025);
+
+    REQUIRE(map.size() == 1024u);
+    REQUIRE(RobinHoodMapTest::getVectorSize(map) == 2048u);
+
+    map.insert(1025, 102500);
+
+    REQUIRE(map.size() == 1025u);
+    REQUIRE(RobinHoodMapTest::getVectorSize(map) == 4096u);
+
+}
+
 // resizing (private)
 
 TEST_CASE("Resize doubles table size", "[resize]") {
@@ -288,10 +423,10 @@ TEST_CASE("Internal state size consistency", "[internal]") {
 TEST_CASE("Stress test many insertions", "[stress]") {
     RobinHoodMap<int, int> map;
     
-    for (int i = 0; i < 1000; ++i) {
+    for (int i = 0; i < 100000; ++i) {
         map.insert(i, i * 10);
     }
-    REQUIRE(map.size() == 1000u);
+    REQUIRE(map.size() == 100000u);
     
     auto value = map.at(500);
     REQUIRE(value.has_value());
@@ -1634,4 +1769,319 @@ TEST_CASE("Iterator decrement on single element map", "[iterator-decrement]") {
     
     ++it;
     REQUIRE(it == map.end());
+}
+
+// ===========================================================================
+// TESTING OTHER DATA STRUCTURES
+// ===========================================================================
+
+// --- Vector as value ---
+
+TEST_CASE("Vector as value - insert and retrieve", "[data-structures]") {
+    RobinHoodMap<std::string, std::vector<int>> map;
+    map.insert("scores", {90, 85, 100, 72});
+
+    auto result = map.at("scores");
+    REQUIRE(result.has_value());
+    REQUIRE(result.value().size() == 4u);
+    REQUIRE(result.value()[0] == 90);
+    REQUIRE(result.value()[3] == 72);
+}
+
+TEST_CASE("Vector as value - update overwrites entire vector", "[data-structures]") {
+    RobinHoodMap<std::string, std::vector<int>> map;
+    map.insert("data", {1, 2, 3});
+    map.insert("data", {10, 20});
+
+    auto result = map.at("data");
+    REQUIRE(result.has_value());
+    REQUIRE(result.value().size() == 2u);
+    REQUIRE(result.value()[0] == 10);
+    REQUIRE(result.value()[1] == 20);
+}
+
+TEST_CASE("Vector as value - empty vector", "[data-structures]") {
+    RobinHoodMap<std::string, std::vector<int>> map;
+    map.insert("empty", {});
+
+    auto result = map.at("empty");
+    REQUIRE(result.has_value());
+    REQUIRE(result.value().empty());
+}
+
+TEST_CASE("Vector as value - multiple keys with vectors", "[data-structures]") {
+    RobinHoodMap<int, std::vector<std::string>> map;
+    map.insert(1, {"hello", "world"});
+    map.insert(2, {"foo", "bar", "baz"});
+    map.insert(3, {"single"});
+
+    REQUIRE(map.size() == 3u);
+    REQUIRE(map.at(1).value().size() == 2u);
+    REQUIRE(map.at(2).value().size() == 3u);
+    REQUIRE(map.at(3).value()[0] == "single");
+}
+
+// --- List as value ---
+
+TEST_CASE("List as value - insert and retrieve", "[data-structures]") {
+    RobinHoodMap<int, std::list<int>> map;
+    map.insert(1, {10, 20, 30});
+
+    auto result = map.at(1);
+    REQUIRE(result.has_value());
+    REQUIRE(result.value().size() == 3u);
+    REQUIRE(result.value().front() == 10);
+    REQUIRE(result.value().back() == 30);
+}
+
+TEST_CASE("List as value - remove key with list value", "[data-structures]") {
+    RobinHoodMap<int, std::list<double>> map;
+    map.insert(1, {1.1, 2.2, 3.3});
+    map.insert(2, {4.4, 5.5});
+
+    map.remove(1);
+    REQUIRE(map.size() == 1u);
+    REQUIRE_FALSE(map.at(1).has_value());
+    REQUIRE(map.at(2).has_value());
+}
+
+// --- Set as value ---
+
+TEST_CASE("Set as value - insert and retrieve", "[data-structures]") {
+    RobinHoodMap<std::string, std::set<int>> map;
+    map.insert("primes", {2, 3, 5, 7, 11});
+
+    auto result = map.at("primes");
+    REQUIRE(result.has_value());
+    REQUIRE(result.value().size() == 5u);
+    REQUIRE(result.value().count(5) == 1u);
+    REQUIRE(result.value().count(4) == 0u);
+}
+
+TEST_CASE("Set as value - duplicates in initializer are deduplicated", "[data-structures]") {
+    RobinHoodMap<int, std::set<std::string>> map;
+    map.insert(1, {"a", "b", "a", "c", "b"});
+
+    auto result = map.at(1);
+    REQUIRE(result.has_value());
+    REQUIRE(result.value().size() == 3u);
+}
+
+// --- Map as value (nested map) ---
+
+TEST_CASE("Map as value - nested map insert and retrieve", "[data-structures]") {
+    RobinHoodMap<std::string, std::map<std::string, int>> map;
+    std::map<std::string, int> inner;
+    inner["age"] = 25;
+    inner["score"] = 100;
+    map.insert("player1", inner);
+
+    auto result = map.at("player1");
+    REQUIRE(result.has_value());
+    REQUIRE(result.value().size() == 2u);
+    REQUIRE(result.value().at("age") == 25);
+    REQUIRE(result.value().at("score") == 100);
+}
+
+TEST_CASE("Map as value - multiple nested maps", "[data-structures]") {
+    RobinHoodMap<int, std::map<int, int>> map;
+    map.insert(1, {{10, 100}, {20, 200}});
+    map.insert(2, {{30, 300}});
+
+    REQUIRE(map.size() == 2u);
+    REQUIRE(map.at(1).value().size() == 2u);
+    REQUIRE(map.at(2).value().at(30) == 300);
+}
+
+// --- Deque as value ---
+
+TEST_CASE("Deque as value - insert and retrieve", "[data-structures]") {
+    RobinHoodMap<int, std::deque<int>> map;
+    map.insert(1, {1, 2, 3, 4, 5});
+
+    auto result = map.at(1);
+    REQUIRE(result.has_value());
+    REQUIRE(result.value().size() == 5u);
+    REQUIRE(result.value().front() == 1);
+    REQUIRE(result.value().back() == 5);
+}
+
+TEST_CASE("Deque as value - update with different size deque", "[data-structures]") {
+    RobinHoodMap<std::string, std::deque<std::string>> map;
+    map.insert("items", {"a", "b"});
+    map.insert("items", {"x", "y", "z"});
+
+    auto result = map.at("items");
+    REQUIRE(result.has_value());
+    REQUIRE(result.value().size() == 3u);
+    REQUIRE(result.value()[0] == "x");
+}
+
+// --- Array as value ---
+
+TEST_CASE("Array as value - fixed size array", "[data-structures]") {
+    RobinHoodMap<int, std::array<int, 3>> map;
+    map.insert(1, {10, 20, 30});
+
+    auto result = map.at(1);
+    REQUIRE(result.has_value());
+    REQUIRE(result.value()[0] == 10);
+    REQUIRE(result.value()[1] == 20);
+    REQUIRE(result.value()[2] == 30);
+}
+
+TEST_CASE("Array as value - multiple entries", "[data-structures]") {
+    RobinHoodMap<std::string, std::array<double, 2>> map;
+    map.insert("point1", {1.5, 2.5});
+    map.insert("point2", {3.0, 4.0});
+
+    REQUIRE(map.size() == 2u);
+    REQUIRE(map.at("point1").value()[0] == 1.5);
+    REQUIRE(map.at("point2").value()[1] == 4.0);
+}
+
+// --- Pair as value ---
+
+TEST_CASE("Pair as value - insert and retrieve", "[data-structures]") {
+    RobinHoodMap<int, std::pair<std::string, int>> map;
+    map.insert(1, {"hello", 42});
+    map.insert(2, {"world", 99});
+
+    auto result = map.at(1);
+    REQUIRE(result.has_value());
+    REQUIRE(result.value().first == "hello");
+    REQUIRE(result.value().second == 42);
+}
+
+// --- Unordered set as value ---
+
+TEST_CASE("Unordered set as value - insert and retrieve", "[data-structures]") {
+    RobinHoodMap<int, std::unordered_set<int>> map;
+    map.insert(1, {10, 20, 30, 40});
+
+    auto result = map.at(1);
+    REQUIRE(result.has_value());
+    REQUIRE(result.value().size() == 4u);
+    REQUIRE(result.value().count(20) == 1u);
+    REQUIRE(result.value().count(50) == 0u);
+}
+
+// --- Vector of vectors (nested containers) ---
+
+TEST_CASE("Vector of vectors as value", "[data-structures]") {
+    RobinHoodMap<int, std::vector<std::vector<int>>> map;
+    map.insert(1, {{1, 2}, {3, 4, 5}, {6}});
+
+    auto result = map.at(1);
+    REQUIRE(result.has_value());
+    REQUIRE(result.value().size() == 3u);
+    REQUIRE(result.value()[0].size() == 2u);
+    REQUIRE(result.value()[1].size() == 3u);
+    REQUIRE(result.value()[2][0] == 6);
+}
+
+// --- Cross-type interactions ---
+
+TEST_CASE("Multiple data structure value types across maps", "[data-structures]") {
+    RobinHoodMap<int, std::vector<int>> vecMap;
+    RobinHoodMap<int, std::set<int>> setMap;
+    RobinHoodMap<int, std::list<int>> listMap;
+
+    for (int i = 0; i < 20; ++i) {
+        vecMap.insert(i, {i, i * 2, i * 3});
+        setMap.insert(i, {i, i * 2, i * 3});
+        listMap.insert(i, {i, i * 2, i * 3});
+    }
+
+    REQUIRE(vecMap.size() == 20u);
+    REQUIRE(setMap.size() == 20u);
+    REQUIRE(listMap.size() == 20u);
+
+    // All maps should be retrievable for every key
+    for (int i = 0; i < 20; ++i) {
+        REQUIRE(vecMap.at(i).has_value());
+        REQUIRE(setMap.at(i).has_value());
+        REQUIRE(listMap.at(i).has_value());
+    }
+}
+
+TEST_CASE("Data structure values survive resize", "[data-structures]") {
+    RobinHoodMap<int, std::vector<std::string>> map;
+
+    // Insert enough to trigger multiple resizes
+    for (int i = 0; i < 100; ++i) {
+        map.insert(i, {"item_" + std::to_string(i), "extra"});
+    }
+
+    REQUIRE(map.size() == 100u);
+
+    // Verify all values survived resizing intact
+    for (int i = 0; i < 100; ++i) {
+        auto result = map.at(i);
+        REQUIRE(result.has_value());
+        REQUIRE(result.value().size() == 2u);
+        REQUIRE(result.value()[0] == "item_" + std::to_string(i));
+        REQUIRE(result.value()[1] == "extra");
+    }
+}
+
+TEST_CASE("Copy assignment with data structure values", "[data-structures]") {
+    RobinHoodMap<int, std::vector<int>> map1;
+    map1.insert(1, {10, 20, 30});
+    map1.insert(2, {40, 50});
+
+    RobinHoodMap<int, std::vector<int>> map2;
+    map2 = map1;
+
+    REQUIRE(map2.size() == 2u);
+    REQUIRE(map2.at(1).value() == std::vector<int>({10, 20, 30}));
+
+    // Modify original, copy should be independent
+    map1.insert(1, {999});
+    REQUIRE(map2.at(1).value().size() == 3u);
+    REQUIRE(map2.at(1).value()[0] == 10);
+}
+
+TEST_CASE("Iterator with data structure values", "[data-structures]") {
+    RobinHoodMap<int, std::vector<int>> map;
+    map.insert(1, {10, 20});
+    map.insert(2, {30, 40, 50});
+    map.insert(3, {60});
+
+    size_t totalElements = 0;
+    for (auto it = map.begin(); it != map.end(); ++it) {
+        totalElements += (*it).value.size();
+    }
+    REQUIRE(totalElements == 6u);
+}
+
+TEST_CASE("Remove with data structure values", "[data-structures]") {
+    RobinHoodMap<std::string, std::map<std::string, int>> map;
+    map.insert("a", {{"x", 1}, {"y", 2}});
+    map.insert("b", {{"z", 3}});
+    map.insert("c", {{"w", 4}, {"v", 5}, {"u", 6}});
+
+    map.remove("b");
+    REQUIRE(map.size() == 2u);
+    REQUIRE_FALSE(map.at("b").has_value());
+    REQUIRE(map.at("a").value().size() == 2u);
+    REQUIRE(map.at("c").value().size() == 3u);
+}
+
+TEST_CASE("Non-const operator[] with vector value", "[data-structures]") {
+    RobinHoodMap<std::string, std::vector<int>> map;
+
+    // operator[] should default-insert an empty vector
+    auto& vec = map["new_key"];
+    REQUIRE(vec.empty());
+
+    // Modify through the reference
+    vec.push_back(42);
+    vec.push_back(99);
+
+    auto result = map.at("new_key");
+    REQUIRE(result.has_value());
+    REQUIRE(result.value().size() == 2u);
+    REQUIRE(result.value()[0] == 42);
+    REQUIRE(result.value()[1] == 99);
 }
