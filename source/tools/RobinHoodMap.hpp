@@ -39,8 +39,13 @@ class RobinHoodMap {
     bool filled = false;   //< Indicates if the entry is filled
   };
 
+  /// @brief the load factor threshold for resizing the table
+  static constexpr double RHM_LOAD_FACTOR = 0.75;
+  /// @brief the initial size of the hash table MUST ALWAYS BE A POWER OF 2 FOR BIT MASKING TO WORK
+  static constexpr size_t INITIAL_SIZE = 8;
+
   /// the physical table storing entries
-  std::vector<Entry> mTable{8, Entry{}};
+  std::vector<Entry> mTable{INITIAL_SIZE, Entry{}};
   /// the number of filled entries
   size_t mSize = 0;
   /// the hash function we use
@@ -81,6 +86,13 @@ class RobinHoodMap {
         return;
       }
 
+      // Calculate the probe count of the existing entry
+      //
+      // same as doing (index - mTable[index].hash % mTable.size()) + mTable.size()) % mTable.size()
+      // 
+      // We use mask instead of the % operator as the mask is bitwise and significantly faster
+      // than using the % operator which is a lot more costly, especially since we are trying to 
+      // optimize for speed 
       size_t existingProbeCount = (index - (mTable[index].hash & mask) + mTable.size()) & mask;
 
       // If the existing entry has probed less than the current probe count, swap with it (Robin Hood step)
@@ -160,7 +172,7 @@ class RobinHoodMap {
    * @param value The value associated with the key.
    */
   void insert(const K& key, const V& value) {
-    if (mSize >= mTable.size() / 2) {
+    if (mSize + 1 >= (mTable.size() * RHM_LOAD_FACTOR)) {
       _resize();
     }
     _insertWithHash(key, value, mHasher(key));
@@ -171,7 +183,7 @@ class RobinHoodMap {
    * Will remove the key if it exists, otherwise does nothing.
    * @param key The key to search and remove..
    */
-  void remove(const K& key) {
+  bool remove(const K& key) {
     const size_t mask = mTable.size() - 1;
     size_t hash = mHasher(key);
     size_t index = hash & mask;
@@ -199,17 +211,18 @@ class RobinHoodMap {
           index = nextIndex;
           nextIndex = (nextIndex + 1) & mask;
         }
-        return;
+        return true;
       }
 
       if (size_t currentProbeCount = (index - (mTable[index].hash & mask) + mTable.size()) & mask;
           currentProbeCount < probeCount) {
-        return;
+        return false;
       }
 
       ++probeCount;
       index = (index + 1) & mask;
     }
+    return false;
   }
 
   /**
@@ -310,7 +323,7 @@ class RobinHoodMap {
    * @param key The key to check for.
    * @return true if the key exists, false otherwise.
    */
-  bool contains(const K& key) const noexcept {
+  [[nodiscard]] bool contains(const K& key) const noexcept {
     const size_t mask = mTable.size() - 1;
     const size_t hash = mHasher(key);
     size_t index = hash & mask;
@@ -349,7 +362,7 @@ class RobinHoodMap {
    * Checks if the map is empty.
    * @return true if the map has no elements, false otherwise.
    */
-  bool empty() const noexcept {
+  [[nodiscard]] bool empty() const noexcept {
     return mSize == 0;
   }
 
@@ -357,7 +370,7 @@ class RobinHoodMap {
    * Returns the number of elements in the map.
    * @return The size of the map.
    */
-  size_t size() const noexcept {
+  [[nodiscard]] size_t size() const noexcept {
     return mSize;
   }
 

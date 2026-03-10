@@ -106,6 +106,10 @@ public:
             map.insert(i, i * 100);
         }
     }
+
+    static double loadFactor(const RobinHoodMap<int, int>& map) {
+        return map.RHM_LOAD_FACTOR;
+    }
 };
 
 // constructor
@@ -258,121 +262,33 @@ TEST_CASE("Assignment operator creates independent copy", "[assignment]") {
     REQUIRE(value.value() == 100);
 }
 
-// verifying resize values (default values start at 8 with load factor of 0.5)
+// verifying resize values using the map's load factor
 
 TEST_CASE("Checking default resizing does get called", "[resize]") {
     RobinHoodMap<int, int> map;
+    double lf = RobinHoodMapTest::loadFactor(map);
+    int nextKey = 1;
 
-    map.insert(1, 100);
-    map.insert(2, 200);
-    map.insert(3, 300);
-    map.insert(4, 400);
+    // Test resize across multiple capacity doublings (8 → 16 → ... → 4096)
+    for (int doublings = 0; doublings < 10; ++doublings) {
+        size_t capacity = RobinHoodMapTest::getVectorSize(map);
+        size_t threshold = static_cast<size_t>(capacity * lf);
 
+        // Fill up to one below the threshold
+        RobinHoodMapTest::addMoreItems(map, nextKey, static_cast<int>(threshold));
+        nextKey = static_cast<int>(threshold);
 
-    // should not have resized yet since we are at 3/8 capacity, but should have resized after the 4th insert
-    REQUIRE(map.size() == 4u);
-    REQUIRE(RobinHoodMapTest::getVectorSize(map) == 8u);
+        // Should still be at the same capacity
+        REQUIRE(RobinHoodMapTest::getVectorSize(map) == capacity);
 
-    map.insert(5, 500);
- 
-    REQUIRE(map.size() == 5u);
-    REQUIRE(RobinHoodMapTest::getVectorSize(map) == 16u);
+        // Insert the element that triggers resize
+        map.insert(nextKey, nextKey * 100);
+        ++nextKey;
 
-    map.insert(6, 600);
-    map.insert(7, 700);
-    map.insert(8, 800);
-
-    REQUIRE(map.size() == 8u);
-    REQUIRE(RobinHoodMapTest::getVectorSize(map) == 16u);
-
-    map.insert(9, 900);
-
-    REQUIRE(map.size() == 9u);
-    REQUIRE(RobinHoodMapTest::getVectorSize(map) == 32u);
-
-    // for (int i = 10; i < 17; ++i) {
-    //     map.insert(i, i * 100);
-    // }
-    RobinHoodMapTest::addMoreItems(map, 10, 17);
-
-    REQUIRE(map.size() == 16u);
-    REQUIRE(RobinHoodMapTest::getVectorSize(map) == 32u);
-
-    map.insert(17, 1700);
-
-    REQUIRE(map.size() == 17u);
-    REQUIRE(RobinHoodMapTest::getVectorSize(map) == 64u);
-
-    // for (int i = 18; i < 33; ++i) {
-    //     map.insert(i, i * 100);
-    // }
-    RobinHoodMapTest::addMoreItems(map, 18, 33);
-
-    REQUIRE(map.size() == 32u);
-    REQUIRE(RobinHoodMapTest::getVectorSize(map) == 64u);
-
-    map.insert(33, 3300);
-
-    REQUIRE(map.size() == 33u);
-    REQUIRE(RobinHoodMapTest::getVectorSize(map) == 128u);
-
-    // for (int i = 34; i < 65; ++i) {
-    //     map.insert(i, i * 100);
-    // }
-    RobinHoodMapTest::addMoreItems(map, 34, 65);
-
-    REQUIRE(map.size() == 64u);
-    REQUIRE(RobinHoodMapTest::getVectorSize(map) == 128u);
-
-    map.insert(65, 6500);
-
-    REQUIRE(map.size() == 65u);
-    REQUIRE(RobinHoodMapTest::getVectorSize(map) == 256u);
-
-    // for (int i = 66; i < 129; ++i) {
-    //     map.insert(i, i * 100);
-    // }
-
-    RobinHoodMapTest::addMoreItems(map, 66, 129);
-
-    REQUIRE(map.size() == 128u);
-    REQUIRE(RobinHoodMapTest::getVectorSize(map) == 256u);
-
-    map.insert(129, 12900);
-
-    REQUIRE(map.size() == 129u);
-    REQUIRE(RobinHoodMapTest::getVectorSize(map) == 512u);
-
-    RobinHoodMapTest::addMoreItems(map, 130, 257);
-
-    REQUIRE(map.size() == 256u);
-    REQUIRE(RobinHoodMapTest::getVectorSize(map) == 512u);
-
-    map.insert(257, 25700);
-
-    REQUIRE(map.size() == 257u);
-    REQUIRE(RobinHoodMapTest::getVectorSize(map) == 1024u);
-
-    RobinHoodMapTest::addMoreItems(map, 258, 513);
-
-    REQUIRE(map.size() == 512u);
-    REQUIRE(RobinHoodMapTest::getVectorSize(map) == 1024u);
-
-    map.insert(513, 51300);
-
-    REQUIRE(map.size() == 513u);
-    REQUIRE(RobinHoodMapTest::getVectorSize(map) == 2048u);
-
-    RobinHoodMapTest::addMoreItems(map, 514, 1025);
-
-    REQUIRE(map.size() == 1024u);
-    REQUIRE(RobinHoodMapTest::getVectorSize(map) == 2048u);
-
-    map.insert(1025, 102500);
-
-    REQUIRE(map.size() == 1025u);
-    REQUIRE(RobinHoodMapTest::getVectorSize(map) == 4096u);
-
+        // Capacity should have doubled
+        REQUIRE(map.size() == threshold);
+        REQUIRE(RobinHoodMapTest::getVectorSize(map) == capacity * 2);
+    }
 }
 
 // resizing (private)
