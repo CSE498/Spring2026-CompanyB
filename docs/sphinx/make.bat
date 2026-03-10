@@ -46,6 +46,7 @@ GOTO :EOF
 :clean
 IF EXIST %BUILDDIR% rmdir /s /q %BUILDDIR%
 IF EXIST xml rmdir /s /q xml
+IF EXIST %SOURCEDIR%\api rmdir /s /q %SOURCEDIR%\api
 GOTO end
 
 :open
