@@ -9,13 +9,15 @@
 #include <emscripten/val.h>
 
 #include <cassert>
+#include <expected>
 
 using emscripten::val;
 
 namespace cse498 {
 
-WebImage::WebImage(const std::string& img_id, const std::string& src)
-    : id(img_id), src(src) {
+WebImage::WebImage(const std::string& img_id, const std::string& src,
+                   const std::string& alt_text)
+    : id(img_id), src(src), alt(alt_text) {
   val document = val::global("document");
 
   // Check if ID already exists
@@ -27,6 +29,7 @@ WebImage::WebImage(const std::string& img_id, const std::string& src)
   img_element = document.call<val>("createElement", std::string("img"));
   img_element.set("id", id);
   img_element.set("src", src);
+  img_element.set("alt", alt);
 
   // Add to the page
   document["body"].call<void>("appendChild", img_element);
@@ -46,15 +49,27 @@ void WebImage::SetSource(const std::string& new_src) {
   img_element.set("src", src);
 }
 
-void WebImage::SetSize(int w, int h) {
+void WebImage::SetSize(int w, int h, SizeUnit unit) {
   assert(w >= 0 && "Width must be non-negative");
   assert(h >= 0 && "Height must be non-negative");
 
   width = w;
   height = h;
 
-  img_element["style"].set("width", std::to_string(width) + "px");
-  img_element["style"].set("height", std::to_string(height) + "px");
+  std::string unit_str;
+
+  switch (unit) {
+    case SizeUnit::px:      unit_str = "px";  break;
+    case SizeUnit::em:      unit_str = "em";  break;
+    case SizeUnit::rem:     unit_str = "rem"; break;
+    case SizeUnit::percent: unit_str = "%";   break;
+    case SizeUnit::vw:      unit_str = "vw";  break;
+    case SizeUnit::vh:      unit_str = "vh";  break;
+  }
+
+  img_element["style"].set("width", std::to_string(width) + unit_str);
+  img_element["style"].set("height", std::to_string(height) + unit_str);
+  
 }
 
 void WebImage::SetPosition(int x, int y) {
@@ -80,10 +95,13 @@ void WebImage::SetVisible(bool is_visible) {
 
 bool WebImage::IsLoaded() const { return img_element["complete"].as<bool>(); }
 
-bool WebImage::HasError() const {
+std::expected<void, std::string> WebImage::HasError() const {
   // Check the naturalWidth to insure it isnt 0 and is properly loaded
-  return img_element["complete"].as<bool>() &&
-         img_element["naturalWidth"].as<int>() == 0;
+  if (img_element["complete"].as<bool>() &&
+      img_element["naturalWidth"].as<int>() == 0) {
+    return std::unexpected("Image failed to load: " + src);
+  }
+  return {};
 }
 
 }  // namespace cse498

@@ -8,9 +8,13 @@
 
 #include <emscripten/val.h>
 
+#include <expected>
 #include <string>
 
 namespace cse498 {
+
+/// CSS units supported for image sizing (to help avoid wrong unit inputs)
+enum class SizeUnit { px, em, rem, percent, vw, vh };
 
 /**
  * @class WebImage
@@ -24,13 +28,13 @@ namespace cse498 {
 class WebImage {
  private:
   /// Image's alt text
-  std::string alt;
+  std::string alt{};
 
   /// Image's DOM element ID
-  std::string id;
+  std::string id{};
 
   /// Image's source
-  std::string src;
+  std::string src{};
 
   /// Image's Width
   int width = 0;
@@ -52,8 +56,9 @@ class WebImage {
    * @brief Construct a WebImage, creating the <img> element in the DOM.
    * @param img_id The DOM element ID for the image. Must be unique.
    * @param src The image source URL or file path.
+   * @param alt_text Alternative text for accessibility 
    **/
-  WebImage(const std::string& img_id, const std::string& src);
+  WebImage(const std::string& img_id, const std::string& src, const std::string& alt_text);
 
   /// Destructor that removes the image element from the DOM
   ~WebImage();
@@ -69,13 +74,14 @@ class WebImage {
    * @brief Check if the image is loaded.
    * @return Bool of loaded status.
    **/
-  bool IsLoaded() const;
+  [[nodiscard]] bool IsLoaded() const;
 
   /**
    * @brief Check if the image has had an error during loading.
-   * @return True if error has occured, false otherwise.
+   * @return An empty expected if no error occurred, or an unexpected containing
+   *         an error message if the image failed to load.
    **/
-  bool HasError() const;
+  [[nodiscard]] std::expected<void, std::string> HasError() const;
 
   /**
    * @brief Change the image source to a new file or URL.
@@ -98,10 +104,11 @@ class WebImage {
 
   /**
    * @brief Set the display size of the image.
-   * @param w The width in pixels. Must be non-negative.
-   * @param h The height in pixels. Must be non-negative.
+   * @param w The width value. Must be non-negative.
+   * @param h The height value. Must be non-negative.
+   * @param unit The CSS unit enum with defaults to SizeUnit::px.
    **/
-  void SetSize(int w, int h);
+  void SetSize(int w, int h, SizeUnit unit = SizeUnit::px);
 
   /**
    * @brief Show or hide the image element.
@@ -113,43 +120,43 @@ class WebImage {
    * @brief Get the current width and height of the image.
    * @return A pair containing (width, height) in pixels.
    **/
-  std::pair<int, int> GetSize() const { return {width, height}; }
+  [[nodiscard]] std::pair<int, int> GetSize() const { return {width, height}; }
 
   /**
    * @brief Get the current position of the image.
    * @return A pair containing (x, y) coordinates in pixels.
    **/
-  std::pair<int, int> GetPosition() const { return {x_pos, y_pos}; }
+  [[nodiscard]] std::pair<int, int> GetPosition() const { return {x_pos, y_pos}; }
 
   /**
    * @brief Get the alt text of the image.
    * @return The alternative text string.
    **/
-  std::string GetAlt() const { return alt; }
+  [[nodiscard]] std::string GetAlt() const { return alt; }
 
   /**
    * @brief Get the DOM element ID of the image.
    * @return The image element's unique identifier.
    **/
-  std::string GetId() const { return id; }
+  [[nodiscard]] std::string GetId() const { return id; }
 
   /**
    * @brief Get the current image source path or URL.
    * @return The source string.
    **/
-  std::string GetSource() const { return src; }
+  [[nodiscard]] std::string GetSource() const { return src; }
 
   /**
    * @brief Get the current width of the image in pixels.
    * @return The image width.
    **/
-  int GetWidth() const { return width; }
+  [[nodiscard]] int GetWidth() const { return width; }
 
   /**
    * @brief Get the current height of the image in pixels.
    * @return The image height.
    **/
-  int GetHeight() const { return height; }
+  [[nodiscard]] int GetHeight() const { return height; }
 };
 
 }  // namespace cse498
