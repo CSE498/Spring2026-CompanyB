@@ -40,8 +40,6 @@ Generated output (all git-ignored):
 
 ## Prerequisites
 
-You need **three** tools installed. All are cross-platform.
-
 ### 1. Python 3 + pip
 
 - **Mac**: `brew install python` (or use the system Python 3 if available)
@@ -131,8 +129,7 @@ the full source listing.
 
 ## Writing Prose / Guides Alongside API Docs
 
-One of Sphinx's strengths over standalone Doxygen is mixing hand-written
-documentation with auto-generated API references. To add a written guide:
+You can have handwritten doc files alongside the Breathe/Exhale generated ones. To add a written guide:
 
 1. Create a new `.rst` file, e.g. `docs/sphinx/source/getting-started.rst`
 2. Add it to the `toctree` in `index.rst`
@@ -179,25 +176,6 @@ right into a CI pipeline. A minimal GitHub Actions step would look like:
 
 This ensures docs are always up to date and will catch broken Doxygen comments
 (e.g., `@param` names that don't match the code).
-
----
-
-## Sphinx vs. Doxygen -- Key Differences
-
-| Aspect                  | Doxygen alone                   | Sphinx + Exhale                 |
-|-------------------------|---------------------------------|---------------------------------|
-| Output quality          | Functional but dated look       | Modern, themed, searchable      |
-| Auto-discovery          | Built-in                        | Built-in (via Exhale)           |
-| Prose documentation     | Awkward (mainpage, groups)      | First-class RST/Markdown        |
-| Cross-referencing       | Automatic but limited           | Rich, customizable              |
-| Hosting                 | Self-host HTML                  | Read the Docs (free), GitHub Pages, or self-host |
-| Comment syntax          | Doxygen tags (`@brief`, etc.)   | Same -- Breathe reads them      |
-| Learning curve          | Low                             | Slightly higher (RST syntax)    |
-
-The bottom line: your existing Doxygen comments work unchanged. Sphinx just
-gives you a nicer front-end and the ability to write real documentation pages
-alongside the API reference -- and Exhale means nobody has to remember to
-update RST files when they add a new class.
 
 ---
 
