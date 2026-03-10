@@ -129,10 +129,10 @@ the full source listing.
 
 ## Writing Prose / Guides Alongside API Docs
 
-You can have handwritten doc files alongside the Breathe/Exhale generated ones. To add a written guide:
+You can have handwritten doc files alongside the Breathe/Exhale generated ones. To add a new page:
 
 1. Create a new `.rst` file, e.g. `docs/sphinx/source/getting-started.rst`
-2. Add it to the `toctree` in `index.rst`
+2. Add it to the `toctree` in `index.rst`. You do this by just writing the file path (relative to index.rst) alongside whatever else is in the contents; see for example how it's done for the "project_description.rst" file in the current index file.
 3. Write in reStructuredText (RST) -- here's a quick cheat sheet:
 
 ```rst
