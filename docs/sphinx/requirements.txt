@@ -1,0 +1,6 @@
+# Python dependencies for building Sphinx docs.
+# Install with: pip install -r requirements.txt
+sphinx>=7.0
+breathe>=4.35
+exhale>=0.3.7
+sphinx-rtd-theme>=2.0

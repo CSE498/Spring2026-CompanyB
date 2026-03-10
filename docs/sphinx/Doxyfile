@@ -1,0 +1,30 @@
+# Doxyfile for generating XML consumed by Sphinx+Breathe.
+# Written by Claude.
+#
+# This config produces XML only (no HTML/LaTeX) -- Sphinx handles final output.
+
+PROJECT_NAME           = "CSE498 Group Project"
+PROJECT_BRIEF          = "Fall 2026, CSE 498, Section 2"
+
+# Point at the project source headers
+INPUT                  = ../../source
+RECURSIVE              = YES
+FILE_PATTERNS          = *.hpp *.h *.cpp
+
+# Only generate XML for Breathe; skip standalone HTML/LaTeX output
+GENERATE_XML           = YES
+XML_OUTPUT             = xml
+GENERATE_HTML          = NO
+GENERATE_LATEX         = NO
+
+# Extract everything so Breathe has full visibility
+EXTRACT_ALL            = YES
+EXTRACT_PRIVATE        = YES
+EXTRACT_STATIC         = YES
+
+# Exclude third-party code from docs
+EXCLUDE_PATTERNS       = */third-party/*
+
+# Quiet output -- only show warnings
+QUIET                  = YES
+WARNINGS               = YES

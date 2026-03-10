@@ -47,3 +47,8 @@
 
 # JetBrains IDE
 .idea
+
+# Sphinx / Doxygen generated output
+docs/sphinx/build/
+docs/sphinx/xml/
+docs/sphinx/source/api/
