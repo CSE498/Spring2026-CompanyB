@@ -102,9 +102,14 @@ but harmless and ensures the `xml/` directory is always up to date.
 
 ## Adding Documentation for New Classes
 
-Just write Doxygen comments in your header -- **that's it**. Exhale
+Just write Doxygen comments in your header. Exhale
 automatically discovers all classes, structs, namespaces, files, and free
 functions in `source/` and generates an RST page for each one.
+
+Note: if you want the class documentation to show up correctly in the generated docs,
+you need to put it right above the `class WhateverClass {` line. If you put it elsewhere
+it could end up attached to e.g. the namespace or the file and not show up in the doc page 
+for that class.
 
 ```cpp
 namespace cse498 {
