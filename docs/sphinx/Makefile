@@ -31,7 +31,7 @@ sphinx:
 	$(SPHINXBUILD) -b html $(SPHINXOPTS) $(SOURCEDIR) $(BUILDDIR)/html
 
 clean:
-	rm -rf $(BUILDDIR) xml
+	rm -rf $(BUILDDIR) $(SOURCEDIR)/api xml
 
 open: docs
 	open $(BUILDDIR)/html/index.html
