@@ -6,8 +6,7 @@
 //To run test write  './ImageManagerTest'
 
 
-#define CATCH_CONFIG_MAIN
-#include "../../third-party/Catch/single_include/catch2/catch.hpp"
+#include <catch2/catch_test_macros.hpp>
 
 #include "../../source/Interfaces/gui/ImageManager.hpp"
 
