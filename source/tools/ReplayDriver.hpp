@@ -7,6 +7,8 @@
 
 #include "nlohmann/json.hpp"
 #include "../../tests/tools/MockWorld.hpp"
+#include <expected>
+#include <memory>
 
 class MockWorld; // Forward declaration for MockWorld
 
@@ -20,10 +22,10 @@ class MockWorld; // Forward declaration for MockWorld
 class ReplayDriver {
  private:
   // world* world; need a pointer to the world object to instuct addtions and
-  MockWorld* world;  // This is a placeholder. Replace with actual world class pointer when available.
+  std::shared_ptr<MockWorld> world;  // This is a placeholder. Replace with actual world class pointer when available.
  public:
   /// @brief Basic constructor for the ReplayDriver.
-  ReplayDriver(MockWorld* world) : world(world) {};
+  ReplayDriver(std::shared_ptr<MockWorld> world) : world(world) {};
   ~ReplayDriver() = default;
 
   /// @brief Method to replay logged events from a JSON file.
