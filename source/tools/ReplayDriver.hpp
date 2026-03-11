@@ -29,7 +29,7 @@ class ReplayDriver {
   /// @brief Method to replay logged events from a JSON file.
   /// @param filePath Path to the JSON file containing logged events.
   /// @return Success status of the replay operation. True if successful and SendInstructions is called, false otherwise.
-  bool ReplayFromFile(const std::string& filePath);
+  std::expected<bool,std::string> ReplayFromFile(const std::string& filePath);
   /// @brief Method to send instructions to the world based on the event data.
   /// @param eventData JSON data containing the events to be replayed.
   void SendInstructions(const nlohmann::json& eventData);

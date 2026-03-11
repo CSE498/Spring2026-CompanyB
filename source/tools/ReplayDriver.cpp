@@ -4,19 +4,17 @@
 #include <iostream>
 
 namespace cse498 {
-bool ReplayDriver::ReplayFromFile(const std::string &filePath) {
+std::expected<bool,std::string> ReplayDriver::ReplayFromFile(const std::string &filePath) {
   std::ifstream inFile(filePath);
   if (!inFile.is_open()) {
-    std::cerr << "Failed to open file: " << filePath << std::endl;
-    return false;
+    return std::unexpected("Failed to open file" + filePath);
   }
 
   nlohmann::json eventData;
   try {
     inFile >> eventData;
   } catch (const nlohmann::json::parse_error &e) {
-    std::cerr << "JSON parse error: " << e.what() << std::endl;
-    return false;
+    return std::unexpected("Failed to parse JSON: " + std::string(e.what()));
   }
 
   SendInstructions(eventData);

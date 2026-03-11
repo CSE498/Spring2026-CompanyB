@@ -13,10 +13,10 @@ TEST_CASE("ReplayDriver can read and replay events from a JSON file", "[ReplayDr
     
     mockAgent->jsonify();
 
-    cse498::ReplayDriver replayDriver(&mockWorld);
-    bool result = replayDriver.ReplayFromFile("test_events.json");
+    cse498::ReplayDriver replayDriver(mockWorld);
+    auto result = replayDriver.ReplayFromFile("test_events.json");
 
-    REQUIRE(result == true);
+    REQUIRE(result.value());
 
     // Verify that the agent's state has been updated based on the JSON data
     REQUIRE(mockAgent->id == 5);
@@ -31,9 +31,9 @@ TEST_CASE("ReplayDriver handles invalid file paths gracefully", "[ReplayDriver]"
     cse498::MockWorld mockWorld;
     cse498::ReplayDriver replayDriver(&mockWorld);
     
-    bool result = replayDriver.ReplayFromFile("non_existent_file.json");
+    auto result = replayDriver.ReplayFromFile("non_existent_file.json");
     
-    REQUIRE(result == false);
+    REQUIRE(!result);
 }
 
 TEST_CASE("ReplayDriver handles malformed JSON gracefully", "[ReplayDriver]") {
@@ -45,9 +45,9 @@ TEST_CASE("ReplayDriver handles malformed JSON gracefully", "[ReplayDriver]") {
     cse498::MockWorld mockWorld;
     cse498::ReplayDriver replayDriver(&mockWorld);
     
-    bool result = replayDriver.ReplayFromFile("malformed.json");
+    auto result = replayDriver.ReplayFromFile("malformed.json");
     
-    REQUIRE(result == false);
+    REQUIRE(!result);
 
     // Clean up the test file
     std::remove("malformed.json");
