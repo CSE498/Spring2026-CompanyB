@@ -30,15 +30,18 @@ namespace cse498 {
  * (colors, transforms, etc.).
  **/
 class WebCanvas : public WebElement {
+ public:
+  using RGB = std::tuple<int, int, int>;
+
  private:
   /// A struct for storing the state of a canvas
   struct CanvasState {
-    std::tuple<int, int, int> pen_color;
-    std::tuple<int, int, int> fill_color;
-    double alpha;
-    double line_width;
-    std::string font;
-    std::pair<double, double> location;
+    RGB pen_color{255, 255, 255};
+    RGB fill_color{255, 255, 255};
+    double alpha = 1.0;
+    double line_width = 1.0;
+    std::string font{};
+    std::pair<double, double> location{0.0, 0.0};
   };
 
   /// Canvas width
@@ -48,13 +51,13 @@ class WebCanvas : public WebElement {
   int height = 0;
 
   /// Background color of the Canvas
-  std::tuple<int, int, int> background_color{0, 0, 0};
+  RGB background_color{0, 0, 0};
 
   /// The pen color the canvas sues
-  std::tuple<int, int, int> pen_color{0, 0, 0};
+  RGB pen_color{255, 255, 255};
 
   /// The fill color the canvas uses for shapes
-  std::tuple<int, int, int> fill_color{0, 0, 0};
+  RGB fill_color{255, 255, 255};
 
   /// The opacity of the shapes, images, and text drawn onto the canvas.
   double alpha = 1.0;
@@ -63,7 +66,7 @@ class WebCanvas : public WebElement {
   double line_width = 1.0;
 
   /// The font that the canvas writes text in.
-  std::string font;
+  std::string font{};
 
   /// The current translation offset of the 2D context's transform origin.
   std::pair<double, double> location{0.0, 0.0};
@@ -88,7 +91,7 @@ class WebCanvas : public WebElement {
   /**
    * @brief Converts an RGB tuple to a CSS rgb() string
    **/
-  static std::string RgbString(std::tuple<int, int, int> rgb);
+  static std::string RgbString(RGB rgb);
 
  public:
   /**
@@ -127,7 +130,7 @@ class WebCanvas : public WebElement {
    * @brief Set the CSS background color of the canvas element.
    * @param rgb An (r, g, b) tuple with values in the range [0, 255].
    **/
-  void SetBackgroundColor(std::tuple<int, int, int> rgb);
+  void SetBackgroundColor(RGB rgb);
 
   /**
    * @brief Draw a straight line between two points.
@@ -198,13 +201,13 @@ class WebCanvas : public WebElement {
    * @brief Set the stroke color used for lines and shape outlines.
    * @param rgb An (r, g, b) tuple with values in the range [0, 255].
    **/
-  void SetPenColor(std::tuple<int, int, int> rgb);
+  void SetPenColor(RGB rgb);
 
   /**
    * @brief Set the fill color used for filled shapes and text.
    * @param rgb An (r, g, b) tuple with values in the range [0, 255].
    */
-  void SetFillColor(std::tuple<int, int, int> rgb);
+  void SetFillColor(RGB rgb);
 
   /**
    * @brief Set the line width for stroke operations.
