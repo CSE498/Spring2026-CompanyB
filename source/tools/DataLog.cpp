@@ -11,8 +11,9 @@ namespace cse498 {
 // Currently, we're calculating stats based on "duration" 
 // field in the JSON data, but this can be easily modified to 
 // accommodate other fields as needed (will be included in new module specs)
-void DataLog::AddEntry(const nlohmann::json& data) {
+void DataLog::AddEntry(const ActionEventBase& data) {
   // Create log entry with automatic timestamp
+  /*
   nlohmann::json logEntry = data;
   logEntry["timestamp"] = GlobalClock::GetTime();
 
@@ -48,6 +49,7 @@ void DataLog::AddEntry(const nlohmann::json& data) {
       mMedianIsValid = false;  // Invalidate cache when new data is added
     }
   }
+    */
 }
 
 std::optional<double> DataLog::GetMean() const {

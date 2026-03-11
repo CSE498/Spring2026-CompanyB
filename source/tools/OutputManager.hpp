@@ -12,22 +12,14 @@
 #include <fstream>
 #include <string>
 
+#include "../Interfaces/IOutputManager.hpp"
 #include "DataLog.hpp"
 #include "nlohmann/json.hpp"
 
 namespace cse498 {
 
-/// @brief Log verbosity: controls whether messages go to file, console, or
-/// both.
-enum class LogLevel {
-  Silent,   ///< No output
-  Normal,   ///< Standard run output (file + key console summaries)
-  Verbose,  ///< More detailed output
-  Debug     ///< All messages (debugging)
-};
-
 /// @brief Formats and persists simulation log data and programmer log messages.
-class OutputManager {
+class OutputManager : public IOutputManager {
 
  private:
   /// @brief Current path of the JSON log file to be written.

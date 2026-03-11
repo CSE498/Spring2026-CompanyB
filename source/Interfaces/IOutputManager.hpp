@@ -1,0 +1,30 @@
+/**
+ * @file IOutputManager.hpp
+ * @author GitHub Copilot
+ **/
+
+#pragma once
+
+#include <string>
+#include "IActionLog.hpp" // For LogLevel definition
+#include "nlohmann/json.hpp"
+#include "../tools/DataLog.hpp"
+
+namespace cse498 {
+
+/**
+ * @class IOutputManager
+ * @brief Interface for formatting and persisting simulation output.
+ */
+class IOutputManager {
+ public:
+  virtual ~IOutputManager() = default;
+
+  virtual bool SetOutputFile(const std::string& path) = 0;
+  virtual void LogMessage(LogLevel level, const std::string& message) = 0;
+  virtual void SetLogLevel(LogLevel level) noexcept = 0;
+  virtual void WriteSimulationOutput(const DataLog& dataLog) = 0;
+  virtual const nlohmann::json& GetBufferedLog() const noexcept = 0;
+};
+
+}  // namespace cse498

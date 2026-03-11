@@ -11,7 +11,9 @@
 #include <string>
 #include <vector>
 
+
 #include "nlohmann/json.hpp"
+#include "../Interfaces/IDataLog.hpp"
 
 namespace cse498 {
 /* Class Description:
@@ -22,7 +24,7 @@ namespace cse498 {
  *  and logging system. It's a singleton according to our current design pattern. 
  
  */
-class DataLog {
+class DataLog : public IDataLog {
  private:
   /// @brief Vector storing all log entries as JSON objects
   std::vector<nlohmann::json> mEntries{};
@@ -64,35 +66,34 @@ class DataLog {
   DataLog& operator=(const DataLog&) = delete;
 
   /// @brief Adds a log entry with automatic timestamp.
-  /// @param data JSON object containing agentId, actionType, duration, and
-  /// summary.
-  void AddEntry(const nlohmann::json& data);
+  /// @param data ActionEventBase containing agentId, actionType, duration, and summary.
+  void AddEntry(const ActionEventBase& data) override;
   /// @brief Gets the mean of all logged action durations.
   /// @return Mean duration value, or std::nullopt if no data has been logged.
-  std::optional<double> GetMean() const;
+  std::optional<double> GetMean() const override;
 
   /// @brief Gets the median of all logged action durations.
   /// @return Median duration value, or std::nullopt if no data has been logged.
-  std::optional<double> GetMedian() const;
+  std::optional<double> GetMedian() const override;
 
   /// @brief Gets the minimum logged action duration.
   /// @return Minimum duration value, or std::nullopt if no data has been logged.
-  std::optional<double> GetMin() const;
+  std::optional<double> GetMin() const override;
 
   /// @brief Gets the maximum logged action duration.
   /// @return Maximum duration value, or std::nullopt if no data has been logged.
-  std::optional<double> GetMax() const;
+  std::optional<double> GetMax() const override;
 
   /// @brief Gets the total number of logged entries.
   /// @return Total entry count.
-  size_t GetCount() const;
+  size_t GetCount() const override;
 
   /// @brief Gets all logged entries.
   /// @return Const reference to the entries vector.
   const std::vector<nlohmann::json>& GetEntries() const;
 
   /// @brief Clears all entries and resets statistics.
-  void Reset();
+  void Reset() override;
 };
 
 }  // namespace cse498
