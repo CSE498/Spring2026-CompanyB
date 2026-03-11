@@ -149,7 +149,7 @@ class DataMap {
          * @return The value if the key exists and the type matches; otherwise, an error
          */
         template <typename V>
-        std::expected<V, std::string> Get(const std::string& name) const
+        [[nodiscard]] std::expected<V, std::string> Get(const std::string& name) const
         {
             auto it = mData.find(name);
             if (it == mData.end()) {
@@ -168,7 +168,7 @@ class DataMap {
          * @return A reference to the value if the key exists and the type matches; otherwise
          */
         template <typename V>
-        V& GetRef(const std::string& name)
+        [[nodiscard]] V& GetRef(const std::string& name)
         {
             auto it = mData.find(name);
             assert(it != mData.end() && "DataMap::GetRef(): key not found (check for typo or initialization)");
@@ -182,21 +182,21 @@ class DataMap {
          * @param name The key to check for.
          * @return true if the key exists, false otherwise.
          */
-        bool Contains(const std::string& name) const { return mData.find(name) != mData.end(); }
+        [[nodiscard]] bool Contains(const std::string& name) const noexcept { return mData.find(name) != mData.end(); }
         /**
          * Checks if the map is empty.
          * @return true if the map is empty, false otherwise.
          */
-        bool IsEmpty() const noexcept { return mData.empty(); }
+        [[nodiscard]] bool IsEmpty() const noexcept { return mData.empty(); }
         /** 
          * Returns the number of key-value pairs in the map.
          * @return The size of the map.
          */
-        int Size() const { return mData.size(); }
+        [[nodiscard]] int Size() const noexcept { return mData.size(); }
         /**
          * Removes all key-value pairs from the map, leaving it empty.
          */
-        void Clear() { mData.clear(); }
+        void Clear() noexcept { mData.clear(); }
 
 };
 } // namespace cse498
