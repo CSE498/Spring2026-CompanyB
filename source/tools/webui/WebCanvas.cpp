@@ -26,19 +26,28 @@ namespace cse498 {
 
 WebCanvas::WebCanvas(int width, int height, const std::string& id)
     : WebElement(id, true), width(width), height(height) {
+  // Get the global document
   val document = val::global("document");
+
+  // Look for an element with the same ID
   val existing = document.call<val>("getElementById", id);
 
+  // If the element with the same ID exists, then assert
   assert((existing.isNull() || existing.isUndefined()) &&
          "Canvas with this ID already exists in the DOM");
 
+  // Create a canvas element
   canvas_element = document.call<val>("createElement", std::string("canvas"));
   canvas_element.set("id", id);
-  document["body"].call<void>("appendChild", canvas_element);
+  document["body"].call<void>(
+      "appendChild",
+      canvas_element);  // Add the canvas element to the body section
 
-  ctx = canvas_element.call<val>("getContext", std::string("2d"));
-  transform_matrix = ctx.call<val>("getTransform");
-  Resize(width, height);
+  ctx = canvas_element.call<val>("getContext",
+                                 std::string("2d"));  // Save the context
+  transform_matrix =
+      ctx.call<val>("getTransform");  // Save the transform matrix
+  Resize(width, height);              // Set the size of the canvas
 }
 
 WebCanvas::~WebCanvas() {
@@ -57,7 +66,7 @@ void WebCanvas::Resize(int new_width, int new_height) {
   ApplyState();
 }
 
-std::string WebCanvas::RgbString(std::tuple<int, int, int> rgb) {
+std::string WebCanvas::RgbString(RGB rgb) {
   auto [r, g, b] = rgb;
   return "rgb(" + std::to_string(r) + "," + std::to_string(g) + "," +
          std::to_string(b) + ")";
@@ -81,7 +90,7 @@ void WebCanvas::ApplyState() {
 
 void WebCanvas::Clear() { ctx.call<void>("clearRect", 0, 0, width, height); }
 
-void WebCanvas::SetBackgroundColor(std::tuple<int, int, int> rgb) {
+void WebCanvas::SetBackgroundColor(RGB rgb) {
   auto [r, g, b] = rgb;
   assert(r >= 0 && r <= 255 && "Red value must be 0-255");
   assert(g >= 0 && g <= 255 && "Green value must be 0-255");
@@ -112,7 +121,8 @@ void WebCanvas::DrawRect(double x_top_l, double y_top_l, double w, double h,
 void WebCanvas::DrawCircle(double x, double y, double radius, bool filled) {
   assert(radius >= 0 && "Circle radius must be non-negative");
   ctx.call<void>("beginPath");
-  ctx.call<void>("arc", x, y, radius, 0, 2 * M_PI);
+  ctx.call<void>("arc", x, y, radius, 0,
+                 2 * M_PI);  // M_PI is a constant from the <math.h> header
   if (filled) {
     ctx.call<void>("fill");
   } else {
@@ -196,7 +206,7 @@ void WebCanvas::DrawImage(const std::string& path, double x, double y, double w,
       id.c_str(), path.c_str(), x, y, w, h);
 }
 
-void WebCanvas::SetPenColor(std::tuple<int, int, int> rgb) {
+void WebCanvas::SetPenColor(RGB rgb) {
   auto [r, g, b] = rgb;
   assert(r >= 0 && r <= 255 && "Red value must be 0-255");
   assert(g >= 0 && g <= 255 && "Green value must be 0-255");
@@ -205,7 +215,7 @@ void WebCanvas::SetPenColor(std::tuple<int, int, int> rgb) {
   ctx.set("strokeStyle", RgbString(rgb));
 }
 
-void WebCanvas::SetFillColor(std::tuple<int, int, int> rgb) {
+void WebCanvas::SetFillColor(RGB rgb) {
   auto [r, g, b] = rgb;
   assert(r >= 0 && r <= 255 && "Red value must be 0-255");
   assert(g >= 0 && g <= 255 && "Green value must be 0-255");
@@ -276,13 +286,16 @@ int WebCanvas::GetHeight() const { return height; }
 
 // https://emscripten.org/docs/api_reference/html5.h.html#c.emscripten_request_animation_frame
 void WebCanvas::RequestAnimationFrame(std::function<void()> callback) {
-  void* cb = new std::function<void()>(std::move(callback));
+  void* cb = new std::function<void()>(
+      std::move(callback));  // Heap allocate the callback
+  // Put the callback on the next frame render
   emscripten_request_animation_frame(
       [](double time, void* user_data) -> EM_BOOL {
-        auto* fn = static_cast<std::function<void()>*>(user_data);
-        (*fn)();
-        delete fn;
-        return EM_FALSE;
+        auto* fn = static_cast<std::function<void()>*>(
+            user_data);   // Move the callback to be an r-value function
+        (*fn)();          // Call the function
+        delete fn;        // Delete the function from the heap
+        return EM_FALSE;  // Signal the end of the run
       },
       cb);
 }
