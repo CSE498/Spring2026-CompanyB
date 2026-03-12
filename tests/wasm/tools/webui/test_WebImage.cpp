@@ -84,10 +84,11 @@ struct SetupMockDOM {
   TEST_CASE("WebImage constructor creates image with correct properties",
             "[WebImage]") {
     SetupMockDOM mock;
-    cse498::WebImage img("test-img-1", "assets/test.png");
+    cse498::WebImage img("test-img-1", "assets/test.png", "A test image");
 
     REQUIRE(img.GetId() == "test-img-1");
     REQUIRE(img.GetSource() == "assets/test.png");
+    REQUIRE(img.GetAlt() == "A test image");
     REQUIRE(img.GetWidth() == 0);
     REQUIRE(img.GetHeight() == 0);
   }
@@ -95,7 +96,7 @@ struct SetupMockDOM {
   TEST_CASE("WebImage SetSource changes and properly updates the image source",
             "[WebImage]") {
     SetupMockDOM mock;
-    cse498::WebImage img("test-img-2", "initial.png");
+    cse498::WebImage img("test-img-2", "initial.png", "Initial image");
 
     img.SetSource("new_image.png");
 
@@ -108,7 +109,7 @@ struct SetupMockDOM {
 
   TEST_CASE("WebImage SetSize updates dimensions correctly", "[WebImage]") {
     SetupMockDOM mock;
-    cse498::WebImage img("test-img-3", "test.png");
+    cse498::WebImage img("test-img-3", "test.png", "Size test image");
 
     img.SetSize(200, 150);
 
@@ -124,7 +125,7 @@ struct SetupMockDOM {
   TEST_CASE("WebImage GetSize returns correct dimensions and updates properly",
             "[WebImage]") {
     SetupMockDOM mock;
-    cse498::WebImage img("test-img-4", "test.png");
+    cse498::WebImage img("test-img-4", "test.png", "GetSize test image");
 
     img.SetSize(300, 250);
     auto [width, height] = img.GetSize();
@@ -141,7 +142,7 @@ struct SetupMockDOM {
 
   TEST_CASE("WebImage SetPosition updates position correctly", "[WebImage]") {
     SetupMockDOM mock;
-    cse498::WebImage img("test-img-5", "test.png");
+    cse498::WebImage img("test-img-5", "test.png", "Position test image");
 
     img.SetPosition(100, 50);
     auto [x, y] = img.GetPosition();
@@ -158,7 +159,7 @@ struct SetupMockDOM {
 
   TEST_CASE("WebImage SetAlt updates alt text properly", "[WebImage]") {
     SetupMockDOM mock;
-    cse498::WebImage img("test-img-6", "test.png");
+    cse498::WebImage img("test-img-6", "test.png", "Initial alt text");
 
     img.SetAlt("A test image");
 
@@ -171,7 +172,7 @@ struct SetupMockDOM {
 
   TEST_CASE("WebImage handles multiple property changes", "[WebImage]") {
     SetupMockDOM mock;
-    cse498::WebImage img("test-img-7", "original.png");
+    cse498::WebImage img("test-img-7", "original.png", "Multi-property test image");
 
     img.SetSource("updated.png");
     img.SetSize(400, 300);
@@ -190,14 +191,14 @@ struct SetupMockDOM {
   TEST_CASE("WebImage IsLoaded returns false for unloaded images",
             "[WebImage]") {
     SetupMockDOM mock;
-    cse498::WebImage img("test-img-loading", "test.png");
+    cse498::WebImage img("test-img-loading", "test.png", "Loading test image");
 
     REQUIRE(img.IsLoaded() == false);
   }
 
   TEST_CASE("WebImage SetSize with zero values", "[WebImage]") {
     SetupMockDOM mock;
-    cse498::WebImage img("test-img-zero-size", "test.png");
+    cse498::WebImage img("test-img-zero-size", "test.png", "Zero size test image");
 
     img.SetSize(0, 0);
 
@@ -207,7 +208,7 @@ struct SetupMockDOM {
 
   TEST_CASE("WebImage handles empty strings", "[WebImage]") {
     SetupMockDOM mock;
-    cse498::WebImage img("test-img-empty", "");
+    cse498::WebImage img("test-img-empty", "", "Empty source test");
 
     REQUIRE(img.GetSource() == "");
 
@@ -216,11 +217,11 @@ struct SetupMockDOM {
   }
 
   TEST_CASE(
-      "WebImage HasError returns true when complete = true but naturalWidth = "
-      "0",
+      "WebImage HasError returns unexpected with error message when complete = "
+      "true but naturalWidth = 0",
       "[WebImage]") {
     SetupMockDOM mock;
-    cse498::WebImage img("test-img-has-error", "bad-path.png");
+    cse498::WebImage img("test-img-has-error", "bad-path.png", "Error test image");
 
     // Since there are no setters for these properties, manually edit the mock
     // element and simulate a failed load
@@ -230,13 +231,15 @@ struct SetupMockDOM {
     elem.set("complete", true);
     elem.set("naturalWidth", 0);
 
-    REQUIRE(img.HasError() == true);
+    auto result = img.HasError();
+    REQUIRE_FALSE(result.has_value());
+    REQUIRE(result.error().find("bad-path.png") != std::string::npos);
   }
 
-  TEST_CASE("WebImage HasError returns false for a successfully loaded image",
+  TEST_CASE("WebImage HasError returns empty expected for a successfully loaded image",
             "[WebImage]") {
     SetupMockDOM mock;
-    cse498::WebImage img("test-img-loaded-ok", "good-image.png");
+    cse498::WebImage img("test-img-loaded-ok", "good-image.png", "Loaded ok test image");
 
     // Since there are no setters for these properties, manually edit the mock
     // element and simulate a successful load
@@ -246,5 +249,22 @@ struct SetupMockDOM {
     elem.set("complete", true);
     elem.set("naturalWidth", 200);
 
-    REQUIRE(img.HasError() == false);
+    REQUIRE(img.HasError().has_value());
+  }
+
+  TEST_CASE("WebImage SetSize respects SizeUnit enum", "[WebImage]") {
+    SetupMockDOM mock;
+    cse498::WebImage img("test-img-units", "test.png", "Unit test image");
+
+    img.SetSize(50, 25, cse498::SizeUnit::percent);
+    REQUIRE(img.GetWidth() == 50);
+    REQUIRE(img.GetHeight() == 25);
+
+    img.SetSize(10, 5, cse498::SizeUnit::em);
+    REQUIRE(img.GetWidth() == 10);
+    REQUIRE(img.GetHeight() == 5);
+
+    img.SetSize(20, 15, cse498::SizeUnit::vw);
+    REQUIRE(img.GetWidth() == 20);
+    REQUIRE(img.GetHeight() == 15);
   }
