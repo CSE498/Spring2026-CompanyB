@@ -6,14 +6,14 @@
 #pragma once
 
 #include <string>
-
+#include <cstdint>
 
 
 namespace cse498 {
     /* Class Description:
      *  A tool to make precise timing measurements. It should be told when to start and stop,
      *  but also be giving a name for the timing,
-     *  it can track multiple different times and compare them as needed.
+     *  it acts as a stopwatch that calculate the time in Ticks from GlobalClock
      *  It can also pause and resume the timing measurements if needed.
      *  Citation: Used AI responsibly and actively in building the class below.
      */
@@ -33,28 +33,22 @@ namespace cse498 {
         // Reset the internal variables of the stopwatch for the object
         void Reset();
         /// @return total calculated time in ticks
-        double GetTotalTime() const;
-        /// @return  total calculated time in seconds
-        double GetTimeInSeconds() const;
-        /// @return total calculated time in minutes
-        double GetTimeInMinutes() const;
-        ///@return total calculated time in hours
-        double GetTimeInHours() const;
+        [[nodiscard]] uint64_t GetTotalTime() const;
         /// @return the given name of the object when it was initialized
-        const std::string& GetName() const;
+        [[nodiscard]] const std::string& GetName() const;
 
  private:
   // Name of the object
   std::string mName;
   // Time when the stop watch is either started or resumed
-  double mStartTime;
+  uint64_t mStartTime{0};
   // The accumulated total Time when the stopwatch is running, NOT including
   // when the stopwatch is paused
-  double mAccumulatedTime;
+  uint64_t mAccumulatedTime{0};
   // Check if the stopwatch has started and not stopped
-  bool mIsRunning;
+  bool mIsRunning{false};
   // Check if the stopwatch has been paused
-  bool mIsPaused;
+  bool mIsPaused{false};
 };
 
 }

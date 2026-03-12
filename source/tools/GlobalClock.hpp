@@ -10,10 +10,13 @@
 namespace cse498 {
 
     /* Class Description:
-     *  Global clock for tracking simulation time.
+     *  Global clock for tracking simulation time in ticks.
      *  It is a static utility class and cannot be instantiated.
+     *  I expect this class to be used by everyone who need to know the current time of simulation.
      *  It can be used by calling the static methods directly, e.g. GlobalClock::GetTime() or GlobalClock::Tick().
-     *  Citation: Used AI responsibly and actively in building the class below.
+     *  You can call GlobalClock::Tick() to make the time pass by 1 ticks, or to provide a parameter for Tick() to make the time pass by that amount.
+     *  GetTime() would return the current time in ticks.
+     *  Citation: Used AI to edit the initial design I had of the class to make it static so it won't be constructed.
      */
 class GlobalClock {
  public:
