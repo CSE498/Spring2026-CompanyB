@@ -106,11 +106,14 @@ void WebTextbox::Clear() {
 
 /**
  * @brief Reads the current text back from the DOM (or the mock buffer if headless).
+ * Uses std::expected to safely handle cases where the DOM element failed to initialize.
  */
-std::string WebTextbox::GetText() const {
+std::expected<std::string, std::string> WebTextbox::GetText() const {
     if (IsHeadless()) return mock_text_content_;
 
-    if (div_element_.isNull() || div_element_.isUndefined()) return "";
+    if (div_element_.isNull() || div_element_.isUndefined()) {
+        return std::unexpected("Error: DOM element is null or undefined.");
+    }
     return div_element_["innerText"].as<std::string>();
 }
 
@@ -122,7 +125,7 @@ void WebTextbox::SetStyle(const TextStyle& style) {
 
     val css = div_element_["style"];
     css.set("fontFamily", style.font_family);
-    css.set("fontSize", std::to_string(style.font_size) + "px");
+    css.set("fontSize", style.font_size); // Now directly applies the string
     css.set("color", style.color);
     css.set("backgroundColor", style.background_color);
     css.set("fontWeight", style.bold ? "bold" : "normal");

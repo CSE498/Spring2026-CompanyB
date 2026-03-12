@@ -8,6 +8,7 @@
 #include <emscripten/val.h>
 #include <string>
 #include <algorithm> // For std::clamp
+#include <expected>  // For std::expected
 
 namespace cse498 {
 
@@ -17,7 +18,7 @@ namespace cse498 {
  */
 struct TextStyle {
     std::string font_family = "Arial";
-    int font_size = 16;
+    std::string font_size = "16px";
     std::string color = "black";
     std::string background_color = "transparent";
     bool bold = false;
@@ -43,7 +44,7 @@ class WebTextbox {
     static constexpr const char* kDefaultOverflow = "auto";
     static constexpr const char* kDefaultZIndex = "9999";
     static constexpr size_t kMinAllowedLength = 1;
-    static constexpr size_t kMaxAllowedLength = 500000; // 500KB cap
+    static constexpr size_t kMaxAllowedLength = 52428800; // 50MB cap
 
     /**
      * @brief Checks if the environment lacks a DOM (e.g., running in Node.js).
@@ -125,9 +126,9 @@ class WebTextbox {
 
     /**
      * @brief Retrieves the current text contained in the box.
-     * @return A std::string containing the inner text.
+     * @return A std::expected containing the inner text, or an error string if invalid.
      */
-    [[nodiscard]] std::string GetText() const;
+    [[nodiscard]] std::expected<std::string, std::string> GetText() const;
 };
 
 } // namespace cse498
