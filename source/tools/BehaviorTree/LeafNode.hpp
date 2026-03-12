@@ -28,7 +28,10 @@ class LeafNode: public Node
         LeafNode(std::string name, int tickDuration) : Node(name), m_tickDuration(tickDuration) {}
         virtual ~LeafNode() = default;
 
-        virtual void print(int depth) const;
+        virtual void print(int depth) const {
+            std::cout << std::string(depth * 2, ' ') << m_name << " (" << m_status << "): " << m_tickDuration << '\n';
+        };
+
         virtual Status tick() = 0;
         virtual std::string getActivePath() = 0;
 

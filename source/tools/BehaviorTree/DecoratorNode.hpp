@@ -28,7 +28,11 @@ class DecoratorNode: public Node
         *
         * @param node The node to attach as the child.
         */
-        void addNode(std::unique_ptr<Node> node);
+        void addNode(std::unique_ptr<Node> node) {
+            // assert(m_child == nullptr); // Check for Existing Child
+            
+            m_child = std::move(node);
+        };
 
         /**
         * @brief Removes the child node from this decorator.
@@ -36,9 +40,16 @@ class DecoratorNode: public Node
         * The child is destroyed when removed. After deletion, the decorator
         * has no child until a new node is added.
         */
-        void deleteNode();
+        void deleteNode() { m_child = nullptr; };
 
-        virtual void print(int depth) const;
+        virtual void print(int depth) const {
+            int indent = 2;
+
+            std::cout << std::string(depth * indent, ' ') << m_name << " (" << m_status << ")" << '\n';
+            
+            m_child->print(depth + 1);
+        };
+
         virtual Status tick() = 0;
         virtual std::string getActivePath() = 0;
 

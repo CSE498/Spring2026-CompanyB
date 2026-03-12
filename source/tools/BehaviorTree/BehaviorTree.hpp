@@ -7,6 +7,7 @@
 #include "ActionNode.hpp"
 
 #include <memory>
+#include <iostream>
 
 // ATTRIBUTIONS: Used ChatGPT to create Docstrings. Further modifications come from my input
 
@@ -45,7 +46,10 @@ namespace cse498
          * @return The status code returned by the root node
          *         (e.g., Success (1), Failure (0), or Running (-1)).
          */
-        Status tick();
+        Status tick() {
+            ++m_tickCount;
+            return m_root->tick();
+        };
 
         /**
          * @brief Returns the total number of times the tree has been ticked.
@@ -63,7 +67,7 @@ namespace cse498
          *
          * @return A formatted string representing the active node path.
          */
-        std::string getActivePath();
+        std::string getActivePath() { return m_root->getActivePath(); };
 
         /**
          * @brief Outputs a debug visualization of the behavior tree.
@@ -73,7 +77,10 @@ namespace cse498
          *
          * Intended for debugging and development purposes.
          */
-        void debugView() const;
+        void debugView() const {
+            int depth = 0;
+            m_root->print(depth);
+        };
 
     private:
         /// Tracks the total number of tick() calls made on this tree.
