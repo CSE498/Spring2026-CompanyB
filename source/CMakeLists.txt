@@ -136,8 +136,11 @@ elseif(DEFINED EMSCRIPTEN)
     # Exclude Qt GUI files (Qt can't be compiled by emcc)
     list(FILTER SOURCES EXCLUDE REGEX ".*/Interfaces/gui/.*")
 
+    # Exclude native entry points
+    list(FILTER SOURCES EXCLUDE REGEX "(_main|^main)\\.cpp$")
+
     add_executable(index ${SOURCES})
-    set_target_properties(index PROPERTIES SUFFIX ".html")
+    set_target_properties(index PROPERTIES SUFFIX ".js")
     target_include_directories(index PRIVATE ${HEADER_DIRS})
 
     # Emscripten compile options
@@ -151,8 +154,14 @@ elseif(DEFINED EMSCRIPTEN)
         -sALLOW_MEMORY_GROWTH=1
         -sMAXIMUM_MEMORY=1gb
         -sEXPORTED_RUNTIME_METHODS=ccall,cwrap
-        --emrun
         -lembind
+    )
+
+    # Copy custom HTML into build output
+    configure_file(
+        ${CMAKE_CURRENT_SOURCE_DIR}/tools/webui/index.html
+        ${CMAKE_BINARY_DIR}/index.html
+        COPYONLY
     )
 
 else()
