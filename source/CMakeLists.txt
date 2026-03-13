@@ -4,6 +4,7 @@ project(cse498-segfault-survivors)
 # Configuration options
 set(BUILD_TESTS OFF CACHE BOOL "Build native tests")
 set(BUILD_WASM_TESTS OFF CACHE BOOL "Build Emscripten specific wasm tests")
+set(NO_QT OFF CACHE BOOL "Build without Qt and exclude Interfaces/gui sources")
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
@@ -85,9 +86,14 @@ elseif(BUILD_TESTS)
     list(FILTER SOURCES EXCLUDE REGEX "(_main|^main)\\.cpp$")
     list(FILTER SOURCES EXCLUDE REGEX ".*/tools/webui/.*")
 
-    # Find Qt6 for native build
-    find_package(Qt6 REQUIRED COMPONENTS Core Gui Widgets)
-    set(CMAKE_AUTOMOC ON) # Necessary for QT macro searches
+    if(NO_QT)
+        # Skip Qt entirely and exclude GUI sources
+        list(FILTER SOURCES EXCLUDE REGEX ".*/Interfaces/gui/.*")
+    else()
+        # Find Qt6 for native build
+        find_package(Qt6 REQUIRED COMPONENTS Core Gui Widgets)
+        set(CMAKE_AUTOMOC ON) # Necessary for QT macro searches
+    endif()
 
     # Fetch Catch2 v3 from GitHub
     include(FetchContent)
@@ -106,12 +112,18 @@ elseif(BUILD_TESTS)
     else()
         add_library(project_lib ${SOURCES})
         target_include_directories(project_lib PUBLIC ${HEADER_DIRS})
-        target_link_libraries(project_lib PUBLIC Qt6::Core Qt6::Gui Qt6::Widgets)
+        if(NOT NO_QT)
+            target_link_libraries(project_lib PUBLIC Qt6::Core Qt6::Gui Qt6::Widgets)
+        endif()
     endif()
 
     # Native tests from tests/ (excluding tests/wasm/)
     file(GLOB_RECURSE TEST_SOURCES "../tests/*.cpp")
     list(FILTER TEST_SOURCES EXCLUDE REGEX ".*/wasm/.*")
+    if(NO_QT)
+        # Exclude tests for Qt GUI components
+        list(FILTER TEST_SOURCES EXCLUDE REGEX ".*/tests/tools/.*")
+    endif()
     list(LENGTH TEST_SOURCES TEST_SOURCES_COUNT)
     if(TEST_SOURCES_COUNT EQUAL 0)
         message(FATAL_ERROR "No test files found in tests/ directory")
@@ -144,15 +156,22 @@ elseif(DEFINED EMSCRIPTEN)
     )
 
 else()
-    # Native build: include Qt GUI files
+    # Native build
     list(FILTER SOURCES EXCLUDE REGEX ".*/tools/webui/.*")
 
-    find_package(Qt6 REQUIRED COMPONENTS Core Gui Widgets)
-    set(CMAKE_AUTOMOC ON)
+    if(NO_QT)
+        # Skip Qt entirely and exclude GUI sources
+        list(FILTER SOURCES EXCLUDE REGEX ".*/Interfaces/gui/.*")
+    else()
+        find_package(Qt6 REQUIRED COMPONENTS Core Gui Widgets)
+        set(CMAKE_AUTOMOC ON)
+    endif()
 
     add_executable(app ${SOURCES})
     target_include_directories(app PRIVATE ${HEADER_DIRS})
-    target_link_libraries(app PRIVATE Qt6::Core Qt6::Gui Qt6::Widgets)
+    if(NOT NO_QT)
+        target_link_libraries(app PRIVATE Qt6::Core Qt6::Gui Qt6::Widgets)
+    endif()
     target_compile_options(app PRIVATE
         -Wall -Wextra -Wcast-align -Wnon-virtual-dtor -Woverloaded-virtual -pedantic
     )

@@ -5,6 +5,14 @@ set -e
 export SERVE_PORT="${SERVE_PORT:-8080}"
 export SOURCE_DIR="${SOURCE_DIR:-/app/source}"
 export BUILD_DIR="${BUILD_DIR:-/app/build}"
+export GNUTLS_CPUID_OVERRIDE=0x1
+
+# Restore build directory ownership to the host user
+fix_permissions() {
+    if [ -n "${HOST_UID}" ] && [ "${HOST_UID}" != "0" ]; then
+        chown -R "${HOST_UID}:${HOST_GID:-${HOST_UID}}" "${BUILD_DIR}"
+    fi
+}
 
 show_help() {
     echo
@@ -49,6 +57,7 @@ do_build-emscripten() {
 
     echo "==> Build complete! <==="
     ls -lh "${BUILD_DIR}/emscripten"
+    fix_permissions
 }
 
 find_qt6_dir() {
@@ -63,7 +72,7 @@ do_build_native() {
         exit 1
     fi
 
-    local NATIVE_BUILD_DIR="${BUILD_DIR}/native"
+    local NATIVE_BUILD_DIR="${BUILD_DIR}/docker-native"
     local QT6_DIR
     QT6_DIR="$(find_qt6_dir)"
     mkdir -p "${NATIVE_BUILD_DIR}"
@@ -76,6 +85,7 @@ do_build_native() {
     cmake --build "${NATIVE_BUILD_DIR}" --parallel
 
     echo "==> Native build complete! <==="
+    fix_permissions
 }
 
 do_serve() {
@@ -115,6 +125,7 @@ do_test_emscripten() {
     # Run tests with Node.js
     echo "==> Running tests <==="
     node "${TEST_BUILD_DIR}/tests.js"
+    fix_permissions
 }
 
 do_test_native() {
@@ -125,7 +136,7 @@ do_test_native() {
         exit 1
     fi
 
-    local TEST_BUILD_DIR="${BUILD_DIR}/tests/native"
+    local TEST_BUILD_DIR="${BUILD_DIR}/tests/docker-native"
     local QT6_DIR
     QT6_DIR="$(find_qt6_dir)"
     mkdir -p "${TEST_BUILD_DIR}"
@@ -140,6 +151,7 @@ do_test_native() {
 
     echo "==> Running tests <==="
     QT_QPA_PLATFORM=offscreen "${TEST_BUILD_DIR}/tests"
+    fix_permissions
 }
 
 do_clean() {

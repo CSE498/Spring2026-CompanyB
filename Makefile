@@ -17,11 +17,16 @@
 #   make src-grumpy
 #   make test-build
 
+# Pass host UID/GID into Docker so build outputs are not owned by root
+HOST_UID := $(shell id -u)
+HOST_GID := $(shell id -g)
+export HOST_UID HOST_GID
+
 .PHONY: default all build test clean debug opt quick grumpy \
         src-% test-% help docker-build-emscripten docker-build-native \
         docker-test-emscripten docker-test-native \
         docker-serve docker-dev docker-shell docker-clean \
-        docker-image docker-rebuild
+        docker-image docker-rebuild run-native
 
 # ---------- High-level targets ----------
 
@@ -62,26 +67,32 @@ test-%:
 
 # Build the project with Emscripten (ignores Qt)
 docker-build-emscripten:
+	mkdir -p build
 	docker compose run --rm build-emscripten
 
 # Build the project natively with Qt (ignores emscripten)
 docker-build-native:
+	mkdir -p build
 	docker compose run --rm build-native
 
 # Build and run emscripten tests
 docker-test-emscripten:
+	mkdir -p build
 	docker compose run --rm test-emscripten
 
 # Build and run native tests
 docker-test-native:
+	mkdir -p build
 	docker compose run --rm test-native
 
 # Build and serve with web server
 docker-serve:
+	mkdir -p build
 	docker compose up serve
 
 # Interactive development shell
 docker-dev:
+	mkdir -p build
 	docker compose run --rm dev
 
 docker-shell: docker-dev
@@ -98,6 +109,10 @@ docker-clean:
 docker-rebuild:
 	docker build --no-cache -t cse498-companyb-project .
 
+# Forwards the display from WSL to Windows
+run-native:
+	DISPLAY=:0 XDG_RUNTIME_DIR=/run/user/1000 WAYLAND_DISPLAY=wayland-0 build/native/app
+
 help:
 	@echo "Top-level targets:"
 	@echo "  make / make build      Build program(s) in source/"
@@ -106,13 +121,18 @@ help:
 	@echo "  make debug|opt|quick|grumpy   Build program(s) with that mode (source/)"
 	@echo "  make clean             Clean source/ and tests/"
 	@echo
+	@echo "Flags:"
+	@echo "  NO_QT=1                Skip Qt. Excludes Interfaces/gui sources."
+	@echo "                         Works with: build, test, all, debug, opt, quick, grumpy"
+	@echo "                         Example: make test NO_QT=1"
+	@echo
 	@echo "Forwarding targets:"
 	@echo "  make src-<tgt>         Run 'make <tgt>' in source/"
 	@echo "  make test-<tgt>        Run 'make <tgt>' in tests/"
 	@echo
 	@echo "Docker Build System"
-	@echo "  make docker-build              Build with Emscripten (outputs to /build/emscripten)"
-	@echo "  make docker-build-native       Build natively with Qt"
+	@echo "  make docker-build-emscripten   Build with Emscripten (outputs to build/emscripten)"
+	@echo "  make docker-build-native       Build natively with Qt (outputs to build/docker-native)"
 	@echo "  make docker-test-emscripten    Build + run Emscripten Catch2 tests"
 	@echo "  make docker-test-native        Build + run native Catch2 tests with Qt"
 	@echo "  make docker-serve              Build with Emscripten and serve the output"
@@ -121,3 +141,4 @@ help:
 	@echo "  make docker-image              Build the Docker image"
 	@echo "  make docker-clean              Clean the output directory"
 	@echo "  make docker-rebuild            Rebuild the Docker image without cache"
+	@echo "  make run-native                Enables x11 forwarding for the GUI from WSL to a Windows host"
