@@ -35,3 +35,17 @@ cd tests
 g++ -std=c++23 -I../source -I../third-party/qt/include -I../third-party/Catch/single_include tools/TextTest.cpp ../source/Interfaces/gui/Text.cpp -o TextTest -L../third-party/qt/lib -lQt6Core -lQt6Gui -lQt6Widgets
 
 PATH="../third-party/qt/bin:$PATH" ./TextTest
+
+#### Menu
+on my machine, to test the individual MenuTest class I ran:
+c++ -std=c++23 \      
+  -I./source \
+  -I./third-party/Catch/single_include \
+  -O2 -g -Wall -Wextra -Wpedantic \
+  ./tests/tools/MenuTest.cpp \
+  ./source/Interfaces/gui/Menu.cpp \
+  -o ./tests/build/MenuTest
+
+and then:
+
+./tests/build/MenuTest

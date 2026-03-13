@@ -18,7 +18,8 @@
 #include <vector>
 
 namespace cse498 {
- /**
+
+/**
  * Stores items identified by a programmer-facing string key and a stable ItemId.
  * Supports navigation events, predicate-driven dynamic visibility/enabled state,
  * and callback hooks.
@@ -59,42 +60,19 @@ public:
      * Result of handling navigation event
      */
     enum class InputResult {
-        Ignored, // menu closed or event not used
-        Heard    // menu handled it
+        Ignored,
+        Heard
     };
 
     /**
-      * Renderable snapshot of item's UI state
-      */
+     * Renderable snapshot of item's UI state
+     */
     struct RenderItem {
         ItemId id{};
         std::string label{};
         bool enabled{true};
         bool visible{true};
         bool selected{false};
-    };
-
-    /**
-     * Internal item representation stored by Menu
-     *
-     * Stores base flags (enabled/visible/selected), optional predicates that refine
-     * runtime state, and callback actions invoked on selection/hover/activation.
-     */
-    struct Item {
-        ItemId id{};
-        std::string key;    // programmer-side identifier
-        std::string label;  // user-facing text
-
-        bool enabled{true};
-        bool visible{true};
-        bool selected{false};
-
-        Predicate enabledIf{};
-        Predicate visibleIf{};
-
-        Action onActivate{};
-        Action onHover{};
-        Action onSelected{};
     };
 
     /**
@@ -114,31 +92,23 @@ public:
      * @param key unique programmer facing identifier
      * @param label user facing label to display in the GUI
      * @param onActivate callback invoked when the item is activated
-     * @param enabled Base enabled flag (before applying enabled predicate)
-     * @param visible Base visible flag (before applying visible predicate)
-     * @return The stable ItemId for the inserted/updated item.
+     * @param enabled base enabled flag
+     * @param visible base visible flag
+     * @return stable ItemId for inserted/updated item
      */
-    ItemId addItem(std::string key,
-                   std::string label,
+    ItemId addItem(const std::string& key,
+                   const std::string& label,
                    Action onActivate,
                    bool enabled = true,
                    bool visible = true);
 
     /**
      * Removes an item by ItemId.
-     * Updates storage and key->id mapping, then normalizes selection.
-     *
-     * @param id ItemId of the item to remove.
-     * @return true if an item was removed; false if id was not found.
      */
     bool removeItem(ItemId id);
 
     /**
      * Removes an item by its string key.
-     * overload for callers who store keys instead of IDs
-     *
-     * @param key Key of the item to remove.
-     * @return true if an item was removed; false if key was not found.
      */
     bool removeItem(std::string_view key);
 
@@ -149,44 +119,8 @@ public:
 
     /**
      * Finds an ItemId by item key.
-     * @param key Key to look up.
      */
     std::optional<ItemId> findItemIdByKey(std::string_view key) const;
-
-    /**
-     * Retrieves a mutable pointer to an item by ItemId
-     * @param id ItemId to look up.
-     */
-    Item* getItem(ItemId id);
-
-    /**
-     * Retrieves a const pointer to an item by ItemId
-     * @param id ItemId to look up
-     * @return Pointer to the item if found; nullptr otherwise
-     */
-    const Item* getItem(ItemId id) const;
-
-    /**
-     * Retrieves a mutable pointer to an item by key
-     * @param key Key to look up
-     * @return Pointer to the item if found; nullptr otherwise
-     */
-    Item* getItemByKey(std::string_view key);
-
-    /**
-     * Retrieves a const pointer to an item by key
-     * @param key Key to look up
-     * @return Pointer to the item if found; nullptr otherwise
-     */
-    const Item* getItemByKey(std::string_view key) const;
-
-    /**
-     * Returns a read-only reference to the internal item list
-     * @return Const reference to the item vector.
-     */
-    const std::vector<Item>& items() const;
-
-    /// Getters and Setters
 
     /** Set an item's base enabled flag. */
     void setItemEnabled(ItemId id, bool enabled);
@@ -214,97 +148,58 @@ public:
 
     /**
      * Select an item by ItemId.
-     * Only selectable items (final-visible and final-enabled) can be selected.
-     *
-     * @param id ItemId to select
-     * @return true if selection succeeded, false otherwise
      */
     bool select(ItemId id);
 
     /**
-     * Select the next selectable item
-     *
-     * @return true if selection moved, false if no selectable items
+     * Select the next selectable item.
      */
     bool selectNext();
 
     /**
-     * Select the previous selectable item
-     *
-     * @return true if selection moved, false if no selectable items
+     * Select the previous selectable item.
      */
     bool selectPrevious();
 
     /**
      * Select the first selectable item.
-     *
-     * @return true if a selectable item exists, false otherwise
      */
     bool selectFirst();
 
     /**
      * Select the last selectable item.
-     *
-     * @return true if a selectable item exists, false otherwise
      */
     bool selectLast();
 
     /**
      * Hover an item by ItemId.
-     *
-     * Hover is allowed on disabled items but not on invisible items.
-     *
-     * @param id ItemId to hover
-     * @return true if the item exists and is visible, false otherwise
      */
     bool hover(ItemId id);
 
     /**
      * Activate the currently selected item.
-     *
-     * Respects visibility/enabled guards and ignoreDisabledActivation policy.
-     *
-     * @return true if activation occurred, false otherwise
      */
     bool activateSelected();
 
     /**
      * Activate an item by ItemId.
-     *
-     * Invisible items never activate. Disabled items activate only if
-     * ignoreDisabledActivation is false.
-     *
-     * @param id ItemId to activate
-     * @return true if activation occurred, false otherwise
      */
     bool activate(ItemId id);
 
-    /// Input Handling
     /**
      * Handle a navigation event.
-     *
-     * If the menu is closed, events are ignored. Otherwise, events map to selection
-     * movement, activation, or closing the menu (Back).
-     *
-     * @param event Navigation event
-     * @return Heard if processed while open, Ignored if menu is closed
      */
     InputResult handleNav(NavEvent event);
 
     /**
      * Build a render snapshot for the GUI.
-     *
-     * Returns a snapshot of id/label/final enabled/visible/selected state.
-     * Avoids exposing internal data to the GUI
-     *
-     * @return Vector of RenderItem snapshots
      */
     std::vector<RenderItem> buildRenderModel() const;
 
-    /** Set the menu title */
+    /** Set the menu title. */
     void setTitle(std::string title);
 
-    /** Get the menu title */
+    /** Get the menu title. */
     const std::string& title() const;
 
     /** Set whether the menu is open. */
@@ -320,65 +215,87 @@ public:
     bool ignoreDisabledActivation() const;
 
 private:
+    struct Item {
+        ItemId id{};
+        std::string key;
+        std::string label;
+
+        bool enabled{true};
+        bool visible{true};
+        bool selected{false};
+
+        Predicate enabledIf{};
+        Predicate visibleIf{};
+
+        Action onActivate{};
+        Action onHover{};
+        Action onSelected{};
+    };
+
     /**
      * First valid ItemId value
      */
     static constexpr ItemId kFirstId = 1;
 
+    Item* getItem(ItemId id);
+    const Item* getItem(ItemId id) const;
+    Item* getItemByKey(std::string_view key);
+    const Item* getItemByKey(std::string_view key) const;
+
     /**
-     * Compute final visiblilty
+     * Compute final visibility.
      */
     bool isVisible(const Item& item) const;
 
     /**
-     * Compute final enabled state
+     * Compute final enabled state.
      */
     bool isEnabled(const Item& item) const;
 
     /**
-     * Compute whether an item can be selected
+     * Compute whether an item can be selected.
      */
     bool isSelectable(const Item& item) const;
 
     /**
-     * Repair selection to ensure a valid selectable item is selected
+     * Repair selection to ensure a valid selectable item is selected.
      */
     void normalizeSelection();
 
     /**
-     * Generate next unique ItemId
+     * Generate next unique ItemId.
      */
     ItemId nextId();
 
     /**
-     * Menu title shown by the GUI
+     * Menu title shown by the GUI.
      */
-    std::string m_title;
+    std::string m_title{""};
 
     /**
-     * Whether the menu is currently open and accepts navigation input
+     * Whether the menu is currently open and accepts navigation input.
      */
     bool m_open{true};
 
     /**
-     * If true, disabled items cant be activated
+     * If true, disabled items can't be activated.
      */
     bool m_ignoreDisabledActivation{true};
 
     /**
-     * Ordered storage of menu items
+     * Ordered storage of menu items.
      */
     std::vector<Item> m_items;
 
     /**
-     * Lookup from item key to ItemId
+     * Lookup from item key to ItemId.
      */
     std::unordered_map<std::string, ItemId> m_keyToId;
 
     /**
-     * Id generator - never decreases or reuses Ids
+     * Id generator - never decreases or reuses Ids.
      */
     ItemId m_nextId{kFirstId};
 };
 
-} // namespace cse498
+}

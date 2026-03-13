@@ -11,8 +11,8 @@
 namespace cse498 {
 
 /**
-* Default constructor.
-*/
+ * Default constructor.
+ */
 Menu::Menu() = default;
 
 /**
@@ -25,22 +25,21 @@ Menu::Menu(std::string title)
 }
 
 /**
-* Adds a new item or updates an existing item with the same key.
-*/
-Menu::ItemId Menu::addItem(std::string key,
-                           std::string label,
+ * Adds a new item or updates an existing item with the same key.
+ */
+Menu::ItemId Menu::addItem(const std::string& key,
+                           const std::string& label,
                            Action onActivate,
                            bool enabled,
                            bool visible)
 {
-    assert(!key.empty() && "Menu::addItem requires non empty key");
+    assert(!key.empty() && "addItem requires non empty key");
 
-    // if key already exists, update existing item
     if (auto itKey = m_keyToId.find(key); itKey != m_keyToId.end()) {
         Item* existing = getItem(itKey->second);
-        assert(existing && "m_keyToId not synced with m_items");
+        assert(existing && "m-keyToId not synced with m-items");
 
-        existing->label = std::move(label);
+        existing->label = label;
         existing->onActivate = std::move(onActivate);
         existing->enabled = enabled;
         existing->visible = visible;
@@ -49,11 +48,10 @@ Menu::ItemId Menu::addItem(std::string key,
         return existing->id;
     }
 
-    // new item
     Item item;
     item.id = nextId();
-    item.key = std::move(key);
-    item.label = std::move(label);
+    item.key = key;
+    item.label = label;
     item.onActivate = std::move(onActivate);
     item.enabled = enabled;
     item.visible = visible;
@@ -67,36 +65,39 @@ Menu::ItemId Menu::addItem(std::string key,
 }
 
 /**
-* Removes an item by ItemId.
-* Updates storage and key->id mapping, then normalizes selection.
-*/
+ * Removes an item by ItemId.
+ * Updates storage and key->id mapping, then normalizes selection.
+ */
 bool Menu::removeItem(ItemId id)
 {
     auto item = std::find_if(m_items.begin(), m_items.end(),
-    [id](const Item& it) { return it.id == id; });
+        [id](const Item& it) { return it.id == id; });
 
     if (item == m_items.end()) {
         return false;
     }
 
-    // remove key mapping if it still points to this id
     if (!item->key.empty()) {
         auto keyIt = m_keyToId.find(item->key);
         if (keyIt != m_keyToId.end() && keyIt->second == id) {
             m_keyToId.erase(keyIt);
         }
     }
+
     m_items.erase(item);
+    normalizeSelection();
+    return true;
 }
 
 /**
-* Removes an item by its string key.
-* overload for callers who store keys instead of IDs
-*/
+ * Removes an item by its string key.
+ */
 bool Menu::removeItem(std::string_view key)
 {
     auto opt = findItemIdByKey(key);
-    if (!opt) return false;
+    if (!opt) {
+        return false;
+    }
     return removeItem(*opt);
 }
 
@@ -107,7 +108,6 @@ void Menu::clear()
 {
     m_items.clear();
     m_keyToId.clear();
-    // keep m_nextId increasing so no id repeat
 }
 
 /**
@@ -115,14 +115,15 @@ void Menu::clear()
  */
 std::optional<Menu::ItemId> Menu::findItemIdByKey(std::string_view key) const
 {
-    // m_keyToId key type is std::string; use a temporary string_view -> string
     auto it = m_keyToId.find(std::string(key));
-    if (it == m_keyToId.end()) return std::nullopt;
+    if (it == m_keyToId.end()) {
+        return std::nullopt;
+    }
     return it->second;
 }
 
 /**
- * Retrieves a mutable pointer to an item by ItemId
+ * Retrieves a mutable pointer to an item by ItemId.
  */
 Menu::Item* Menu::getItem(ItemId id)
 {
@@ -133,8 +134,8 @@ Menu::Item* Menu::getItem(ItemId id)
 }
 
 /**
-* Retrieves a const pointer to an item by ItemId
-*/
+ * Retrieves a const pointer to an item by ItemId.
+ */
 const Menu::Item* Menu::getItem(ItemId id) const
 {
     auto it = std::find_if(m_items.begin(), m_items.end(),
@@ -144,7 +145,7 @@ const Menu::Item* Menu::getItem(ItemId id) const
 }
 
 /**
- * Retrieves a mutable pointer to an item by key
+ * Retrieves a mutable pointer to an item by key.
  */
 Menu::Item* Menu::getItemByKey(std::string_view key)
 {
@@ -153,20 +154,12 @@ Menu::Item* Menu::getItemByKey(std::string_view key)
 }
 
 /**
-* Retrieves a const pointer to an item by key
-*/
+ * Retrieves a const pointer to an item by key.
+ */
 const Menu::Item* Menu::getItemByKey(std::string_view key) const
 {
     auto opt = findItemIdByKey(key);
     return opt ? getItem(*opt) : nullptr;
-}
-
-/**
- * Returns a read-only reference to the internal item list
- */
-const std::vector<Menu::Item>& Menu::items() const
-{
-    return m_items;
 }
 
 /**
@@ -179,8 +172,9 @@ void Menu::setItemEnabled(ItemId id, bool enabled)
     item->enabled = enabled;
     normalizeSelection();
 }
+
 /**
- * Get an item's base enabled flag.
+ * Set an item's base visible flag.
  */
 void Menu::setItemVisible(ItemId id, bool visible)
 {
@@ -191,7 +185,7 @@ void Menu::setItemVisible(ItemId id, bool visible)
 }
 
 /**
- * Get an item's label text.
+ * Set an item's label text.
  */
 void Menu::setItemLabel(ItemId id, std::string label)
 {
@@ -201,7 +195,7 @@ void Menu::setItemLabel(ItemId id, std::string label)
 }
 
 /**
- * Get an item's enabled predicate
+ * Set an item's enabled predicate.
  */
 void Menu::setEnabledPredicate(ItemId id, Predicate pred)
 {
@@ -212,8 +206,8 @@ void Menu::setEnabledPredicate(ItemId id, Predicate pred)
 }
 
 /**
-* Set an item's enabled predicate
-*/
+ * Set an item's visible predicate.
+ */
 void Menu::setVisiblePredicate(ItemId id, Predicate pred)
 {
     Item* item = getItem(id);
@@ -223,7 +217,7 @@ void Menu::setVisiblePredicate(ItemId id, Predicate pred)
 }
 
 /**
- * Set an item's activation callback
+ * Set an item's activation callback.
  */
 void Menu::setActivateAction(ItemId id, Action action)
 {
@@ -233,7 +227,7 @@ void Menu::setActivateAction(ItemId id, Action action)
 }
 
 /**
- * Set an item's hover action
+ * Set an item's hover action.
  */
 void Menu::setHoverAction(ItemId id, Action action)
 {
@@ -243,7 +237,7 @@ void Menu::setHoverAction(ItemId id, Action action)
 }
 
 /**
- * Set an item's selection callback
+ * Set an item's selection callback.
  */
 void Menu::setSelectedAction(ItemId id, Action action)
 {
@@ -253,8 +247,8 @@ void Menu::setSelectedAction(ItemId id, Action action)
 }
 
 /**
-  * Compute final visiblilty
-  */
+ * Compute final visibility.
+ */
 bool Menu::isVisible(const Item& item) const
 {
     if (!item.visible) return false;
@@ -263,9 +257,8 @@ bool Menu::isVisible(const Item& item) const
 }
 
 /**
-* Compute final enabled state
-* (base enabled flag + enabled predicate)
-*/
+ * Compute final enabled state.
+ */
 bool Menu::isEnabled(const Item& item) const
 {
     if (!item.enabled) return false;
@@ -274,8 +267,7 @@ bool Menu::isEnabled(const Item& item) const
 }
 
 /**
- * Compute whether item can be selected
- * (final-visible and final-enabled)
+ * Compute whether item can be selected.
  */
 bool Menu::isSelectable(const Item& item) const
 {
@@ -283,11 +275,10 @@ bool Menu::isSelectable(const Item& item) const
 }
 
 /**
- * Repair selection to ensure a valid selectable item is selected
+ * Repair selection to ensure a valid selectable item is selected.
  */
 void Menu::normalizeSelection()
 {
-    // if current selection still ok, keep it
     for (auto& item : m_items) {
         if (item.selected) {
             if (isSelectable(item)) return;
@@ -296,12 +287,11 @@ void Menu::normalizeSelection()
         }
     }
 
-    // otherwise pick the first selectable item (if any)
     selectFirst();
 }
 
 /**
- * Generate next unique ItemId
+ * Generate next unique ItemId.
  */
 Menu::ItemId Menu::nextId()
 {
@@ -310,14 +300,11 @@ Menu::ItemId Menu::nextId()
 
 /**
  * Select an item by ItemId.
- * Only selectable items (final-visible and final-enabled) can be selected.
- *
  */
 bool Menu::select(ItemId id)
 {
     Item* target = nullptr;
 
-    // locate selectable target
     for (auto& item : m_items) {
         if (item.id == id && isSelectable(item)) {
             target = &item;
@@ -326,26 +313,18 @@ bool Menu::select(ItemId id)
     }
 
     if (!target) {
-        // clear any existing selection if invalid id/non-selectable
-        bool hadSelected = false;
         for (auto& item : m_items) {
-            if (item.selected) {
-                item.selected = false;
-                hadSelected = true;
-            }
+            item.selected = false;
         }
-        (void)hadSelected;
         return false;
     }
 
     const bool wasAlreadySelected = target->selected;
 
-    // apply selection state consistently
     for (auto& item : m_items) {
         item.selected = (&item == target);
     }
 
-    // fire callback only on transition to selected
     if (!wasAlreadySelected && target->onSelected) {
         target->onSelected();
     }
@@ -355,34 +334,30 @@ bool Menu::select(ItemId id)
 
 /**
  * Select the first selectable item.
- *
- * @return true if a selectable item exists, false otherwise
  */
 bool Menu::selectFirst()
 {
     auto it = std::find_if(m_items.begin(), m_items.end(),
         [this](const Item& item) { return isSelectable(item); });
+
     if (it == m_items.end()) return false;
     return select(it->id);
 }
 
 /**
-* Select the last selectable item.
-*
-* @return true if a selectable item exists, false otherwise
-*/
+ * Select the last selectable item.
+ */
 bool Menu::selectLast()
 {
     auto it = std::find_if(m_items.rbegin(), m_items.rend(),
         [this](const Item& item) { return isSelectable(item); });
+
     if (it == m_items.rend()) return false;
     return select(it->id);
 }
 
 /**
- * Select the next selectable item
- *
- * @return true if selection moved, false if no selectable items
+ * Select the next selectable item.
  */
 bool Menu::selectNext()
 {
@@ -405,14 +380,13 @@ bool Menu::selectNext()
             return select(m_items[idx].id);
         }
     }
+
     return false;
 }
 
 /**
-* Select the previous selectable item
-*
-* @return true if selection moved, false if no selectable items
-*/
+ * Select the previous selectable item.
+ */
 bool Menu::selectPrevious()
 {
     if (m_items.empty()) return false;
@@ -434,62 +408,48 @@ bool Menu::selectPrevious()
             return select(m_items[idx].id);
         }
     }
+
     return false;
 }
 
 /**
  * Hover an item by ItemId.
- *
- * Hover is allowed on disabled items but not on invisible items.
- *
- * @param id ItemId to hover
- * @return true if the item exists and is visible, false otherwise
  */
 bool Menu::hover(ItemId id)
 {
     Item* item = getItem(id);
     if (!item) return false;
 
-    // allow hover on disabled, but not invisible
     if (!isVisible(*item)) return false;
 
-    if (item->onHover) item->onHover();
+    if (item->onHover) {
+        item->onHover();
+    }
     return true;
 }
 
 /**
  * Activate the currently selected item.
- *
- * Respects visibility/enabled guards and ignoreDisabledActivation policy.
- *
- * @return true if activation occurred, false otherwise
  */
 bool Menu::activateSelected()
 {
     auto it = std::find_if(m_items.begin(), m_items.end(),
         [](const Item& item) { return item.selected; });
+
     if (it == m_items.end()) return false;
     return activate(it->id);
 }
 
 /**
  * Activate an item by ItemId.
- *
- * Invisible items never activate. Disabled items activate only if
- * ignoreDisabledActivation is false.
- *
- * @param id ItemId to activate
- * @return true if activation occurred, false otherwise
  */
 bool Menu::activate(ItemId id)
 {
     Item* item = getItem(id);
     if (!item) return false;
 
-    // invisible items should never activate
     if (!isVisible(*item)) return false;
 
-    // if disabled and ignore is true, block activation
     if (!isEnabled(*item) && m_ignoreDisabledActivation) {
         return false;
     }
@@ -498,17 +458,12 @@ bool Menu::activate(ItemId id)
         item->onActivate();
         return true;
     }
+
     return false;
 }
 
 /**
  * Handle a navigation event.
- *
- * If the menu is closed, events are ignored. Otherwise, events map to selection
- * movement, activation, or closing the menu (Back).
- *
- * @param event Navigation event
- * @return Heard if processed while open, Ignored if menu is closed
  */
 Menu::InputResult Menu::handleNav(NavEvent event)
 {
@@ -547,11 +502,6 @@ Menu::InputResult Menu::handleNav(NavEvent event)
 
 /**
  * Build a render snapshot for the GUI.
- *
- * Returns a snapshot of id/label/final enabled/visible/selected state.
- * Avoids exposing internal data to the GUI
- *
- * @return Vector of RenderItem snapshots
  */
 std::vector<Menu::RenderItem> Menu::buildRenderModel() const
 {
@@ -572,7 +522,7 @@ std::vector<Menu::RenderItem> Menu::buildRenderModel() const
 }
 
 /**
- * Set the menu title
+ * Set the menu title.
  */
 void Menu::setTitle(std::string title)
 {
@@ -580,7 +530,7 @@ void Menu::setTitle(std::string title)
 }
 
 /**
- * Get the menu title
+ * Get the menu title.
  */
 const std::string& Menu::title() const
 {
@@ -588,7 +538,7 @@ const std::string& Menu::title() const
 }
 
 /**
- * Set whether the menu is open
+ * Set whether the menu is open.
  */
 void Menu::setOpen(bool open)
 {
@@ -596,7 +546,7 @@ void Menu::setOpen(bool open)
 }
 
 /**
- * Get whether the menu is open
+ * Get whether the menu is open.
  */
 bool Menu::isOpen() const
 {
@@ -604,7 +554,7 @@ bool Menu::isOpen() const
 }
 
 /**
- * Set whether disabled items are blocked from activation
+ * Set whether disabled items are blocked from activation.
  */
 void Menu::setIgnoreDisabledActivation(bool ignore)
 {
@@ -612,11 +562,11 @@ void Menu::setIgnoreDisabledActivation(bool ignore)
 }
 
 /**
- * Get whether disabled items are blocked from activation
+ * Get whether disabled items are blocked from activation.
  */
 bool Menu::ignoreDisabledActivation() const
 {
     return m_ignoreDisabledActivation;
 }
 
-} // namespace cse498
+} 
