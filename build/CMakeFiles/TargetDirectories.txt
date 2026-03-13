@@ -1,0 +1,9 @@
+C:/Users/munni/Spring2026-CompanyB/build/CMakeFiles/QtApp.dir
+C:/Users/munni/Spring2026-CompanyB/build/CMakeFiles/run_tests.dir
+C:/Users/munni/Spring2026-CompanyB/build/CMakeFiles/test.dir
+C:/Users/munni/Spring2026-CompanyB/build/CMakeFiles/edit_cache.dir
+C:/Users/munni/Spring2026-CompanyB/build/CMakeFiles/rebuild_cache.dir
+C:/Users/munni/Spring2026-CompanyB/build/CMakeFiles/QtApp_autogen_timestamp_deps.dir
+C:/Users/munni/Spring2026-CompanyB/build/CMakeFiles/QtApp_autogen.dir
+C:/Users/munni/Spring2026-CompanyB/build/CMakeFiles/run_tests_autogen_timestamp_deps.dir
+C:/Users/munni/Spring2026-CompanyB/build/CMakeFiles/run_tests_autogen.dir

@@ -47,3 +47,5 @@
 
 # JetBrains IDE
 .ideabuild/
+
+build/

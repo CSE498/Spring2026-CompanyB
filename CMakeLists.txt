@@ -11,9 +11,11 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 find_package(Qt6 REQUIRED COMPONENTS Core)
 find_package(Qt6 REQUIRED COMPONENTS Widgets)
 
+
 qt_add_executable(QtApp
-    source/Interfaces/gui/MadiQtTest.cpp
-    source/Interfaces/gui/ImageGrid.cpp
+        source/Interfaces/gui/MadiQTtest.cpp
+        source/Interfaces/gui/ImageManager.cpp
+        source/Interfaces/gui/ImageGrid.cpp
 )
 
 target_link_libraries(QtApp PRIVATE Qt6::Core Qt6::Widgets)

@@ -1,32 +1,33 @@
-#pragma once 
+#pragma once
 
-#include <iostream>
-#include <string>
+#include <QString>
+#include <QPixmap>
+#include <QGraphicsScene>
+#include <QGraphicsPixmapItem>
+#include <QGraphicsView>
 #include <unordered_map>
-#include <stdexcept>
+#include <expected>
 
 namespace cse498 {
-class ImageManager {
-    private:
-        std::unordered_map<std::string, std::string> mImages;
+
+    class ImageManager {
     public:
-        // Constructor
-        ImageManager();
-        
-        // Destructor
+      	ImageManager();
+        ImageManager(QGraphicsScene &scene);
         ~ImageManager();
 
-        void Load(std::string imageId, std::string path);
-
-        std::string GetImage(std::string imageId) const;
-
-        void AddToImages(std::string imageId, std::string path);
-
-        bool HasImage(std::string imageId);
-
-        void Remove(std::string imageId);
-
+        bool Load(const QString &imageId, const QString &path);
+        const QPixmap &GetImage(const QString &imageId) const;
+        bool HasImage(const QString &imageId) const;
+        void Remove(const QString &imageId);
         void Clear();
-};
+        void Show(const QString &imageId, int x, int y) const;
+        void SetSceneAndView(QGraphicsView &view, int width, int height);
 
-}
+    private:
+        QGraphicsScene &mScene;
+        std::unordered_map<QString, QPixmap> mImages;
+        QGraphicsScene mOwnedScene;
+    };
+
+} // namespace cse498

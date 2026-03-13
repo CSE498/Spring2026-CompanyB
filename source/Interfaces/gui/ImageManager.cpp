@@ -1,81 +1,81 @@
 #include "ImageManager.hpp"
-
+#include <stdexcept>
+#include <algorithm>
+#include <expected>
 
 namespace cse498 {
-// Constructor
-ImageManager::ImageManager() {
-    // Initialize empty image map
-    std::cout << "ImageManager initialized" << std::endl;
-}
 
-// Destructor
-ImageManager::~ImageManager() {
-    // Clear all images on destruction
-    Clear();
-    std::cout << "ImageManager cleared" << std::endl;
-}
+ImageManager::ImageManager() : mScene(mOwnedScene) {}
 
-// Load an image from file and store it in the map
-void ImageManager::Load(std::string imageId, std::string path) {
-    if (imageId.empty()) {
-        std::cerr << "Error: Image ID is empty" << std::endl;
-        return;
+ImageManager::ImageManager(QGraphicsScene &scene) : mScene(scene) {}
+
+ImageManager::~ImageManager() {}
+
+bool ImageManager::Load(const QString &imageId, const QString &path) {
+    if (imageId.isEmpty()) {
+        qWarning() << "Error: Image ID is empty";
+        return false;
     }
-    
-    if (path.empty()) {
-        std::cerr << "Error: Path cannot be empty" << std::endl;
-        return;
+    if (path.isEmpty()) {
+        qWarning() << "Error: Path cannot be empty";
+        return false;
     }
 
-    mImages[imageId] = path;
-    std::cout << "Successfully loaded image '" << imageId << "' from " << path << std::endl;
+    QPixmap pixmap(path);
+    if (pixmap.isNull()) {
+        qWarning() << "Failed to load image:" << path;
+        return false;
+    }
 
+    mImages[imageId] = pixmap;
+    qDebug() << "Successfully loaded image '" << imageId << "' from" << path;
+    return true;
 }
 
-// Retrieve an image path by ID
-std::string ImageManager::GetImage(std::string imageId) const {
+const QPixmap &ImageManager::GetImage(const QString &imageId) const {
     auto it = mImages.find(imageId);
-    
-    // if (it == mImages.end()) {
-    //     //insert error cannot fine image here
-    // }
-    
+    if (it == mImages.end()) {
+        throw std::out_of_range((imageId + " was not found").toStdString());
+    }
     return it->second;
 }
 
-// Add an image to the collection directly (for preloaded images)
-void ImageManager::AddToImages(std::string imageId, std::string path) {
-    if (imageId.empty() || path.empty()) {
-        std::cerr << "Error: Cannot add image with empty ID or empty path" << std::endl;
-        return;
-    }
-    
-    mImages[imageId] = path;
-    std::cout << "Added image '" << imageId << "' to manager" << std::endl;
-}
-
-// Check if image exists in manager
-bool ImageManager::HasImage(std::string imageId) {
+bool ImageManager::HasImage(const QString &imageId) const {
     return mImages.find(imageId) != mImages.end();
 }
 
-// Remove a specific image from the manager
-void ImageManager::Remove(std::string imageId) {
+void ImageManager::Remove(const QString &imageId) {
     auto it = mImages.find(imageId);
-    
-    // if (it == mImages.end()) {
-    //     //insert error message here
-    //     return;
-    // }
-    
+    if (it == mImages.end()) {
+        // TODO: determine appropriate return/error type for missing image removal
+        qWarning() << "Error: Image '" << imageId << "' not found";
+        return;
+    }
     mImages.erase(it);
+    qDebug() << "Removed image '" << imageId << "'";
 }
 
-// Clear all images from the manager
 void ImageManager::Clear() {
-    if (!mImages.empty()) {
-        std::cout << mImages.size() << "Images cleared" << std::endl;
-        mImages.clear();
+    mImages.clear();
+}
+
+void ImageManager::Show(const QString &imageId, int x, int y) const {
+    auto it = mImages.find(imageId);
+    if (it == mImages.end()) {
+        qWarning() << "Error: Image '" << imageId << "' not found";
+        return;
     }
+
+    QGraphicsPixmapItem *item = mScene.addPixmap(it->second);
+    item->setPos(x, y);
 }
+
+void ImageManager::SetSceneAndView(QGraphicsView &view, int width, int height) {
+    mScene.setSceneRect(0, 0, width, height);
+    view.setFixedSize(width, height);
+    
+    view.setScene(&mScene);
+    view.show();
 }
+
+} // namespace cse498e cse498}

@@ -17,12 +17,14 @@ BIN       := $(BUILD_DIR)/run_tests
 
 CATCH_INC := ../third-party/Catch/single_include
 QT_INC := ../third-party/qt/include
+QT_FLAGS := $(shell pkg-config --cflags Qt6Widgets 2>/dev/null || pkg-config --cflags Qt5Widgets)
+QT_LIBS  := $(shell pkg-config --libs   Qt6Widgets 2>/dev/null || pkg-config --libs   Qt5Widgets)
 
 CXXFLAGS ?= -O2 -g
 WARNFLAGS ?= -Wall -Wextra -Wpedantic
-CPPFLAGS += -I$(SRC_DIR) -I$(CATCH_INC) -I$(QT_INC)
+CPPFLAGS += -I$(SRC_DIR) -I$(CATCH_INC) -I$(QT_INC) $(QT_FLAGS)
 LDFLAGS  ?=
-LDLIBS   ?=
+LDLIBS   ?= $(QT_LIBS)
 
 # Pick up .cpp from tests/
 TEST_FILES := $(shell find $(TEST_DIR) -type f -name '*.cpp')
