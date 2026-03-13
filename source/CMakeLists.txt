@@ -63,13 +63,22 @@ if(BUILD_WASM_TESTS)
     # Emscripten compatibility: disable POSIX signals
     target_compile_definitions(tests PRIVATE CATCH_CONFIG_NO_POSIX_SIGNALS)
 
+    # Install npm modules for jsdom and canvas in the build directory
+    execute_process(
+      COMMAND npm install jsdom canvas
+      WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+    )
+
     # Output as a js file for Node.js execution
     set_target_properties(tests PROPERTIES SUFFIX ".js")
+    message(STATUS "Source directory: ${CMAKE_SOURCE_DIR}")
     target_link_options(tests PRIVATE
         -sNODERAWFS=1
         -sALLOW_MEMORY_GROWTH=1
         -lembind
         -sNO_DISABLE_EXCEPTION_CATCHING
+        # Link JS libraries for Node
+        --pre-js "${CMAKE_CURRENT_SOURCE_DIR}/../third-party/emscripten-test-libs/pre.js"
     )
 
 elseif(BUILD_TESTS)
@@ -127,8 +136,11 @@ elseif(DEFINED EMSCRIPTEN)
     # Exclude Qt GUI files (Qt can't be compiled by emcc)
     list(FILTER SOURCES EXCLUDE REGEX ".*/Interfaces/gui/.*")
 
+    # Exclude native entry points
+    list(FILTER SOURCES EXCLUDE REGEX "(_main|^main)\\.cpp$")
+
     add_executable(index ${SOURCES})
-    set_target_properties(index PROPERTIES SUFFIX ".html")
+    set_target_properties(index PROPERTIES SUFFIX ".js")
     target_include_directories(index PRIVATE ${HEADER_DIRS})
 
     # Emscripten compile options
@@ -142,8 +154,14 @@ elseif(DEFINED EMSCRIPTEN)
         -sALLOW_MEMORY_GROWTH=1
         -sMAXIMUM_MEMORY=1gb
         -sEXPORTED_RUNTIME_METHODS=ccall,cwrap
-        --emrun
         -lembind
+    )
+
+    # Copy custom HTML into build output
+    configure_file(
+        ${CMAKE_CURRENT_SOURCE_DIR}/tools/webui/index.html
+        ${CMAKE_BINARY_DIR}/index.html
+        COPYONLY
     )
 
 else()
