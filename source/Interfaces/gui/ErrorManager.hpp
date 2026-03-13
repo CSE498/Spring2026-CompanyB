@@ -1,9 +1,10 @@
-#ifndef ERRORMANAGER_HPP
-#define ERRORMANAGER_HPP
+#pragma once
 
 #include <functional>
 #include <string>
 #include <ostream>
+
+namespace cse498 {
 
 class ErrorManager {
 public:
@@ -25,7 +26,7 @@ public:
     using ErrorHandler = std::function<void(const std::string&, Severity)>;
 
     // Constructors
-    ErrorManager();
+    ErrorManager() = default;
     explicit ErrorManager(OutputMode mode);
 
     // Reporting functions
@@ -39,21 +40,25 @@ public:
     void setFatalHandler(ErrorHandler handler);
 
     void setOutputMode(OutputMode mode);
+    [[nodiscard]] OutputMode getOutputMode() const;
     void clearHandlers();
 
 private:
     // Internal dispatch
     void dispatch(const std::string& message, Severity severity);
 
+    // Retrieve the handler for a given severity (may be empty)
+    const ErrorHandler& getHandler(Severity severity) const;
+
     // Default behaviors
-    void defaultHandler(const std::string& message, Severity severity);
+    void defaultHandler(const std::string& message, Severity severity) const;
 
     // State
-    OutputMode m_outputMode;
+    OutputMode m_outputMode = OutputMode::Terminal;
 
     ErrorHandler m_warningHandler;
     ErrorHandler m_errorHandler;
     ErrorHandler m_fatalHandler;
 };
 
-#endif // ERRORMANAGER_HPP
+} // namespace cse498

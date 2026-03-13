@@ -2,8 +2,7 @@
 #include <iostream>
 #include <stdexcept>
 
-ErrorManager::ErrorManager()
-    : m_outputMode(OutputMode::Terminal) {}
+namespace cse498 {
 
 ErrorManager::ErrorManager(OutputMode mode)
     : m_outputMode(mode) {}
@@ -45,29 +44,31 @@ void ErrorManager::setOutputMode(OutputMode mode) {
     m_outputMode = mode;
 }
 
+ErrorManager::OutputMode ErrorManager::getOutputMode() const {
+    return m_outputMode;
+}
+
 void ErrorManager::clearHandlers() {
     m_warningHandler = nullptr;
     m_errorHandler = nullptr;
     m_fatalHandler = nullptr;
 }
 
-void ErrorManager::dispatch(const std::string& message, Severity severity) {
-    ErrorHandler* handler = nullptr;
-
+const ErrorManager::ErrorHandler& ErrorManager::getHandler(Severity severity) const {
     switch (severity) {
-        case Severity::Warning:
-            handler = &m_warningHandler;
-            break;
-        case Severity::Error:
-            handler = &m_errorHandler;
-            break;
-        case Severity::Fatal:
-            handler = &m_fatalHandler;
-            break;
+        case Severity::Warning: return m_warningHandler;
+        case Severity::Error:   return m_errorHandler;
+        case Severity::Fatal:   return m_fatalHandler;
     }
+    // Unreachable, but satisfies compiler warnings
+    return m_errorHandler;
+}
 
-    if (handler && *handler) {
-        (*handler)(message, severity);
+void ErrorManager::dispatch(const std::string& message, Severity severity) {
+    const ErrorHandler& handler = getHandler(severity);
+
+    if (handler) {
+        handler(message, severity);
     } else {
         defaultHandler(message, severity);
     }
@@ -78,7 +79,7 @@ void ErrorManager::dispatch(const std::string& message, Severity severity) {
     }
 }
 
-void ErrorManager::defaultHandler(const std::string& message, Severity severity) {
+void ErrorManager::defaultHandler(const std::string& message, Severity severity) const {
     std::ostream& out = std::cerr;
 
     switch (severity) {
@@ -95,3 +96,5 @@ void ErrorManager::defaultHandler(const std::string& message, Severity severity)
 
     out << message << std::endl;
 }
+
+} // namespace cse498

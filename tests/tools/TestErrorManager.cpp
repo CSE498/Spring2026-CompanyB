@@ -2,6 +2,8 @@
 #include <catch2/catch.hpp>
 #include "Interfaces/gui/ErrorManager.hpp"
 
+using cse498::ErrorManager;
+
 TEST_CASE("ErrorManager handles warnings correctly", "[ErrorManager][warning]") {
     ErrorManager em;
 
@@ -76,7 +78,7 @@ TEST_CASE("ErrorManager handles fatal errors correctly", "[ErrorManager][fatal]"
     SECTION("Custom fatal handler is called before exception is thrown") {
         bool handlerCalled = false;
 
-        em.setFatalHandler([&](const std::string& msg, ErrorManager::Severity sev) {
+        em.setFatalHandler([&](const std::string&, ErrorManager::Severity) {
             handlerCalled = true;
         });
 
@@ -96,6 +98,12 @@ TEST_CASE("ErrorManager configuration", "[ErrorManager][config]") {
     SECTION("Output mode can be changed at runtime") {
         REQUIRE_NOTHROW(em.setOutputMode(ErrorManager::OutputMode::Web));
         REQUIRE_NOTHROW(em.reportWarning("Web warning"));
+    }
+
+    SECTION("getOutputMode returns the current mode") {
+        REQUIRE(em.getOutputMode() == ErrorManager::OutputMode::Terminal);
+        em.setOutputMode(ErrorManager::OutputMode::GUI);
+        REQUIRE(em.getOutputMode() == ErrorManager::OutputMode::GUI);
     }
 
     SECTION("clearHandlers removes all custom handlers") {
