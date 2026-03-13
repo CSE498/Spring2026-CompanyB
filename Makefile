@@ -111,7 +111,7 @@ docker-rebuild:
 
 # Forwards the display from WSL to Windows
 run-native:
-	DISPLAY=:0 XDG_RUNTIME_DIR=/run/user/1000 WAYLAND_DISPLAY=wayland-0 build/native/app
+	DISPLAY=:0 XDG_RUNTIME_DIR=/run/user/1000 WAYLAND_DISPLAY=wayland-0 build/docker-native/app
 
 help:
 	@echo "Top-level targets:"
