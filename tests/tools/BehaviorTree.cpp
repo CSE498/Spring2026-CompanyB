@@ -613,4 +613,6 @@ TEST_CASE("Node deletion works correctly", "[delete]") {
 
     rootPtr->deleteNode(inv2Ptr);
     rootPtr->deleteNode(inv1Ptr);
+
+    REQUIRE(tree.getActivePath() == "SeqRoot");
 }

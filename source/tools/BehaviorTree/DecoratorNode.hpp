@@ -29,7 +29,7 @@ class DecoratorNode: public Node
         * @param node The node to attach as the child.
         */
         void addNode(std::unique_ptr<Node> node) {
-            // assert(m_child == nullptr); // Check for Existing Child
+            // assert(m_child != nullptr); // Check for Existing Child
             
             m_child = std::move(node);
         };

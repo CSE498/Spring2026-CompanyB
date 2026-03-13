@@ -32,7 +32,7 @@ class SequenceNode: public CompositeNode
             auto& children = this->getChildren();
             if (children.empty()) return Status::Running;
             
-            // Check status of active child
+            // Check status of active child (Pick last child if m_index is out of bounds)
             auto& child = (*(children.begin() + m_index)) ? *(children.begin() + m_index) : *(children.end() - 1);
             Status status = child->tick();
 

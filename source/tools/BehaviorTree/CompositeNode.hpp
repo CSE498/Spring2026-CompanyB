@@ -33,7 +33,7 @@ class CompositeNode: public Node
         */
         void addNode(std::unique_ptr<Node> node)
         {
-            //assert(node); // Check for Nullptr
+            // assert(node.get() != nullptr); // Check for Nullptr
 
             m_children.push_back(std::move(node));
         };
@@ -49,17 +49,9 @@ class CompositeNode: public Node
         // ATTRIBUTIONS: Used ChatGPT to get the remove_if algorithm implementation
 
         void deleteNode(Node* node) {
-            auto delNode = std::remove_if(
-                                m_children.begin(),
-                                m_children.end(),
-                                [node](const std::unique_ptr<Node>& child) {
+            std::erase_if(m_children, [node](const std::unique_ptr<Node>& child) {
                                     return child.get() == node;
-                                }
-                            );
-
-            //assert(delNode == m_children.end());
-
-            m_children.erase(delNode, m_children.end());
+                                });
         };
 
         virtual void print(int depth) const {
