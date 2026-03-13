@@ -1,6 +1,0 @@
-set(__QT_DEPLOY_TARGET_QtApp_FILE C:/Users/munni/Spring2026-CompanyB/build/QtApp.exe)
-set(__QT_DEPLOY_TARGET_QtApp_TYPE EXECUTABLE)
-set(__QT_DEPLOY_TARGET_QtApp_RUNTIME_DLLS C:/Qt/6.10.2/mingw_64/bin/Qt6Widgets.dll;C:/Qt/6.10.2/mingw_64/bin/Qt6Gui.dll;C:/Qt/6.10.2/mingw_64/bin/Qt6Core.dll)
-set(__QT_DEPLOY_TARGET_run_tests_FILE C:/Users/munni/Spring2026-CompanyB/build/run_tests.exe)
-set(__QT_DEPLOY_TARGET_run_tests_TYPE EXECUTABLE)
-set(__QT_DEPLOY_TARGET_run_tests_RUNTIME_DLLS C:/Qt/6.10.2/mingw_64/bin/Qt6Widgets.dll;C:/Qt/6.10.2/mingw_64/bin/Qt6Gui.dll;C:/Qt/6.10.2/mingw_64/bin/Qt6Core.dll)
