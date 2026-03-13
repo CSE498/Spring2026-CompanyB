@@ -30,19 +30,18 @@ struct SetupMockCanvas {
       globalThis.Image = function() { this.complete = false; };
       window._imageCache = {};
 });
-// clang-format on
-}
-~SetupMockCanvas() {
-  // clang-format off
+    // clang-format on
+  }
+  ~SetupMockCanvas() {
+    // clang-format off
   EM_ASM({
     delete globalThis.document;
     delete globalThis.window;
     delete globalThis.Image;
   });
-  // clang-format on
-}
-}
-;
+    // clang-format on
+  }
+};
 
 TEST_CASE("Initialize Canvas", "[web_canvas]") {
   SetupMockCanvas mock;
