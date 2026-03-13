@@ -11,7 +11,7 @@
 #   make clean        # remove build directory
 #   make list         # show source and test files cmake will pick up
 
-BUILD_DIR := ../build/tests
+BUILD_DIR := ../build/tests/native
 
 # Pass NO_QT=1 in the command line to skip Qt and its GUI sources.
 NO_QT ?= 0

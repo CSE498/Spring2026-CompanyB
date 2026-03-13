@@ -64,11 +64,11 @@ All Docker targets build inside a container with the full toolchain pre-installe
 ### Native (Qt)
 
 > [!WARNING]
-> `docker-build-native` produces a **Linux binary**. It will not run on macOS or Windows and possibly various linux distros. For local development with the GUI, build on your host machine instead (see below).
+> `docker-build-native` produces a **Linux binary**. It cannot be run directly on macOS. On macOS, install Qt and use `make build` instead. On Windows, you can launch it using `make run-native`.
 
 | Command | Description |
 |---|---|
-| `make docker-build-native` | Build the native Qt application to `/build/native/` |
+| `make docker-build-native` | Build the native Qt application to `build/docker-native/` |
 | `make docker-test-native` | Build and run native Catch2 tests (headless) |
 
 ### Other
@@ -79,6 +79,7 @@ All Docker targets build inside a container with the full toolchain pre-installe
 | `make docker-image` | Build the Docker image |
 | `make docker-rebuild` | Rebuild the Docker image from scratch (no cache) |
 | `make docker-clean` | Remove the `build/` directory |
+| `make run-native` | Run the native app from WSL with X11 forwarding to Windows |
 
 ---
 
@@ -97,7 +98,7 @@ These run on your host machine and require Qt6 installed (see prereqs above).
 | `make all` | Build + run tests |
 | `make clean` | Remove build artifacts |
 
-Output binary is at `/build/native/app`. Test binary is at `/build/tests/tests`.
+Output binary is at `build/native/app`. Test binary is at `build/tests/native/tests`.
 
 You can also forward targets directly to `/source/` or `/tests/`:
 ```bash
