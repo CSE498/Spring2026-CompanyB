@@ -1,5 +1,0 @@
-C:/Users/munni/Spring2026-CompanyB/source/Interfaces/gui/build/CMakeFiles/ImageManagerApp.dir
-C:/Users/munni/Spring2026-CompanyB/source/Interfaces/gui/build/CMakeFiles/edit_cache.dir
-C:/Users/munni/Spring2026-CompanyB/source/Interfaces/gui/build/CMakeFiles/rebuild_cache.dir
-C:/Users/munni/Spring2026-CompanyB/source/Interfaces/gui/build/CMakeFiles/ImageManagerApp_autogen_timestamp_deps.dir
-C:/Users/munni/Spring2026-CompanyB/source/Interfaces/gui/build/CMakeFiles/ImageManagerApp_autogen.dir
