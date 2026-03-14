@@ -371,26 +371,26 @@ TEST_CASE("Scheduler: Template Instantiation with Different ID Types", "[schedul
 
 // Tests: Dynamic Weight Adjustment
 
-TEST_CASE("Scheduler: Auto-adjustment Enable/Disable", "[scheduler]") {
+TEST_CASE("Scheduler: Rebalancing Enable/Disable", "[scheduler]") {
   Scheduler<size_t> scheduler;
   
-  SECTION("Auto-adjustment disabled by default") {
-    CHECK_FALSE(scheduler.IsAutoAdjustmentEnabled());
+  SECTION("Rebalancing disabled by default") {
+    CHECK_FALSE(scheduler.IsRebalancingEnabled());
   }
   
-  SECTION("Enable auto-adjustment") {
-    scheduler.EnableAutoAdjustment(true);
-    CHECK(scheduler.IsAutoAdjustmentEnabled());
+  SECTION("Enable rebalancing") {
+    scheduler.EnableRebalancing(true);
+    CHECK(scheduler.IsRebalancingEnabled());
   }
   
-  SECTION("Disable auto-adjustment") {
-    scheduler.EnableAutoAdjustment(true);
-    scheduler.EnableAutoAdjustment(false);
-    CHECK_FALSE(scheduler.IsAutoAdjustmentEnabled());
+  SECTION("Disable rebalancing") {
+    scheduler.EnableRebalancing(true);
+    scheduler.EnableRebalancing(false);
+    CHECK_FALSE(scheduler.IsRebalancingEnabled());
   }
 }
 
-TEST_CASE("Scheduler: Auto-adjustment Configuration", "[scheduler]") {
+TEST_CASE("Scheduler: Rebalancing Configuration", "[scheduler]") {
   Scheduler<size_t> scheduler;
   
   SECTION("Default configuration values") {
@@ -473,16 +473,16 @@ TEST_CASE("Scheduler: Manual Weight Setting", "[scheduler]") {
     CHECK(result.error() == SchedulerError::InvalidWeight);
   }
 
-  SECTION("SetBaseWeight returns error when auto-adjust is enabled") {
-    scheduler.EnableAutoAdjustment(true);
+  SECTION("SetBaseWeight returns error when rebalancing is enabled") {
+    scheduler.EnableRebalancing(true);
     auto result = scheduler.SetBaseWeight(1, 20.0);
     CHECK_FALSE(result.has_value());
-    CHECK(result.error() == SchedulerError::WeightBlockedByAutoAdjust);
+    CHECK(result.error() == SchedulerError::WeightBlockedByRebalancing);
   }
 
-  SECTION("SetBaseWeight succeeds after disabling auto-adjust") {
-    scheduler.EnableAutoAdjustment(true);
-    scheduler.EnableAutoAdjustment(false);
+  SECTION("SetBaseWeight succeeds after disabling rebalancing") {
+    scheduler.EnableRebalancing(true);
+    scheduler.EnableRebalancing(false);
     auto result = scheduler.SetBaseWeight(1, 20.0);
     CHECK(result.has_value());
     auto weight = scheduler.GetBaseWeight(1);
@@ -495,7 +495,7 @@ TEST_CASE("Scheduler: Wait Cycle Tracking", "[scheduler]") {
   Scheduler<size_t> scheduler;
   REQUIRE(scheduler.AddProcess(1, 10.0).has_value());
   REQUIRE(scheduler.AddProcess(2, 1.0).has_value());
-  scheduler.EnableAutoAdjustment(true);
+  scheduler.EnableRebalancing(true);
   
   SECTION("Wait cycles increment for non-executed processes") {
     for (int i = 0; i < 5; ++i) {
@@ -522,7 +522,7 @@ TEST_CASE("Scheduler: Dynamic Weight Adjustment", "[scheduler]") {
   Scheduler<size_t> scheduler;
   REQUIRE(scheduler.AddProcess(1, 10.0).has_value());
   REQUIRE(scheduler.AddProcess(2, 5.0).has_value());
-  scheduler.EnableAutoAdjustment(true);
+  scheduler.EnableRebalancing(true);
   REQUIRE(scheduler.SetFrequencyPenalty(0.1).has_value());
   
   SECTION("Dynamic weight decreases after execution") {
@@ -548,7 +548,7 @@ TEST_CASE("Scheduler: Starvation Prevention", "[scheduler]") {
   Scheduler<size_t> scheduler;
   REQUIRE(scheduler.AddProcess(1, 100.0).has_value());
   REQUIRE(scheduler.AddProcess(2, 1.0).has_value());
-  scheduler.EnableAutoAdjustment(true);
+  scheduler.EnableRebalancing(true);
   REQUIRE(scheduler.SetWaitBoostFactor(0.5).has_value());
   REQUIRE(scheduler.SetMinWeight(0.1).has_value());
   
@@ -589,7 +589,7 @@ TEST_CASE("Scheduler: Reset Dynamic Weights", "[scheduler]") {
   Scheduler<size_t> scheduler;
   REQUIRE(scheduler.AddProcess(1, 10.0).has_value());
   REQUIRE(scheduler.AddProcess(2, 5.0).has_value());
-  scheduler.EnableAutoAdjustment(true);
+  scheduler.EnableRebalancing(true);
   
   SECTION("Reset clears all adjustments") {
     for (int i = 0; i < 20; ++i) {

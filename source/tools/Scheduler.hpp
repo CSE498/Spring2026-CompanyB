@@ -36,7 +36,7 @@ namespace cse498 {
     NegativeWeight,              ///< Weight cannot be negative
     NoSchedulableProcesses,      ///< No processes available to schedule
     InvalidParameter,            ///< Invalid configuration parameter
-    WeightBlockedByAutoAdjust,   ///< Cannot set base weight while auto-adjust is enabled
+    WeightBlockedByRebalancing,   ///< Cannot set base weight while rebalancing is enabled
     ZeroMaxFailures,             ///< Max failures must be > 0
     InvalidBackoffMultiplier,    ///< Backoff multiplier must be >= 1.0
     ZeroRecoveryThreshold        ///< Recovery threshold must be > 0
@@ -64,8 +64,8 @@ namespace cse498 {
         return "No schedulable processes available";
       case SchedulerError::InvalidParameter:
         return "Invalid configuration parameter";
-      case SchedulerError::WeightBlockedByAutoAdjust:
-        return "Cannot set base weight while auto-adjust is enabled; disable auto-adjust first";
+      case SchedulerError::WeightBlockedByRebalancing:
+        return "Cannot set base weight while rebalancing is enabled; call EnableRebalancing(false) first";
       case SchedulerError::ZeroMaxFailures:
         return "Max consecutive failures must be greater than zero";
       case SchedulerError::InvalidBackoffMultiplier:
@@ -99,10 +99,10 @@ namespace cse498 {
    * Each process tracks three weight values:
    * 
    *   - base_weight    — the user-configured weight (set via AddProcess / SetBaseWeight)
-   *   - active_weight  — adjusted copy of base_weight (only changes when auto-adjust is on)
+   *   - adjusted_weight  — adjusted copy of base_weight (only changes when rebalancing is on)
    *   - deficit          — round-robin accumulator used by deterministic mode (can go negative)
    * 
-   * GetEffectiveWeight() returns active_weight when auto-adjust is enabled,
+   * GetEffectiveWeight() returns adjusted_weight when rebalancing is enabled,
    * otherwise base_weight. This is the weight used in both scheduling algorithms.
    * 
    * ## Algorithm 1: Deterministic (Weighted Deficit Round-Robin)
@@ -147,12 +147,12 @@ namespace cse498 {
    * @code
    *   for each process P:
    *       if P was selected:
-   *           P.active_weight *= (1 - frequency_penalty)   // penalize over-use
+   *           P.adjusted_weight *= (1 - frequency_penalty)   // penalize over-use
    *           P.wait_cycles = 0
    *       else:
    *           P.wait_cycles++
-   *           P.active_weight += wait_boost_factor * P.wait_cycles  // reward waiting
-   *       clamp P.active_weight to [min_weight, max_weight]
+   *           P.adjusted_weight += wait_boost_factor * P.wait_cycles  // reward waiting
+   *       clamp P.adjusted_weight to [min_weight, max_weight]
    * @endcode
    * 
    * This gradually shifts weight toward starving processes and away from
@@ -223,7 +223,7 @@ namespace cse498 {
      */
     struct ProcessState {
       double base_weight{};               ///< Base priority weight 
-      double active_weight{};            ///< Dynamically adjusted weight (used when auto-adjust enabled)
+      double adjusted_weight{};            ///< Dynamically adjusted weight (used when rebalancing is enabled)
       double deficit{};                   ///< Round-robin accumulator (goes negative after selection)
       size_t execution_count{};           ///< no of times this process has been scheduled
       size_t wait_cycles{};               ///< no of cycles since last execution
@@ -240,7 +240,7 @@ namespace cse498 {
       
       ProcessState(double weight, size_t order)
         : base_weight(weight),
-          active_weight(weight),
+          adjusted_weight(weight),
           deficit(weight),
           execution_count(0),
           wait_cycles(0),
@@ -276,7 +276,7 @@ namespace cse498 {
     mutable std::mt19937 rng;                               ///< Random number generator
     
   
-    bool auto_adjust_enabled{};                               ///< Enable automatic weight adjustment
+    bool rebalance_enabled{};                               ///< Whether RebalanceWeights() runs after each GetNext()
     double min_weight{};                                      ///< Minimum weight (so as to prevent starvation)
     double max_weight{};                                      ///< Maximum weight ceiling (prevents unbounded growth)
     double wait_boost_factor{};                               ///< Weight increase per wait cycle
@@ -294,37 +294,37 @@ namespace cse498 {
     // function Methods 
     
     /**
-     * @brief Rebalance active weights after a scheduling decision.
+     * @brief Rebalance adjusted weights after a scheduling decision.
      * @param selected_id The process that was just selected.
      * 
-     * Called after each GetNext(). Does nothing if auto-adjust is off.
+     * Called after each GetNext(). Does nothing if rebalancing is off.
      * - The selected process's weight is reduced (frequency penalty).
      * - All other processes' weights are increased (wait boost).
      * - All weights are clamped to [min_weight, max_weight].
      */
     void RebalanceWeights(ID_TYPE selected_id) 
     {
-      if (!auto_adjust_enabled) {return;}
+      if (!rebalance_enabled) {return;}
       
       for (auto& [id, state] : process_map)
       {
         if (id == selected_id)
         {
-          state.active_weight *= (1.0 - frequency_penalty);
+          state.adjusted_weight *= (1.0 - frequency_penalty);
           state.last_execution_cycle = scheduling_cycle;
           state.wait_cycles = 0;
         } else {
           state.wait_cycles++;
-          state.active_weight += (wait_boost_factor * state.wait_cycles);
+          state.adjusted_weight += (wait_boost_factor * state.wait_cycles);
         }
         
-        if (state.active_weight < min_weight) 
+        if (state.adjusted_weight < min_weight) 
         {
-          state.active_weight = min_weight;
+          state.adjusted_weight = min_weight;
         }
-        if (state.active_weight > max_weight) 
+        if (state.adjusted_weight > max_weight) 
         {
-          state.active_weight = max_weight;
+          state.adjusted_weight = max_weight;
         }
       }
     }
@@ -336,7 +336,7 @@ namespace cse498 {
      */
     double GetEffectiveWeight(const ProcessState& state) const 
     {
-      return auto_adjust_enabled ? state.active_weight : state.base_weight;
+      return rebalance_enabled ? state.adjusted_weight : state.base_weight;
     }
     
     /**
@@ -382,7 +382,7 @@ namespace cse498 {
      * @endcode
      * Note the deficit for the selected process will be negative because 
      * it is subtracted from the total weight of all processes, but eventually climbs 
-     * up by adding its effective weight (base or active weight) to the defict, 
+     * up by adding its effective weight (base or adjusted weight) to the deficit, 
      * and it will be positive eventually.
      * https://en.wikipedia.org/wiki/Deficit_round_robin
      */
@@ -494,7 +494,7 @@ namespace cse498 {
       : scheduling_mode(mode),
         next_insertion_order(0),
         rng(seed),
-        auto_adjust_enabled(false),
+        rebalance_enabled(false),
         min_weight(MIN_WEIGHT),
         max_weight(MAX_WEIGHT),
         wait_boost_factor(WAIT_BOOST_FACTOR),
@@ -606,7 +606,7 @@ namespace cse498 {
       scheduling_mode = mode;
       
        
-      // initialize each process's deficit to its current effective weight(either base_weight or active_weight),
+      // initialize each process's deficit to its current effective weight(either base_weight or adjusted_weight),
       // so the round-robin algorithm starts fairly. 
       //For probabilistic mode, no persistent state (like deficit)
       // is needed, so there's nothing to reset—selection is inherently memoryless.
@@ -665,7 +665,7 @@ namespace cse498 {
      * @brief Get the highest effective weight among all schedulable processes
      * @return Expected containing maximum weight or error code
      * 
-     * Returns dynamic weight when auto-adjust is enabled, base weight otherwise.
+     * Returns adjusted weight when rebalancing is enabled, base weight otherwise.
      */
    
     [[nodiscard]] std::expected<double, SchedulerError> GetHighestWeight() const 
@@ -679,7 +679,7 @@ namespace cse498 {
       auto schedulable_weights = process_map 
           | std::views::values                                                        // ProcessState stream
           | std::views::filter([this](const ProcessState& s) { return IsSchedulable(s); })  // drop disabled / backed-off
-          | std::views::transform([this](const ProcessState& s) { return GetEffectiveWeight(s); }); // → double
+          | std::views::transform([this](const ProcessState& s) { return GetEffectiveWeight(s); }); // -> double
       
       // Find the maximum weight in the filtered range.
       auto it = std::ranges::max_element(schedulable_weights);
@@ -693,7 +693,7 @@ namespace cse498 {
      * @brief Get the sum of all effective weights for schedulable processes
      * @return Total weight across all schedulable processes
      * 
-     * Returns dynamic weights when auto-adjust is enabled, base weights otherwise.
+     * Returns adjusted weights when rebalancing is enabled, base weights otherwise.
      */
     [[nodiscard]] double GetTotalWeight() const noexcept 
     {
@@ -727,31 +727,32 @@ namespace cse498 {
     //  Dynamic Weight Adjustment API
     
     /**
-     * @brief Enable or disable automatic weight adjustment
-     * @param enable true to enable dynamic adjustments, false to use static weights
+     * @brief Enable or disable weight rebalancing after each scheduling decision.
+     * @param enable true to rebalance weights each cycle, false to use static base weights.
      * 
-     * When enabled, process weights are automatically adjusted based on:
-     *  Frequency of execution (frequently executed processes get reduced weight)
-     *  Wait time (longer processes get increased weight)
+     * When enabled, RebalanceWeights() runs after every GetNext() call:
+     *  - The selected process's weight is reduced (frequency penalty).
+     *  - Waiting processes' weights are boosted (wait boost).
+     * Disabling resets all adjusted weights back to their base values.
      */
-    void EnableAutoAdjustment(bool enable) noexcept 
+    void EnableRebalancing(bool enable) noexcept 
     {
-      auto_adjust_enabled = enable;
+      rebalance_enabled = enable;
       if (!enable) {
         for (auto& [id, state] : process_map) {
-          state.active_weight = state.base_weight;
+          state.adjusted_weight = state.base_weight;
           state.wait_cycles = 0;
         }
       }
     }
     
     /**
-     * @brief Check if automatic weight adjustment is enabled
-     * @return true if auto-adjustment is active
+     * @brief Check if weight rebalancing is enabled
+     * @return true if rebalancing is active
      */
-    [[nodiscard]] bool IsAutoAdjustmentEnabled() const noexcept 
+    [[nodiscard]] bool IsRebalancingEnabled() const noexcept 
     {
-      return auto_adjust_enabled;
+      return rebalance_enabled;
     }
     
     /**
@@ -841,16 +842,16 @@ namespace cse498 {
      * @param weight New base weight (must be non-negative and finite)
      * @return Success or error code
      * 
-     * Fails with WeightBlockedByAutoAdjust if auto-adjustment is enabled.
-     * When auto-adjust is on, effective weight is dynamic; set weight has no effect.
-     * Disable auto-adjust with EnableAutoAdjustment(false) first, set weight, then
+     * Fails with WeightBlockedByRebalancing if rebalancing is enabled.
+     * When rebalancing is on, effective weight is adjusted dynamically; setting base weight has no effect.
+     * Call EnableRebalancing(false) first, set the weight, then
      * re-enable if desired.
      */
     [[nodiscard]] std::expected<void, SchedulerError> SetBaseWeight(ID_TYPE id, double weight) 
     {
-      if (auto_adjust_enabled)
+      if (rebalance_enabled)
       {
-        return std::unexpected(SchedulerError::WeightBlockedByAutoAdjust);
+        return std::unexpected(SchedulerError::WeightBlockedByRebalancing);
       }
       if (!std::isfinite(weight)) { return std::unexpected(SchedulerError::InvalidWeight); }
       if (weight < 0.0) { return std::unexpected(SchedulerError::NegativeWeight);  }
@@ -859,7 +860,7 @@ namespace cse498 {
       if (it == process_map.end()) { return std::unexpected(SchedulerError::ProcessNotFound); }
       
       it->second.base_weight = weight;
-      it->second.active_weight = weight;
+      it->second.adjusted_weight = weight;
       return {};
     }
     
@@ -875,7 +876,7 @@ namespace cse498 {
       {
         return std::unexpected(SchedulerError::ProcessNotFound);
       }
-      return it->second.active_weight;
+      return it->second.adjusted_weight;
     }
     
     /**
@@ -907,7 +908,7 @@ namespace cse498 {
     {
       for (auto& [id, state] : process_map) 
       {
-        state.active_weight = state.base_weight;
+        state.adjusted_weight = state.base_weight;
         state.wait_cycles = 0;
         state.execution_count = 0;
         state.last_execution_cycle = 0;
