@@ -293,12 +293,15 @@ namespace cse498 {
     // function Methods 
     
     /**
-     * @brief Apply dynamic weight adjustments to all processes 
-     * @param selected_id The ID of the process 
+     * @brief Rebalance active weights after a scheduling decision.
+     * @param selected_id The process that was just selected.
      * 
-     * It is called after each GetNext() when auto_adjust_enabled is true.
+     * Called after each GetNext(). Does nothing if auto-adjust is off.
+     * - The selected process's weight is reduced (frequency penalty).
+     * - All other processes' weights are increased (wait boost).
+     * - All weights are clamped to [min_weight, max_weight].
      */
-    void ApplyDynamicAdjustments(ID_TYPE selected_id) 
+    void RebalanceWeights(ID_TYPE selected_id) 
     {
       if (!auto_adjust_enabled) {return;}
       
@@ -376,7 +379,7 @@ namespace cse498 {
      *   selected.deficit -= sum of all effective weights
      *   return selected
      * @endcode
-     * NB the deficit for the selected process will be negative because 
+     * Note the deficit for the selected process will be negative because 
      * it is subtracted from the total weight of all processes, but eventually climbs 
      * up by adding its effective weight (base or active weight) to the defict, 
      * and it will be positive eventually.
@@ -568,26 +571,23 @@ namespace cse498 {
     {
       if (process_map.empty()) {return std::unexpected(SchedulerError::EmptyScheduler);}
       
+      // Step 1: Advance the scheduler cycle and decrement cycles_until_retry for any processes in backoff
       scheduling_cycle++;
-      UpdateBackoffCounters();
+      UpdateBackoffCounters(); // (UpdateBackoffCounters reduces cycles_until_retry for  failing processes to eventually make them schedulable again)
       
-      std::expected<ID_TYPE, SchedulerError> selected;
+      // Step 2: Pick the next process using the current scheduling algorithm.
+      std::expected<ID_TYPE, SchedulerError> selected = 
+          (scheduling_mode == Mode::DETERMINISTIC)
+              ? GetNextDeterministic()
+              : GetNextProbabilistic();
       
-      if (scheduling_mode == Mode::DETERMINISTIC) 
-      {
-        selected = GetNextDeterministic(); 
-      } 
-      else { selected = GetNextProbabilistic(); }
       
-      if (!selected) 
-      {
-        return selected;
-      }
+      if (!selected) { return selected; } //If there was an error, it returns that error to the caller.
       
+      // Step 3: Record the selection and rebalance weights for next time.
       ID_TYPE selected_id = *selected;
-      
       process_map.find(selected_id)->second.execution_count++;
-      ApplyDynamicAdjustments(selected_id);
+      RebalanceWeights(selected_id);
       
       return selected_id;
     }
