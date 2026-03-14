@@ -134,6 +134,30 @@ class DataMap {
         ConstIterator cend() const { return ConstIterator(mData.cend()); } //< Returns a const iterator to the end of the map
 
         /**
+         * Map-style access. Inserts an empty std::any when the key does not exist.
+         * @param name The key to access.
+         * @return A mutable reference to the stored std::any value.
+         */
+        std::any& operator[](const std::string& name) { 
+            if (mData.find(name) == mData.end()) {
+                mData[name] = std::any();
+            }
+            return mData[name];
+        }
+
+        /**
+         * Const map-style access.
+         * @param name The key to access.
+         * @return A const reference to the stored std::any value.
+         */
+        [[nodiscard]] const std::any& operator[](const std::string& name) const
+        {
+            auto it = mData.find(name);
+            assert(it != mData.end() && "DataMap::operator[] const: key not found");
+            return it->second;
+        }
+
+        /**
          * Associates the given value with the specified key. If the key already exists, its value is overwritten.
          * @tparam V The type of the value to store.
          * @param name The key to associate with the value.

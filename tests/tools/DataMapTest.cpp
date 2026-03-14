@@ -32,7 +32,7 @@ TEST_CASE("DataMap can store and retrieve values", "[DataMap]") {
         data.Set("isAlive", true);
         auto alive = data.Get<bool>("isAlive");
         REQUIRE(alive.has_value());
-        REQUIRE(alive.value() == true);
+        REQUIRE(alive.value());
     }
 }
 
@@ -56,7 +56,7 @@ TEST_CASE("DataMap can store multiple different types", "[DataMap]") {
         REQUIRE(data.Get<double>("health").value() == 45.0);
         REQUIRE(data.Get<int>("score").value() == 100);
         REQUIRE(data.Get<std::string>("playerName").value() == "Bob");
-        REQUIRE(data.Get<bool>("isAlive").value() == true);
+        REQUIRE(data.Get<bool>("isAlive").value());
     }
 }
 
@@ -214,7 +214,7 @@ TEST_CASE("DataMap stress test with alternating types", "[DataMap]") {
     REQUIRE(data.Get<std::string>("multi").value() == "text");
 
     data.Set("multi", true);
-    REQUIRE(data.Get<bool>("multi").value() == true);
+    REQUIRE(data.Get<bool>("multi").value());
 }
 
 TEST_CASE("DataMap handles custom struct types", "[DataMap]") {
@@ -238,6 +238,39 @@ TEST_CASE("DataMap handles custom struct types", "[DataMap]") {
     REQUIRE(retrieved.value().name == "Hero");
     REQUIRE(retrieved.value().level == 10);
     REQUIRE(retrieved.value().health == 100.0);
+}
+
+TEST_CASE("DataMap operator[] supports map-style access", "[DataMap]") {
+    cse498::DataMap data;
+
+    SECTION("operator[] inserts missing key with empty any") {
+        auto slot = data["missing"];
+        REQUIRE(data.Contains("missing"));
+        REQUIRE(!slot.has_value());
+    }
+
+    SECTION("operator[] can assign and then read through Get") {
+        data["score"] = 123;
+        auto score = data.Get<int>("score");
+        REQUIRE(score.has_value());
+        REQUIRE(score.value() == 123);
+    }
+
+    SECTION("operator[] can mutate an existing value") {
+        data.Set("name", std::string("Alice"));
+        data["name"] = std::string("Bob");
+        REQUIRE(data.Get<std::string>("name").value() == "Bob");
+    }
+}
+
+TEST_CASE("DataMap const operator[] reads existing key", "[DataMap]") {
+    cse498::DataMap mutable_data;
+    mutable_data.Set("answer", 42);
+
+    const cse498::DataMap& data = mutable_data;
+    const std::any& value = data["answer"];
+
+    REQUIRE(std::any_cast<int>(value) == 42);
 }
 
 // ============================================================================
@@ -435,25 +468,25 @@ TEST_CASE("DataMap Contains checks key existence", "[DataMap]") {
     cse498::DataMap data;
     data.Set("exists", 1);
 
-    REQUIRE(data.Contains("exists") == true);
-    REQUIRE(data.Contains("missing") == false);
+    REQUIRE(data.Contains("exists"));
+    REQUIRE(!data.Contains("missing"));
 }
 
 TEST_CASE("DataMap IsEmpty and Size", "[DataMap]") {
     cse498::DataMap data;
 
-    REQUIRE(data.IsEmpty() == true);
+    REQUIRE(data.IsEmpty());
     REQUIRE(data.Size() == 0);
 
     data.Set("a", 1);
-    REQUIRE(data.IsEmpty() == false);
+    REQUIRE(!data.IsEmpty());
     REQUIRE(data.Size() == 1);
 
     data.Set("b", 2);
     REQUIRE(data.Size() == 2);
 
     data.Clear();
-    REQUIRE(data.IsEmpty() == true);
+    REQUIRE(data.IsEmpty());
     REQUIRE(data.Size() == 0);
 }
 
