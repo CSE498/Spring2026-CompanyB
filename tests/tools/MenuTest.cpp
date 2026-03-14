@@ -3,6 +3,8 @@
 
 #include "Interfaces/gui/Menu.hpp"
 
+#include <vector>
+
 using cse498::Menu;
 
 static const Menu::RenderItem* findRenderItem(const std::vector<Menu::RenderItem>& items,
@@ -27,9 +29,8 @@ TEST_CASE("Menu addItem returns stable ids and updates existing key", "[gui][men
 
     REQUIRE(id1 != id2);
 
-    auto id1_again = m.addItem("play", "Start Game", [&] { activated += 10; }, true, true);
-
-    CHECK(id1_again == id1);
+    auto id1Again = m.addItem("play", "Start Game", [&] { activated += 10; }, true, true);
+    CHECK(id1Again == id1);
 
     auto model = m.buildRenderModel();
     REQUIRE(model.size() == 2);
@@ -38,8 +39,11 @@ TEST_CASE("Menu addItem returns stable ids and updates existing key", "[gui][men
     REQUIRE(playItem != nullptr);
     CHECK(playItem->label == "Start Game");
 
-    CHECK(m.select(id1));
-    CHECK(m.activateSelected());
+    auto selectResult = m.select(id1);
+    CHECK(selectResult.has_value());
+
+    auto activateResult = m.activate(id1);
+    CHECK(activateResult.has_value());
     CHECK(activated == 10);
 }
 
@@ -51,8 +55,7 @@ TEST_CASE("Menu removeItem by id removes item and normalizes selection", "[gui][
     auto id2 = m.addItem("b", "B", [] {}, true, true);
     auto id3 = m.addItem("c", "C", [] {}, true, true);
 
-    REQUIRE(m.select(id2));
-
+    REQUIRE(m.select(id2).has_value());
     CHECK(m.removeItem(id2));
 
     auto model = m.buildRenderModel();
@@ -93,9 +96,9 @@ TEST_CASE("Menu selectFirst selectLast selectNext selectPrevious navigate select
     Menu m;
 
     auto id1 = m.addItem("a", "A", [] {}, true, true);
-    auto id2 = m.addItem("b", "B", [] {}, false, true); // disabled
+    auto id2 = m.addItem("b", "B", [] {}, false, true);
     auto id3 = m.addItem("c", "C", [] {}, true, true);
-    auto id4 = m.addItem("d", "D", [] {}, true, false); // invisible
+    auto id4 = m.addItem("d", "D", [] {}, true, false);
 
     CHECK(m.selectFirst());
 
@@ -123,20 +126,35 @@ TEST_CASE("Menu selectFirst selectLast selectNext selectPrevious navigate select
     (void)id4;
 }
 
-TEST_CASE("Menu select fails for disabled or invisible items", "[gui][menu]")
+TEST_CASE("Menu select returns error for disabled or invisible items", "[gui][menu]")
 {
     Menu m;
 
     auto disabledId = m.addItem("disabled", "Disabled", [] {}, false, true);
     auto hiddenId = m.addItem("hidden", "Hidden", [] {}, true, false);
 
-    CHECK_FALSE(m.select(disabledId));
-    CHECK_FALSE(m.select(hiddenId));
+    auto disabledResult = m.select(disabledId);
+    CHECK_FALSE(disabledResult.has_value());
+    CHECK(disabledResult.error() == "select failed: item is not selectable");
+
+    auto hiddenResult = m.select(hiddenId);
+    CHECK_FALSE(hiddenResult.has_value());
+    CHECK(hiddenResult.error() == "select failed: item is not selectable");
 
     auto model = m.buildRenderModel();
     for (const auto& item : model) {
         CHECK_FALSE(item.selected);
     }
+}
+
+TEST_CASE("Menu select returns error for invalid id", "[gui][menu]")
+{
+    Menu m;
+    m.addItem("a", "A", [] {}, true, true);
+
+    auto result = m.select(9999);
+    CHECK_FALSE(result.has_value());
+    CHECK(result.error() == "select failed: invalid item id");
 }
 
 TEST_CASE("Menu predicates affect visibility and enabled state", "[gui][menu]")
@@ -167,18 +185,30 @@ TEST_CASE("Menu predicates affect visibility and enabled state", "[gui][menu]")
     CHECK(item->visible);
 }
 
-TEST_CASE("Menu activation respects ignoreDisabledActivation", "[gui][menu]")
+TEST_CASE("Menu activate returns error for disabled item when disabled activation is ignored", "[gui][menu]")
 {
     Menu m;
 
     int count = 0;
     auto id = m.addItem("x", "X", [&] { count++; }, false, true);
 
-    CHECK_FALSE(m.activate(id));
+    auto result = m.activate(id);
+    CHECK_FALSE(result.has_value());
+    CHECK(result.error() == "activate failed: item is disabled");
     CHECK(count == 0);
+}
+
+TEST_CASE("Menu activate succeeds for disabled item when ignoreDisabledActivation is false", "[gui][menu]")
+{
+    Menu m;
+
+    int count = 0;
+    auto id = m.addItem("x", "X", [&] { count++; }, false, true);
 
     m.setIgnoreDisabledActivation(false);
-    CHECK(m.activate(id));
+
+    auto result = m.activate(id);
+    CHECK(result.has_value());
     CHECK(count == 1);
 }
 
@@ -189,8 +219,22 @@ TEST_CASE("Menu invisible items never activate", "[gui][menu]")
     int count = 0;
     auto id = m.addItem("x", "X", [&] { count++; }, true, false);
 
-    CHECK_FALSE(m.activate(id));
+    auto result = m.activate(id);
+    CHECK_FALSE(result.has_value());
+    CHECK(result.error() == "activate failed: item is not visible");
     CHECK(count == 0);
+}
+
+TEST_CASE("Menu activate returns error when callback is missing", "[gui][menu]")
+{
+    Menu m;
+
+    auto id = m.addItem("x", "X", [] {}, true, true);
+    m.setActivateAction(id, Menu::Action{});
+
+    auto result = m.activate(id);
+    CHECK_FALSE(result.has_value());
+    CHECK(result.error() == "activate failed: item has no activation callback");
 }
 
 TEST_CASE("Menu hover works for visible items even if disabled", "[gui][menu]")
@@ -209,7 +253,7 @@ TEST_CASE("Menu hover works for visible items even if disabled", "[gui][menu]")
     CHECK(hoverCount == 1);
 }
 
-TEST_CASE("Menu onSelected callback runs only when selection changes", "[gui][menu]")
+TEST_CASE("Menu onSelected callback fires only when selection changes", "[gui][menu]")
 {
     Menu m;
 
@@ -222,19 +266,23 @@ TEST_CASE("Menu onSelected callback runs only when selection changes", "[gui][me
     m.setSelectedAction(id1, [&] { selectedA++; });
     m.setSelectedAction(id2, [&] { selectedB++; });
 
-    CHECK(m.select(id2));
+    auto toB = m.select(id2);
+    CHECK(toB.has_value());
     CHECK(selectedA == 0);
     CHECK(selectedB == 1);
 
-    CHECK(m.select(id1));
+    auto toA = m.select(id1);
+    CHECK(toA.has_value());
     CHECK(selectedA == 1);
     CHECK(selectedB == 1);
 
-    CHECK(m.select(id1));
+    auto toAAgain = m.select(id1);
+    CHECK(toAAgain.has_value());
     CHECK(selectedA == 1);
     CHECK(selectedB == 1);
 
-    CHECK(m.select(id2));
+    auto backToB = m.select(id2);
+    CHECK(backToB.has_value());
     CHECK(selectedA == 1);
     CHECK(selectedB == 2);
 }
@@ -249,7 +297,7 @@ TEST_CASE("Menu handleNav ignores input when closed and handles input when open"
     auto id1 = m.addItem("a", "A", [&] { countA++; }, true, true);
     auto id2 = m.addItem("b", "B", [&] { countB++; }, true, true);
 
-    REQUIRE(m.select(id1));
+    REQUIRE(m.select(id1).has_value());
 
     m.setOpen(false);
     CHECK(m.handleNav(Menu::NavEvent::Down) == Menu::InputResult::Ignored);
