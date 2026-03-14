@@ -18,6 +18,7 @@
 #include <random>
 #include <unordered_map>
 #include <vector>
+#include <ranges> // for views and std::transform
 
 namespace cse498 {
 
@@ -603,6 +604,12 @@ namespace cse498 {
       if (mode == scheduling_mode) return;
       
       scheduling_mode = mode;
+      
+       
+      // initialize each process's deficit to its current effective weight(either base_weight or active_weight),
+      // so the round-robin algorithm starts fairly. 
+      //For probabilistic mode, no persistent state (like deficit)
+      // is needed, so there's nothing to reset—selection is inherently memoryless.
       if (mode == Mode::DETERMINISTIC) 
       {
         for (auto& [id, state] : process_map) 
@@ -660,6 +667,7 @@ namespace cse498 {
      * 
      * Returns dynamic weight when auto-adjust is enabled, base weight otherwise.
      */
+   
     [[nodiscard]] std::expected<double, SchedulerError> GetHighestWeight() const 
     {
       if (process_map.empty()) 
@@ -667,27 +675,20 @@ namespace cse498 {
         return std::unexpected(SchedulerError::EmptyScheduler);
       }
       
-      std::optional<double> max_weight;
+      // Build a  pipeline: map values -> keep schedulable -> extract weight.
+      auto schedulable_weights = process_map 
+          | std::views::values                                                        // ProcessState stream
+          | std::views::filter([this](const ProcessState& s) { return IsSchedulable(s); })  // drop disabled / backed-off
+          | std::views::transform([this](const ProcessState& s) { return GetEffectiveWeight(s); }); // → double
       
-      for (const auto& [id, state] : process_map) 
-      {
-        if (IsSchedulable(state)) 
-        {
-          double effective_weight = GetEffectiveWeight(state);
-          if (!max_weight || effective_weight > *max_weight) 
-          {
-            max_weight = effective_weight;
-          }
-        }
-      }
-      
-      if (!max_weight) 
+      // Find the maximum weight in the filtered range.
+      auto it = std::ranges::max_element(schedulable_weights);
+      if (it == schedulable_weights.end()) 
       {
         return std::unexpected(SchedulerError::NoSchedulableProcesses);
       }
-      return *max_weight;
+      return *it;
     }
-    
     /**
      * @brief Get the sum of all effective weights for schedulable processes
      * @return Total weight across all schedulable processes
