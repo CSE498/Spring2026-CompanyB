@@ -14,12 +14,16 @@ namespace cse498 {
  * @brief All AnnotationSet class methods.
  */
 
-void AnnotationSet::addTag(const tag& tagToAdd){
-    tags.insert(tagToAdd);
+std::optional<const tag *> AnnotationSet::addTag(const tag& tagToAdd){
+    auto [it, inserted] = tags.insert(tagToAdd);
+    if(inserted) {
+        return &*it;
+    }
+    return std::nullopt;
 }
 
-bool AnnotationSet::removeTag(const tag& tagToRemove){
-    return tags.erase(tagToRemove) > 0;
+std::expected<void, std::string> AnnotationSet::removeTag(const tag& tagToRemove){
+    return tags.erase(tagToRemove) > 0 ? std::expected<void, std::string>{} : std::unexpected("Tag not found");
 }
 
 bool AnnotationSet::hasTag(const tag& queryTag) const{
@@ -35,11 +39,7 @@ std::optional<const tag *> AnnotationSet::getTag(const tag& queryTag) const{
 }
 
 std::optional<const tag *> AnnotationSet::operator[](const tag& queryTag) const{
-    auto it = tags.find(queryTag);
-    if(it != tags.end()){
-        return &(*it);
-    }
-    return std::nullopt;
+    return getTag(queryTag);
 }
 
 const std::unordered_set<tag>& AnnotationSet::getTags() const{

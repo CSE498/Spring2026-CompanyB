@@ -18,7 +18,7 @@
 
 using namespace cse498;
 
-//constructor 
+//constructor  
 TEST_CASE("AnnotationSet constructor", "[Constructor]"){
     AnnotationSet s;
     CHECK(s.size() == 0);
@@ -63,27 +63,34 @@ TEST_CASE("AnnotationSet copy assignment operator", "[CopyAssignment]") {
 //insert
 TEST_CASE("AddTag one element", "[addTag]"){
     AnnotationSet s;
-    s.addTag("tag1");
+    auto added = s.addTag("tag1");
+    CHECK(added.has_value());
+    CHECK(*added.value() == "tag1");
     CHECK(s.size() == 1);
     CHECK(s.hasTag("tag1"));
 }
 
 TEST_CASE("Insert empty string", "[addTag]") {
     AnnotationSet s;
-    s.addTag("");
-
+    auto added = s.addTag("");
+    CHECK(added.has_value());
+    CHECK(*added.value() == "");
     CHECK(s.size() == 1);
     CHECK(s.hasTag(""));
 }
 
 TEST_CASE("AddTag multiple elements", "[addTag]"){
     AnnotationSet s; 
-    s.addTag("fancy");
+    auto added1 = s.addTag("fancy");
+    CHECK(added1.has_value());
+    CHECK(*added1.value() == "fancy");
     CHECK(s.size() == 1);
     CHECK(s.hasTag("fancy"));
 
-    s.addTag("groovy");
-    s.addTag("slick");
+    auto added2 = s.addTag("groovy");
+    auto added3 = s.addTag("slick");
+    CHECK(added2.has_value());
+    CHECK(added3.has_value());
     CHECK(s.size() == 3);
     CHECK((s.hasTag("groovy")&& s.hasTag("slick")));
     CHECK(s.getTags() == std::unordered_set<std::string>{"fancy","groovy","slick"});
@@ -91,11 +98,13 @@ TEST_CASE("AddTag multiple elements", "[addTag]"){
 
 TEST_CASE("AddTag multiple of the same element", "[addTag]"){
     AnnotationSet s;
-    s.addTag("agent");
+    auto added = s.addTag("agent");
+    CHECK(added.has_value());
     CHECK(s.size() == 1);
     CHECK(s.hasTag("agent"));
 
-    s.addTag("agent");
+    auto addedAgain = s.addTag("agent");
+    CHECK_FALSE(addedAgain.has_value()); // duplicate
     CHECK(s.size() == 1);
     CHECK(s.hasTag("agent"));
 
@@ -107,7 +116,9 @@ TEST_CASE("AddTag multiple of the same element", "[addTag]"){
 
 TEST_CASE("AddTag insert element then move memory", "[addTag]"){
     AnnotationSet s;
-    s.addTag("s");
+    auto added = s.addTag("s");
+    CHECK(added.has_value());
+    CHECK(*added.value() == "s");
     CHECK(s.size() == 1);
     CHECK(s.hasTag("s")); 
     CHECK(s.getTags() == std::unordered_set<std::string>{"s"});  
@@ -120,8 +131,10 @@ TEST_CASE("AddTag insert element then move memory", "[addTag]"){
 
 TEST_CASE("Case sensitivity", "[addTag]") {
     AnnotationSet s;
-    s.addTag("Hello");
-    s.addTag("hello");
+    auto added1 = s.addTag("Hello");
+    auto added2 = s.addTag("hello");
+    CHECK(added1.has_value());
+    CHECK(added2.has_value());
 
     CHECK(s.size() == 2);
     CHECK(s.hasTag("Hello"));
@@ -151,7 +164,8 @@ TEST_CASE("removeTag add one tag and then remove", "[removeTag]"){
     CHECK(set.hasTag("happy"));
     CHECK(set.getTags() == std::unordered_set<std::string>{"happy"});
 
-    set.removeTag("happy");
+    auto removed = set.removeTag("happy");
+    CHECK(removed.has_value());
     CHECK(set.size() == 0);
     CHECK(set.empty());
     CHECK_FALSE(set.hasTag("happy"));
@@ -162,7 +176,7 @@ TEST_CASE("remove tag that doesn't exist", "[removeTag]"){
     AnnotationSet g;
     CHECK(g.size() == 0);
     CHECK(g.empty());
-    CHECK_FALSE(g.removeTag("here"));
+    CHECK_FALSE(g.removeTag("here").has_value());
     CHECK(g.size() == 0);
     CHECK(g.empty());
 }
@@ -185,10 +199,10 @@ TEST_CASE("Remove same tag twice", "[removeTag]") {
     AnnotationSet s;
     s.addTag("dup");
 
-    CHECK(s.removeTag("dup") == true);
+    CHECK(s.removeTag("dup").has_value());
     CHECK(s.size() == 0);
 
-    CHECK_FALSE(s.removeTag("dup"));
+    CHECK_FALSE(s.removeTag("dup").has_value());
     CHECK(s.size() == 0);
 }
 
@@ -205,7 +219,7 @@ TEST_CASE("removeTag randomized stress", "[removeTag]") {
     std::shuffle(tags.begin(), tags.end(), std::mt19937{std::random_device{}()});
 
     for (int i = 0; i < N; ++i) {
-        CHECK(s.removeTag(tags[i]) == true);
+        CHECK(s.removeTag(tags[i]).has_value());
     }
 
     CHECK(s.empty());
@@ -255,7 +269,8 @@ TEST_CASE("Lookup fails after removal", "[getTag][bracketOperator]") {
     AnnotationSet s;
     s.addTag("alpha");
     s.removeTag("alpha");
-
+    
+    CHECK_FALSE(s.removeTag("alpha").has_value()); // updated for expected
     CHECK(s.getTag("alpha") == std::nullopt);
     CHECK(s["alpha"] == std::nullopt);
 }

@@ -9,6 +9,7 @@
 #pragma once
 
 #include <cstddef>
+#include <expected>
 #include <optional>
 #include <string>
 #include <unordered_set> 
@@ -44,21 +45,21 @@ class AnnotationSet{
         * @brief Adds a tag to the annotation set.
         * @param tag The tag to be added.
         */
-        void addTag(const tag&);
+        std::optional<const tag *> addTag(const tag&);
 
         /*
         * @brief Removes a tag from the annotation set.
         * @param tag The tag to be removed.
         * @return true if the tag was removed, false if it was not found.
         */
-        bool removeTag(const tag&);
+        std::expected<void, std::string> removeTag(const tag&);
 
         /*
         * @brief Checks if a tag exists in the annotation set. 
         * @param tag The tag to be checked.
         * @return true if the tag exists, false otherwise.
         */ 
-        bool hasTag(const tag&) const;
+        [[nodiscard]] bool hasTag(const tag&) const;
 
         /*
         * @brief Retrieves a tag from the annotation set.
@@ -90,7 +91,7 @@ class AnnotationSet{
         * @brief Checks if the annotation set is empty.
         * @return true if the annotation set is empty, false otherwise.
         */
-        bool empty() const;
+        [[nodiscard]] bool empty() const;
 
         /*
         * @brief Clears all tags from the annotation set.
