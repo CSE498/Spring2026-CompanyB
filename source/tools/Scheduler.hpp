@@ -340,7 +340,7 @@ namespace cse498 {
      * @param state ProcessState to check
      * @return true if process can be scheduled false otherwise
      */
-    bool IsSchedulable(const ProcessState& state) const 
+    [[nodiscard]] bool IsSchedulable(const ProcessState& state) const 
     {
       return state.enabled && state.cycles_until_retry == 0;
     }
@@ -376,33 +376,35 @@ namespace cse498 {
      *   selected.deficit -= sum of all effective weights
      *   return selected
      * @endcode
-     * NB the deficit will be negative after selection but eventually climbs 
+     * NB the deficit for the selected process will be negative because 
+     * it is subtracted from the total weight of all processes, but eventually climbs 
      * up by adding its effective weight (base or active weight) to the defict, 
      * and it will be positive eventually.
      * https://en.wikipedia.org/wiki/Deficit_round_robin
      */
-    std::expected<ID_TYPE, SchedulerError> GetNextDeterministic() 
+    [[nodiscard]] std::expected<ID_TYPE, SchedulerError> GetNextDeterministic() 
     {
       if (process_map.empty()) 
       {
         return std::unexpected(SchedulerError::EmptyScheduler);
       }
       
-      struct BestCandidate 
-      {
-        ID_TYPE id;
-        double weight;
-        size_t order;
-      };
       
+      // Struct to store the id, weight, and order of the best candidate 
+      //we dont need to store the whole state of the process
+      struct BestCandidate { ID_TYPE id; double weight; size_t order; };
+
       std::optional<BestCandidate> best;
-      
       for (auto& [id, state] : process_map)
       {
         if (!IsSchedulable(state)) continue;
         
-        double effective_weight = GetEffectiveWeight(state);
-        state.deficit += effective_weight;
+        // Add the process's "budget" (effective weight) to its accumulated deficit,
+        // allowing it to build up credit for selection if not chosen.
+        state.deficit += GetEffectiveWeight(state);
+
+        // Choose the process with the highest deficit (most credit).
+        // Break ties by choosing the process added earlier (lower insertion_order).
         bool is_better = !best ||
                         (state.deficit > best->weight) ||
                         (state.deficit == best->weight && state.insertion_order < best->order);
@@ -417,9 +419,11 @@ namespace cse498 {
       {
         return std::unexpected(SchedulerError::NoSchedulableProcesses);
       }
+
       
-      double total_weight = GetTotalWeight();
-      process_map.find(best->id)->second.deficit -= total_weight;
+      // Subtract the total weight from the selected process's deficit.
+      // This prevents a process from running excessively more often than its share.
+      process_map.find(best->id)->second.deficit -= GetTotalWeight();
       
       return best->id;
     }
@@ -428,8 +432,15 @@ namespace cse498 {
      * @brief Select next process using probabilistic weighted random selection
      * @return ID of the process to execute next
      * 
-     * Algorithm: Each process has probability equal to
-     *   P(process) = weight of process / sum(all weights)
+     * Algorithm:
+     * @code
+     *   total_weight = sum of effective weights for schedulable processes
+     *   r = random number in [0, total_weight)
+     *   cumulative = 0
+     *   for each schedulable process P:
+     *       cumulative += GetEffectiveWeight(P)
+     *       if r < cumulative: return P
+     * @endcode
      */
     std::expected<ID_TYPE, SchedulerError> GetNextProbabilistic() const 
     {
@@ -438,21 +449,25 @@ namespace cse498 {
       double total_weight = GetTotalWeight();
       if (total_weight <= 0.0)  {  return std::unexpected(SchedulerError::NoSchedulableProcesses);   }
       
-      std::uniform_real_distribution<double> dist(0.0, total_weight);
-      double random_value = dist(rng);
+      // Draw to determine where we land on the weighted process interval
+      std::uniform_real_distribution<double> dist(0.90, total_weight);
+      double random_value = dist(rng);  
+
       
-    
       double cumulative = 0.0;
       std::optional<ID_TYPE> selected_id;
-      
+
+      // Iterate through all processes and accumulate their weights
+      // The process whose weight interval contains random_value gets selected
       for (const auto& [id, state] : process_map)
       {
         if (!IsSchedulable(state)) continue;
         
-        cumulative += GetEffectiveWeight(state);
+        cumulative += GetEffectiveWeight(state); // move to the next process's interval
+        // check if it contains random_value
         if (random_value < cumulative) 
         {
-          selected_id = id;
+          selected_id = id; // select the first process whose interval covers the random value
           break;
         }
       }
@@ -551,10 +566,7 @@ namespace cse498 {
      */
     [[nodiscard]] std::expected<ID_TYPE, SchedulerError> GetNext() 
     {
-      if (process_map.empty()) 
-      {
-        return std::unexpected(SchedulerError::EmptyScheduler);
-      }
+      if (process_map.empty()) {return std::unexpected(SchedulerError::EmptyScheduler);}
       
       scheduling_cycle++;
       UpdateBackoffCounters();
@@ -563,12 +575,9 @@ namespace cse498 {
       
       if (scheduling_mode == Mode::DETERMINISTIC) 
       {
-        selected = GetNextDeterministic();
+        selected = GetNextDeterministic(); 
       } 
-      else 
-      {
-        selected = GetNextProbabilistic();
-      }
+      else { selected = GetNextProbabilistic(); }
       
       if (!selected) 
       {
