@@ -5,7 +5,8 @@
 #include <cmath> // for std::abs, std::sqrt, std::cos, std::sin
 #include <algorithm> // for std::max
 #include <numbers> // for std::numbers::pi
-
+#include <expected>
+#include <string>
 
 namespace cse498 {
 
@@ -81,6 +82,14 @@ public:
         }
         return *this;
     }
+
+	[[nodiscard]] static
+		std::expected<Point, std::string>safe_normalize(const Point& p){
+    	double mag = p.magnitude();
+    	if (tol_equal(mag, 0.0))
+        	return std::unexpected("Cannot normalize a zero vector");
+    	return Point(p.getX() / mag, p.getY() / mag);
+	}
     
     // rotate 
     Point& rotate(double deg, const Point& pivot = {0,0},
@@ -115,6 +124,11 @@ public:
 
 
 };
+
+inline std::ostream& operator<<(std::ostream& os, const Point& p) {
+    return os << "(" << p.getX() << ", " << p.getY() << ")";
+}
+
 
 // The addition "operators"
 Point operator+(const Point& lhs, const Point& rhs);
