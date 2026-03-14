@@ -3,27 +3,33 @@
 namespace cse498 {
 
     std::optional<int> ExpressionParser::getPrecedence(const std::string& op) const {
-        // Return nullopt for unknown operators, otherwise get what is store in OPERATORINFOMAP
-        if (OPERATORINFOMAP.find(op) == OPERATORINFOMAP.end()) {
+        // Return nullopt for unknown operators, otherwise get what is stored in OPERATORINFOMAP
+        const auto* entry = findOperatorEntry(op);
+        if (entry == nullptr) {
             return std::nullopt;
-        } else {
-            return OPERATORINFOMAP.at(op).precedence;
         }
+        return entry->precedence;
     }
 
-    void ExpressionParser::shantingYardAlgo(std::vector<Token>& sortedTokens, std::stack<Token>& operatorStack) {
-        
-        // Shunting Yard Algorithm
+    /**
+     * @brief Shunting Yard Algorithm: convert the already-tokenized infix expression (this->tokens) (infix: [a, +, b])
+     * into postfix (Reverse Polish Notation) (postfix:[a, b, +]).
+     * "sortedTokens" acts as the output queue that will hold the final postfix sequence.
+     * "operatorStack" is the working stack used to temporarily store operators and parentheses as we scan through the tokens.
+     */
+    void ExpressionParser::shuntingYardAlgo(std::vector<Token>& sortedTokens, std::stack<Token>& operatorStack) {
         for (const auto& token : tokens) {
             if (isOperand(token)) {
+              // If the token is an operand (variable, literal, or index), add it directly to the output queue.
                 sortedTokens.push_back(token);
 
             } else if (isOperator(token) && token.value == "^") {
-                // ^ is right associative
+                // ^ is right associative, so we only pop operators of higher precedence, not equal precedence
                 operatorStack.push(token);
-                
+
             } else if (isOperator(token)) {
-                while (!operatorStack.empty() && getPrecedence(operatorStack.top().value).has_value() 
+              // For left-associative operators, pop operators from the stack to the output queue as long as they have higher or equal precedence.
+                while (!operatorStack.empty() && getPrecedence(operatorStack.top().value).has_value()
                         && getPrecedence(operatorStack.top().value).value() >= getPrecedence(token.value).value()) {
                     sortedTokens.push_back(operatorStack.top());
                     operatorStack.pop();
@@ -32,6 +38,7 @@ namespace cse498 {
                 operatorStack.push(token);
 
             } else if (isRightParen(token)) {
+              // When we encounter a right parenthesis, we pop operators from the stack to the output queue until we find a left parenthesis.
                 while (!operatorStack.empty() && !(isLeftParen(operatorStack.top()))) {
                     sortedTokens.push_back(operatorStack.top());
                     operatorStack.pop();
@@ -43,30 +50,36 @@ namespace cse498 {
 
                 operatorStack.pop();
             } else if (isLeftParen(token)) {
+              // Left parentheses are pushed onto the stack to denote the start of a parenthetical group.
                 operatorStack.push(token);
             } else {
                 throw ExpressionException("Unknown token type during Parse: " + token.value);
             }
-            
+
         }
     };
 
-    std::function<double(const std::vector<double>&, const std::map<std::string, double>&)> ExpressionParser::buildEvaluator(const std::vector<Token> sortedTokens) {
-        // Capture the sorted tokens by value and return a lambda function that takes in the arguments and variables for evaluation
+    Expression ExpressionParser::buildEvaluator(const std::vector<Token> sortedTokens) {
+        // Capture the sorted tokens by value and return a lambda function that takes in the
+        // arguments and variables for evaluation. Capturing by value (with std::move) ensures
+        // the lambda owns its copy of the token sequence and remains safe to use after parse().
         return [sortedTokens = std::move(sortedTokens)](const std::vector<double> &args = {}, const std::map<std::string, double> &variables = {}) -> double {
 
             std::stack<double> evalStack = {};
 
             for (const auto& token: sortedTokens) {
                 if (token.type == TokenType::Literal) {
+                    // Convert a literal token to a double and push it onto the evaluation stack.
                     evalStack.push(std::stod(token.value));
                 } else if (token.type == TokenType::Variable) {
+                    // Look up a variable token in the provided variables map and push its value onto the evaluation stack.
                     if (variables.find(token.value) == variables.end()) {
                         throw ExpressionException("Undefined variable: " + token.value);
                     }
 
                     evalStack.push(variables.at(token.value));
                 } else if (token.type == TokenType::Index) {
+                    // Resolve an index token "{i}" into a value from the args vector, with bounds checking.
                     int i = std::stoi(token.value);
 
                     if (i < 0) {
@@ -81,6 +94,9 @@ namespace cse498 {
 
                     evalStack.push(args.at(i));
                 } else if (token.type == TokenType::Operator) {
+                    // For a binary operator, pop the top two operands from the evaluation stack
+                    // (second is the right-hand operand, first is the left-hand operand), then
+                    // apply the operator and push the result back on the stack.
                     if (evalStack.size() < 2) {
                         throw ExpressionException("Invalid expression: Not enough operands for operator " + token.value);
                     }
@@ -91,17 +107,17 @@ namespace cse498 {
                     double first = evalStack.top();
                     evalStack.pop();
 
+                    // Guard against division by zero for the division operator.
                     if (token.value == "/" && second == 0) {
                         throw ExpressionException("Division by zero");
                     }
 
-                    if (OPERATORINFOMAP.find(token.value) == OPERATORINFOMAP.end()) {
+                    const auto* entry = findOperatorEntry(token.value);
+                    if (entry == nullptr) {
                         throw ExpressionException("Unknown operator during evaluation: " + token.value);
                     }
-                    
-                    OperatorInfo info = OPERATORINFOMAP.at(token.value);
 
-                    evalStack.push(info.apply(first, second));
+                    evalStack.push(entry->apply(first, second));
                 } else {
                     throw ExpressionException("Unknown token type during evaluation: " + token.value);
                 }
@@ -115,7 +131,7 @@ namespace cse498 {
         };
     }
 
-    std::function<double(const std::vector<double>&, const std::map<std::string, double>&)> ExpressionParser::parse() {
+    Expression ExpressionParser::parse() {
 
         if (!validateExpr()) {
             throw ExpressionException("Invalid expression: " + expression);
@@ -125,7 +141,7 @@ namespace cse498 {
         std::stack<Token> operatorStack = {};
 
         // Shunting Yard Algorithm
-        shantingYardAlgo(sortedTokens, operatorStack);
+        shuntingYardAlgo(sortedTokens, operatorStack);
 
         // Pop any remaining operators from the stack to the output queue
         while (!operatorStack.empty()) {
@@ -273,7 +289,7 @@ namespace cse498 {
                         if (hasDecimal) {
                             throw ExpressionException("Invalid literal: Multiple decimal points in a single number");
                         }
-                        
+
                         hasDecimal = true;
                     }
 
@@ -301,10 +317,10 @@ namespace cse498 {
                     } else if (!std::isdigit(expression.at(i + 1))) {
                         throw ExpressionException("Invalid index: Non-numeric characters in index");
                     }
-                    
+
                     index += expression.at(++i);
                 }
-                
+
                 if (expression.at(i) != '}') {
                     throw ExpressionException("Invalid index: Missing closing brace '}'");
                 }
@@ -323,7 +339,7 @@ namespace cse498 {
                 tokens.push_back(token);
                 tokenStrings += token.value + " ";
 
-            } else if (c == '+' || c == '-' || c == '*' || c == '/' || 
+            } else if (c == '+' || c == '-' || c == '*' || c == '/' ||
                         c == '^' || c == '%') {
                 // Sinle-character operators
                 Token token{TokenType::Operator, std::string(1, c)};
@@ -342,7 +358,7 @@ namespace cse498 {
                 }
 
                 tokenStrings += tokens.back().value + " ";
-                
+
             } else if (c == '=' || c == '&' || c == '|') {
                 // Two-character operators: ==, &&, ||
                 if (i + 1 < expression.size() && expression.at(i + 1) == c) {
