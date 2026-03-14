@@ -16,6 +16,7 @@
 #include <unordered_map>
 #include <utility>
 #include <vector>
+#include <expected>
 
 namespace cse498 {
 
@@ -149,7 +150,7 @@ public:
     /**
      * Select an item by ItemId.
      */
-    bool select(ItemId id);
+    std::expected<void, std::string> select(ItemId id);
 
     /**
      * Select the next selectable item.
@@ -184,7 +185,7 @@ public:
     /**
      * Activate an item by ItemId.
      */
-    bool activate(ItemId id);
+    std::expected<void, std::string> activate(ItemId id);
 
     /**
      * Handle a navigation event.

@@ -35,9 +35,10 @@ Menu::ItemId Menu::addItem(const std::string& key,
 {
     assert(!key.empty() && "addItem requires non empty key");
 
-    if (auto itKey = m_keyToId.find(key); itKey != m_keyToId.end()) {
+    auto itKey = m_keyToId.find(key);
+    if (itKey != m_keyToId.end()) {
         Item* existing = getItem(itKey->second);
-        assert(existing && "m-keyToId not synced with m-items");
+        assert(existing && "m_keyToId not synced with m_items");
 
         existing->label = label;
         existing->onActivate = std::move(onActivate);
@@ -48,7 +49,7 @@ Menu::ItemId Menu::addItem(const std::string& key,
         return existing->id;
     }
 
-    Item item;
+    Item item{};
     item.id = nextId();
     item.key = key;
     item.label = label;
@@ -179,7 +180,8 @@ void Menu::setItemEnabled(ItemId id, bool enabled)
 void Menu::setItemVisible(ItemId id, bool visible)
 {
     Item* item = getItem(id);
-    if (!item) return;
+    assert(item && "setItemVisible: invalid item id");
+
     item->visible = visible;
     normalizeSelection();
 }
@@ -301,22 +303,18 @@ Menu::ItemId Menu::nextId()
 /**
  * Select an item by ItemId.
  */
-bool Menu::select(ItemId id)
+std::expected<void, std::string> Menu::select(ItemId id)
 {
-    Item* target = nullptr;
-
-    for (auto& item : m_items) {
-        if (item.id == id && isSelectable(item)) {
-            target = &item;
-            break;
-        }
+    Item* target = getItem(id);
+    if (!target) {
+        return std::unexpected("select failed: invalid item id");
     }
 
-    if (!target) {
+    if (!isSelectable(*target)) {
         for (auto& item : m_items) {
             item.selected = false;
         }
-        return false;
+        return std::unexpected("select failed: item is not selectable");
     }
 
     const bool wasAlreadySelected = target->selected;
@@ -329,7 +327,7 @@ bool Menu::select(ItemId id)
         target->onSelected();
     }
 
-    return true;
+    return {};
 }
 
 /**
@@ -341,7 +339,7 @@ bool Menu::selectFirst()
         [this](const Item& item) { return isSelectable(item); });
 
     if (it == m_items.end()) return false;
-    return select(it->id);
+    return select(it->id).has_value();
 }
 
 /**
@@ -353,7 +351,7 @@ bool Menu::selectLast()
         [this](const Item& item) { return isSelectable(item); });
 
     if (it == m_items.rend()) return false;
-    return select(it->id);
+    return select(it->id).has_value();
 }
 
 /**
@@ -377,7 +375,7 @@ bool Menu::selectNext()
     for (std::size_t step = 0; step < n; ++step) {
         const std::size_t idx = (start + step) % n;
         if (isSelectable(m_items[idx])) {
-            return select(m_items[idx].id);
+            return select(m_items[idx].id).has_value();
         }
     }
 
@@ -405,7 +403,7 @@ bool Menu::selectPrevious()
     for (std::size_t step = 0; step < n; ++step) {
         const std::size_t idx = (start + n - step) % n;
         if (isSelectable(m_items[idx])) {
-            return select(m_items[idx].id);
+            return select(m_items[idx].id).has_value();
         }
     }
 
@@ -437,30 +435,35 @@ bool Menu::activateSelected()
         [](const Item& item) { return item.selected; });
 
     if (it == m_items.end()) return false;
-    return activate(it->id);
+    return activate(it->id).has_value();
 }
 
 /**
  * Activate an item by ItemId.
  */
-bool Menu::activate(ItemId id)
+std::expected<void, std::string> Menu::activate(ItemId id)
 {
     Item* item = getItem(id);
-    if (!item) return false;
+    if (!item) {
+        return std::unexpected("activate failed: invalid item id");
+    }
 
-    if (!isVisible(*item)) return false;
+    if (!isVisible(*item)) {
+        return std::unexpected("activate failed: item is not visible");
+    }
 
     if (!isEnabled(*item) && m_ignoreDisabledActivation) {
-        return false;
+        return std::unexpected("activate failed: item is disabled");
     }
 
-    if (item->onActivate) {
-        item->onActivate();
-        return true;
+    if (!item->onActivate) {
+        return std::unexpected("activate failed: item has no activation callback");
     }
 
-    return false;
+    item->onActivate();
+    return {};
 }
+
 
 /**
  * Handle a navigation event.
