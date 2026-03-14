@@ -1,5 +1,4 @@
 #include "../../source/tools/PointClass.hpp"
-//#include <catch2/catch_test_macros.hpp>
 #include "../../third-party/Catch/single_include/catch2/catch.hpp"               
 
 using namespace cse498; 
@@ -24,11 +23,6 @@ TEST_CASE("Testing Constructors, setters/getters", "[Point][constructor]"){
 
     A.setX(21);
     CHECK(A.getX() == 21);
-
-    Point* C = new Point(A.getX(), A.getY());
-    CHECK(A == (*C));
-    delete C; 
-
 };
 
 TEST_CASE("Testing addition operator", "[Point][operator+]"){
@@ -150,6 +144,9 @@ TEST_CASE("Testing equality operator", "[Point][equal==]"){
 
     CHECK(A != s);
     CHECK(s != A);
+
+    CHECK_FALSE(A == s);
+    CHECK_FALSE(s == A);
 };
 
 TEST_CASE("Testing dot method", "[Point][dot]"){
