@@ -3,9 +3,9 @@
  * @brief A generic priority-based scheduler for managing process execution order
  * @author Joshua Twumasi
  * 
- * This is a header only class by design for template bases
- * It manages a set of processes based on priority weights and returns
- * the ID of which one should execute next. Supporrts deterministic and probabilistic modes
+ * Header-only, template-based class that manages a set of processes by priority
+ * weight and returns the ID of which one should execute next. Supports
+ * deterministic (weighted round-robin) and probabilistic (weighted random) modes.
  */
 
 #pragma once
@@ -81,11 +81,115 @@ namespace cse498 {
    * 
    * @tparam ID_TYPE type used to identify processes (default is size_t)
    * 
-   * Scheduler maintains a collection of processes with associated weights and
-   * determines execution order based on those weights. 
+   * ## Overview
    * 
-   * @note This class is NOT thread-safe. use external synchronization like 
-   * std::mutex or std::shared_mutex if the scheduler is accessed from multiple threads.
+   * Scheduler maintains a collection of processes, each with a priority weight,
+   * and decides which one should execute next. It has three layers of functionality
+   * that can be enabled independently:
+   * 
+   *   1. Core scheduling (always active) — picks the next process by weight.
+   *   2. Dynamic weight adjustment (opt-in) — automatically adjusts weights
+   *      to prevent starvation and penalize over-execution.
+   *   3.   Failure handling (opt-in) — tracks failures, applies exponential
+   *      backoff, and auto-disables unreliable processes.
+   * 
+   * ## Weight types
+   * 
+   * Each process tracks three weight values:
+   * 
+   *   - base_weight    — the user-configured weight (set via AddProcess / SetBaseWeight)
+   *   - active_weight  — adjusted copy of base_weight (only changes when auto-adjust is on)
+   *   - deficit          — round-robin accumulator used by deterministic mode (can go negative)
+   * 
+   * GetEffectiveWeight() returns active_weight when auto-adjust is enabled,
+   * otherwise base_weight. This is the weight used in both scheduling algorithms.
+   * 
+   * ## Algorithm 1: Deterministic (Weighted Deficit Round-Robin)
+   * 
+   * @code
+   *   for each schedulable process P:
+   *       P.deficit += GetEffectiveWeight(P) 
+   *   selected = process with highest deficit (ties broken by insertion order)
+   *   selected.deficit -= sum of all effective weights
+   *   return selected
+   * @endcode
+   * 
+   * deficit acts as a deficit counter. It goes negative after selection,
+   * then accumulates back up. Over N cycles, each process is selected in exact
+   * proportion to its weight.
+   * 
+   * Example: A(weight=2), B(weight=1), total=3; deficits starts at A=0 and B=0 before we add their weights
+   *   In the order A,B                
+   *   Cycle 1: deficits  0,0   -> add weights -> 2,1 -> select A -> subtract 3 -> -1,1
+   *   Cycle 2: deficits -1,1   -> add weights -> 1,2 -> select B -> subtract 3 -> 1,-1
+   *   Cycle 3: deficits  1,-1  -> add weights -> 3,0 -> select A -> subtract 3 -> 0,0
+   *      Therefore A will run 2 times and B runs 1 time. Consistent with A:B -> 2:1 ratio
+   * 
+   * 
+   * ## Algorithm 2: Probabilistic (Weighted Random)
+   * 
+   * @code
+   *   total = sum of effective weights for schedulable processes
+   *   r = random number in [0, total)
+   *   cumulative = 0
+   *   for each schedulable process P:
+   *       cumulative += GetEffectiveWeight(P)
+   *       if r < cumulative: return P
+   * @endcode
+   * 
+   * Each process has selection probability = its weight / total weight.
+   * 
+   * ## Dynamic weight adjustment (when enabled)
+   * 
+   * After each GetNext() call:
+   * 
+   * @code
+   *   for each process P:
+   *       if P was selected:
+   *           P.active_weight *= (1 - frequency_penalty)   // penalize over-use
+   *           P.wait_cycles = 0
+   *       else:
+   *           P.wait_cycles++
+   *           P.active_weight += wait_boost_factor * P.wait_cycles  // reward waiting
+   *       clamp P.active_weight to [min_weight, max_weight]
+   * @endcode
+   * 
+   * This gradually shifts weight toward starving processes and away from
+   * frequently selected ones.
+   * 
+   * ## Failure handling (when enabled)
+   * 
+   * @code
+   *   on MarkProcessFailed(id):
+   *       P.failure_count++
+   *       P.backoff_cycles = min(P.backoff_cycles * multiplier, max_backoff)
+   *       P.cycles_until_retry = P.backoff_cycles   // countdown starts
+   *       if P.failure_count >= max_consecutive_failures:
+   *           P.enabled = false                      // auto-disable
+   * 
+   *   on each GetNext():
+   *       for each process: if cycles_until_retry > 0, decrement it
+   *       (process is skipped while cycles_until_retry > 0)
+   * 
+   *   on MarkProcessSuccess(id):
+   *       P.success_count++
+   *       if P.success_count >= recovery_threshold:
+   *           reset failure state (failure_count, backoff, etc.)
+   * @endcode
+   * 
+   * ## Quick-start example
+   * 
+   * @code
+   *   Scheduler<size_t> sched;
+   *   sched.AddProcess(1, 10.0);   // high priority
+   *   sched.AddProcess(2, 5.0);    // medium
+   *   sched.AddProcess(3, 1.0);    // low
+   * 
+   *   auto next = sched.GetNext();
+   *   if (next) { execute(*next); }
+   *   // Over 16 calls: process 1 runs 10x, 2 5x, 3 1x
+   * @endcode
+   * 
    */
   template<typename ID_TYPE = size_t>
   class Scheduler {
@@ -116,10 +220,10 @@ namespace cse498 {
      * 
      * This struct contains only scheduling-specific information
      */
-    struct ProcessInfo {
+    struct ProcessState {
       double base_weight{};               ///< Base priority weight 
-      double dynamic_weight{};            ///< Dynamically adjusted weight (used when auto-adjust enabled)
-      double current_weight{};            ///< Current effective weight (for deterministic mode)
+      double active_weight{};            ///< Dynamically adjusted weight (used when auto-adjust enabled)
+      double deficit{};                   ///< Round-robin accumulator (goes negative after selection)
       size_t execution_count{};           ///< no of times this process has been scheduled
       size_t wait_cycles{};               ///< no of cycles since last execution
       size_t last_execution_cycle{};      ///< Cycle number when last executed
@@ -133,10 +237,10 @@ namespace cse498 {
       size_t backoff_cycles{};            ///< Cycles to wait before retry (exponential backoff)
       size_t cycles_until_retry{};        ///< Countdown until process can be retried
       
-      ProcessInfo(double weight, size_t order)
+      ProcessState(double weight, size_t order)
         : base_weight(weight),
-          dynamic_weight(weight),
-          current_weight(weight),
+          active_weight(weight),
+          deficit(weight),
           execution_count(0),
           wait_cycles(0),
           last_execution_cycle(0),
@@ -162,11 +266,12 @@ namespace cse498 {
 
     // Member Variables
     
-    std::unordered_map<ID_TYPE, ProcessInfo> process_map;  ///< Maps process ID to metadata
+    std::unordered_map<ID_TYPE, ProcessState> process_map;  ///< Maps process ID to metadata
     Mode scheduling_mode;                                   ///< Current scheduling algorithm
     size_t next_insertion_order{};                            ///< Counter for insertion order
     
     // Random number generation for probabilistic mode
+    // Remember to use Random.hpp from Group 19
     mutable std::mt19937 rng;                               ///< Random number generator
     
   
@@ -197,49 +302,47 @@ namespace cse498 {
     {
       if (!auto_adjust_enabled) {return;}
       
-      for (auto& [id, info] : process_map) 
+      for (auto& [id, state] : process_map)
       {
-        if (id == selected_id) 
+        if (id == selected_id)
         {
-          // Selected process, apply frequency penalty and reset wait
-          info.dynamic_weight *= (1.0 - frequency_penalty);
-          info.last_execution_cycle = scheduling_cycle;
-          info.wait_cycles = 0;
+          state.active_weight *= (1.0 - frequency_penalty);
+          state.last_execution_cycle = scheduling_cycle;
+          state.wait_cycles = 0;
         } else {
-          // Waiting process; increment wait and apply boost
-          info.wait_cycles++;
-          info.dynamic_weight += (wait_boost_factor * info.wait_cycles);
+          state.wait_cycles++;
+          state.active_weight += (wait_boost_factor * state.wait_cycles);
         }
         
-        if (info.dynamic_weight < min_weight) 
+        if (state.active_weight < min_weight) 
         {
-          info.dynamic_weight = min_weight;
+          state.active_weight = min_weight;
         }
-        if (info.dynamic_weight > max_weight) 
+        if (state.active_weight > max_weight) 
         {
-          info.dynamic_weight = max_weight;
+          state.active_weight = max_weight;
         }
       }
     }
     
     /**
      * @brief Get the effective weight for a process based on current settings
-     * @param info ProcessInfo to get weight from
+     * @param state ProcessState to get weight from
      * @return Effective weight
      */
-    double GetEffectiveWeight(const ProcessInfo& info) const 
+    double GetEffectiveWeight(const ProcessState& state) const 
     {
-      return auto_adjust_enabled ? info.dynamic_weight : info.base_weight;
+      return auto_adjust_enabled ? state.active_weight : state.base_weight;
     }
     
     /**
      * @brief Check if a process is currently schedulable 
-     * @param info ProcessInfo to check
+     * @param state ProcessState to check
      * @return true if process can be scheduled false otherwise
      */
-    bool IsSchedulable(const ProcessInfo& info) const 
+    bool IsSchedulable(const ProcessState& state) const 
     {
-      return info.enabled && info.cycles_until_retry == 0; // enabled or not in backoff period
+      return state.enabled && state.cycles_until_retry == 0;
     }
     
     /**
@@ -252,11 +355,11 @@ namespace cse498 {
     {
       if (!failure_handling_enabled) return;
       
-      for (auto& [id, info] : process_map) 
+      for (auto& [id, state] : process_map)
       {
-        if (info.cycles_until_retry > 0) 
+        if (state.cycles_until_retry > 0)
         {
-          info.cycles_until_retry--;
+          state.cycles_until_retry--;
         }
       }
     }
@@ -265,9 +368,17 @@ namespace cse498 {
      * @brief Select next process using deterministic round-robin weighted scheduling
      * @return ID of the process to execute next
      * 
-     * Algorithm: Each process accumulates its base_weight to current_weight each cycle.
-     * The process with the highest current_weight is selected, then its current_weight
-     * is reduced by the total weight. 
+     * Algorithm: 
+     * @code
+     *   for each schedulable process P:
+     *       P.deficit += GetEffectiveWeight(P) 
+     *   selected = process with highest deficit (ties broken by insertion order)
+     *   selected.deficit -= sum of all effective weights
+     *   return selected
+     * @endcode
+     * NB the deficit will be negative after selection but eventually climbs 
+     * up by adding its effective weight (base or active weight) to the defict, 
+     * and it will be positive eventually.
      * https://en.wikipedia.org/wiki/Deficit_round_robin
      */
     std::expected<ID_TYPE, SchedulerError> GetNextDeterministic() 
@@ -286,21 +397,19 @@ namespace cse498 {
       
       std::optional<BestCandidate> best;
       
-      for (auto& [id, info] : process_map) 
+      for (auto& [id, state] : process_map)
       {
-     
-        if (!IsSchedulable(info)) continue;
+        if (!IsSchedulable(state)) continue;
         
-       
-        double effective_weight = GetEffectiveWeight(info);
-        info.current_weight += effective_weight;
+        double effective_weight = GetEffectiveWeight(state);
+        state.deficit += effective_weight;
         bool is_better = !best ||
-                        (info.current_weight > best->weight) ||
-                        (info.current_weight == best->weight && info.insertion_order < best->order);
+                        (state.deficit > best->weight) ||
+                        (state.deficit == best->weight && state.insertion_order < best->order);
         
         if (is_better) 
         {
-          best = BestCandidate{id, info.current_weight, info.insertion_order};
+          best = BestCandidate{id, state.deficit, state.insertion_order};
         }
       }
       
@@ -310,7 +419,7 @@ namespace cse498 {
       }
       
       double total_weight = GetTotalWeight();
-      process_map.find(best->id)->second.current_weight -= total_weight;
+      process_map.find(best->id)->second.deficit -= total_weight;
       
       return best->id;
     }
@@ -324,17 +433,10 @@ namespace cse498 {
      */
     std::expected<ID_TYPE, SchedulerError> GetNextProbabilistic() const 
     {
-      if (process_map.empty()) 
-      {
-        return std::unexpected(SchedulerError::EmptyScheduler);
-      }
+      if (process_map.empty())  { return std::unexpected(SchedulerError::EmptyScheduler);  }
       
       double total_weight = GetTotalWeight();
-      if (total_weight <= 0.0) 
-      {
-        return std::unexpected(SchedulerError::NoSchedulableProcesses);
-      }
-      
+      if (total_weight <= 0.0)  {  return std::unexpected(SchedulerError::NoSchedulableProcesses);   }
       
       std::uniform_real_distribution<double> dist(0.0, total_weight);
       double random_value = dist(rng);
@@ -343,12 +445,11 @@ namespace cse498 {
       double cumulative = 0.0;
       std::optional<ID_TYPE> selected_id;
       
-      for (const auto& [id, info] : process_map) 
+      for (const auto& [id, state] : process_map)
       {
-       
-        if (!IsSchedulable(info)) continue;
+        if (!IsSchedulable(state)) continue;
         
-        cumulative += GetEffectiveWeight(info);
+        cumulative += GetEffectiveWeight(state);
         if (random_value < cumulative) 
         {
           selected_id = id;
@@ -356,10 +457,7 @@ namespace cse498 {
         }
       }
       
-      if (!selected_id) 
-      {
-        return std::unexpected(SchedulerError::NoSchedulableProcesses);
-      }
+      if (!selected_id) {  return std::unexpected(SchedulerError::NoSchedulableProcesses);   }
       
       return *selected_id;
     }
@@ -417,7 +515,7 @@ namespace cse498 {
         return std::unexpected(SchedulerError::ProcessAlreadyExists);
       }
       
-      process_map.emplace(id, ProcessInfo(weight, next_insertion_order++));
+      process_map.emplace(id, ProcessState(weight, next_insertion_order++));
       return {};  // Success
     }
     
@@ -498,9 +596,9 @@ namespace cse498 {
       scheduling_mode = mode;
       if (mode == Mode::DETERMINISTIC) 
       {
-        for (auto& [id, info] : process_map) 
+        for (auto& [id, state] : process_map) 
         {
-          info.current_weight = GetEffectiveWeight(info);
+          state.deficit = GetEffectiveWeight(state);
         }
       }
     }
@@ -562,11 +660,11 @@ namespace cse498 {
       
       std::optional<double> max_weight;
       
-      for (const auto& [id, info] : process_map) 
+      for (const auto& [id, state] : process_map) 
       {
-        if (IsSchedulable(info)) 
+        if (IsSchedulable(state)) 
         {
-          double effective_weight = GetEffectiveWeight(info);
+          double effective_weight = GetEffectiveWeight(state);
           if (!max_weight || effective_weight > *max_weight) 
           {
             max_weight = effective_weight;
@@ -590,10 +688,10 @@ namespace cse498 {
     [[nodiscard]] double GetTotalWeight() const noexcept 
     {
       double total = 0.0;
-      for (const auto& [id, info] : process_map) 
+      for (const auto& [id, state] : process_map) 
       {
-        if (IsSchedulable(info)) {
-          total += GetEffectiveWeight(info);
+        if (IsSchedulable(state)) {
+          total += GetEffectiveWeight(state);
         }
       }
       return total;
@@ -630,9 +728,9 @@ namespace cse498 {
     {
       auto_adjust_enabled = enable;
       if (!enable) {
-        for (auto& [id, info] : process_map) {
-          info.dynamic_weight = info.base_weight;
-          info.wait_cycles = 0;
+        for (auto& [id, state] : process_map) {
+          state.active_weight = state.base_weight;
+          state.wait_cycles = 0;
         }
       }
     }
@@ -751,7 +849,7 @@ namespace cse498 {
       if (it == process_map.end()) { return std::unexpected(SchedulerError::ProcessNotFound); }
       
       it->second.base_weight = weight;
-      it->second.dynamic_weight = weight;
+      it->second.active_weight = weight;
       return {};
     }
     
@@ -767,7 +865,7 @@ namespace cse498 {
       {
         return std::unexpected(SchedulerError::ProcessNotFound);
       }
-      return it->second.dynamic_weight;
+      return it->second.active_weight;
     }
     
     /**
@@ -797,12 +895,12 @@ namespace cse498 {
      */
     void ResetDynamicWeights() 
     {
-      for (auto& [id, info] : process_map) 
+      for (auto& [id, state] : process_map) 
       {
-        info.dynamic_weight = info.base_weight;
-        info.wait_cycles = 0;
-        info.execution_count = 0;
-        info.last_execution_cycle = 0;
+        state.active_weight = state.base_weight;
+        state.wait_cycles = 0;
+        state.execution_count = 0;
+        state.last_execution_cycle = 0;
       }
       scheduling_cycle = 0;
     }
@@ -825,9 +923,9 @@ namespace cse498 {
       failure_handling_enabled = enable;
       
       if (!enable) {
-        for (auto& [id, info] : process_map) 
+        for (auto& [id, state] : process_map) 
         {
-          info.ResetFailureState();
+          state.ResetFailureState();
         }
       }
     }
@@ -861,22 +959,22 @@ namespace cse498 {
       
       if (!failure_handling_enabled) return {};
       
-      ProcessInfo& info = it->second;
-      info.failure_count++;
-      info.total_failures++;
-      info.success_count = 0;
+      ProcessState& state = it->second;
+      state.failure_count++;
+      state.total_failures++;
+      state.success_count = 0;
       
-      size_t backoff = (info.backoff_cycles == 0)
+      size_t backoff = (state.backoff_cycles == 0)
           ? initial_backoff_cycles
           : static_cast<size_t>(std::min(
-                info.backoff_cycles * backoff_multiplier,
+                state.backoff_cycles * backoff_multiplier,
                 static_cast<double>(max_backoff_cycles)));
-      info.backoff_cycles = backoff;
-      info.cycles_until_retry = backoff;
+      state.backoff_cycles = backoff;
+      state.cycles_until_retry = backoff;
       
-      if (info.failure_count >= max_consecutive_failures) 
+      if (state.failure_count >= max_consecutive_failures) 
       {
-        info.enabled = false;
+        state.enabled = false;
         // Keep backoff values for informational purposes
       }
       
@@ -901,12 +999,12 @@ namespace cse498 {
       
       if (!failure_handling_enabled) return {};
       
-      ProcessInfo& info = it->second;
-      info.success_count++;
+      ProcessState& state = it->second;
+      state.success_count++;
       
-      if (info.success_count >= recovery_success_threshold) 
+      if (state.success_count >= recovery_success_threshold) 
       {
-        info.ResetFailureState();
+        state.ResetFailureState();
       }
       
       return {};
@@ -926,10 +1024,10 @@ namespace cse498 {
         return std::unexpected(SchedulerError::ProcessNotFound);
       }
       
-      ProcessInfo& info = it->second;
-      info.enabled = true;
-      info.current_weight = GetEffectiveWeight(info);
-      info.ResetFailureState();
+      ProcessState& state = it->second;
+      state.enabled = true;
+      state.deficit = GetEffectiveWeight(state);
+      state.ResetFailureState();
       
       return {};
     }
@@ -1147,8 +1245,8 @@ namespace cse498 {
     [[nodiscard]] size_t GetEnabledProcessCount() const noexcept 
     {
       size_t count = 0;
-      for (const auto& [id, info] : process_map) {
-        if (info.enabled) count++;
+      for (const auto& [id, state] : process_map) {
+        if (state.enabled) count++;
       }
       return count;
     }
@@ -1160,9 +1258,9 @@ namespace cse498 {
     [[nodiscard]] size_t GetSchedulableProcessCount() const noexcept 
     {
       size_t count = 0;
-      for (const auto& [id, info] : process_map) 
+      for (const auto& [id, state] : process_map) 
       {
-        if (IsSchedulable(info)) count++;
+        if (IsSchedulable(state)) count++;
       }
       return count;
     }
