@@ -291,7 +291,7 @@ TEST_CASE("Testing normalize method", "[Point][normalize]"){
 
     Point P(1.25, -0.5); 
     P.normalize();
-    CHECK(tol_equal(A.dot(A), 1.0));
+    CHECK(tol_equal(P.dot(P), 1.0));
 
     Point Q(3, 4);
     Q.normalize().scale(5);

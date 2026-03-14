@@ -66,7 +66,8 @@ Point operator*(const Point& lhs, const Point& rhs){
  * example: Point A(2,3) * 4 = Point(8,12)
  */
 Point operator*(const Point& lhs, double rhs){
-    return Point(lhs.getX() * rhs, lhs.getY() * rhs);
+    Point result = lhs;
+    return result.scale(rhs);
 }
 
 /* Products
@@ -74,7 +75,8 @@ Point operator*(const Point& lhs, double rhs){
  * example: Point 4 * A(2,3) = Point(8,12)
  */
 Point operator*(double lhs, const Point& rhs){
-    return Point( lhs * rhs.getX(), lhs * rhs.getY());
+    Point result = rhs;
+    return result.scale(lhs);
 }
 
 /* Equality
@@ -106,22 +108,19 @@ bool operator==(double lhs, const Point& rhs){
 
 // The unequal "operators"
 bool operator!=(const Point& lhs, const Point& rhs){
-   if ( lhs.getX() != rhs.getX() || lhs.getY() != rhs.getY())
-        return true;
-    return false;
+    return !(lhs == rhs);
 }
 
-
-bool operator!=(const Point& lhs [[maybe_unused]], double rhs [[maybe_unused]]){
-    return true;
+bool operator!=(const Point& lhs, double rhs){
+    return !(lhs == rhs);
 }
 
-bool operator!=( double lhs [[maybe_unused]], const Point& rhs [[maybe_unused]] ) {
-    return true;
+bool operator!=( double lhs, const Point& rhs){
+    return !(lhs == rhs);
 }
 
 double dot(const Point& A, const Point& B){
-    return (( A.getX() * B.getX()) + (A.getY() * B.getY() ));
+    return A.dot(B);
 }
 
 } // namespace cse498
