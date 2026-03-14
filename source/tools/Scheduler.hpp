@@ -140,7 +140,7 @@ namespace cse498 {
    * 
    * Each process has selection probability = its weight / total weight.
    * 
-   * ## Dynamic weight adjustment (when enabled)
+   * ## Rebalancing API (when enabled)
    * 
    * After each GetNext() call:
    * 
@@ -152,7 +152,7 @@ namespace cse498 {
    *       else:
    *           P.wait_cycles++
    *           P.adjusted_weight += wait_boost_factor * P.wait_cycles  // reward waiting
-   *       clamp P.adjusted_weight to [min_weight, max_weight]
+   *       clamp P.adjusted_weight to [weight_floor, weight_ceiling]
    * @endcode
    * 
    * This gradually shifts weight toward starving processes and away from
@@ -204,8 +204,8 @@ namespace cse498 {
     };
     
     /// Default configuration values
-    static constexpr double MIN_WEIGHT = 0.1;
-    static constexpr double MAX_WEIGHT = 1000.0;
+    static constexpr double DEFAULT_WEIGHT_FLOOR = 0.1;
+    static constexpr double DEFAULT_WEIGHT_CEILING = 1000.0;
     static constexpr double WAIT_BOOST_FACTOR = 0.1;
     static constexpr double FREQ_PENALTY = 0.05;
     static constexpr double MAX_FREQ_PENALTY = 1.0;
@@ -277,8 +277,8 @@ namespace cse498 {
     
   
     bool rebalance_enabled{};                               ///< Whether RebalanceWeights() runs after each GetNext()
-    double min_weight{};                                      ///< Minimum weight (so as to prevent starvation)
-    double max_weight{};                                      ///< Maximum weight ceiling (prevents unbounded growth)
+    double weight_floor{};                                    ///< Lower bound for adjusted weights (prevents starvation)
+    double weight_ceiling{};                                  ///< Upper bound for adjusted weights (prevents unbounded growth)
     double wait_boost_factor{};                               ///< Weight increase per wait cycle
     double frequency_penalty{};                               ///< Weight reduction for frequent execution
     size_t scheduling_cycle{};                                ///< Current scheduling cycle number
@@ -300,7 +300,7 @@ namespace cse498 {
      * Called after each GetNext(). Does nothing if rebalancing is off.
      * - The selected process's weight is reduced (frequency penalty).
      * - All other processes' weights are increased (wait boost).
-     * - All weights are clamped to [min_weight, max_weight].
+     * - All weights are clamped to [weight_floor, weight_ceiling].
      */
     void RebalanceWeights(ID_TYPE selected_id) 
     {
@@ -318,13 +318,13 @@ namespace cse498 {
           state.adjusted_weight += (wait_boost_factor * state.wait_cycles);
         }
         
-        if (state.adjusted_weight < min_weight) 
+        if (state.adjusted_weight < weight_floor)
         {
-          state.adjusted_weight = min_weight;
+          state.adjusted_weight = weight_floor;
         }
-        if (state.adjusted_weight > max_weight) 
+        if (state.adjusted_weight > weight_ceiling)
         {
-          state.adjusted_weight = max_weight;
+          state.adjusted_weight = weight_ceiling;
         }
       }
     }
@@ -495,8 +495,8 @@ namespace cse498 {
         next_insertion_order(0),
         rng(seed),
         rebalance_enabled(false),
-        min_weight(MIN_WEIGHT),
-        max_weight(MAX_WEIGHT),
+        weight_floor(DEFAULT_WEIGHT_FLOOR),
+        weight_ceiling(DEFAULT_WEIGHT_CEILING),
         wait_boost_factor(WAIT_BOOST_FACTOR),
         frequency_penalty(FREQ_PENALTY),
         scheduling_cycle(0),
@@ -697,14 +697,13 @@ namespace cse498 {
      */
     [[nodiscard]] double GetTotalWeight() const noexcept 
     {
-      double total = 0.0;
-      for (const auto& [id, state] : process_map) 
-      {
-        if (IsSchedulable(state)) {
-          total += GetEffectiveWeight(state);
+      return std::accumulate(
+        process_map.begin(), process_map.end(), 0.0,
+        [this](double sum, const auto& pair) {
+          const auto& state = pair.second;
+          return sum + (IsSchedulable(state) ? GetEffectiveWeight(state) : 0.0);
         }
-      }
-      return total;
+      );
     }
     
     /**
@@ -715,16 +714,13 @@ namespace cse498 {
     [[nodiscard]] std::expected<size_t, SchedulerError> GetExecutionCount(ID_TYPE id) const 
     {
       auto it = process_map.find(id);
-      if (it == process_map.end()) 
-      {
-        return std::unexpected(SchedulerError::ProcessNotFound);
-      }
+      if (it == process_map.end())  { return std::unexpected(SchedulerError::ProcessNotFound); }
       return it->second.execution_count;
     }
     
 
 
-    //  Dynamic Weight Adjustment API
+    //  Rebalancing API
     
     /**
      * @brief Enable or disable weight rebalancing after each scheduling decision.
@@ -756,42 +752,41 @@ namespace cse498 {
     }
     
     /**
-     * @brief Set the minimum weight threshold
-     * @param min Minimum weight value (not negative)
+     * @brief Set the weight floor (lower clamp for rebalancing).
+     * @param floor Minimum weight value (must be non-negative and finite)
      * @return Success or error code
-     * Default is  0.1
      */
-    [[nodiscard]] std::expected<void, SchedulerError> SetMinWeight(double min) 
+    [[nodiscard]] std::expected<void, SchedulerError> SetWeightFloor(double floor) 
     {
-      if (!std::isfinite(min)) return std::unexpected(SchedulerError::InvalidWeight);
-      if (min < 0.0) return std::unexpected(SchedulerError::NegativeWeight);
-      min_weight = min;
+      if (!std::isfinite(floor)) return std::unexpected(SchedulerError::InvalidWeight);
+      if (floor < 0.0) return std::unexpected(SchedulerError::NegativeWeight);
+      weight_floor = floor;
       return {};
     }
     
     /**
-     * @brief Get the current minimum weight threshold
-     * @return Min weight value
+     * @brief Get the current weight floor
+     * @return Weight floor value
      */
-    [[nodiscard]] double GetMinWeight() const noexcept { return min_weight;  }
+    [[nodiscard]] double GetWeightFloor() const noexcept { return weight_floor; }
     
     /**
-     * @brief Set the maximum weight ceiling
-     * @param max Maximum weight value (must be positive and finite)
+     * @brief Set the weight ceiling (upper clamp for rebalancing).
+     * @param ceiling Maximum weight value (must be positive and finite)
      * @return Success or error code
      */
-    [[nodiscard]] std::expected<void, SchedulerError> SetMaxWeight(double max) 
+    [[nodiscard]] std::expected<void, SchedulerError> SetWeightCeiling(double ceiling) 
     {
-      if (!std::isfinite(max) || max <= 0.0) return std::unexpected(SchedulerError::InvalidParameter);
-      max_weight = max;
+      if (!std::isfinite(ceiling) || ceiling <= 0.0) return std::unexpected(SchedulerError::InvalidParameter);
+      weight_ceiling = ceiling;
       return {};
     }
     
     /**
-     * @brief Get the current maximum weight ceiling
-     * @return Max weight value
+     * @brief Get the current weight ceiling
+     * @return Weight ceiling value
      */
-    [[nodiscard]] double GetMaxWeight() const noexcept { return max_weight; }
+    [[nodiscard]] double GetWeightCeiling() const noexcept { return weight_ceiling; }
     
     /**
      * @brief Set the wait boost factor
@@ -799,7 +794,7 @@ namespace cse498 {
      * @return Success or error code
      * 
      */
-    [[nodiscard]] std::expected<void, SchedulerError> SetWaitBoostFactor(double factor) 
+    [[nodiscard]] std::expected<void, SchedulerError> SetWaitBoostFactor(const double factor) 
     {
       if (!std::isfinite(factor)) return std::unexpected(SchedulerError::InvalidParameter);
       if (factor < 0.0)  return std::unexpected(SchedulerError::InvalidParameter);
@@ -820,7 +815,7 @@ namespace cse498 {
      * 
      * Each process s multiplied by (1 - penalty) whenever it is selected.
      */
-    [[nodiscard]] std::expected<void, SchedulerError> SetFrequencyPenalty(double penalty) 
+    [[nodiscard]] std::expected<void, SchedulerError> SetFrequencyPenalty(const double penalty) 
     {
       if (!std::isfinite(penalty) || penalty < 0.0 || penalty > MAX_FREQ_PENALTY) 
       {
@@ -847,7 +842,7 @@ namespace cse498 {
      * Call EnableRebalancing(false) first, set the weight, then
      * re-enable if desired.
      */
-    [[nodiscard]] std::expected<void, SchedulerError> SetBaseWeight(ID_TYPE id, double weight) 
+    [[nodiscard]] std::expected<void, SchedulerError> SetBaseWeight(ID_TYPE id, const double weight) 
     {
       if (rebalance_enabled)
       {
@@ -865,11 +860,11 @@ namespace cse498 {
     }
     
     /**
-     * @brief Get the current dynamic weight of a process
+     * @brief Get the current adjusted weight of a process
      * @param id Process ID
-     * @return Expected containing dynamic weight or error code
+     * @return Expected containing adjusted weight or error code
      */
-    [[nodiscard]] std::expected<double, SchedulerError> GetDynamicWeight(ID_TYPE id) const 
+    [[nodiscard]] std::expected<double, SchedulerError> GetAdjustedWeight(ID_TYPE id) const 
     {
       auto it = process_map.find(id);
       if (it == process_map.end()) 
@@ -904,7 +899,7 @@ namespace cse498 {
      * @brief Reset all dynamic weights to their base values
      * 
      */
-    void ResetDynamicWeights() 
+    void ResetAdjustedWeights() 
     {
       for (auto& [id, state] : process_map) 
       {
@@ -1096,7 +1091,7 @@ namespace cse498 {
      * @param id Process ID
      * @return Expected containing consecutive failure count or error code
      */
-    [[nodiscard]] std::expected<size_t, SchedulerError> GetFailureCount(ID_TYPE id) const 
+    [[nodiscard]] std::expected<size_t, SchedulerError> GetProcessFailureCount(ID_TYPE id) const 
     {
       auto it = process_map.find(id);
       if (it == process_map.end()) 
@@ -1126,7 +1121,7 @@ namespace cse498 {
      * @param id Process ID
      * @return Expected containing consecutive success count or error code
      */
-    [[nodiscard]] std::expected<size_t, SchedulerError> GetSuccessCount(ID_TYPE id) const 
+    [[nodiscard]] std::expected<size_t, SchedulerError> GetProcessSuccessCount(ID_TYPE id) const 
     {
       auto it = process_map.find(id);
       if (it == process_map.end()) 
@@ -1156,7 +1151,7 @@ namespace cse498 {
      * @param id Process ID
      * @return Expected containing cycles until retry or error code
      */
-    [[nodiscard]] std::expected<size_t, SchedulerError> GetCyclesUntilRetry(ID_TYPE id) const 
+    [[nodiscard]] std::expected<size_t, SchedulerError> GetProcessCyclesUntilRetry(ID_TYPE id) const 
     {
       auto it = process_map.find(id);
       if (it == process_map.end()) 
@@ -1174,7 +1169,7 @@ namespace cse498 {
      * @return Success or error code
      * Default: 3
      */
-    [[nodiscard]] std::expected<void, SchedulerError> SetMaxConsecutiveFailures(size_t max) 
+    [[nodiscard]] std::expected<void, SchedulerError> SetMaxConsecutiveFailures(const size_t max) 
     {
       if (max == 0) 
       {
@@ -1204,7 +1199,7 @@ namespace cse498 {
      * @return Success or error code
      * Default: 2.0
      */
-    [[nodiscard]] std::expected<void, SchedulerError> SetBackoffMultiplier(double multiplier) 
+    [[nodiscard]] std::expected<void, SchedulerError> SetBackoffMultiplier(const double multiplier) 
     {
       if (!std::isfinite(multiplier) || multiplier < 1.0) 
       {
@@ -1221,7 +1216,7 @@ namespace cse498 {
      * @param max Maximum backoff cycles
      * Default: 64
      */
-    void SetMaxBackoffCycles(size_t max) 
+    void SetMaxBackoffCycles(const size_t max) 
     {
       max_backoff_cycles = max;
     }
