@@ -203,17 +203,23 @@ namespace cse498 {
       PROBABILISTIC   ///< Random weighted
     };
     
-    /// Default configuration values
-    static constexpr double DEFAULT_WEIGHT_FLOOR = 0.1;
-    static constexpr double DEFAULT_WEIGHT_CEILING = 1000.0;
-    static constexpr double WAIT_BOOST_FACTOR = 0.1;
-    static constexpr double FREQ_PENALTY = 0.05;
+    
+    struct Config {
+      // Rebalancing
+      double weight_floor          = 0.1;
+      double weight_ceiling        = 1000.0;
+      double wait_boost_factor     = 0.1;
+      double frequency_penalty     = 0.05;
+
+      // Failure handling
+      size_t max_consecutive_failures   = 3;
+      size_t initial_backoff_cycles     = 1;
+      double backoff_multiplier         = 2.0;
+      size_t max_backoff_cycles         = 64;
+      size_t recovery_success_threshold = 2;
+    };
+
     static constexpr double MAX_FREQ_PENALTY = 1.0;
-    static constexpr size_t MAX_FAILURES = 3;
-    static constexpr size_t INTIAL_BACKOFF_CYCLES = 1;
-    static constexpr double BACKOFF_MULT = 2.0;
-    static constexpr size_t MAX_BACKOFF_CYCLES = 64;
-    static constexpr size_t RECOVERY_THRESHOLD = 2;
 
   private:
     /**
@@ -487,25 +493,27 @@ namespace cse498 {
     /**
      * @brief Construct a new Scheduler
      * @param mode Scheduling algorithm to use
-     * @param seed Random seed for probabilistic mode 
+     * @param seed Random seed for probabilistic mode
+     * @param cfg  Configuration knobs (defaults are sane for most workloads)
      */
     explicit Scheduler(Mode mode = Mode::DETERMINISTIC, 
-                      unsigned int seed = std::random_device{}())
+                      unsigned int seed = std::random_device{}(),
+                      const Config& cfg = Config{})
       : scheduling_mode(mode),
         next_insertion_order(0),
         rng(seed),
         rebalance_enabled(false),
-        weight_floor(DEFAULT_WEIGHT_FLOOR),
-        weight_ceiling(DEFAULT_WEIGHT_CEILING),
-        wait_boost_factor(WAIT_BOOST_FACTOR),
-        frequency_penalty(FREQ_PENALTY),
+        weight_floor(cfg.weight_floor),
+        weight_ceiling(cfg.weight_ceiling),
+        wait_boost_factor(cfg.wait_boost_factor),
+        frequency_penalty(cfg.frequency_penalty),
         scheduling_cycle(0),
         failure_handling_enabled(false),
-        max_consecutive_failures(MAX_FAILURES),
-        initial_backoff_cycles(INTIAL_BACKOFF_CYCLES),
-        backoff_multiplier(BACKOFF_MULT),
-        max_backoff_cycles(MAX_BACKOFF_CYCLES),
-        recovery_success_threshold(RECOVERY_THRESHOLD)
+        max_consecutive_failures(cfg.max_consecutive_failures),
+        initial_backoff_cycles(cfg.initial_backoff_cycles),
+        backoff_multiplier(cfg.backoff_multiplier),
+        max_backoff_cycles(cfg.max_backoff_cycles),
+        recovery_success_threshold(cfg.recovery_success_threshold)
     { }
     
 

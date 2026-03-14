@@ -429,9 +429,10 @@ TEST_CASE("Scheduler: Rebalancing Configuration", "[scheduler]") {
   Scheduler<size_t> scheduler;
   
   SECTION("Default configuration values") {
-    CHECK(scheduler.GetWeightFloor() == Scheduler<size_t>::DEFAULT_WEIGHT_FLOOR);
-    CHECK(scheduler.GetWaitBoostFactor() == Scheduler<size_t>::WAIT_BOOST_FACTOR);
-    CHECK(scheduler.GetFrequencyPenalty() == Scheduler<size_t>::FREQ_PENALTY);
+    Scheduler<size_t>::Config defaults;
+    CHECK(scheduler.GetWeightFloor() == defaults.weight_floor);
+    CHECK(scheduler.GetWaitBoostFactor() == defaults.wait_boost_factor);
+    CHECK(scheduler.GetFrequencyPenalty() == defaults.frequency_penalty);
   }
   
   SECTION("Set minimum weight") {
@@ -946,11 +947,12 @@ TEST_CASE("Scheduler: Failure Configuration", "[scheduler]") {
   Scheduler<size_t> scheduler;
   
   SECTION("Default configuration values") {
-    CHECK(scheduler.GetMaxConsecutiveFailures() == Scheduler<size_t>::MAX_FAILURES);
-    CHECK(scheduler.GetInitialBackoffCycles() == Scheduler<size_t>::INTIAL_BACKOFF_CYCLES);
-    CHECK(scheduler.GetBackoffMultiplier() == Scheduler<size_t>::BACKOFF_MULT);
-    CHECK(scheduler.GetMaxBackoffCycles() == Scheduler<size_t>::MAX_BACKOFF_CYCLES);
-    CHECK(scheduler.GetRecoverySuccessThreshold() == Scheduler<size_t>::RECOVERY_THRESHOLD);
+    Scheduler<size_t>::Config defaults;
+    CHECK(scheduler.GetMaxConsecutiveFailures() == defaults.max_consecutive_failures);
+    CHECK(scheduler.GetInitialBackoffCycles() == defaults.initial_backoff_cycles);
+    CHECK(scheduler.GetBackoffMultiplier() == defaults.backoff_multiplier);
+    CHECK(scheduler.GetMaxBackoffCycles() == defaults.max_backoff_cycles);
+    CHECK(scheduler.GetRecoverySuccessThreshold() == defaults.recovery_success_threshold);
   }
   
   SECTION("Set valid configuration") {
