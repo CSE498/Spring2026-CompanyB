@@ -14,6 +14,41 @@
 using namespace cse498;
 
 
+// Quick-start example: shows how to set up and use the Scheduler
+TEST_CASE("Scheduler: Quick Start Usage Example", "[scheduler][example]") {
+  // Create a scheduler (deterministic mode by default).
+  Scheduler<int> scheduler;
+
+  // Add processes with base weights (higher = more CPU time).
+  REQUIRE(scheduler.AddProcess(1, 10.0).has_value());
+  REQUIRE(scheduler.AddProcess(2, 5.0).has_value());
+  REQUIRE(scheduler.AddProcess(3, 1.0).has_value());
+
+  // Call GetNext() each cycle to get the next process to run.
+  auto next = scheduler.GetNext();
+  REQUIRE(next.has_value());
+
+  // (Optional) Enable rebalancing to prevent starvation.
+  scheduler.EnableRebalancing(true);
+  REQUIRE(scheduler.SetWeightFloor(0.5).has_value());
+  REQUIRE(scheduler.SetFrequencyPenalty(0.1).has_value());
+  REQUIRE(scheduler.SetWaitBoostFactor(0.2).has_value());
+
+  // (Optional) Enable failure handling with exponential backoff.
+  scheduler.EnableFailureHandling(true);
+  REQUIRE(scheduler.SetMaxConsecutiveFailures(3).has_value());
+
+  // 6. Report success/failure after each execution.
+  REQUIRE(scheduler.MarkProcessSuccess(*next).has_value());
+
+  // Run a few cycles and confirm the scheduler keeps producing valid IDs.
+  for (int i = 0; i < 20; ++i) {
+    auto id = scheduler.GetNext();
+    REQUIRE(id.has_value());
+    CHECK((*id >= 1 && *id <= 3));
+  }
+}
+
 // Test for Core Functionality
 
 TEST_CASE("Scheduler: Basic Construction", "[scheduler]") {
@@ -394,15 +429,15 @@ TEST_CASE("Scheduler: Rebalancing Configuration", "[scheduler]") {
   Scheduler<size_t> scheduler;
   
   SECTION("Default configuration values") {
-    CHECK(scheduler.GetMinWeight() == Scheduler<size_t>::MIN_WEIGHT);
+    CHECK(scheduler.GetWeightFloor() == Scheduler<size_t>::DEFAULT_WEIGHT_FLOOR);
     CHECK(scheduler.GetWaitBoostFactor() == Scheduler<size_t>::WAIT_BOOST_FACTOR);
     CHECK(scheduler.GetFrequencyPenalty() == Scheduler<size_t>::FREQ_PENALTY);
   }
   
   SECTION("Set minimum weight") {
-    auto result = scheduler.SetMinWeight(0.5);
+    auto result = scheduler.SetWeightFloor(0.5);
     CHECK(result.has_value());
-    CHECK(scheduler.GetMinWeight() == 0.5);
+    CHECK(scheduler.GetWeightFloor() == 0.5);
   }
   
   SECTION("Set wait boost factor") {
@@ -418,7 +453,7 @@ TEST_CASE("Scheduler: Rebalancing Configuration", "[scheduler]") {
   }
   
   SECTION("Invalid minimum weight returns error") {
-    auto result = scheduler.SetMinWeight(-0.1);
+    auto result = scheduler.SetWeightFloor(-0.1);
     CHECK_FALSE(result.has_value());
     CHECK(result.error() == SchedulerError::NegativeWeight);
   }
@@ -518,27 +553,27 @@ TEST_CASE("Scheduler: Wait Cycle Tracking", "[scheduler]") {
   }
 }
 
-TEST_CASE("Scheduler: Dynamic Weight Adjustment", "[scheduler]") {
+TEST_CASE("Scheduler: Rebalancing", "[scheduler]") {
   Scheduler<size_t> scheduler;
   REQUIRE(scheduler.AddProcess(1, 10.0).has_value());
   REQUIRE(scheduler.AddProcess(2, 5.0).has_value());
   scheduler.EnableRebalancing(true);
   REQUIRE(scheduler.SetFrequencyPenalty(0.1).has_value());
   
-  SECTION("Dynamic weight decreases after execution") {
-    auto initial = scheduler.GetDynamicWeight(1);
+  SECTION("Adjusted weight decreases after execution") {
+    auto initial = scheduler.GetAdjustedWeight(1);
     REQUIRE(initial.has_value());
     
     REQUIRE(scheduler.GetNext().has_value());
     
-    auto after = scheduler.GetDynamicWeight(1);
+    auto after = scheduler.GetAdjustedWeight(1);
     REQUIRE(after.has_value());
     
     CHECK(*after < *initial);
   }
   
-  SECTION("GetDynamicWeight for non-existent process returns error") {
-    auto result = scheduler.GetDynamicWeight(99);
+  SECTION("GetAdjustedWeight for non-existent process returns error") {
+    auto result = scheduler.GetAdjustedWeight(99);
     CHECK_FALSE(result.has_value());
     CHECK(result.error() == SchedulerError::ProcessNotFound);
   }
@@ -550,7 +585,7 @@ TEST_CASE("Scheduler: Starvation Prevention", "[scheduler]") {
   REQUIRE(scheduler.AddProcess(2, 1.0).has_value());
   scheduler.EnableRebalancing(true);
   REQUIRE(scheduler.SetWaitBoostFactor(0.5).has_value());
-  REQUIRE(scheduler.SetMinWeight(0.1).has_value());
+  REQUIRE(scheduler.SetWeightFloor(0.1).has_value());
   
   SECTION("Low-weight process eventually gets scheduled") {
     bool process2_executed = false;
@@ -596,20 +631,20 @@ TEST_CASE("Scheduler: Reset Dynamic Weights", "[scheduler]") {
       REQUIRE(scheduler.GetNext().has_value());
     }
     
-    scheduler.ResetDynamicWeights();
+    scheduler.ResetAdjustedWeights();
     
-    auto dyn1 = scheduler.GetDynamicWeight(1);
-    auto dyn2 = scheduler.GetDynamicWeight(2);
+    auto adj1 = scheduler.GetAdjustedWeight(1);
+    auto adj2 = scheduler.GetAdjustedWeight(2);
     auto weight1 = scheduler.GetBaseWeight(1);
     auto weight2 = scheduler.GetBaseWeight(2);
     
-    REQUIRE(dyn1.has_value());
-    REQUIRE(dyn2.has_value());
+    REQUIRE(adj1.has_value());
+    REQUIRE(adj2.has_value());
     REQUIRE(weight1.has_value());
     REQUIRE(weight2.has_value());
     
-    CHECK(*dyn1 == *weight1);
-    CHECK(*dyn2 == *weight2);
+    CHECK(*adj1 == *weight1);
+    CHECK(*adj2 == *weight2);
     
     auto wait1 = scheduler.GetWaitCycles(1);
     auto wait2 = scheduler.GetWaitCycles(2);
@@ -718,8 +753,8 @@ TEST_CASE("Scheduler: Failure Tracking", "[scheduler]") {
   REQUIRE(scheduler.SetRecoverySuccessThreshold(3).has_value());
   
   SECTION("Initial failure and success counts are zero") {
-    auto failures = scheduler.GetFailureCount(1);
-    auto successes = scheduler.GetSuccessCount(1);
+    auto failures = scheduler.GetProcessFailureCount(1);
+    auto successes = scheduler.GetProcessSuccessCount(1);
     auto total = scheduler.GetTotalFailures(1);
     
     REQUIRE(failures.has_value());
@@ -734,7 +769,7 @@ TEST_CASE("Scheduler: Failure Tracking", "[scheduler]") {
   SECTION("Marking failure increments counts") {
     CHECK(scheduler.MarkProcessFailed(1).has_value());
     
-    auto failures = scheduler.GetFailureCount(1);
+    auto failures = scheduler.GetProcessFailureCount(1);
     auto total = scheduler.GetTotalFailures(1);
     
     REQUIRE(failures.has_value());
@@ -747,7 +782,7 @@ TEST_CASE("Scheduler: Failure Tracking", "[scheduler]") {
   SECTION("Marking success increments success count") {
     CHECK(scheduler.MarkProcessSuccess(1).has_value());
     
-    auto successes = scheduler.GetSuccessCount(1);
+    auto successes = scheduler.GetProcessSuccessCount(1);
     REQUIRE(successes.has_value());
     CHECK(*successes == 1);
   }
@@ -757,7 +792,7 @@ TEST_CASE("Scheduler: Failure Tracking", "[scheduler]") {
     REQUIRE(scheduler.MarkProcessSuccess(1).has_value());
     REQUIRE(scheduler.MarkProcessFailed(1).has_value());
     
-    auto successes = scheduler.GetSuccessCount(1);
+    auto successes = scheduler.GetProcessSuccessCount(1);
     REQUIRE(successes.has_value());
     CHECK(*successes == 0);
   }
@@ -770,8 +805,8 @@ TEST_CASE("Scheduler: Failure Tracking", "[scheduler]") {
     REQUIRE(scheduler.MarkProcessSuccess(1).has_value());
     REQUIRE(scheduler.MarkProcessSuccess(1).has_value());
     
-    auto failures = scheduler.GetFailureCount(1);
-    auto successes = scheduler.GetSuccessCount(1);
+    auto failures = scheduler.GetProcessFailureCount(1);
+    auto successes = scheduler.GetProcessSuccessCount(1);
     
     REQUIRE(failures.has_value());
     REQUIRE(successes.has_value());
@@ -889,14 +924,14 @@ TEST_CASE("Scheduler: Recovery After Successes", "[scheduler]") {
     REQUIRE(scheduler.MarkProcessFailed(1).has_value());
     REQUIRE(scheduler.MarkProcessFailed(1).has_value());
     
-    auto before = scheduler.GetFailureCount(1);
+    auto before = scheduler.GetProcessFailureCount(1);
     REQUIRE(before.has_value());
     CHECK(*before == 2);
     
     REQUIRE(scheduler.MarkProcessSuccess(1).has_value());
     REQUIRE(scheduler.MarkProcessSuccess(1).has_value());
     
-    auto after = scheduler.GetFailureCount(1);
+    auto after = scheduler.GetProcessFailureCount(1);
     auto backoff = scheduler.GetBackoffCycles(1);
     
     REQUIRE(after.has_value());
@@ -1065,7 +1100,7 @@ TEST_CASE("Scheduler: All processes disabled", "[scheduler]") {
   }
 }
 
-TEST_CASE("Scheduler: GetCyclesUntilRetry countdown", "[scheduler]") {
+TEST_CASE("Scheduler: GetProcessCyclesUntilRetry countdown", "[scheduler]") {
   Scheduler<size_t> scheduler;
   scheduler.EnableFailureHandling(true);
   REQUIRE(scheduler.AddProcess(1, 5.0).has_value());
@@ -1074,7 +1109,7 @@ TEST_CASE("Scheduler: GetCyclesUntilRetry countdown", "[scheduler]") {
   SECTION("Cycles until retry counts down after failure") {
     REQUIRE(scheduler.MarkProcessFailed(1).has_value());
 
-    auto initial = scheduler.GetCyclesUntilRetry(1);
+    auto initial = scheduler.GetProcessCyclesUntilRetry(1);
     REQUIRE(initial.has_value());
     size_t start_cycles = *initial;
     CHECK(start_cycles > 0);
@@ -1084,7 +1119,7 @@ TEST_CASE("Scheduler: GetCyclesUntilRetry countdown", "[scheduler]") {
       REQUIRE(next.has_value());
     }
 
-    auto after = scheduler.GetCyclesUntilRetry(1);
+    auto after = scheduler.GetProcessCyclesUntilRetry(1);
     REQUIRE(after.has_value());
     CHECK(*after == 0);
   }
