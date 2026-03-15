@@ -33,9 +33,9 @@ namespace cse498
     {
     private:
         WorldBase &mWorld;
-        QGraphicsScene &mScene;
-        int mTileSize;
-        std::unordered_map<size_t, QPixmap> mTilePixmaps;
+        QGraphicsScene &mScene = *(new QGraphicsScene());
+        int mTileSize{32}; // default tile size
+        std::unordered_map<size_t, QPixmap> mTilePixmaps{};
         // std::vector<QPixmap> mImageList;
 
     public:
@@ -43,7 +43,7 @@ namespace cse498
         virtual ~ImageGrid() = default;
 
         ImageGrid(WorldBase &world, QGraphicsScene &scene, int tileSize);
-        std::expected<std::vector<QPixmap>, bool> LoadImages(const std::vector<QString> &mImagePaths);
+        std::expected<std::vector<QPixmap>, std::string> LoadImages(const std::vector<QString> &mImagePaths);
         // bool LoadImages(const std::vector<QString> &mImagePaths);
         void MapImages(const std::vector<QString> &imagePaths);
         void RenderGrid();

@@ -12,7 +12,7 @@ namespace cse498
 
     // helper for MapImages
     // load images into an image list
-    std::expected<std::vector<QPixmap>, bool> ImageGrid::LoadImages(const std::vector<QString> &imagePaths)
+    std::expected<std::vector<QPixmap>, std::string> ImageGrid::LoadImages(const std::vector<QString> &imagePaths)
     {
         std::vector<QPixmap> imageList;
         for (const QString &imagePath : imagePaths)
@@ -21,7 +21,7 @@ namespace cse498
             if (pixmap.isNull())
             {
                 qWarning() << "Failed to load image:" << imagePath;
-                return std::unexpected(false);
+                return std::unexpected("Failed to load image.");
             }
             imageList.push_back(pixmap);
         }
