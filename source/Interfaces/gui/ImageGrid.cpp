@@ -54,13 +54,11 @@ namespace cse498
             }
 
             // map each cell type to corresponding images
-            // i = 1 to account for 'Unknown' cell type
+            // i: cell type index; i starts at 1 to account for 'Unknown' cell type
             for (size_t i = 1; i < cellTypes.size(); i++)
             {
-                // std::unordered_map<size_t, QPixmap> tilePixmaps;
                 // map each cell type to images in mImageList (std::vector<QPixmap> mImageList;)
-                size_t cellTypeID = i;
-                mTilePixmaps[cellTypeID] = imageList[i - 1];
+                mTilePixmaps[i] = imageList[i - 1];
             }
             qDebug() << "Images successfully mapped to cell types! Yippee!";
         }
