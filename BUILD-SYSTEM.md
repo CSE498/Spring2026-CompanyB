@@ -132,7 +132,7 @@ You will need to change your Catch2 header in your test files.
 ```cpp
 #include "../../third-party/Catch/single_include/catch2/catch.hpp"
 ```
-**To:****
+**To:**
 ```cpp
 #include <catch2/catch_test_macros.hpp>
 ```
@@ -146,7 +146,7 @@ You may find that WSL does not have enough allocated memory.
 
 1. Create a file on your host, `Windows`, here: `C:/Users/<mydir>/.wslconfig`.
 2. Populate the file with this information:
-```toml
+```bash
 [wsl2]
 memory=12GB
 processors=6
