@@ -146,7 +146,7 @@ You may find that WSL does not have enough allocated memory.
 
 1. Create a file on your host, `Windows`, here: `C:/Users/<mydir>/.wslconfig`.
 2. Populate the file with this information:
-```BASH
+```toml
 [wsl2]
 memory=12GB
 processors=6
