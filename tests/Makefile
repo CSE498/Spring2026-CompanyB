@@ -21,7 +21,7 @@ else
   CMAKE_NO_QT :=
 endif
 
-.PHONY: all build test clean list
+.PHONY: all build test list
 
 all: test
 
@@ -31,9 +31,6 @@ build:
 
 test: build
 	$(BUILD_DIR)/tests
-
-clean:
-	rm -rf $(BUILD_DIR)
 
 list:
 	@echo "Sources:"; \
