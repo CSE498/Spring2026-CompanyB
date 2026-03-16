@@ -1,8 +1,8 @@
 #include <emscripten.h>
-#include <memory>
-#include <print>
 
 #include <catch2/catch_test_macros.hpp>
+#include <memory>
+#include <print>
 
 #include "tools/webui/WebLayout.hpp"
 
@@ -19,18 +19,17 @@ struct SetupMockDOMWebLayout {
       }
     });
     // clang-format on
-    }
+  }
 
-    ~SetupMockDOMWebLayout() {
-      // clang-format off
+  ~SetupMockDOMWebLayout() {
+    // clang-format off
       EM_ASM({
         delete globalThis.document;
         delete globalThis.window;
       });
-      // clang-format on
-    }
-    }
-    ;
+    // clang-format on
+  }
+};
 
 using namespace cse498;
 
@@ -62,7 +61,7 @@ void TEST_ADD_ELEMENT(WebLayout& layout, std::shared_ptr<WebElement> elem) {
 
   REQUIRE(layout.AddChild(elem).has_value());
 
-  REQUIRE(layout.GetNumChildren() == lengthBefore+1);
+  REQUIRE(layout.GetNumChildren() == lengthBefore + 1);
 
   // Check that element is in the DOM, and it's parent is the layout
   std::string layoutId = layout.GetId();
@@ -71,7 +70,7 @@ void TEST_ADD_ELEMENT(WebLayout& layout, std::shared_ptr<WebElement> elem) {
       {
         const layoutId = UTF8ToString($0);
         const elemId = UTF8ToString($1);
-        
+
         const elem = document.getElementById(elemId);
 
         if (!elem) return 0;
@@ -79,8 +78,7 @@ void TEST_ADD_ELEMENT(WebLayout& layout, std::shared_ptr<WebElement> elem) {
 
         return 1;
       },
-      layoutId.c_str(),
-      elemId.c_str());
+      layoutId.c_str(), elemId.c_str());
 
   REQUIRE(domCheck == 1);
 }
@@ -99,16 +97,15 @@ void TEST_REMOVE_ELEMENT(WebLayout& layout, std::shared_ptr<WebElement> elem) {
 
   REQUIRE(layout.RemoveChild(elem).has_value());
 
-  REQUIRE(layout.GetNumChildren() == lengthBefore-1);
-  
-  // Child should not be in the DOM anymore 
+  REQUIRE(layout.GetNumChildren() == lengthBefore - 1);
+
+  // Child should not be in the DOM anymore
   // REQUIRE(ELEMENT_PRESENT(elem->GetId()) == 0);
 }
 
 // -------- Tests for WebLayout --------
 
-TEST_CASE("WebLayout constructor creates DOM element with ID",
-          "[WebLayout]") {
+TEST_CASE("WebLayout constructor creates DOM element with ID", "[WebLayout]") {
   SetupMockDOMWebLayout mock;
   WebLayout layout("layout1");
 
@@ -155,7 +152,8 @@ TEST_CASE("WebLayout can add and remove children", "[WebLayout]") {
   TEST_REMOVE_ELEMENT(layout, elem2);
 }
 
-TEST_CASE("WebLayout: adding or removing null pointers is an error", "[WebLayout]") {
+TEST_CASE("WebLayout: adding or removing null pointers is an error",
+          "[WebLayout]") {
   SetupMockDOMWebLayout mock;
   WebLayout layout("layout1");
 
@@ -168,7 +166,8 @@ TEST_CASE("WebLayout: adding or removing null pointers is an error", "[WebLayout
   REQUIRE(layout.RemoveChild(elem2).error() == WebLayout::Error::NullPtr);
 }
 
-TEST_CASE("WebLayout: adding the same element twice gives an error", "[WebLayout]") {
+TEST_CASE("WebLayout: adding the same element twice gives an error",
+          "[WebLayout]") {
   SetupMockDOMWebLayout mock;
   WebLayout layout("layout1");
 
@@ -176,7 +175,8 @@ TEST_CASE("WebLayout: adding the same element twice gives an error", "[WebLayout
 
   TEST_ADD_ELEMENT(layout, elem1);
 
-  REQUIRE(layout.AddChild(elem1).error() == WebLayout::Error::ElementAlreadyMember);
+  REQUIRE(layout.AddChild(elem1).error() ==
+          WebLayout::Error::ElementAlreadyMember);
 }
 
 TEST_CASE("WebLayout can set properties with chained function calls",
