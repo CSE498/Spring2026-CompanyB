@@ -1,7 +1,7 @@
 /**
  * @file Scheduler.hpp
  * @brief A generic priority-based scheduler for managing process execution order
- * @author Joshua Twumasi
+ 
  * 
  * Header-only, template-based class that manages a set of processes by priority
  * weight and returns the ID of which one should execute next. Supports
@@ -178,17 +178,77 @@ namespace cse498 {
    *           reset failure state (failure_count, backoff, etc.)
    * @endcode
    * 
-   * ## Quick-start example
+   * ## Usage Examples
    * 
+   * ### 1. Basic scheduling (deterministic)
    * @code
-   *   Scheduler<size_t> sched;
-   *   sched.AddProcess(1, 10.0);   // high priority
-   *   sched.AddProcess(2, 5.0);    // medium
-   *   sched.AddProcess(3, 1.0);    // low
+   *   Scheduler<int> sched;                         // deterministic mode by default
+   *   sched.AddProcess(1, 10.0);                    // high priority
+   *   sched.AddProcess(2, 5.0);                     // medium
+   *   sched.AddProcess(3, 1.0);                     // low
    * 
-   *   auto next = sched.GetNext();
+   *   auto next = sched.GetNext();                  // returns std::expected<int, SchedulerError>
    *   if (next) { execute(*next); }
-   *   // Over 16 calls: process 1 runs 10x, 2 5x, 3 1x
+   *   // Over 16 cycles: process 1 runs ~10x, 2 ~5x, 3 ~1x
+   * @endcode
+   * 
+   * ### 2. Probabilistic mode
+   * @code
+   *   Scheduler<int> sched(Scheduler<int>::Mode::PROBABILISTIC);
+   *   sched.AddProcess(1, 10.0);
+   *   sched.AddProcess(2, 5.0);
+   *   // Process 1 has 10/15 -> 67% chance of selection each cycle
+   * @endcode
+   * 
+   * ### 3. Custom config at construction
+   * @code
+   *   Scheduler<int>::Config cfg;
+   *   cfg.weight_floor      = 0.5;
+   *   cfg.frequency_penalty = 0.15;
+   *   cfg.max_consecutive_failures = 5;
+   *   Scheduler<int> sched(Scheduler<int>::Mode::DETERMINISTIC, std::random_device{}(), cfg);
+   * @endcode
+   * 
+   * ### 4. Rebalancing (starvation prevention)
+   * @code
+   *   Scheduler<int> sched;
+   *   sched.AddProcess(1, 100.0);
+   *   sched.AddProcess(2, 1.0);
+   * 
+   *   sched.EnableRebalancing(true);
+   *   sched.SetWeightFloor(0.5);                    // no weight drops below 0.5
+   *   sched.SetWeightCeiling(200.0);                // no weight exceeds 200
+   *   sched.SetFrequencyPenalty(0.1);               // selected process loses 10% weight
+   *   sched.SetWaitBoostFactor(0.2);                // waiting processes gain 0.2 * wait_cycles
+   *   // Process 2 gradually gets more CPU time despite low base weight
+   * @endcode
+   * 
+   * ### 5. Failure handling with exponential backoff
+   * @code
+   *   Scheduler<int> sched;
+   *   sched.AddProcess(1, 10.0);
+   *   sched.AddProcess(2, 10.0);
+   * 
+   *   sched.EnableFailureHandling(true);
+   *   sched.SetMaxConsecutiveFailures(3);            // disable after 3 consecutive failures
+   *   sched.SetBackoffMultiplier(2.0);               // backoff doubles each failure: 1 -> 2 -> 4
+   *   sched.SetRecoverySuccessThreshold(2);          // 2 successes in a row clears failure state
+   * 
+   *   auto id = sched.GetNext();
+   *   if (id && taskFailed(*id)) {
+   *       sched.MarkProcessFailed(*id);              // triggers backoff countdown
+   *   } else if (id) {
+   *       sched.MarkProcessSuccess(*id);             // clears failures after enough successes
+   *   }
+   * @endcode
+   * 
+   * ### 6. Manual process control
+   * @code
+   *   sched.DisableProcess(2);                       // temporarily remove from scheduling
+   *   sched.EnableProcess(2);                        // bring it back
+   *   sched.SetBaseWeight(1, 20.0);                  // change priority at runtime (rebalancing must be off)
+   *   sched.RemoveProcess(3);                        // permanently remove
+   *   sched.Clear();                                 // remove all processes and reset state
    * @endcode
    * 
    */
