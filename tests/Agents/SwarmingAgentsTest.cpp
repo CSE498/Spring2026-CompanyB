@@ -6,6 +6,7 @@
 #include "../../../third-party/Catch/single_include/catch2/catch.hpp"
 
 #include "../../source/Agents/SwarmingAgent.hpp"
+#include "../../source/Agents/PacingAgent.hpp"
 #include "../../source/Worlds/MazeWorld.hpp"
 
 using namespace cse498;
@@ -308,6 +309,159 @@ TEST_CASE("Agent skips itself when gathering knowledge", "[SwarmingAgent]") {
 }
 
 // Multiple agents with full RunAgents cycle
+
+// ==================
+// ADDITIONAL TESTS
+// ==================
+
+// 1. Non-SwarmingAgent neighbor — exercises the dynamic_cast → continue branch
+
+TEST_CASE("Agent skips non-SwarmingAgent neighbors during knowledge merge", "[SwarmingAgent]") {
+    MazeWorld world;
+
+    // Add a PacingAgent — this is NOT a SwarmingAgent
+    auto & pacer = world.AddAgent<PacingAgent>("Pacer");
+    pacer.SetLocation(WorldPosition{1, 1});
+
+    // Add a SwarmingAgent seeking a target it doesn't know about
+    auto & seeker = world.AddAgent<SwarmingAgent>("Seeker");
+    seeker.SetLocation(WorldPosition{2, 1});
+    seeker.SetTarget(99);
+    seeker.SetTarget(99);
+
+    // Should not crash and should not learn anything from the PacingAgent
+    size_t action = seeker.SelectAction(world.GetGrid());
+    REQUIRE(seeker.GetKnownLocations().empty());
+    REQUIRE(action >= MOVE_UP);
+    REQUIRE(action <= MOVE_RIGHT);
+}
+
+// 2. Initialize() return value
+
+TEST_CASE("Initialize returns true when world provides required actions", "[SwarmingAgent]") {
+    MazeWorld world;
+    auto & agent = world.AddAgent<SwarmingAgent>("Agent");
+    agent.SetLocation(WorldPosition{1, 1});
+
+    // Initialize is called inside AddAgent; call it again to verify the return value
+    REQUIRE(agent.Initialize() == true);
+}
+
+// 3. Multiple agents with overlapping partial knowledge
+
+TEST_CASE("Knowledge merge only adds new keys, does not duplicate shared keys", "[SwarmingAgent]") {
+    MazeWorld world;
+
+    // Agent A knows locations 1 and 2
+    auto & a = world.AddAgent<SwarmingAgent>("A");
+    a.SetLocation(WorldPosition{1, 1});
+    a.AddKnownLocation(1, WorldPosition{9, 9});
+    a.AddKnownLocation(2, WorldPosition{5, 5});
+
+    // Agent B knows locations 2 and 3
+    auto & b = world.AddAgent<SwarmingAgent>("B");
+    b.SetLocation(WorldPosition{2, 1});
+    b.AddKnownLocation(2, WorldPosition{5, 5});
+    b.AddKnownLocation(3, WorldPosition{1, 9});
+
+    // Agent C knows nothing, targets location 1
+    auto & c = world.AddAgent<SwarmingAgent>("C");
+    c.SetLocation(WorldPosition{3, 1});
+    c.SetTarget(1);
+
+    (void)c.SelectAction(world.GetGrid());
+
+    const auto & locs = c.GetKnownLocations();
+    REQUIRE(locs.size() == 3);
+    REQUIRE(locs.contains(1));
+    REQUIRE(locs.contains(2));
+    REQUIRE(locs.contains(3));
+}
+
+// 4. Duplicate key via AddKnownLocation — insert semantics
+
+TEST_CASE("AddKnownLocation with duplicate key overwrites the previous value", "[SwarmingAgent]") {
+    MazeWorld world;
+    auto & agent = world.AddAgent<SwarmingAgent>("Agent");
+    agent.SetLocation(WorldPosition{1, 1});
+
+    agent.AddKnownLocation(10, WorldPosition{5, 5});
+    agent.AddKnownLocation(10, WorldPosition{9, 9});
+
+    auto result = agent.GetKnownLocations().at(10);
+    REQUIRE(result.has_value());
+    // RobinHoodMap::insert overwrites on duplicate key
+    REQUIRE(result.value().X() == Approx(9.0));
+    REQUIRE(result.value().Y() == Approx(9.0));
+}
+
+// 5. Deterministic wandering — same ID produces same sequence
+
+TEST_CASE("Wandering is deterministic given the same agent ID seed", "[SwarmingAgent]") {
+    // Create two separate worlds so agent IDs are both 0
+    MazeWorld world1;
+    auto & a1 = world1.AddAgent<SwarmingAgent>("A");
+    a1.SetLocation(WorldPosition{5, 5});
+
+    MazeWorld world2;
+    auto & a2 = world2.AddAgent<SwarmingAgent>("A");
+    a2.SetLocation(WorldPosition{5, 5});
+
+    // Both agents have ID 0 and same seed — wander sequences should match
+    for (int i = 0; i < 20; ++i) {
+        REQUIRE(a1.SelectAction(world1.GetGrid()) == a2.SelectAction(world2.GetGrid()));
+    }
+}
+
+// 6. Diagonal target with equal dx and dy — boundary condition
+
+TEST_CASE("Agent moves horizontally when dx equals dy", "[SwarmingAgent]") {
+    MazeWorld world;
+    auto & agent = world.AddAgent<SwarmingAgent>("Agent");
+    // dx = 2, dy = 2 — abs(dx) >= abs(dy) is true, so horizontal (right) wins
+    agent.SetLocation(WorldPosition{1, 1});
+    agent.SetTarget(99);
+    agent.AddKnownLocation(99, WorldPosition{3, 3});
+
+    size_t action = agent.SelectAction(world.GetGrid());
+    REQUIRE(action == MOVE_RIGHT);
+}
+
+// 7. Many agents sharing knowledge — light stress test
+
+TEST_CASE("Knowledge spreads correctly among many agents", "[SwarmingAgent]") {
+    MazeWorld world;
+
+    // First agent knows the target location
+    auto & knower = world.AddAgent<SwarmingAgent>("Knower");
+    knower.SetLocation(WorldPosition{1, 1});
+    knower.AddKnownLocation(42, WorldPosition{9, 9});
+
+    // Add 15 seekers that all want target 42
+    std::vector<std::reference_wrapper<SwarmingAgent>> seekers;
+    for (int i = 0; i < 15; ++i) {
+        auto & s = world.AddAgent<SwarmingAgent>("Seeker" + std::to_string(i));
+        s.SetLocation(WorldPosition{static_cast<double>(1 + (i % 8)),
+                                    static_cast<double>(2 + (i / 8))});
+        s.SetTarget(42);
+        seekers.push_back(s);
+    }
+
+    // Run one round — every seeker should learn where target 42 is
+    for (auto & ref : seekers) {
+        (void)ref.get().SelectAction(world.GetGrid());
+    }
+
+    for (auto & ref : seekers) {
+        REQUIRE(ref.get().GetKnownLocations().contains(42));
+        auto result = ref.get().GetKnownLocations().at(42);
+        REQUIRE(result.has_value());
+        REQUIRE(result.value().X() == Approx(9.0));
+        REQUIRE(result.value().Y() == Approx(9.0));
+    }
+}
+
+// Full RunAgents integration
 
 TEST_CASE("Full RunAgents cycle moves agent toward target", "[SwarmingAgent]") {
     MazeWorld world;
