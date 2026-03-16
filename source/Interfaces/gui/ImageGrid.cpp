@@ -34,7 +34,7 @@ namespace cse498
 
         auto expectedImageList = LoadImages(imagePaths);
 
-        WorldGrid &grid = mWorld.GetGrid();
+        const WorldGrid &grid = mWorld.GetGrid();
         const std::vector<CellType> &cellTypes = grid.GetCellTypes();
 
         if (expectedImageList.has_value())
@@ -67,7 +67,7 @@ namespace cse498
     void ImageGrid::RenderGrid()
     {
         // get the grid from the WorldBase class
-        WorldGrid &grid = mWorld.GetGrid();
+        const WorldGrid &grid = mWorld.GetGrid();
 
         // loop over rows
         for (size_t y = 0; y < grid.GetHeight(); ++y)
