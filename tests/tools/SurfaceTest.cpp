@@ -5,7 +5,7 @@
 #include <vector>
 #include <tuple>
 
-#include "../../source/tools/PointClass.hpp"
+#include "../../source/tools/Point.hpp"
 #include "../../source/tools/Circle.hpp"
 #include "../../source/tools/Box.hpp"
 #include "../../source/tools/Surface.hpp"

@@ -25,7 +25,7 @@
 #include <numbers>
 #endif
 
-#include "PointClass.hpp"
+#include "Point.hpp"
 
 namespace cse498 {
 

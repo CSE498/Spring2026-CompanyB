@@ -1,4 +1,4 @@
-#include "../../source/tools/PointClass.hpp"
+#include "../../source/tools/Point.hpp"
 #include "../../third-party/Catch/single_include/catch2/catch.hpp"               
 
 using namespace cse498; 

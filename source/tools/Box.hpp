@@ -8,7 +8,7 @@
 #ifndef CSE498_BOX_HPP
 #define CSE498_BOX_HPP
 
-#include "PointClass.hpp"
+#include "Point.hpp"
 #include "Circle.hpp"
 #include <cmath>
 #include <optional>

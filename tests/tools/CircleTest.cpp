@@ -11,7 +11,7 @@
 #include <cmath>
 #include <stdexcept>
 
-#include "../../source/tools/PointClass.hpp"
+#include "../../source/tools/Point.hpp"
 #include "../../source/tools/Circle.hpp"
 
 using namespace cse498;

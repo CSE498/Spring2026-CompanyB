@@ -6,7 +6,7 @@
  */
 
 #include "../source/tools/Box.hpp"
-#include "../source/tools/PointClass.hpp"
+#include "../source/tools/Point.hpp"
 #include "../source/tools/Circle.hpp"
 #include "../third-party/Catch/single_include/catch2/catch.hpp"
 #include <iostream>
