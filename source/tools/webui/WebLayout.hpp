@@ -6,12 +6,12 @@
 
 #pragma once
 
+#include <emscripten/val.h>
+
+#include <expected>
 #include <memory>
 #include <utility>
 #include <vector>
-#include <expected>
-
-#include <emscripten/val.h>
 
 #include "WebElement.hpp"
 
@@ -52,14 +52,16 @@ class WebLayout : public WebElement {
    * @param elem The child element to add.
    * @return Reference to this layout for method chaining.
    */
-  std::expected<void, WebLayout::Error> AddChild(std::shared_ptr<WebElement> elem);
+  std::expected<void, WebLayout::Error> AddChild(
+      std::shared_ptr<WebElement> elem);
 
   /**
    * @brief Removes a child WebElement from this layout in the DOM.
    * @param elem The child element to remove.
    * @return Reference to this layout for method chaining.
    */
-  std::expected<void, WebLayout::Error> RemoveChild(std::shared_ptr<WebElement> elem);
+  std::expected<void, WebLayout::Error> RemoveChild(
+      std::shared_ptr<WebElement> elem);
 
   size_t GetNumChildren() const;
 

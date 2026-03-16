@@ -8,6 +8,7 @@
 
 #include <emscripten.h>
 #include <emscripten/html5.h>
+
 #include <algorithm>
 
 using emscripten::val;
@@ -33,7 +34,8 @@ WebLayout::~WebLayout() {
   }
 }
 
-std::expected<void, WebLayout::Error> WebLayout::AddChild(std::shared_ptr<WebElement> elem) {
+std::expected<void, WebLayout::Error> WebLayout::AddChild(
+    std::shared_ptr<WebElement> elem) {
   if (!elem) {
     return std::unexpected(WebLayout::Error::NullPtr);
   }
@@ -54,7 +56,8 @@ std::expected<void, WebLayout::Error> WebLayout::AddChild(std::shared_ptr<WebEle
   return {};
 }
 
-std::expected<void, WebLayout::Error> WebLayout::RemoveChild(std::shared_ptr<WebElement> elem) {
+std::expected<void, WebLayout::Error> WebLayout::RemoveChild(
+    std::shared_ptr<WebElement> elem) {
   if (!elem) {
     return std::unexpected(WebLayout::Error::NullPtr);
   }
@@ -75,9 +78,7 @@ std::expected<void, WebLayout::Error> WebLayout::RemoveChild(std::shared_ptr<Web
   return {};
 }
 
-size_t WebLayout::GetNumChildren() const {
-  return elements.size();
-}
+size_t WebLayout::GetNumChildren() const { return elements.size(); }
 
 bool WebLayout::ContainsChild(std::shared_ptr<WebElement> elem) const {
   return std::find(elements.begin(), elements.end(), elem) != elements.end();
