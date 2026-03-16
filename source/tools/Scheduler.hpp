@@ -964,7 +964,7 @@ namespace cse498 {
     [[nodiscard]] size_t GetSchedulingCycle() const noexcept { return scheduling_cycle;  }
     
     /**
-     * @brief Reset all dynamic weights to their base values
+     * @brief Reset all adjusted weights (dynamic weights) to their base values
      * 
      */
     void ResetAdjustedWeights() 
