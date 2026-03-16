@@ -5,7 +5,8 @@
 #include <cmath> // for std::abs, std::sqrt, std::cos, std::sin
 #include <algorithm> // for std::max
 #include <numbers> // for std::numbers::pi
-
+#include <expected>
+#include <string>
 
 namespace cse498 {
 
@@ -38,62 +39,63 @@ public:
 
 
     // setters to set value of x and y 
-    Point& setX(double X=0.0) { this->x = X; return *this;}
-    Point& setY(double Y=0.0) { this->y = Y; return *this; }
+    Point& setX(double x_value=0.0) { x = x_value; return *this;}
+    Point& setY(double y_value=0.0) { y = y_value; return *this;}
 
     // operators
     // addition (+=)
     Point& operator+=(const Point& other){
-        this->x += other.x;
-        this->y += other.y;
+        x += other.x;
+        y += other.y;
         return *this;
     }
 
     // subtraction (-=)
     Point& operator-=(const Point& other){
-        this->x -= other.x;
-        this->y -= other.y;
+        x -= other.x;
+        y -= other.y;
         return *this;
     }
 
     //3. Geometry: dot and cross product, magnitude, normalize(return unit vector),
-    double dot(const Point& A) const{
-        return (( this->x* A.getX() ) + ( this->y * A.getY() ));
+    [[nodiscard]] double dot(const Point& other) const{
+        return ((x* other.getX()) + (y * other.getY()));
     }
 
-
-    double magnitude() const{
-        double X_squared = this->x *this->x;
-        double Y_squared = this->y * this->y;
-        double square_sum = (X_squared + Y_squared);
-        double square_root = std::sqrt(square_sum);
-        return square_root;
-        
+    [[nodiscard]] double magnitude() const{
+        return std::sqrt(x * x + y * y);
     }
+
     //4. Transforms: rotate, scale
-    // scale method -- I might delete this in the future 
-    // since I already have operator*
     Point& scale(double scalar){
-        x = this->x * scalar;
-        y = this->y * scalar;
+        x = x * scalar;
+        y = y * scalar;
         return *this;
     }
 
     // normalize
     Point& normalize(){
         double mag = this->magnitude(); 
-        if (mag != 0){
-            x = this->x / mag;
-            y = this->y / mag;
+        if (!tol_equal(mag, 0.0)){
+            x = x / mag;
+            y = y / mag;
         }
-
         return *this;
     }
+
+	[[nodiscard]] static
+		std::expected<Point, std::string>safe_normalize(const Point& p){
+    	double mag = p.magnitude();
+    	if (tol_equal(mag, 0.0))
+        	return std::unexpected("Cannot normalize a zero vector");
+    	return Point(p.getX() / mag, p.getY() / mag);
+	}
     
     // rotate 
-    Point& rotate(double deg, Point pivot = {0,0},
+    Point& rotate(double deg, const Point& pivot = {0,0},
                   bool counter_clockwise = true){ 
-        //return *this; // I will implement this later.
+        // Skip rotation if angle is effectively zero 
+        // (within floating-point tolerance)
         if (tol_equal(deg, 0)) return *this;
         if (!counter_clockwise) deg = -deg;
 
@@ -102,11 +104,11 @@ public:
         double tempx = x - pivot.x; 
         double tempy = y - pivot.y; 
 
-        double c = std::cos(rad);
-        double s = std::sin(rad);
+        double cos_rad = std::cos(rad);
+        double sin_rad = std::sin(rad);
 
-        x = (( tempx*c ) - ( tempy*s )) + pivot.x;
-        y = (( tempx*s ) + ( tempy*c )) + pivot.y;
+        x = ((tempx*cos_rad) - (tempy*sin_rad)) + pivot.x;
+        y = ((tempx*sin_rad) + (tempy*cos_rad)) + pivot.y;
 
         return *this;
     }
@@ -116,12 +118,17 @@ public:
     // area of triangle, possibly torque
     // 2D cross product yields a fake "k" in ijk system 
     // my method will return a scalar, not a point vector 
-    double cross_product(const Point& other) const {
-        return (this->x * other.y) - (this->y * other.x);
+    [[nodiscard]] double cross_product(const Point& other) const{
+        return (x * other.y) - (y * other.x);
     }
 
 
 };
+
+inline std::ostream& operator<<(std::ostream& os, const Point& p) {
+    return os << "(" << p.getX() << ", " << p.getY() << ")";
+}
+
 
 // The addition "operators"
 Point operator+(const Point& lhs, const Point& rhs);
