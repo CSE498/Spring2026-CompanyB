@@ -8,11 +8,16 @@
 #include <functional>
 #include <initializer_list>
 #include <ranges>
+#include <type_traits>
 #include <vector>
 
 namespace cse498 {    
 
-    /**
+    enum class FunctionSetError {
+        IndexOutOfBounds
+    };
+
+     /**
      * @brief A collection of callable objects with uniform signature.
      * 
      * Stores std::function objects and allows batch invocation, error
@@ -50,6 +55,18 @@ namespace cse498 {
         constexpr void add(const FuncType& func) {
             functions.emplace_back(func);
         }
+        
+        /**
+         * @brief Check whether a fucntion can be stored in the set.
+         *
+         * @pram func The function to check.
+         * 
+         * @note We never actually use f, but its useful so the compiler can auto deduce type
+         **/
+        template <typename F>
+        constexpr bool check_storable(const F& f) {
+            return std::is_constructible_v<FuncType, F>;
+        }
 
         /**
          * @brief Invoke all functions in the set with the given arguments.
@@ -58,7 +75,7 @@ namespace cse498 {
          * 
          * @param args Arguments to pass to each stored function.
          */
-        constexpr void invoke(Params... args) const {
+        constexpr void invoke(const Params&... args) const {
             std::ranges::for_each(functions, [&](const FuncType& func){
                 func(args...);
             });
@@ -70,24 +87,25 @@ namespace cse498 {
          * Executes each function in the set. If a function throws, its index
          * is recorded. Returns a std::expected:
          * - `void` on success
-         * - `std::vector<size_t>` of function indexes that threw
+         * - `std::vector<std::pair<size_t, std::exception_ptr>>` of function indexes that threw and the exception
          * 
          * @param args Arguments to pass to each function.
          * @return std::expected<void, std::vector<size_t>>
          */
-        constexpr std::expected<void, std::vector<size_t>> invoke_all(Params... args) const {
-            std::vector<size_t> error_funcs;
-	    // std::views::enumerate doesnt work on apple clang so we do old style for loop instead
+        constexpr std::expected<void, std::vector<std::pair<size_t, std::exception_ptr>>> invoke_catch(const Params&... args) const {
+           std::vector<std::pair<size_t, std::exception_ptr>> errors;
+	        // std::views::enumerate doesnt work on apple clang so we do old style for loop instead
+            // We cant do a normal range based loop because we want the index
             for (size_t index{0}; index < functions.size(); ++index) {
-		auto func = functions[index];
+	        	auto func = functions[index];
                 try {
                     func(args...);
                 } catch (...) {
-                    error_funcs.push_back(index);
+                    errors.emplace_back(index, std::current_exception());
                 }
             }
-            if (!error_funcs.empty()) {
-                return std::unexpected{error_funcs};
+            if (!errors.empty()) {
+                return std::unexpected{errors};
             }
             return {};
         }
@@ -101,7 +119,7 @@ namespace cse498 {
          */
         constexpr void operator()(Params... args) const {
             invoke(args...);
-        }
+        }                
 
         /**
          * @brief Access a function by index with bounds checking.
@@ -153,12 +171,14 @@ namespace cse498 {
          * @brief Remove a function at a specific index with bounds checking.
          * 
          * @param index Index of the function to remove.
-         * @throws std::out_of_range if index is invalid.
+         * @returns std::expected<void, FunctionSetError> depending on if index is out of bounds.
          */
-        constexpr void pop_at(size_t index) {
-            if (index >= functions.size())
-                throw std::out_of_range("FunctionSet::pop_at");
+        constexpr std::expected<void, FunctionSetError> pop_at(size_t index) {
+            if (index >= functions.size()) {
+                return std::unexpected{FunctionSetError::IndexOutOfBounds};
+            }
             functions.erase(functions.begin() + index);
+            return {};
         }
 
         /**
