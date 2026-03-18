@@ -1,0 +1,66 @@
+name: Integration
+
+on:
+  push:
+    branches:
+      - "**"
+  # Allows manually triggering on main to setup caches for existing PRs
+  workflow_dispatch:
+
+jobs:
+  format:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Formatting Checks
+        run: find source tests -type f \( -name "*.cpp" -o -name "*.hpp" -o -name "*.c" -o -name "*.h" \) | xargs clang-format --style="Google" -n -Werror --verbose
+
+  native-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Qt6
+        uses: jurplel/install-qt-action@v4
+        with:
+          version: "6.*"
+          cache: true
+          install-deps: true
+
+      - name: Run Tests
+        env:
+          # Headless mode
+          QT_QPA_PLATFORM: offscreen
+        run: make test
+
+  emscripten-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Cache Emscripten
+        id: cache-emsdk
+        uses: actions/cache@v4
+        with:
+          path: ~/emsdk
+          key: emsdk-${{ runner.os }}-5.0.0
+
+      - name: Install Emscripten
+        if: steps.cache-emsdk.outputs.cache-hit != 'true'
+        run: |
+          git clone https://github.com/emscripten-core/emsdk.git ~/emsdk
+          ~/emsdk/emsdk install 5.0.0
+          ~/emsdk/emsdk activate 5.0.0
+
+      - name: Activate Emscripten
+        run: |
+          source ~/emsdk/emsdk_env.sh
+          echo "EMSDK=$HOME/emsdk" >> $GITHUB_ENV
+          echo "$HOME/emsdk/upstream/emscripten" >> $GITHUB_PATH
+
+      - name: Run Tests
+        env:
+          SOURCE_DIR: ${{ github.workspace }}/source
+          BUILD_DIR: /tmp/build
+        run: bash scripts/docker-entrypoint.sh test-emscripten
