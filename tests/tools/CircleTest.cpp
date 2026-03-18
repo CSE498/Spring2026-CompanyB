@@ -6,8 +6,8 @@
  * Test files for company C++ classes live in tests/tools/, parallel to source/tools/.
  */
 
-#include "../../third-party/Catch/single_include/catch2/catch.hpp"
-
+// #include "../../third-party/Catch/single_include/catch2/catch.hpp"
+#include <catch2/catch_test_macros.hpp>
 #include <cmath>
 #include <stdexcept>
 

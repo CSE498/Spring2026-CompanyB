@@ -1,5 +1,7 @@
 #include "../../source/tools/Point.hpp"
-#include "../../third-party/Catch/single_include/catch2/catch.hpp"               
+// #include "../../third-party/Catch/single_include/catch2/catch.hpp"               
+
+#include <catch2/catch_test_macros.hpp>
 
 using namespace cse498; 
 
