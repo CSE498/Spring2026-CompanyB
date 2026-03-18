@@ -1,6 +1,6 @@
+#include <catch2/catch.hpp>
 #include "../../source/tools/StateGrid/StateGrid.hpp"
 #include "../../source/tools/StateGrid/Tile.hpp"
-#include "catch2/catch.hpp"
 
 namespace cse498
 {

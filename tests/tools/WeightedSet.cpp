@@ -1,11 +1,10 @@
-#include "../../source/tools/WeightedSet.hpp"
-
+#include <catch2/catch.hpp>
 #include <cmath>
 #include <set>
 #include <unordered_map>
 #include <vector>
 
-#include "catch2/catch.hpp"
+#include "../../source/tools/WeightedSet.hpp"
 
 void FillSetWithInts(cse498::WeightedSet<int>& ws, const int lower,
                      const int upper, const bool differentWeights = false) {

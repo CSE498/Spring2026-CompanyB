@@ -1,9 +1,8 @@
 #include "../../source/tools/Random.hpp"
 
+#include <catch2/catch.hpp>
 #include <cmath>
 #include <vector>
-
-#include "catch2/catch.hpp"
 
 TEST_CASE("Random basic range behavior", "[random]") {
   cse498::Random rng(12345);

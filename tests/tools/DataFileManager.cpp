@@ -1,9 +1,8 @@
 #include "../../source/tools/DataFileManager.hpp"
 
+#include <catch2/catch.hpp>
 #include <string>
 #include <vector>
-
-#include "catch2/catch.hpp"
 
 /**
  * Helper to register a set of simple attributes for testing.

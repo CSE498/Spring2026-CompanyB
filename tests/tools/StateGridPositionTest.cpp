@@ -1,4 +1,4 @@
-#include "catch2/catch.hpp"
+#include <catch2/catch.hpp>
 #include "../../source/tools/StateGridPosition.hpp"
 #include "../../source/tools/StateGrid/StateGrid.hpp"
 
