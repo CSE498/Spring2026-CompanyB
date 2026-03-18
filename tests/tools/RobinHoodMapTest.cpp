@@ -18,7 +18,10 @@
  * @author Claude Opus 4.5
  */
 
-#include "../../../third-party/Catch/single_include/catch2/catch.hpp"
+// #include "../../../third-party/Catch/single_include/catch2/catch.hpp"
+
+#include <catch2/catch_test_macros.hpp>
+#include <catch2/matchers/catch_matchers_floating_point.hpp>
 #include <string>
 #include <climits>
 #include <type_traits>
@@ -192,7 +195,7 @@ TEST_CASE("At empty map", "[at]") {
 
 // operator[]
 
-TEST_CASE("Const subscript operator behaves like at", "[operator[]]") {
+TEST_CASE("Const subscript operator behaves like at") {
     RobinHoodMap<int, int> map;
     map.insert(5, 500);
     
@@ -666,8 +669,8 @@ TEST_CASE("Type variations double value", "[types]") {
     auto value1 = map.at(1);
     auto value2 = map.at(2);
     
-    REQUIRE(value1.value() == Approx(3.14159));
-    REQUIRE(value2.value() == Approx(2.71828));
+    REQUIRE_THAT(value1.value(), Catch::Matchers::WithinRel(3.14159));
+    REQUIRE_THAT(value2.value(), Catch::Matchers::WithinRel(2.71828));
 }
 
 // Resize Behavior
@@ -1351,7 +1354,7 @@ TEST_CASE("Reserve prevents automatic resizes", "[reserve]") {
 
 // Non-const operator[] Tests
 
-TEST_CASE("Non-const operator[] inserts default value", "[operator[]-nonconst]") {
+TEST_CASE("Non-const operator() <- square brackets inserts default value") {
     RobinHoodMap<int, int> map;
     int& value = map[1];
     value = 100;
@@ -1360,7 +1363,7 @@ TEST_CASE("Non-const operator[] inserts default value", "[operator[]-nonconst]")
     REQUIRE(map.at(1).value() == 100);
 }
 
-TEST_CASE("Non-const operator[] returns existing value", "[operator[]-nonconst]") {
+TEST_CASE("Non-const operator() <- square brackets returns existing value") {
     RobinHoodMap<int, int> map;
     map.insert(1, 100);
     
@@ -1371,7 +1374,7 @@ TEST_CASE("Non-const operator[] returns existing value", "[operator[]-nonconst]"
     REQUIRE(map.at(1).value() == 999);
 }
 
-TEST_CASE("Non-const operator[] with string values", "[operator[]-nonconst]") {
+TEST_CASE("Non-const operator() <- square brackets with string values") {
     RobinHoodMap<std::string, std::string> map;
     map["hello"] = "world";
     
@@ -1379,7 +1382,7 @@ TEST_CASE("Non-const operator[] with string values", "[operator[]-nonconst]") {
     REQUIRE(map.at("hello").value() == "world");
 }
 
-TEST_CASE("Non-const operator[] modifies in place", "[operator[]-nonconst]") {
+TEST_CASE("Non-const operator() <- square brackets modifies in place") {
     RobinHoodMap<int, int> map;
     map[1] = 100;
     map[1] = 200;
@@ -1389,7 +1392,7 @@ TEST_CASE("Non-const operator[] modifies in place", "[operator[]-nonconst]") {
     REQUIRE(map.at(1).value() == 300);
 }
 
-TEST_CASE("Non-const operator[] multiple keys", "[operator[]-nonconst]") {
+TEST_CASE("Non-const operator() <- square brackets multiple keys") {
     RobinHoodMap<int, int> map;
     map[1] = 100;
     map[2] = 200;
@@ -1984,7 +1987,7 @@ TEST_CASE("Remove with data structure values", "[data-structures]") {
     REQUIRE(map.at("c").value().size() == 3u);
 }
 
-TEST_CASE("Non-const operator[] with vector value", "[data-structures]") {
+TEST_CASE("Non-const operator() <- square brackets with vector value", "[data-structures]") {
     RobinHoodMap<std::string, std::vector<int>> map;
 
     // operator[] should default-insert an empty vector

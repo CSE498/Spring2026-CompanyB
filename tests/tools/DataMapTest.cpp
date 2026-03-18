@@ -1,5 +1,9 @@
 #include "../../source/tools/DataMap.hpp"
-#include "../../third-party/Catch/single_include/catch2/catch.hpp"
+// #include "../../third-party/Catch/single_include/catch2/catch.hpp"
+// #include "../../third-party/Catch/single_include/catch2/catch.hpp"
+
+#include <catch2/catch_test_macros.hpp>
+
 #include <string>
 #include <vector>
 #include <set>
