@@ -28,8 +28,8 @@ class WorldPosition {
   WorldPosition(T x, U y)
       : WorldPosition(static_cast<double>(x), static_cast<double>(y)) {}
 
-  WorldPosition(const WorldPosition &) = default;
-  WorldPosition &operator=(const WorldPosition &) = default;
+  WorldPosition(const WorldPosition&) = default;
+  WorldPosition& operator=(const WorldPosition&) = default;
 
   // -- Accessors --
 
@@ -45,9 +45,9 @@ class WorldPosition {
   }
 
   /// Enable all comparison operators (==, !=, <, <=, >, >=)
-  auto operator<=>(const WorldPosition &) const = default;
+  auto operator<=>(const WorldPosition&) const = default;
 
-  WorldPosition &Set(double in_x, double in_y) {
+  WorldPosition& Set(double in_x, double in_y) {
     x = in_x;
     y = in_y;
     return *this;

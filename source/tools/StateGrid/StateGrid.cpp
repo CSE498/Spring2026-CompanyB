@@ -18,7 +18,7 @@ Tile tileFromSymbol(char symbol, int r, int c) {
 }
 
 StateGrid::StateGrid(int width, int height,
-                     const std::vector<std::vector<char>> &premadeMap)
+                     const std::vector<std::vector<char>>& premadeMap)
     : width(width), height(height) {
   // An LLM helped with error handling
 
@@ -52,7 +52,7 @@ int StateGrid::getWidth() const { return width; }
 
 int StateGrid::getHeight() const { return height; }
 
-Tile *StateGrid::getTile(int row, int col) {
+Tile* StateGrid::getTile(int row, int col) {
   if (row < 0 || row >= height || col < 0 || col >= width) {
     return nullptr;
   }
@@ -60,7 +60,7 @@ Tile *StateGrid::getTile(int row, int col) {
   return &tiles[row][col];
 }
 
-std::vector<std::vector<Tile>> &StateGrid::getAllTiles() { return tiles; }
+std::vector<std::vector<Tile>>& StateGrid::getAllTiles() { return tiles; }
 
 bool StateGrid::inBounds(int row, int col) const {
   // inbounds check

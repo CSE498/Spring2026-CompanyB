@@ -22,33 +22,33 @@ class Entity {
   const size_t id;    ///< Unique ID for this entity; should never change.
   std::string name;   ///< Name for this entity (E.g., "Player 1" or "+2 Sword")
   Location location;  ///< Where is this entity located?
-  const WorldBase &world;  ///< Which world does this entity belong to?
+  const WorldBase& world;  ///< Which world does this entity belong to?
 
   // @TODO: entities should probably have annotations or properties...
   //        Any public functions here for properties could be useful
   //        in agents, items, or interfaces.
 
  public:
-  Entity(size_t id, const std::string &name, const WorldBase &world)
+  Entity(size_t id, const std::string& name, const WorldBase& world)
       : id(id), name(name), world(world) {}
-  Entity(const Entity &) =
+  Entity(const Entity&) =
       delete;  // Entities must be unique and shouldn't be copied.
-  Entity(Entity &&) = default;  // Entities CAN be moved.
+  Entity(Entity&&) = default;   // Entities CAN be moved.
   virtual ~Entity() = default;  // Destructor must be virtual for derived class.
 
-  Entity &operator=(const Entity &) =
+  Entity& operator=(const Entity&) =
       delete;  // Entities must be unique and shouldn't be copied.
 
   // -- Accessors --
   [[nodiscard]] size_t GetID() const { return id; }
-  [[nodiscard]] const std::string &GetName() const { return name; }
-  [[nodiscard]] const Location &GetLocation() const { return location; }
+  [[nodiscard]] const std::string& GetName() const { return name; }
+  [[nodiscard]] const Location& GetLocation() const { return location; }
 
-  Entity &SetName(const std::string &in_name) {
+  Entity& SetName(const std::string& in_name) {
     name = in_name;
     return *this;
   }
-  Entity &SetLocation(Location in) {
+  Entity& SetLocation(Location in) {
     location = in;
     return *this;
   }

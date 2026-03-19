@@ -66,17 +66,17 @@ class WorldGrid {
   std::string GetTypeName() const { return "cse498::WorldGrid"; }
 
   /// Write the current state of this grid into the provided stream.
-  void Serialize(std::ostream &os) const {
+  void Serialize(std::ostream& os) const {
     os << width << " " << height;
     for (size_t state : cells) os << ' ' << state;
     os << std::endl;
   }
 
   /// Read the state of the grid out of the provided stream.
-  void Deserialize(std::istream &is) {
+  void Deserialize(std::istream& is) {
     is >> width >> height;
     cells.resize(width * height);
-    for (size_t &state : cells) is >> state;
+    for (size_t& state : cells) is >> state;
   }
 
  public:
@@ -88,11 +88,11 @@ class WorldGrid {
                 "This is an invalid cell type and should not be reachable.");
   }
   WorldGrid() : WorldGrid(0, 0, 0) {}
-  WorldGrid(const WorldGrid &) = default;
-  WorldGrid(WorldGrid &&) = default;
+  WorldGrid(const WorldGrid&) = default;
+  WorldGrid(WorldGrid&&) = default;
 
-  WorldGrid &operator=(const WorldGrid &) = default;
-  WorldGrid &operator=(WorldGrid &&) = default;
+  WorldGrid& operator=(const WorldGrid&) = default;
+  WorldGrid& operator=(WorldGrid&&) = default;
 
   // -- Accessors --
   [[nodiscard]] size_t GetWidth() const { return width; }
@@ -116,7 +116,7 @@ class WorldGrid {
   }
 
   /// @return A reference to the grid state at the provided x and y coordinates
-  [[nodiscard]] size_t &operator[](size_t x, size_t y) {
+  [[nodiscard]] size_t& operator[](size_t x, size_t y) {
     assert(IsValid(x, y));
     return cells[ToIndex(x, y)];
   }
@@ -124,7 +124,7 @@ class WorldGrid {
   [[nodiscard]] size_t operator[](WorldPosition pos) const {
     return cells[ToIndex(pos)];
   }
-  [[nodiscard]] size_t &operator[](WorldPosition pos) {
+  [[nodiscard]] size_t& operator[](WorldPosition pos) {
     return cells[ToIndex(pos)];
   }
 
@@ -132,7 +132,7 @@ class WorldGrid {
   //   Cell type management...
   // ===========================
 
-  [[nodiscard]] const std::vector<CellType> &GetCellTypes() const {
+  [[nodiscard]] const std::vector<CellType>& GetCellTypes() const {
     return cell_types;
   }
 
@@ -143,7 +143,7 @@ class WorldGrid {
   /// line)
   /// @return A unique ID associated with this cell type (position in
   /// type_options vector)
-  size_t AddCellType(const std::string &name, const std::string &desc = "",
+  size_t AddCellType(const std::string& name, const std::string& desc = "",
                      char symbol = '\0') {
     cell_types.push_back(CellType{name, desc, symbol});
     return cell_types.size() - 1;
@@ -152,14 +152,14 @@ class WorldGrid {
   /// @brief Return the ID associated with the cell type name.
   /// @param name The unique name of the cell type
   /// @return The unique ID of the cell type (or 0 if it doesn't exist.)
-  [[nodiscard]] size_t GetCellTypeID(const std::string &name) const {
+  [[nodiscard]] size_t GetCellTypeID(const std::string& name) const {
     for (size_t i = 1; i < cell_types.size(); ++i) {
       if (cell_types[i].name == name) return i;
     }
     return 0;
   }
 
-  [[nodiscard]] const std::string &GetCellTypeName(size_t id) const {
+  [[nodiscard]] const std::string& GetCellTypeName(size_t id) const {
     if (id >= cell_types.size()) return cell_types[0].name;
     return cell_types[id].name;
   }
@@ -202,7 +202,7 @@ class WorldGrid {
   /// @brief Write out a human-readable version of the current WorldGrid
   /// @param os Stream to write to
   /// @param types A vector of CellTypes for symbol identification
-  void Print(std::ostream &os) const {
+  void Print(std::ostream& os) const {
     size_t cell_id = 0;
     for (size_t y = 0; y < height; ++y) {
       for (size_t x = 0; x < width; ++x) {
@@ -223,7 +223,7 @@ class WorldGrid {
   }
 
   // Load in a state grid from a vector of strings (one per row).
-  void Load(const std::vector<std::string> &str_grid) {
+  void Load(const std::vector<std::string>& str_grid) {
     height = str_grid.size();
     if (height) width = str_grid[0].size();
     cells.resize(width * height);
@@ -241,7 +241,7 @@ class WorldGrid {
   }
 
   // Load in a state grid from a stream.
-  void Load(std::istream &is) {
+  void Load(std::istream& is) {
     auto str_grid = LoadStream(is);
     Load(str_grid);
   }

@@ -27,7 +27,7 @@ class StateGrid {
    *symbols.
    ***********************************************/
   StateGrid(int width, int height,
-            const std::vector<std::vector<char>> &premadeMap);
+            const std::vector<std::vector<char>>& premadeMap);
 
   /***********************************************
    * Width getter
@@ -51,14 +51,14 @@ class StateGrid {
    *
    * @returns a pointer to the tile, null pointer if out of bounds
    ************************************************/
-  Tile *getTile(int row, int col);
+  Tile* getTile(int row, int col);
 
   /***********************************************
    * All tile getter
    *
    * @returns a reference to the tiles vector so it's mutable
    ************************************************/
-  std::vector<std::vector<Tile>> &getAllTiles();
+  std::vector<std::vector<Tile>>& getAllTiles();
 
   /***********************************************
    * Checks whether a grid coordinate is within bounds and traversable.
