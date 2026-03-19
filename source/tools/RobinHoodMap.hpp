@@ -8,11 +8,10 @@
 #pragma once
 
 #include <algorithm>
+#include <cassert>
+#include <expected>
 #include <functional>
 #include <vector>
-#include <expected>
-#include <cassert>
-
 
 class RobinHoodMapTest;
 
@@ -23,25 +22,26 @@ namespace cse498 {
  */
 template <typename K, typename V>
 class RobinHoodMap {
-
   static_assert(std::is_default_constructible_v<K>,
-    "RobinHoodMap requires K to be default-constructible (used by operator[])");
+                "RobinHoodMap requires K to be default-constructible (used by "
+                "operator[])");
 
  private:
- /**
-  * Entry struct representing a key-value pair in the hash table, 
-  * along with metadata for Robin Hood hashing.
-  */
+  /**
+   * Entry struct representing a key-value pair in the hash table,
+   * along with metadata for Robin Hood hashing.
+   */
   struct Entry {
-    K key;                 //< The key used to access the entry
-    V value;               //< The value associated with the key
-    size_t hash = 0;       //< Stored hash to avoid recomputation
-    bool filled = false;   //< Indicates if the entry is filled
+    K key;                //< The key used to access the entry
+    V value;              //< The value associated with the key
+    size_t hash = 0;      //< Stored hash to avoid recomputation
+    bool filled = false;  //< Indicates if the entry is filled
   };
 
   /// @brief the load factor threshold for resizing the table
   static constexpr double RHM_LOAD_FACTOR = 0.75;
-  /// @brief the initial size of the hash table MUST ALWAYS BE A POWER OF 2 FOR BIT MASKING TO WORK
+  /// @brief the initial size of the hash table MUST ALWAYS BE A POWER OF 2 FOR
+  /// BIT MASKING TO WORK
   static constexpr size_t INITIAL_SIZE = 8;
 
   /// the physical table storing entries
@@ -62,7 +62,8 @@ class RobinHoodMap {
 
     for (auto& entry : oldTable) {
       if (entry.filled) {
-        _insertWithHash(std::move(entry.key), std::move(entry.value), entry.hash);
+        _insertWithHash(std::move(entry.key), std::move(entry.value),
+                        entry.hash);
       }
     }
   }
@@ -88,14 +89,17 @@ class RobinHoodMap {
 
       // Calculate the probe count of the existing entry
       //
-      // same as doing (index - mTable[index].hash % mTable.size()) + mTable.size()) % mTable.size()
-      // 
-      // We use mask instead of the % operator as the mask is bitwise and significantly faster
-      // than using the % operator which is a lot more costly, especially since we are trying to 
-      // optimize for speed 
-      size_t existingProbeCount = (index - (mTable[index].hash & mask) + mTable.size()) & mask;
+      // same as doing (index - mTable[index].hash % mTable.size()) +
+      // mTable.size()) % mTable.size()
+      //
+      // We use mask instead of the % operator as the mask is bitwise and
+      // significantly faster than using the % operator which is a lot more
+      // costly, especially since we are trying to optimize for speed
+      size_t existingProbeCount =
+          (index - (mTable[index].hash & mask) + mTable.size()) & mask;
 
-      // If the existing entry has probed less than the current probe count, swap with it (Robin Hood step)
+      // If the existing entry has probed less than the current probe count,
+      // swap with it (Robin Hood step)
       if (existingProbeCount < probeCount) {
         std::swap(key, mTable[index].key);
         std::swap(value, mTable[index].value);
@@ -132,7 +136,9 @@ class RobinHoodMap {
    * @param other The other RobinHoodMap to move from.
    */
   RobinHoodMap(RobinHoodMap&& other) noexcept
-      : mTable(std::move(other.mTable)), mSize(other.mSize), mHasher(std::move(other.mHasher)) {
+      : mTable(std::move(other.mTable)),
+        mSize(other.mSize),
+        mHasher(std::move(other.mHasher)) {
     other.mSize = 0;
   }
 
@@ -190,17 +196,20 @@ class RobinHoodMap {
     size_t probeCount = 0;
 
     while (mTable[index].filled) {
-
       // Found key
       if (mTable[index].hash == hash && mTable[index].key == key) {
         mTable[index].filled = false;
         --mSize;
 
-        // Now we need to check subsequent entries and shift them back if they are part of the same probe sequence
+        // Now we need to check subsequent entries and shift them back if they
+        // are part of the same probe sequence
         size_t nextIndex = (index + 1) & mask;
         while (mTable[nextIndex].filled) {
           // If the next entry is in its home slot, we can stop shifting
-          if (size_t nextProbeCount = (nextIndex - (mTable[nextIndex].hash & mask) + mTable.size()) & mask;
+          if (size_t nextProbeCount =
+                  (nextIndex - (mTable[nextIndex].hash & mask) +
+                   mTable.size()) &
+                  mask;
               nextProbeCount == 0) {
             break;
           }
@@ -214,7 +223,8 @@ class RobinHoodMap {
         return true;
       }
 
-      if (size_t currentProbeCount = (index - (mTable[index].hash & mask) + mTable.size()) & mask;
+      if (size_t currentProbeCount =
+              (index - (mTable[index].hash & mask) + mTable.size()) & mask;
           currentProbeCount < probeCount) {
         return false;
       }
@@ -227,8 +237,9 @@ class RobinHoodMap {
 
   /**
    * Retrieves the value associated with the given key.
-   * If the key is found, returns a ValueResult with worked=true and a reference to the value.
-   * If the key is not found, returns worked=false and a reference to a default value.
+   * If the key is found, returns a ValueResult with worked=true and a reference
+   * to the value. If the key is not found, returns worked=false and a reference
+   * to a default value.
    * @param key The key to look up.
    * @return ValueResult containing success flag and reference to value.
    */
@@ -241,12 +252,13 @@ class RobinHoodMap {
 
     for (;;) {
       const Entry& entry = mTable[index];
-      
+
       if (!entry.filled) {
         return std::unexpected("Key not found");
       }
 
-      if (size_t entryProbeCount = (index - (entry.hash & mask) + mTable.size()) & mask;
+      if (size_t entryProbeCount =
+              (index - (entry.hash & mask) + mTable.size()) & mask;
           entryProbeCount < probeCount) {
         return std::unexpected("Key not found");
       }
@@ -272,7 +284,8 @@ class RobinHoodMap {
 
   /**
    * Overloaded non-const subscript operator for insertion/update.
-   * If the key does not exist, this will insert it with a default-constructed value
+   * If the key does not exist, this will insert it with a default-constructed
+   * value
    * @param key The key to look up or insert.
    * @return Reference to the value associated with the key.
    */
@@ -286,12 +299,13 @@ class RobinHoodMap {
 
     for (;;) {
       Entry& entry = mTable[searchIndex];
-      
+
       if (!entry.filled) {
         break;
       }
 
-      if (size_t entryProbeCount = (searchIndex - (entry.hash & mask) + mTable.size()) & mask;
+      if (size_t entryProbeCount =
+              (searchIndex - (entry.hash & mask) + mTable.size()) & mask;
           entryProbeCount < searchProbe) {
         break;
       }
@@ -306,7 +320,7 @@ class RobinHoodMap {
 
     // default insert if not found
     insert(key, V{});
-    
+
     // now find the inserted entry to return a reference to its value
     index = hash & mask;
     for (;;) {
@@ -331,12 +345,13 @@ class RobinHoodMap {
 
     for (;;) {
       const Entry& entry = mTable[index];
-      
+
       if (!entry.filled) {
         return false;
       }
 
-      if (size_t entryProbeCount = (index - (entry.hash & mask) + mTable.size()) & mask;
+      if (size_t entryProbeCount =
+              (index - (entry.hash & mask) + mTable.size()) & mask;
           entryProbeCount < probeCount) {
         return false;
       }
@@ -362,17 +377,13 @@ class RobinHoodMap {
    * Checks if the map is empty.
    * @return true if the map has no elements, false otherwise.
    */
-  [[nodiscard]] bool empty() const noexcept {
-    return mSize == 0;
-  }
+  [[nodiscard]] bool empty() const noexcept { return mSize == 0; }
 
   /**
    * Returns the number of elements in the map.
    * @return The size of the map.
    */
-  [[nodiscard]] size_t size() const noexcept {
-    return mSize;
-  }
+  [[nodiscard]] size_t size() const noexcept { return mSize; }
 
   /**
    * Pre-allocates space for at least the specified number of elements.
@@ -393,7 +404,8 @@ class RobinHoodMap {
 
       for (auto& entry : oldTable) {
         if (entry.filled) {
-          _insertWithHash(std::move(entry.key), std::move(entry.value), entry.hash);
+          _insertWithHash(std::move(entry.key), std::move(entry.value),
+                          entry.hash);
         }
       }
     }
@@ -404,8 +416,8 @@ class RobinHoodMap {
    */
   class Iterator {
    private:
-    Entry* mEntry; //< Current entry pointer
-    Entry* mEnd;   //< End entry pointer
+    Entry* mEntry;  //< Current entry pointer
+    Entry* mEnd;    //< End entry pointer
 
     friend class RobinHoodMap;
 
@@ -418,10 +430,10 @@ class RobinHoodMap {
 
     /// Dereferences the iterator to access the current entry.
     /// @return Reference to the current entry.
-    Entry& operator*() { 
+    Entry& operator*() {
       assert(mEntry != mEnd && "Dereferencing end iterator");
       assert(mEntry->filled && "Dereferencing an empty slot");
-      return *mEntry; 
+      return *mEntry;
     }
 
     /// Pre-increment operator to move to the next filled entry.
@@ -502,8 +514,8 @@ class RobinHoodMap {
    */
   class ConstIterator {
    private:
-    const Entry* mEntry; //< Current entry pointer
-    const Entry* mEnd;   //< End entry pointer
+    const Entry* mEntry;  //< Current entry pointer
+    const Entry* mEnd;    //< End entry pointer
 
     friend class RobinHoodMap;
 
@@ -597,7 +609,7 @@ class RobinHoodMap {
   Iterator begin() {
     // find the first filled entry
     auto it = std::find_if(mTable.begin(), mTable.end(),
-        [](const auto& entry) { return entry.filled; });
+                           [](const auto& entry) { return entry.filled; });
 
     // if no entries are filled, return end(), otherwise rerturn an iterator
     // to the first entry.
@@ -619,7 +631,7 @@ class RobinHoodMap {
    */
   ConstIterator begin() const {
     auto it = std::find_if(mTable.cbegin(), mTable.cend(),
-        [](const auto& entry) { return entry.filled; });
+                           [](const auto& entry) { return entry.filled; });
     if (it == mTable.cend()) return end();
     return ConstIterator(&*it, &mTable[mTable.size()]);
   }
@@ -636,18 +648,14 @@ class RobinHoodMap {
    * Returns a const iterator to the first filled entry in the map.
    * @return Const iterator pointing to the first filled entry.
    */
-  ConstIterator cbegin() const {
-    return begin();
-  }
+  ConstIterator cbegin() const { return begin(); }
 
   /**
    * Returns a const iterator to one past the last entry in the map.
    * @return Const iterator pointing to one past the last entry.
    */
-  ConstIterator cend() const {
-    return end();
-  }
+  ConstIterator cend() const { return end(); }
 
   friend class ::RobinHoodMapTest;
 };
-} // namespace cse498
+}  // namespace cse498
