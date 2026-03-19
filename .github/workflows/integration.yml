@@ -17,7 +17,7 @@ jobs:
         id: cache-clang-format
         uses: actions/cache@v4
         with:
-          path: /usr/lib/llvm-21
+          path: ~/llvm-21-cache
           key: clang-format-21-${{ runner.os }}
 
       - name: Install clang-format-21
@@ -28,9 +28,14 @@ jobs:
           echo "deb http://apt.llvm.org/${DISTRO}/ llvm-toolchain-${DISTRO}-21 main" | sudo tee /etc/apt/sources.list.d/llvm-21.list
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends clang-format-21
+          mkdir -p ~/llvm-21-cache/bin ~/llvm-21-cache/lib
+          cp /usr/lib/llvm-21/bin/clang-format ~/llvm-21-cache/bin/clang-format-21
+          ldd /usr/lib/llvm-21/bin/clang-format | grep "=> /" | awk '{print $3}' | xargs -I{} cp {} ~/llvm-21-cache/lib/
 
       - name: Add clang-format-21 to PATH
-        run: echo "/usr/lib/llvm-21/bin" >> $GITHUB_PATH
+        run: |
+          echo "$HOME/llvm-21-cache/bin" >> $GITHUB_PATH
+          echo "LD_LIBRARY_PATH=$HOME/llvm-21-cache/lib:$LD_LIBRARY_PATH" >> $GITHUB_ENV
 
       - name: Formatting Checks
         run: find source tests -type f \( -name "*.cpp" -o -name "*.hpp" -o -name "*.c" -o -name "*.h" \) | xargs clang-format-21 -n -Werror --verbose
