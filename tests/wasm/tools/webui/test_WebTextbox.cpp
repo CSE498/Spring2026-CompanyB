@@ -125,9 +125,11 @@ TEST_CASE("WebTextbox: The Memory Stress Test", "[memory]") {
 
   std::string massive(massive_size, 'X');
   REQUIRE_NOTHROW(heavyBox.SetText(massive));
-  REQUIRE(heavyBox.GetText().value().size() == massive.size()); // Addition of .value()
+  REQUIRE(heavyBox.GetText().value().size() ==
+          massive.size());  // Addition of .value()
 
   std::string more(1024 * 1024, 'Y');  // 1MB more
   REQUIRE_NOTHROW(heavyBox.AppendText(more));
-  REQUIRE(heavyBox.GetText().value().size() == massive_size + (1024 * 1024)); // .value() added here too
+  REQUIRE(heavyBox.GetText().value().size() ==
+          massive_size + (1024 * 1024));  // .value() added here too
 }

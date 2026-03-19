@@ -172,7 +172,8 @@ struct SetupMockDOM {
 
   TEST_CASE("WebImage handles multiple property changes", "[WebImage]") {
     SetupMockDOM mock;
-    cse498::WebImage img("test-img-7", "original.png", "Multi-property test image");
+    cse498::WebImage img("test-img-7", "original.png",
+                         "Multi-property test image");
 
     img.SetSource("updated.png");
     img.SetSize(400, 300);
@@ -198,7 +199,8 @@ struct SetupMockDOM {
 
   TEST_CASE("WebImage SetSize with zero values", "[WebImage]") {
     SetupMockDOM mock;
-    cse498::WebImage img("test-img-zero-size", "test.png", "Zero size test image");
+    cse498::WebImage img("test-img-zero-size", "test.png",
+                         "Zero size test image");
 
     img.SetSize(0, 0);
 
@@ -221,7 +223,8 @@ struct SetupMockDOM {
       "true but naturalWidth = 0",
       "[WebImage]") {
     SetupMockDOM mock;
-    cse498::WebImage img("test-img-has-error", "bad-path.png", "Error test image");
+    cse498::WebImage img("test-img-has-error", "bad-path.png",
+                         "Error test image");
 
     // Since there are no setters for these properties, manually edit the mock
     // element and simulate a failed load
@@ -236,10 +239,13 @@ struct SetupMockDOM {
     REQUIRE(result.error().find("bad-path.png") != std::string::npos);
   }
 
-  TEST_CASE("WebImage HasError returns empty expected for a successfully loaded image",
-            "[WebImage]") {
+  TEST_CASE(
+      "WebImage HasError returns empty expected for a successfully loaded "
+      "image",
+      "[WebImage]") {
     SetupMockDOM mock;
-    cse498::WebImage img("test-img-loaded-ok", "good-image.png", "Loaded ok test image");
+    cse498::WebImage img("test-img-loaded-ok", "good-image.png",
+                         "Loaded ok test image");
 
     // Since there are no setters for these properties, manually edit the mock
     // element and simulate a successful load

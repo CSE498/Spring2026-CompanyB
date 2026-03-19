@@ -3,13 +3,13 @@
  * @brief Web entry point for the Emscripten build.
  **/
 
-#include "WebButton.h"
-#include "WebCanvas.hpp"
-#include "WebLayout.hpp"
-
 #include <emscripten.h>
 
 #include <memory>
+
+#include "WebButton.h"
+#include "WebCanvas.hpp"
+#include "WebLayout.hpp"
 
 using namespace cse498;
 

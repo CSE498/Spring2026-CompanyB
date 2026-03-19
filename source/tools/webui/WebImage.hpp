@@ -56,9 +56,10 @@ class WebImage {
    * @brief Construct a WebImage, creating the <img> element in the DOM.
    * @param img_id The DOM element ID for the image. Must be unique.
    * @param src The image source URL or file path.
-   * @param alt_text Alternative text for accessibility 
+   * @param alt_text Alternative text for accessibility
    **/
-  WebImage(const std::string& img_id, const std::string& src, const std::string& alt_text);
+  WebImage(const std::string& img_id, const std::string& src,
+           const std::string& alt_text);
 
   /// Destructor that removes the image element from the DOM
   ~WebImage();
@@ -126,7 +127,9 @@ class WebImage {
    * @brief Get the current position of the image.
    * @return A pair containing (x, y) coordinates in pixels.
    **/
-  [[nodiscard]] std::pair<int, int> GetPosition() const { return {x_pos, y_pos}; }
+  [[nodiscard]] std::pair<int, int> GetPosition() const {
+    return {x_pos, y_pos};
+  }
 
   /**
    * @brief Get the alt text of the image.
