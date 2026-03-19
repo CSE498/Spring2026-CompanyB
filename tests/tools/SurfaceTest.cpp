@@ -1,5 +1,5 @@
 // test_surface_catch2.cpp
-// #include "../../third-party/Catch/single_include/catch2/catch.hpp"               
+// #include "../../third-party/Catch/single_include/catch2/catch.hpp"
 
 #include <catch2/catch_test_macros.hpp>
 #include <set>
@@ -35,7 +35,7 @@ TEST_CASE("Surface; add shapes and detect overlap", "surface circle") {
   auto contains_pair = [&](Surface::ShapeID a, Surface::ShapeID b) {
     for (const auto& p : pairs) {
       if ((p.first == a && p.second == b) || (p.first == b && p.second == a))
-       
+
         return true;
     }
     return false;
