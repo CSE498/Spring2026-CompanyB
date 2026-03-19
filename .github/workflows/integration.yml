@@ -13,8 +13,26 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Cache clang-format-21
+        id: cache-clang-format
+        uses: actions/cache@v4
+        with:
+          path: /usr/lib/llvm-21
+          key: clang-format-21-${{ runner.os }}
+
+      - name: Install clang-format-21
+        if: steps.cache-clang-format.outputs.cache-hit != 'true'
+        run: |
+          wget -qO- https://apt.llvm.org/llvm-snapshot.gpg.key | sudo tee /etc/apt/trusted.gpg.d/apt.llvm.org.asc
+          echo "deb http://apt.llvm.org/jammy/ llvm-toolchain-jammy-21 main" | sudo tee /etc/apt/sources.list.d/llvm-21.list
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends clang-format-21
+
+      - name: Add clang-format-21 to PATH
+        run: echo "/usr/lib/llvm-21/bin" >> $GITHUB_PATH
+
       - name: Formatting Checks
-        run: find source tests -type f \( -name "*.cpp" -o -name "*.hpp" -o -name "*.c" -o -name "*.h" \) | xargs clang-format -n -Werror --verbose
+        run: find source tests -type f \( -name "*.cpp" -o -name "*.hpp" -o -name "*.c" -o -name "*.h" \) | xargs clang-format-21 -n -Werror --verbose
 
   native-test:
     runs-on: ubuntu-latest
