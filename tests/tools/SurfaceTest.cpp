@@ -1,5 +1,5 @@
 // test_surface_catch2.cpp
-// #include "../../third-party/Catch/single_include/catch2/catch.hpp"
+// #include "../../third-party/Catch/single_include/catch2/catch.hpp"               
 
 #include <catch2/catch_test_macros.hpp>
 #include <set>
@@ -33,8 +33,9 @@ TEST_CASE("Surface; add shapes and detect overlap", "surface circle") {
   auto pairs = s.DetectAllOverlaps();
 
   auto contains_pair = [&](Surface::ShapeID a, Surface::ShapeID b) {
-    for (const auto &p : pairs) {
+    for (const auto& p : pairs) {
       if ((p.first == a && p.second == b) || (p.first == b && p.second == a))
+       
         return true;
     }
     return false;
@@ -60,7 +61,7 @@ TEST_CASE("Surface; add boxes and detect overlap", "surface box") {
 
   auto pairs = s.DetectAllOverlaps();
   auto contains_pair = [&](Surface::ShapeID a, Surface::ShapeID b) {
-    for (const auto &p : pairs) {
+    for (const auto& p : pairs) {
       if ((p.first == a && p.second == b) || (p.first == b && p.second == a))
         return true;
     }
@@ -87,7 +88,7 @@ TEST_CASE("overlap detection and QueryRadius", "surface mixed query") {
 
   auto pairs = s.DetectAllOverlaps();
   auto contains_pair = [&](Surface::ShapeID a, Surface::ShapeID b) {
-    for (const auto &p : pairs) {
+    for (const auto& p : pairs) {
       if ((p.first == a && p.second == b) || (p.first == b && p.second == a))
         return true;
     }
@@ -123,7 +124,7 @@ TEST_CASE("Surface: overlap callbacks ", "surface callbacks") {
 
   s.step();
   bool got_start = false;
-  for (auto &ev : events) {
+  for (auto& ev : events) {
     auto a = std::get<0>(ev);
     auto b = std::get<1>(ev);
     auto sflag = std::get<2>(ev);
@@ -138,7 +139,7 @@ TEST_CASE("Surface: overlap callbacks ", "surface callbacks") {
   s.step();
 
   bool got_end = false;
-  for (auto &ev : events) {
+  for (auto& ev : events) {
     auto a = std::get<0>(ev);
     auto b = std::get<1>(ev);
     auto sflag = std::get<2>(ev);
@@ -151,7 +152,7 @@ TEST_CASE("Surface: overlap callbacks ", "surface callbacks") {
   REQUIRE(s.TranslateShape(id2, Point(-10.0, 0.0)));
   s.step();
   bool got_restart = false;
-  for (auto &ev : events) {
+  for (auto& ev : events) {
     auto a = std::get<0>(ev);
     auto b = std::get<1>(ev);
     auto sflag = std::get<2>(ev);
@@ -174,7 +175,7 @@ TEST_CASE("Remove shape", "surface remove") {
 
   auto pairs_before = s.DetectAllOverlaps();
   auto contains_pair = [&](Surface::ShapeID a, Surface::ShapeID b) {
-    for (const auto &p : pairs_before) {
+    for (const auto& p : pairs_before) {
       if ((p.first == a && p.second == b) || (p.first == b && p.second == a))
         return true;
     }
@@ -187,7 +188,7 @@ TEST_CASE("Remove shape", "surface remove") {
 
   auto pairs_after = s.DetectAllOverlaps();
   bool still_overlapping = false;
-  for (const auto &p : pairs_after) {
+  for (const auto& p : pairs_after) {
     if ((p.first == id1 && p.second == id2) ||
         (p.first == id2 && p.second == id1)) {
       still_overlapping = true;
