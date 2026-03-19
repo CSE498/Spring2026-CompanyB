@@ -46,7 +46,6 @@ TEST_CASE("Random basic range behavior", "[random]") {
       CHECK(v <= 6);
     }
   }
-
 }
 
 TEST_CASE("Random reproducibility and reseeding", "[random]") {
@@ -113,7 +112,7 @@ TEST_CASE("Random integer frequency sanity check", "[random]") {
   }
 
   const double expected = static_cast<double>(num_samples) / 10.0;
-  const double max_rel_error = 0.08; 
+  const double max_rel_error = 0.08;
   for (size_t i = 0; i < counts.size(); ++i) {
     const double rel_error = std::abs(counts[i] - expected) / expected;
     INFO("bucket " << i << ": count=" << counts[i] << " expected=" << expected

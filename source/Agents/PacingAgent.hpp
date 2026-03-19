@@ -10,6 +10,7 @@
 
 #include "../core/AgentBase.hpp"
 
+// clang-format off
 namespace cse498 {
 
   class PacingAgent : public AgentBase {
@@ -50,5 +51,5 @@ namespace cse498 {
     }
 
   };
-
-} // End of namespace cse498
+// clang-format on
+}  // End of namespace cse498
