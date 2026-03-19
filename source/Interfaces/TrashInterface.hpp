@@ -12,6 +12,7 @@
 #include "../core/InterfaceBase.hpp"
 #include "../core/WorldBase.hpp"
 
+// clang-format off
 namespace cse498 {
 
   class TrashInterface : public InterfaceBase {
@@ -104,5 +105,5 @@ namespace cse498 {
       return action_id;
     }
   };
-
+// clang-format on
 } // End of namespace cse498
