@@ -11,7 +11,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     g++-12 \
     && rm -rf /var/lib/apt/lists/* \
     && update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-12 12 \
-    && update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-12 12
+    && update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-12 12 \
+    && git config --system --add safe.directory '*'
 
 # Copy docker-entrypoint script and setup directories
 COPY scripts/docker-entrypoint.sh /app/docker-entrypoint.sh
