@@ -31,6 +31,7 @@ services:
       context: .
     volumes:
       - ./source:/app/source:ro
+      - ./third-party:/app/third-party:ro
       - ./build:/app/build
       - ./tests:/app/tests:ro
       - ./scripts/docker-entrypoint.sh:/app/docker-entrypoint.sh:ro

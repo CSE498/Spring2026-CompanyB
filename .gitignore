@@ -51,3 +51,6 @@
 
 # JetBrains IDE
 .idea
+
+# Generated docs from Doxygen
+/docs
