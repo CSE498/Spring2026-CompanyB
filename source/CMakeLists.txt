@@ -40,6 +40,7 @@ if(BUILD_WASM_TESTS)
 
     # Exclude main source files from library
     list(FILTER SOURCES EXCLUDE REGEX "(_main|^main)\\.cpp$")
+    list(FILTER SOURCES EXCLUDE REGEX "web_entry.cpp$")
 
     # Create INTERFACE library if header only, regular if sources exist
     list(LENGTH SOURCES SOURCES_COUNT)
