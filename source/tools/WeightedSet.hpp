@@ -77,7 +77,7 @@ class WeightedSet {
   };
 
   std::unique_ptr<Node> root_{};  ///< Root of the tree
-  std::random_device rd_{};  ///< Random device.
+  std::random_device rd_{};       ///< Random device.
 
   /**
    * @brief Xoshiro random number generator.
@@ -197,7 +197,8 @@ class WeightedSet {
   }
 
   /** @brief Check if child is a direct child of parent (left or right). */
-  [[nodiscard]] bool IsDirectChild(const Node* const parent, const Node* const child) const {
+  [[nodiscard]] bool IsDirectChild(const Node* const parent,
+                                   const Node* const child) const {
     return (parent->left.get() == child) || (parent->right.get() == child);
   }
 
@@ -488,7 +489,9 @@ class WeightedSet {
   [[nodiscard]] bool empty() const { return size() == 0; }
 
   /** @brief Returns the total weight of all the elements in the set. */
-  [[nodiscard]] double total_weight() const { return root_ ? root_->subtree_weight : 0.0; }
+  [[nodiscard]] double total_weight() const {
+    return root_ ? root_->subtree_weight : 0.0;
+  }
 
   /**
    * @brief Returns whether the set contains the given element.

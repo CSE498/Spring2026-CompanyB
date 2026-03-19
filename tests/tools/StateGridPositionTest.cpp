@@ -1,14 +1,15 @@
 #include <catch2/catch_test_macros.hpp>
-#include "../../source/tools/StateGridPosition.hpp"
-#include "../../source/tools/StateGrid/StateGrid.hpp"
 
-TEST_CASE("Test StateGridPosition Constructors", "[core]")
-{
-  cse498::StateGridPosition pos1;  // Default constructor
+#include "../../source/tools/StateGrid/StateGrid.hpp"
+#include "../../source/tools/StateGridPosition.hpp"
+
+TEST_CASE("Test StateGridPosition Constructors", "[core]") {
+  cse498::StateGridPosition pos1;         // Default constructor
   cse498::StateGridPosition pos2(5, 10);  // size_t constructor
-  cse498::StateGridPosition pos3(3, 7);  // Template constructor
-  cse498::StateGridPosition pos4(5, 10, cse498::Direction::East);  // With direction
-  cse498::StateGridPosition pos5(pos2);  // Copy constructor
+  cse498::StateGridPosition pos3(3, 7);   // Template constructor
+  cse498::StateGridPosition pos4(5, 10,
+                                 cse498::Direction::East);  // With direction
+  cse498::StateGridPosition pos5(pos2);                     // Copy constructor
 
   // Test default values
   CHECK(pos1.Col() == 0);
@@ -33,8 +34,7 @@ TEST_CASE("Test StateGridPosition Constructors", "[core]")
   CHECK(pos5.GetDirection() == pos2.GetDirection());
 }
 
-TEST_CASE("Test StateGridPosition Assignment", "[core]")
-{
+TEST_CASE("Test StateGridPosition Assignment", "[core]") {
   cse498::StateGridPosition pos1(3, 4, cse498::Direction::South);
   cse498::StateGridPosition pos2;
 
@@ -45,8 +45,7 @@ TEST_CASE("Test StateGridPosition Assignment", "[core]")
   CHECK(pos2.GetDirection() == cse498::Direction::South);
 }
 
-TEST_CASE("Test StateGridPosition Accessors", "[core]")
-{
+TEST_CASE("Test StateGridPosition Accessors", "[core]") {
   cse498::StateGridPosition pos(7, 9, cse498::Direction::West);
 
   // Test coordinate accessors
@@ -62,8 +61,7 @@ TEST_CASE("Test StateGridPosition Accessors", "[core]")
   CHECK(pos2.Row() == 2000);
 }
 
-TEST_CASE("Test StateGridPosition Comparisons", "[core]")
-{
+TEST_CASE("Test StateGridPosition Comparisons", "[core]") {
   cse498::StateGridPosition pos1(5, 10, cse498::Direction::North);
   cse498::StateGridPosition pos2(5, 10, cse498::Direction::North);
   cse498::StateGridPosition pos3(5, 10, cse498::Direction::East);
@@ -76,12 +74,11 @@ TEST_CASE("Test StateGridPosition Comparisons", "[core]")
 
   // Test SameCell, ignores direction
   CHECK(pos1.SameCell(pos2));
-  CHECK(pos1.SameCell(pos3));  // Same cell but different direction
+  CHECK(pos1.SameCell(pos3));        // Same cell but different direction
   CHECK_FALSE(pos1.SameCell(pos4));  // Different cell
 }
 
-TEST_CASE("Test StateGridPosition SetDirection", "[core]")
-{
+TEST_CASE("Test StateGridPosition SetDirection", "[core]") {
   cse498::StateGridPosition pos(5.0, 5.0);
 
   CHECK(pos.GetDirection() == cse498::Direction::North);
@@ -99,8 +96,7 @@ TEST_CASE("Test StateGridPosition SetDirection", "[core]")
   CHECK(pos.GetDirection() == cse498::Direction::North);
 }
 
-TEST_CASE("Test StateGridPosition Turn Methods", "[core]")
-{
+TEST_CASE("Test StateGridPosition Turn Methods", "[core]") {
   cse498::StateGridPosition pos(5.0, 5.0, cse498::Direction::North);
 
   // Test TurnRight
@@ -122,11 +118,9 @@ TEST_CASE("Test StateGridPosition Turn Methods", "[core]")
   CHECK(pos.GetDirection() == cse498::Direction::East);
   pos.TurnLeft();
   CHECK(pos.GetDirection() == cse498::Direction::North);
-
 }
 
-TEST_CASE("Test StateGridPosition GetForwardPosition", "[core]")
-{
+TEST_CASE("Test StateGridPosition GetForwardPosition", "[core]") {
   // Test North
   cse498::StateGridPosition pos_north(5, 5, cse498::Direction::North);
   auto forward_north = pos_north.GetForwardPosition();
@@ -157,8 +151,7 @@ TEST_CASE("Test StateGridPosition GetForwardPosition", "[core]")
   CHECK(pos_north.Row() == 5);
 }
 
-TEST_CASE("Test StateGridPosition GetBackwardPosition", "[core]")
-{
+TEST_CASE("Test StateGridPosition GetBackwardPosition", "[core]") {
   // Test North (backward is South direction)
   cse498::StateGridPosition pos_north(5, 5, cse498::Direction::North);
   auto backward_north = pos_north.GetBackwardPosition();
@@ -184,8 +177,7 @@ TEST_CASE("Test StateGridPosition GetBackwardPosition", "[core]")
   CHECK(backward_west.Row() == 5);
 }
 
-TEST_CASE("Test StateGridPosition GetOffset", "[core]")
-{
+TEST_CASE("Test StateGridPosition GetOffset", "[core]") {
   cse498::StateGridPosition pos(5, 5, cse498::Direction::North);
 
   // Test positive offsets
@@ -209,8 +201,7 @@ TEST_CASE("Test StateGridPosition GetOffset", "[core]")
   CHECK(pos.Row() == 5);
 }
 
-TEST_CASE("Test StateGridPosition EuclideanDistance", "[core]")
-{
+TEST_CASE("Test StateGridPosition EuclideanDistance", "[core]") {
   cse498::StateGridPosition pos1(0, 0);
   cse498::StateGridPosition pos2(3, 4);
   cse498::StateGridPosition pos3(0, 0);
@@ -231,8 +222,7 @@ TEST_CASE("Test StateGridPosition EuclideanDistance", "[core]")
   CHECK(pos1.EuclideanDistance(pos5) == 7.0);
 }
 
-TEST_CASE("Test StateGridPosition Edge Cases - Boundary Values", "[core]")
-{
+TEST_CASE("Test StateGridPosition Edge Cases - Boundary Values", "[core]") {
   // Test at origin
   cse498::StateGridPosition origin(0, 0);
   CHECK(origin.Col() == 0);
@@ -244,8 +234,7 @@ TEST_CASE("Test StateGridPosition Edge Cases - Boundary Values", "[core]")
   CHECK(large.Row() == 888888);
 }
 
-TEST_CASE("Test StateGridPosition Edge Cases - Direction Wrapping", "[core]")
-{
+TEST_CASE("Test StateGridPosition Edge Cases - Direction Wrapping", "[core]") {
   cse498::StateGridPosition pos(5.0, 5.0, cse498::Direction::North);
 
   // Test multiple rotations wrap correctly
@@ -266,8 +255,7 @@ static std::vector<std::vector<char>> createOpenMap() {
   return std::vector<std::vector<char>>(5, std::vector<char>(5, 'P'));
 }
 
-TEST_CASE("Test StateGridPosition MoveForward", "[core]")
-{
+TEST_CASE("Test StateGridPosition MoveForward", "[core]") {
   auto map = createOpenMap();
   cse498::StateGrid grid(5, 5, map);
 
@@ -295,7 +283,8 @@ TEST_CASE("Test StateGridPosition MoveForward", "[core]")
   CHECK(pos4.Col() == 1);
   CHECK(pos4.Row() == 2);
 
-  // Attempting to move out of bounds should return false and not change position
+  // Attempting to move out of bounds should return false and not change
+  // position
   cse498::StateGridPosition pos5(0, 0, cse498::Direction::North);
   CHECK(pos5.MoveForward(grid) == false);
   CHECK(pos5.Col() == 0);
@@ -303,10 +292,7 @@ TEST_CASE("Test StateGridPosition MoveForward", "[core]")
 
   // A map with a wall
   std::vector<std::vector<char>> wall_map = {
-    {'P', 'P', 'P'},
-    {'P', 'W', 'P'},
-    {'P', 'P', 'P'}
-  };
+      {'P', 'P', 'P'}, {'P', 'W', 'P'}, {'P', 'P', 'P'}};
   // Should not be able to move into a space with a wall
   cse498::StateGrid walled_grid(3, 3, wall_map);
   cse498::StateGridPosition pos6(1, 0, cse498::Direction::South);
@@ -315,8 +301,7 @@ TEST_CASE("Test StateGridPosition MoveForward", "[core]")
   CHECK(pos6.Row() == 0);
 }
 
-TEST_CASE("Test StateGridPosition MoveBackward", "[core]")
-{
+TEST_CASE("Test StateGridPosition MoveBackward", "[core]") {
   auto map = createOpenMap();
   cse498::StateGrid grid(5, 5, map);
 
@@ -339,8 +324,7 @@ TEST_CASE("Test StateGridPosition MoveBackward", "[core]")
   CHECK(pos3.Row() == 4);
 }
 
-TEST_CASE("Test StateGridPosition IsValidForwardMove", "[core]")
-{
+TEST_CASE("Test StateGridPosition IsValidForwardMove", "[core]") {
   auto map = createOpenMap();
   cse498::StateGrid grid(5, 5, map);
 
@@ -355,18 +339,14 @@ TEST_CASE("Test StateGridPosition IsValidForwardMove", "[core]")
   CHECK(pos2.IsValidForwardMove(grid) == false);
 
   // Another map with a wall
-  std::vector<std::vector<char>> wall_map = {
-    {'P', 'W'},
-    {'P', 'P'}
-  };
+  std::vector<std::vector<char>> wall_map = {{'P', 'W'}, {'P', 'P'}};
   // Should return false for inquiring about moving into a spot with a wall
   cse498::StateGrid walled_grid(2, 2, wall_map);
   cse498::StateGridPosition pos3(0, 0, cse498::Direction::East);
   CHECK(pos3.IsValidForwardMove(walled_grid) == false);
 }
 
-TEST_CASE("Test StateGridPosition IsValidBackwardMove", "[core]")
-{
+TEST_CASE("Test StateGridPosition IsValidBackwardMove", "[core]") {
   auto map = createOpenMap();
   cse498::StateGrid grid(5, 5, map);
 

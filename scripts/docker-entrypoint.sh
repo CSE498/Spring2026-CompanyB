@@ -14,6 +14,9 @@ fix_permissions() {
     fi
 }
 
+# Always restore permissions on exit even if a failure occurs
+trap fix_permissions EXIT
+
 show_help() {
     echo
     echo "! THIS SCRIPT IS ONLY RECOMMENDED FOR USE IN THE INTERACTIVE SHELL !"
@@ -156,7 +159,7 @@ do_test_native() {
 
 do_clean() {
     echo "==> Cleaning build artifacts <==="
-    rm -rf "${BUILD_DIR}"/* "${OUTPUT_DIR}"/*
+    rm -rf "${BUILD_DIR}"/*
 }
 
 # Main command handler
