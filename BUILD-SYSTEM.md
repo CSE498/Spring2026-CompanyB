@@ -78,7 +78,6 @@ All Docker targets build inside a container with the full toolchain pre-installe
 | `make docker-dev` / `make docker-shell` | Interactive shell inside the container |
 | `make docker-image` | Build the Docker image |
 | `make docker-rebuild` | Rebuild the Docker image from scratch (no cache) |
-| `make docker-clean` | Remove the `build/` directory |
 | `make run-native` | Run the native app from WSL with X11 forwarding to Windows |
 
 ---
@@ -109,8 +108,6 @@ make test-list     # list source, test, and object files cmake picked up
 
 Run `make help` for a full list.
 
----
-
 ## CI
 
 All pushes to any branch run two jobs in a CI workflow:
@@ -118,8 +115,42 @@ All pushes to any branch run two jobs in a CI workflow:
 - **native-test** — installs Qt6 and runs `make test` on Ubuntu (headless)
 - **emscripten-test** — installs emsdk 5.0.0 and runs the Emscripten Catch2 tests
 
----
-
 ## Support
 
 For build system issues, reach out to **Maksim Savich** in the `#ci-cd-support` Discord channel.
+
+### Catch2 Headers
+> [!CAUTION]
+> Catch2 uses its own `main` entrypoint. You do not need to setup your own test methods and your own `main` entrypoint. Ensure to remove those files/methods if they exist.
+
+> [!NOTE]
+> The build system uses Catch2 v3. The version in the `third-party` directory is v2.
+
+You will need to change your Catch2 header in your test files.
+
+**From:**
+```cpp
+#include "../../third-party/Catch/single_include/catch2/catch.hpp"
+```
+**To:**
+```cpp
+#include <catch2/catch_test_macros.hpp>
+```
+
+### WSL Memory
+
+> [!NOTE]
+> Ensure the resources you set are available on your machine.
+
+You may find that WSL does not have enough allocated memory.
+
+1. Create a file on your host, `Windows`, here: `C:/Users/<mydir>/.wslconfig`.
+2. Populate the file with this information:
+```bash
+[wsl2]
+memory=12GB
+processors=6
+swap=8GB
+localhostForwarding=true
+networkingMode=mirrored
+```

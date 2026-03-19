@@ -18,7 +18,7 @@ else
   CMAKE_NO_QT :=
 endif
 
-.PHONY: default build debug opt quick grumpy clean
+.PHONY: default build debug opt quick grumpy
 
 default: build
 
@@ -41,6 +41,3 @@ quick:
 grumpy:
 	cmake -S . -B $(BUILD_DIR) -DCMAKE_CXX_FLAGS="-Wconversion -Weffc++" $(CMAKE_NO_QT)
 	cmake --build $(BUILD_DIR) --parallel
-
-clean:
-	rm -rf $(BUILD_DIR)

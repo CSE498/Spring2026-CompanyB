@@ -49,8 +49,7 @@ debug opt quick grumpy:
 
 # Clean everything
 clean:
-	$(MAKE) -C source clean
-	$(MAKE) -C tests clean
+	rm -rf ./build
 
 # Forward anything to source/ by prefixing with src-
 #   make src-debug
@@ -101,10 +100,6 @@ docker-shell: docker-dev
 docker-image:
 	docker build -t cse498-companyb-project .
 
-# Clean output directory
-docker-clean:
-	rm -rf build/*
-
 # Rebuild image from scratch
 docker-rebuild:
 	docker build --no-cache -t cse498-companyb-project .
@@ -119,7 +114,7 @@ help:
 	@echo "  make test              Build + run unit tests in tests/"
 	@echo "  make all               Build program(s) + run tests"
 	@echo "  make debug|opt|quick|grumpy   Build program(s) with that mode (source/)"
-	@echo "  make clean             Clean source/ and tests/"
+	@echo "  make clean             Remove /build"
 	@echo
 	@echo "Flags:"
 	@echo "  NO_QT=1                Skip Qt. Excludes Interfaces/gui sources."
@@ -139,6 +134,5 @@ help:
 	@echo "  make docker-dev                Interactive development shell"
 	@echo "  make docker-shell              Alias for docker-dev"
 	@echo "  make docker-image              Build the Docker image"
-	@echo "  make docker-clean              Clean the output directory"
 	@echo "  make docker-rebuild            Rebuild the Docker image without cache"
 	@echo "  make run-native                Enables x11 forwarding for the GUI from WSL to a Windows host"
