@@ -13,9 +13,9 @@
 
 #pragma once
 
-#include <cstddef>
 #include <cassert>
 #include <cmath>
+#include <cstddef>
 #include <optional>
 #include <ostream>
 #include <stdexcept>
@@ -47,7 +47,8 @@ namespace cse498 {
  */
 class Circle {
  public:
-  static constexpr double EPS = 1e-9;  ///< Default tolerance for floating-point comparisons
+  static constexpr double EPS =
+      1e-9;  ///< Default tolerance for floating-point comparisons
 #if defined(__cpp_lib_math_constants)
   static constexpr double PI = std::numbers::pi_v<double>;  ///< Pi constant
 #else
@@ -64,10 +65,10 @@ class Circle {
    * @param center Center of the circle
    * @param radius Non-negative radius
    */
-  Circle(const Point& center, double radius) : center_(center), radius_(radius) {
+  Circle(const Point& center, double radius)
+      : center_(center), radius_(radius) {
     ValidateNonNegativeRadius(radius_);
   }
-
 
   /**
    * @brief Get the center of the circle.
@@ -95,7 +96,6 @@ class Circle {
     ValidateNonNegativeRadius(radius);
     radius_ = radius;
   }
-
 
   /**
    * @brief Test whether a point lies inside or on the circle.
@@ -132,7 +132,8 @@ class Circle {
   /**
    * @brief Signed distance from a point to the circle boundary.
    * @param p Point to evaluate
-   * @return distance(p, center) - radius (negative inside, zero on boundary, positive outside)
+   * @return distance(p, center) - radius (negative inside, zero on boundary,
+   * positive outside)
    */
   [[nodiscard]] double SignedDistanceToBoundary(const Point& p) const {
     return DistanceTo(p) - radius_;
@@ -166,7 +167,8 @@ class Circle {
   }
 
   /**
-   * @brief Test whether this circle overlaps another (tangency counts as overlap).
+   * @brief Test whether this circle overlaps another (tangency counts as
+   * overlap).
    * @param other Circle to test
    * @return true if distance between centers <= sum of radii (within EPS)
    */
@@ -186,7 +188,8 @@ class Circle {
   }
 
   /**
-   * @brief Test whether this circle is tangent to another (external or internal).
+   * @brief Test whether this circle is tangent to another (external or
+   * internal).
    * @param other Circle to test
    * @param eps Tolerance (default: EPS)
    * @return true if distance equals sum or |difference| of radii within eps
@@ -194,7 +197,8 @@ class Circle {
   [[nodiscard]] bool IsTangentTo(const Circle& other, double eps = EPS) const {
     const double dist = CenterDistanceTo(other);
     const double ext_tangent = std::fabs(dist - (radius_ + other.radius_));
-    const double int_tangent = std::fabs(dist - std::fabs(radius_ - other.radius_));
+    const double int_tangent =
+        std::fabs(dist - std::fabs(radius_ - other.radius_));
     return ext_tangent <= eps || int_tangent <= eps;
   }
 
@@ -207,12 +211,12 @@ class Circle {
   /** @brief Area (pi * radius^2). */
   [[nodiscard]] double Area() const { return PI * radius_ * radius_; }
 
-
   /**
    * @brief Compute intersection points of this circle with another.
    * @param other Other circle
    * @param eps Tolerance for degenerate cases (default: EPS)
-   * @return std::nullopt for no intersections; vector of 1 (tangent) or 2 points otherwise
+   * @return std::nullopt for no intersections; vector of 1 (tangent) or 2
+   * points otherwise
    */
   [[nodiscard]] std::optional<std::vector<Point>> TryIntersectionPoints(
       const Circle& other, double eps = EPS) const {
@@ -227,9 +231,11 @@ class Circle {
     if (d < (std::fabs(r0 - r1) - eps)) return std::nullopt;
     if (d <= eps) return std::nullopt;
 
-    // Distance from this center to the chord midpoint along the center-to-center line.
+    // Distance from this center to the chord midpoint along the
+    // center-to-center line.
     const double a = (r0 * r0 - r1 * r1 + d * d) / (2.0 * d);
-    // Squared half-chord length. Clamp tiny negative noise from floating-point arithmetic.
+    // Squared half-chord length. Clamp tiny negative noise from floating-point
+    // arithmetic.
     double h2 = r0 * r0 - a * a;
     if (h2 < 0.0 && std::fabs(h2) <= eps) h2 = 0.0;
     if (h2 < 0.0) return std::nullopt;
@@ -258,7 +264,8 @@ class Circle {
    * @brief Compute intersection points of this circle with another.
    * @param other Other circle
    * @param eps Tolerance for degenerate cases (default: EPS)
-   * @return Vector of 0, 1 (tangent), or 2 intersection points; empty for coincident circles
+   * @return Vector of 0, 1 (tangent), or 2 intersection points; empty for
+   * coincident circles
    */
   [[nodiscard]] std::vector<Point> IntersectionPoints(const Circle& other,
                                                       double eps = EPS) const {
@@ -306,7 +313,9 @@ class Circle {
    * @param other Circle to compare
    * @return true if circles are not equal within EPS
    */
-  [[nodiscard]] bool operator!=(const Circle& other) const { return !(*this == other); }
+  [[nodiscard]] bool operator!=(const Circle& other) const {
+    return !(*this == other);
+  }
 
  private:
   Point center_{};   ///< Center of the circle
@@ -349,8 +358,8 @@ class Circle {
  * @return Reference to the stream
  */
 inline std::ostream& operator<<(std::ostream& os, const Circle& c) {
-  os << "Circle(center=(" << c.GetCenter().getX() << ", " << c.GetCenter().getY()
-     << "), radius=" << c.GetRadius() << ")";
+  os << "Circle(center=(" << c.GetCenter().getX() << ", "
+     << c.GetCenter().getY() << "), radius=" << c.GetRadius() << ")";
   return os;
 }
 

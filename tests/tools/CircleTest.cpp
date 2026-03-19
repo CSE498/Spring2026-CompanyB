@@ -3,7 +3,8 @@
  * @brief Unit tests for the Circle class (source/tools/Circle.hpp).
  * @author Group-13 (Lemuel). Developed with AI assistance.
  *
- * Test files for company C++ classes live in tests/tools/, parallel to source/tools/.
+ * Test files for company C++ classes live in tests/tools/, parallel to
+ * source/tools/.
  */
 
 // #include "../../third-party/Catch/single_include/catch2/catch.hpp"
@@ -11,8 +12,8 @@
 #include <cmath>
 #include <stdexcept>
 
-#include "../../source/tools/Point.hpp"
 #include "../../source/tools/Circle.hpp"
+#include "../../source/tools/Point.hpp"
 
 using namespace cse498;
 
@@ -78,7 +79,8 @@ TEST_CASE("Circle distance to point and circle") {
   Circle other(Point(6.0, 8.0), 1.0);
   REQUIRE(std::fabs(c.CenterDistanceTo(other) - 10.0) < 1e-9);
 
-  REQUIRE(std::fabs(c.DistanceTo(other) - 10.0) < 1e-9);  // backward-compatible alias
+  REQUIRE(std::fabs(c.DistanceTo(other) - 10.0) <
+          1e-9);  // backward-compatible alias
 }
 
 TEST_CASE("Circle overlap when one is inside another") {
@@ -196,7 +198,8 @@ TEST_CASE("Circle equality operator") {
   Circle a(Point(1.0, 2.0), 3.0);
   Circle b(Point(1.0, 2.0), 3.0);
   Circle c(Point(1.0, 2.0), 4.0);
-  Circle nearly_equal(Point(1.0 + 0.5 * Circle::EPS, 2.0), 3.0 + 0.5 * Circle::EPS);
+  Circle nearly_equal(Point(1.0 + 0.5 * Circle::EPS, 2.0),
+                      3.0 + 0.5 * Circle::EPS);
   Circle beyond_tolerance(Point(1.0 + 2.0 * Circle::EPS, 2.0), 3.0);
 
   REQUIRE(a == b);

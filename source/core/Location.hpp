@@ -34,12 +34,12 @@ class Location {
 
  public:
   Location() = default;
-  Location(const Location &) = default;
-  Location(const WorldPosition &pos) : location(pos) {}
+  Location(const Location&) = default;
+  Location(const WorldPosition& pos) : location(pos) {}
   Location(ItemID id) : location(id) {}
   Location(AgentID id) : location(id) {}
 
-  Location &operator=(const Location &) = default;
+  Location& operator=(const Location&) = default;
 
   [[nodiscard]] bool IsPosition() const {
     return std::holds_alternative<WorldPosition>(location);
@@ -51,7 +51,7 @@ class Location {
     return std::holds_alternative<ItemID>(location);
   }
 
-  [[nodiscard]] const WorldPosition &AsWorldPosition() const {
+  [[nodiscard]] const WorldPosition& AsWorldPosition() const {
     assert(IsPosition());
     return std::get<WorldPosition>(location);
   }

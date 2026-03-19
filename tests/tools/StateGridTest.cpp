@@ -128,10 +128,10 @@ TEST_CASE("Test StateGrid, Tile Integration") {
   StateGrid Stategrid1(3, 2, premadeMap);
 
   // Checks the tiles were initialized correctly and we can pull them
-  auto &tiles = Stategrid1.getAllTiles();
+  auto& tiles = Stategrid1.getAllTiles();
 
   // Checks a path
-  Tile &Tile_0_0 = tiles[0][0];
+  Tile& Tile_0_0 = tiles[0][0];
   CHECK(Tile_0_0.getRow() == 0);
   CHECK(Tile_0_0.getColumn() == 0);
   CHECK(Tile_0_0.getSymbol() == 'P');
@@ -144,7 +144,7 @@ TEST_CASE("Test StateGrid, Tile Integration") {
   CHECK(Tile_0_0.getAgent() == nullptr);
 
   // Checks a wall
-  Tile &Tile_1_1 = tiles[1][1];
+  Tile& Tile_1_1 = tiles[1][1];
   CHECK(Tile_1_1.getRow() == 1);
   CHECK(Tile_1_1.getColumn() == 1);
   CHECK(Tile_1_1.getSymbol() == 'W');
@@ -163,13 +163,13 @@ TEST_CASE("Test StateGrid, Tile Integration") {
   CHECK(Tile_0_0.getAgent() == agent);  // FIXED: Compare shared_ptrs directly
 
   // Checks pulling single tiles, getTile with coords
-  Tile *Tile_0_0_again = Stategrid1.getTile(0, 0);
+  Tile* Tile_0_0_again = Stategrid1.getTile(0, 0);
   CHECK(Tile_0_0_again->hasAgent() == true);
   CHECK(Tile_0_0_again->getAgent() ==
         agent);  // FIXED: Compare shared_ptrs directly
 
   // OOB tiles returns null ptr
-  Tile *Tile_OOB = Stategrid1.getTile(5, 3);
+  Tile* Tile_OOB = Stategrid1.getTile(5, 3);
   CHECK(Tile_OOB == nullptr);
 }
 
@@ -179,7 +179,7 @@ TEST_CASE("Tests Moving agents") {
 
   StateGrid Stategrid1(3, 2, premadeMap);
 
-  auto &tiles = Stategrid1.getAllTiles();
+  auto& tiles = Stategrid1.getAllTiles();
 
   auto agent = std::make_shared<Agent>(42);
   CHECK(tiles[0][0].addAgent(agent) == true);

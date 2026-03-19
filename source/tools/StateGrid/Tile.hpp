@@ -44,7 +44,7 @@ class Tile {
 
  public:
   Tile(int row, int column, char symbol, bool canTraverse,
-       const std::string &name, const MetaData &metaData);
+       const std::string& name, const MetaData& metaData);
 
   /***********************************************
    *  Sets the agent pointer
@@ -53,7 +53,7 @@ class Tile {
    *
    * @returns True if successful, false if it is occupied
    ***********************************************/
-  bool addAgent(const std::shared_ptr<Agent> &newAgent);
+  bool addAgent(const std::shared_ptr<Agent>& newAgent);
 
   /***********************************************
    *  Removes the agent
@@ -118,13 +118,13 @@ class Tile {
    *
    * @returns string ref, name of the tile
    ***********************************************/
-  const std::string &getName() const;
+  const std::string& getName() const;
 
   /***********************************************
    *  MetaData getter
    *
    * @returns MetaData ref, metadata of the tile
    ***********************************************/
-  const MetaData &getMetaData() const;
+  const MetaData& getMetaData() const;
 };
 }  // namespace cse498
