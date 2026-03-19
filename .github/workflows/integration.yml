@@ -23,8 +23,9 @@ jobs:
       - name: Install clang-format-21
         if: steps.cache-clang-format.outputs.cache-hit != 'true'
         run: |
+          DISTRO=$(lsb_release -cs)
           wget -qO- https://apt.llvm.org/llvm-snapshot.gpg.key | sudo tee /etc/apt/trusted.gpg.d/apt.llvm.org.asc
-          echo "deb http://apt.llvm.org/jammy/ llvm-toolchain-jammy-21 main" | sudo tee /etc/apt/sources.list.d/llvm-21.list
+          echo "deb http://apt.llvm.org/${DISTRO}/ llvm-toolchain-${DISTRO}-21 main" | sudo tee /etc/apt/sources.list.d/llvm-21.list
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends clang-format-21
 
