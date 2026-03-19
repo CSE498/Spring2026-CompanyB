@@ -1,6 +1,7 @@
 /**
  * This file is part of the Fall 2026, CSE 498, section 2, course project.
- * @brief A low-end text interface providing a bare-minimum level of interaction.
+ * @brief A low-end text interface providing a bare-minimum level of
+ * interaction.
  * @note Status: PROPOSAL
  **/
 
@@ -106,4 +107,4 @@ namespace cse498 {
     }
   };
 // clang-format on
-} // End of namespace cse498
+}  // End of namespace cse498
