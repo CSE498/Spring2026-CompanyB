@@ -14,7 +14,7 @@ public:
     MockAgent() = default;
     ~MockAgent() = default;
 
-    void jsonify() {
+    void getLoggable() {
         nlohmann::json eventData;
         eventData["id"] = id;
         eventData["position"] = position;
@@ -35,18 +35,22 @@ public:
 
 class MockWorld {
 public:
-    std::vector<MockAgent> agents;
+    std::vector<MockAgent*> agents;
 
     MockWorld() = default;
     ~MockWorld() = default;
 
     MockAgent* getAgent(int id) {
         for (auto& agent : agents) {
-            if (agent.id == id) {
-                return &agent;
+            if (agent->id == id) {
+                return agent;
             }
         }
         return nullptr;
+    }
+
+    std::vector<MockAgent*>& getAgents() {
+        return agents;
     }
 };
 } // namespace cse498

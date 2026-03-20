@@ -8,10 +8,12 @@ TEST_CASE("ReplayDriver can read and replay events from a JSON file", "[ReplayDr
     // Create a sample JSON file with event data
     auto mockWorld = std::make_shared<cse498::MockWorld>();
 
-    mockWorld->agents.push_back(cse498::MockAgent());
-    cse498::MockAgent* mockAgent = &mockWorld->agents[0];
+    cse498::MockAgent agent;
+
+    mockWorld->agents.push_back(&agent);
+    cse498::MockAgent* mockAgent = mockWorld->agents[0];
     
-    mockAgent->jsonify();
+    mockAgent->getLoggable();
 
     cse498::ReplayDriver replayDriver(mockWorld);
     auto result = replayDriver.ReplayFromFile("test_events.json");
@@ -29,7 +31,7 @@ TEST_CASE("ReplayDriver can read and replay events from a JSON file", "[ReplayDr
 
 TEST_CASE("ReplayDriver handles invalid file paths gracefully", "[ReplayDriver]") {
     auto mockWorld = std::make_shared<cse498::MockWorld>();
-    cse498::ReplayDriver replayDriver(mockWorld);
+    cse498::ReplayDriver<cse498::MockWorld> replayDriver(mockWorld);
     
     auto result = replayDriver.ReplayFromFile("non_existent_file.json");
     
@@ -43,7 +45,7 @@ TEST_CASE("ReplayDriver handles malformed JSON gracefully", "[ReplayDriver]") {
     outFile.close();
 
     auto mockWorld = std::make_shared<cse498::MockWorld>();
-    cse498::ReplayDriver replayDriver(mockWorld);
+    cse498::ReplayDriver<cse498::MockWorld> replayDriver(mockWorld);
     
     auto result = replayDriver.ReplayFromFile("malformed.json");
     
