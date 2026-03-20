@@ -86,11 +86,13 @@ void OutputManager::WriteSimulationOutput(const DataLog &dataLog) {
   for (const auto &entry : dataLog.GetEntries()) {
     mBufferedLog[kEntriesKey].push_back(entry);
   }
-  mBufferedLog[kStatisticsKey] = {{"count", dataLog.GetCount()},
-                                {"mean", dataLog.GetMean()},
-                                {"median", dataLog.GetMedian()},
-                                {"min", dataLog.GetMin()},
-                                {"max", dataLog.GetMax()}};
+  mBufferedLog[kStatisticsKey] = nlohmann::json::object({
+    {"count",  dataLog.GetCount()},
+    {"mean",   dataLog.GetMean().value_or(0.0)},
+    {"median", dataLog.GetMedian().value_or(0.0)},
+    {"min",    dataLog.GetMin().value_or(0.0)},
+    {"max",    dataLog.GetMax().value_or(0.0)}
+});
 
   if (!mOutputFilePath.empty()) {
     ensureOutputStreamOpen();
