@@ -6,9 +6,10 @@
 #pragma once
 
 #include <string>
-#include "IActionLog.hpp" // For LogLevel definition
-#include "nlohmann/json.hpp"
+
 #include "../tools/DataLog.hpp"
+#include "IActionLog.hpp"  // For LogLevel definition
+#include "nlohmann/json.hpp"
 
 namespace cse498 {
 

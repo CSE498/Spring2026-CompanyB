@@ -8,6 +8,7 @@
 #include <cstddef>
 #include <optional>
 #include <vector>
+
 #include "IActionLog.hpp"
 
 namespace cse498 {

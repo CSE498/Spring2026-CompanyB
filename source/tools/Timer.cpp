@@ -1,11 +1,11 @@
 #include "Timer.hpp"
 
-#include "GlobalClock.hpp"
 #include <cassert>
+
+#include "GlobalClock.hpp"
 namespace cse498 {
 // Constructor with the initialized member variables
-Timer::Timer(const std::string &name)
-    : mName(name) {}
+Timer::Timer(const std::string& name) : mName(name) {}
 
 void Timer::Start() {
   // Assert to prevent calling Start multiple times
@@ -59,8 +59,7 @@ uint64_t Timer::GetTotalTime() const {
     return mAccumulatedTime;
   }
   // If running and not paused, add the current interval to the accumulated time
-  return mAccumulatedTime +
-         (GlobalClock::GetTime() - mStartTime);
+  return mAccumulatedTime + (GlobalClock::GetTime() - mStartTime);
 }
 
 /*
@@ -83,4 +82,4 @@ double Timer::GetTimeInHours() const {
 
 const std::string& Timer::GetName() const { return mName; }
 
-}
+}  // namespace cse498

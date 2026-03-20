@@ -20,7 +20,6 @@ class DataLog;
 
 /// @brief Formats and persists simulation log data and programmer log messages.
 class OutputManager : public IOutputManager {
-
  private:
   /// @brief Current path of the JSON log file to be written.
   std::string mOutputFilePath{};
@@ -40,7 +39,8 @@ class OutputManager : public IOutputManager {
 
  public:
   OutputManager() = default;
-  explicit OutputManager(std::string outputFilePath, LogLevel level = LogLevel::Normal);
+  explicit OutputManager(std::string outputFilePath,
+                         LogLevel level = LogLevel::Normal);
   ~OutputManager() override;
 
   OutputManager(const OutputManager&) = delete;
@@ -65,8 +65,7 @@ class OutputManager : public IOutputManager {
   /// @param category Top-level category key for persistence.
   /// @param level Log level of this message.
   /// @param message Message text.
-  void LogEntry(const std::string& category,
-                LogLevel level,
+  void LogEntry(const std::string& category, LogLevel level,
                 const std::string& message) override;
 
   /// @brief Records a message to console only.
