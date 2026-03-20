@@ -1,0 +1,305 @@
+/**
+ * @file WebCanvas.cpp
+ * @brief C++ API for the DOM Canvas Element
+ * @author Maksim Savich
+ * @date 2026-2-2
+ **/
+
+/**
+ * Canvas API Sources:
+ * https://developer.mozilla.org/en-US/docs/Web/API/Canvas_API
+ * https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D
+ **/
+
+#include "WebCanvas.hpp"
+
+#include <emscripten.h>
+#include <emscripten/html5.h>
+#include <emscripten/val.h>
+#include <math.h>
+
+#include <cassert>
+
+using emscripten::val;
+
+namespace cse498 {
+
+WebCanvas::WebCanvas(int width, int height, const std::string& id)
+    : WebElement(id, true), width(width), height(height) {
+  // Get the global document
+  val document = val::global("document");
+
+  // Look for an element with the same ID
+  val existing = document.call<val>("getElementById", id);
+
+  // If the element with the same ID exists, then assert
+  assert((existing.isNull() || existing.isUndefined()) &&
+         "Canvas with this ID already exists in the DOM");
+
+  // Create a canvas element
+  canvas_element = document.call<val>("createElement", std::string("canvas"));
+  canvas_element.set("id", id);
+  document["body"].call<void>(
+      "appendChild",
+      canvas_element);  // Add the canvas element to the body section
+
+  ctx = canvas_element.call<val>("getContext",
+                                 std::string("2d"));  // Save the context
+  transform_matrix =
+      ctx.call<val>("getTransform");  // Save the transform matrix
+  Resize(width, height);              // Set the size of the canvas
+}
+
+WebCanvas::~WebCanvas() {
+  if (!canvas_element.isNull() && !canvas_element.isUndefined()) {
+    canvas_element.call<void>("remove");
+  }
+}
+
+void WebCanvas::Resize(int new_width, int new_height) {
+  assert(new_width > 0 && "Canvas width must be positive");
+  assert(new_height > 0 && "Canvas height must be positive");
+  width = new_width;
+  height = new_height;
+  canvas_element.set("width", width);
+  canvas_element.set("height", height);
+  ApplyState();
+}
+
+std::string WebCanvas::RgbString(RGB rgb) {
+  auto [r, g, b] = rgb;
+  return "rgb(" + std::to_string(r) + "," + std::to_string(g) + "," +
+         std::to_string(b) + ")";
+}
+
+void WebCanvas::ApplyState() {
+  ctx.set("strokeStyle", RgbString(pen_color));
+  ctx.set("fillStyle", RgbString(fill_color));
+
+  ctx.set("globalAlpha", alpha);
+  ctx.set("lineWidth", line_width);
+
+  if (!font.empty()) {
+    ctx.set("font", font);
+  }
+
+  if (!transform_matrix.isUndefined()) {
+    ctx.call<void>("setTransform", transform_matrix);
+  }
+}
+
+void WebCanvas::Clear() { ctx.call<void>("clearRect", 0, 0, width, height); }
+
+void WebCanvas::SetBackgroundColor(RGB rgb) {
+  auto [r, g, b] = rgb;
+  assert(r >= 0 && r <= 255 && "Red value must be 0-255");
+  assert(g >= 0 && g <= 255 && "Green value must be 0-255");
+  assert(b >= 0 && b <= 255 && "Blue value must be 0-255");
+  background_color = rgb;
+  canvas_element["style"].set("backgroundColor", RgbString(rgb));
+}
+
+void WebCanvas::DrawLine(std::pair<double, double> start,
+                         std::pair<double, double> end) {
+  ctx.call<void>("beginPath");
+  ctx.call<void>("moveTo", start.first, start.second);
+  ctx.call<void>("lineTo", end.first, end.second);
+  ctx.call<void>("stroke");
+}
+
+void WebCanvas::DrawRect(double x_top_l, double y_top_l, double w, double h,
+                         bool filled) {
+  assert(w >= 0 && "Rectangle width must be non-negative");
+  assert(h >= 0 && "Rectangle height must be non-negative");
+  if (filled) {
+    ctx.call<void>("fillRect", x_top_l, y_top_l, w, h);
+  } else {
+    ctx.call<void>("strokeRect", x_top_l, y_top_l, w, h);
+  }
+}
+
+void WebCanvas::DrawCircle(double x, double y, double radius, bool filled) {
+  assert(radius >= 0 && "Circle radius must be non-negative");
+  ctx.call<void>("beginPath");
+  ctx.call<void>("arc", x, y, radius, 0,
+                 2 * M_PI);  // M_PI is a constant from the <math.h> header
+  if (filled) {
+    ctx.call<void>("fill");
+  } else {
+    ctx.call<void>("stroke");
+  }
+}
+
+void WebCanvas::DrawPolygon(
+    const std::vector<std::pair<double, double>>& points, bool filled) {
+  assert(points.size() >= 3 && "Polygon must have at least 3 points");
+
+  ctx.call<void>("beginPath");
+  ctx.call<void>("moveTo", points[0].first, points[0].second);
+
+  for (size_t i = 1; i < points.size(); ++i) {
+    ctx.call<void>("lineTo", points[i].first, points[i].second);
+  }
+
+  ctx.call<void>("closePath");
+
+  if (filled) {
+    ctx.call<void>("fill");
+  } else {
+    ctx.call<void>("stroke");
+  }
+}
+
+void WebCanvas::DrawText(const std::string& text, double x, double y) {
+  ctx.call<void>("fillText", text, x, y);
+}
+
+void WebCanvas::LoadImage(const std::string& path) {
+  val window = val::global("window");
+  if (window["_imageCache"].isUndefined()) {
+    window.set("_imageCache", val::object());
+  }
+  val cache = window["_imageCache"];
+  if (cache[path].isUndefined()) {
+    val Image = val::global("Image");
+    val img = Image.new_();
+    img.set("src", path);
+    cache.set(path, img);
+    EM_ASM(
+        {
+          var src = UTF8ToString($0);
+          var img = window._imageCache[src];
+          if (img) {
+            img.onerror = function() {
+              console.warn("Failed to load image: " + src);
+              delete window._imageCache[src];
+            };
+          }
+        },
+        path.c_str());
+  }
+}
+
+// Still requires the macro. So I am keeping this function the same.
+void WebCanvas::DrawImage(const std::string& path, double x, double y, double w,
+                          double h) {
+  EM_ASM(
+      {
+        if (!window._imageCache) window._imageCache = {};
+        var canvas = document.getElementById(UTF8ToString($0));
+        var ctx = canvas.getContext('2d');
+        var src = UTF8ToString($1);
+        var img = window._imageCache[src];
+        if (img && img.complete) {
+          ctx.drawImage(img, $2, $3, $4, $5);
+        } else {
+          img = img || new Image();
+          img.src = src;
+          window._imageCache[src] = img;
+          img.onload = function() { ctx.drawImage(img, $2, $3, $4, $5); };
+          img.onerror = function() {
+            console.warn("Failed to load image: " + src);
+            delete window._imageCache[src];
+          };
+        }
+      },
+      id.c_str(), path.c_str(), x, y, w, h);
+}
+
+void WebCanvas::SetPenColor(RGB rgb) {
+  auto [r, g, b] = rgb;
+  assert(r >= 0 && r <= 255 && "Red value must be 0-255");
+  assert(g >= 0 && g <= 255 && "Green value must be 0-255");
+  assert(b >= 0 && b <= 255 && "Blue value must be 0-255");
+  pen_color = rgb;
+  ctx.set("strokeStyle", RgbString(rgb));
+}
+
+void WebCanvas::SetFillColor(RGB rgb) {
+  auto [r, g, b] = rgb;
+  assert(r >= 0 && r <= 255 && "Red value must be 0-255");
+  assert(g >= 0 && g <= 255 && "Green value must be 0-255");
+  assert(b >= 0 && b <= 255 && "Blue value must be 0-255");
+  fill_color = rgb;
+  ctx.set("fillStyle", RgbString(rgb));
+}
+
+void WebCanvas::SetLineWidth(double w) {
+  assert(w >= 0 && "Line width must be non-negative");
+  line_width = w;
+
+  ctx.set("lineWidth", line_width);
+}
+
+void WebCanvas::SetFont(const std::string& new_font) {
+  font = new_font;
+  ctx.set("font", font);
+}
+
+void WebCanvas::SetAlpha(double new_alpha) {
+  assert(new_alpha >= 0.0 && new_alpha <= 1.0 &&
+         "Alpha must be between 0 and 1");
+  alpha = new_alpha;
+  ctx.set("globalAlpha", alpha);
+}
+
+void WebCanvas::Translate(std::pair<double, double> point) {
+  location = point;
+  ctx.call<void>("translate", point.first, point.second);
+  transform_matrix = ctx.call<val>("getTransform");
+}
+
+void WebCanvas::Rotate(double angle, bool clockwise) {
+  double directed_angle = clockwise ? angle : -angle;
+  ctx.call<void>("rotate", directed_angle);
+  transform_matrix = ctx.call<val>("getTransform");
+}
+
+void WebCanvas::Scale(double x, double y) {
+  ctx.call<void>("scale", x, y);
+  transform_matrix = ctx.call<val>("getTransform");
+}
+
+void WebCanvas::Save() {
+  saved_states.push_back(
+      {pen_color, fill_color, alpha, line_width, font, location});
+  ctx.call<void>("save");
+}
+
+void WebCanvas::Restore() {
+  assert(!saved_states.empty() && "No saved state to restore");
+  CanvasState state = saved_states.back();
+  saved_states.pop_back();
+  pen_color = state.pen_color;
+  fill_color = state.fill_color;
+  alpha = state.alpha;
+  line_width = state.line_width;
+  font = state.font;
+  location = state.location;
+  ctx.call<void>("restore");
+  transform_matrix = ctx.call<val>("getTransform");
+}
+
+int WebCanvas::GetWidth() const { return width; }
+
+int WebCanvas::GetHeight() const { return height; }
+
+// https://emscripten.org/docs/api_reference/html5.h.html#c.emscripten_request_animation_frame
+void WebCanvas::RequestAnimationFrame(std::function<void()> callback) {
+  void* cb = new std::function<void()>(
+      std::move(callback));  // Heap allocate the callback
+  // Put the callback on the next frame render
+  emscripten_request_animation_frame(
+      [](double time, void* user_data) -> EM_BOOL {
+        auto* fn = static_cast<std::function<void()>*>(
+            user_data);   // Move the callback to be an r-value function
+        (*fn)();          // Call the function
+        delete fn;        // Delete the function from the heap
+        return EM_FALSE;  // Signal the end of the run
+      },
+      cb);
+}
+
+std::pair<double, double> WebCanvas::GetLocation() const { return location; }
+
+}  // namespace cse498
