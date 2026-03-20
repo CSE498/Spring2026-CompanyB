@@ -2,6 +2,9 @@
 
 #include <filesystem>
 #include <iostream>
+#include <utility>
+
+#include "DataLog.hpp"
 
 namespace cse498 {
 
@@ -13,12 +16,23 @@ constexpr char kStatisticsKey[] = "statistics";
 
 void OutputManager::SetLogLevel(LogLevel level) noexcept { mCurrentLevel = level; }
 
-void OutputManager::ensureOutputStreamOpen() {
+OutputManager::OutputManager(std::string outputFilePath, LogLevel level)
+    : mOutputFilePath(std::move(outputFilePath)), mCurrentLevel(level) {
+  openOutputStream();
+}
+
+OutputManager::~OutputManager() {
+  if (mOutputStream.is_open()) {
+    mOutputStream.close();
+  }
+}
+
+bool OutputManager::openOutputStream() {
   if (mOutputFilePath.empty()) {
-    return;
+    return true;
   }
   if (mOutputStream.is_open()) {
-    return;
+    return true;
   }
 
   namespace fs = std::filesystem;
@@ -28,12 +42,12 @@ void OutputManager::ensureOutputStreamOpen() {
     if (!fs::exists(parent)) {
       std::clog << "[OutputManager] Output directory does not exist: "
                 << parent.string() << '\n';
-      return;
+      return false;
     }
     if (!fs::is_directory(parent)) {
       std::clog << "[OutputManager] Output path is not a directory: "
                 << parent.string() << '\n';
-      return;
+      return false;
     }
   }
 
@@ -41,7 +55,9 @@ void OutputManager::ensureOutputStreamOpen() {
   if (!mOutputStream.is_open()) {
     std::clog << "[OutputManager] Failed to open output file: " << mOutputFilePath
               << '\n';
+    return false;
   }
+  return true;
 }
 
 bool OutputManager::SetOutputFile(const std::string& path) {
@@ -52,33 +68,69 @@ bool OutputManager::SetOutputFile(const std::string& path) {
     }
   }
   mOutputFilePath = path;
-  return true;
+  return openOutputStream();
 }
 
 void OutputManager::LogMessage(LogLevel level, const std::string &message) {
-  // Don't treat "log at Silent" as a valid message
-  if (level == LogLevel::Silent) {
-    return;
-  }
+  LogEntry(kMessagesKey, level, message);
+}
+
+void OutputManager::LogConsole(LogLevel level, const std::string& message) {
   const int levelValue = static_cast<int>(level);
-  const int currentValue = static_cast<int>(mCurrentLevel);
-  if (levelValue > currentValue) {
+  if (level == LogLevel::Silent ||
+      levelValue > static_cast<int>(mCurrentLevel)) {
+    return;
+  }
+  std::clog << "[OutputManager] " << message << '\n';
+}
+
+void OutputManager::LogFile(LogLevel level, const std::string& message) {
+  const int levelValue = static_cast<int>(level);
+  if (level == LogLevel::Silent ||
+      levelValue > static_cast<int>(mCurrentLevel)) {
+    return;
+  }
+  if (mOutputStream.is_open()) {
+    if (!mBufferedLog.contains(kMessagesKey) ||
+        !mBufferedLog[kMessagesKey].is_array()) {
+      mBufferedLog[kMessagesKey] = nlohmann::json::array();
+    }
+    mBufferedLog[kMessagesKey].push_back(
+        {{"level", levelValue}, {"text", message}});
+  }
+}
+
+bool OutputManager::Flush() {
+  if (!mOutputStream.is_open()) {
+    return mOutputFilePath.empty();
+  }
+  mOutputStream << mBufferedLog.dump(2) << '\n';
+  mOutputStream.flush();
+  return !mOutputStream.fail();
+}
+
+void OutputManager::LogMessage(const std::string& message) {
+  LogMessage(LogLevel::Normal, message);
+}
+
+void OutputManager::LogEntry(const std::string& category,
+                             LogLevel level,
+                             const std::string& message) {
+  const int levelValue = static_cast<int>(level);
+  if (level == LogLevel::Silent ||
+      levelValue > static_cast<int>(mCurrentLevel)) {
     return;
   }
 
-  std::clog << "[OutputManager] " << message << '\n';
+  LogConsole(level, message);
 
-  if (!mOutputFilePath.empty()) {
-    ensureOutputStreamOpen();
-    if (mOutputStream.is_open()) {
-      if (!mBufferedLog.contains(kMessagesKey) ||
-          !mBufferedLog[kMessagesKey].is_array()) {
-        mBufferedLog[kMessagesKey] = nlohmann::json::array();
-      }
-      mBufferedLog[kMessagesKey].push_back(
-          {{"level", levelValue}, {"text", message}});
-    }
+  if (!mOutputStream.is_open()) {
+    return;
   }
+  if (!mBufferedLog.contains(category) || !mBufferedLog[category].is_array()) {
+    mBufferedLog[category] = nlohmann::json::array();
+  }
+  mBufferedLog[category].push_back({{"level", levelValue}, {"text", message}});
 }
 
 void OutputManager::WriteSimulationOutput(const DataLog &dataLog) {
@@ -86,21 +138,14 @@ void OutputManager::WriteSimulationOutput(const DataLog &dataLog) {
   for (const auto &entry : dataLog.GetEntries()) {
     mBufferedLog[kEntriesKey].push_back(entry);
   }
-  mBufferedLog[kStatisticsKey] = nlohmann::json::object({
-    {"count",  dataLog.GetCount()},
-    {"mean",   dataLog.GetMean().value_or(0.0)},
-    {"median", dataLog.GetMedian().value_or(0.0)},
-    {"min",    dataLog.GetMin().value_or(0.0)},
-    {"max",    dataLog.GetMax().value_or(0.0)}
-});
+  mBufferedLog[kStatisticsKey] = nlohmann::json::object(
+      {{"count", dataLog.GetCount()},
+       {"mean", dataLog.GetMean().value_or(0.0)},
+       {"median", dataLog.GetMedian().value_or(0.0)},
+       {"min", dataLog.GetMin().value_or(0.0)},
+       {"max", dataLog.GetMax().value_or(0.0)}});
 
-  if (!mOutputFilePath.empty()) {
-    ensureOutputStreamOpen();
-    if (mOutputStream.is_open()) {
-      mOutputStream << mBufferedLog.dump(2) << '\n';
-      mOutputStream.flush();
-    }
-  }
+  Flush();
 
   if (mCurrentLevel != LogLevel::Silent) {
     const auto mean = dataLog.GetMean();

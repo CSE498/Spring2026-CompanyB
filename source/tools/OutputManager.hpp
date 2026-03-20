@@ -13,17 +13,17 @@
 #include <string>
 
 #include "../Interfaces/IOutputManager.hpp"
-#include "DataLog.hpp"
 #include "nlohmann/json.hpp"
 
 namespace cse498 {
+class DataLog;
 
 /// @brief Formats and persists simulation log data and programmer log messages.
 class OutputManager : public IOutputManager {
 
  private:
   /// @brief Current path of the JSON log file to be written.
-  std::string mOutputFilePath;
+  std::string mOutputFilePath{};
 
   /// @brief Active log level controlling which messages are emitted.
   LogLevel mCurrentLevel = LogLevel::Normal;
@@ -34,13 +34,14 @@ class OutputManager : public IOutputManager {
   /// @brief In-memory JSON that accumulates simulation outputs and insights.
   nlohmann::json mBufferedLog = nlohmann::json::object();
 
-  /// @brief Ensures the output file is open for writing; no-op if path empty or
-  /// already open.
-  void ensureOutputStreamOpen();
+  /// @brief Opens the configured output file if possible.
+  /// @return true when no file path is configured or stream opens successfully.
+  bool openOutputStream();
 
  public:
   OutputManager() = default;
-  ~OutputManager() = default;
+  explicit OutputManager(std::string outputFilePath, LogLevel level = LogLevel::Normal);
+  ~OutputManager() override;
 
   OutputManager(const OutputManager&) = delete;
   OutputManager& operator=(const OutputManager&) = delete;
@@ -48,17 +49,44 @@ class OutputManager : public IOutputManager {
   /// @brief Sets the output file path and closes any previously open file.
   /// @param path Path for the JSON log file.
   /// @return true on success, false if closing the previous file failed.
-  bool SetOutputFile(const std::string& path);
+  bool SetOutputFile(const std::string& path) override;
 
   /// @brief Records a log message at the given level; writes to file and/or
   /// console per current log level.
   /// @param level Log level of this message.
   /// @param message Message text.
-  void LogMessage(LogLevel level, const std::string& message);
+  void LogMessage(LogLevel level, const std::string& message) override;
+
+  /// @brief Records a message with default Normal level.
+  /// @param message Message text.
+  void LogMessage(const std::string& message);
+
+  /// @brief Records a category-tagged entry with standard level filtering.
+  /// @param category Top-level category key for persistence.
+  /// @param level Log level of this message.
+  /// @param message Message text.
+  void LogEntry(const std::string& category,
+                LogLevel level,
+                const std::string& message) override;
+
+  /// @brief Records a message to console only.
+  /// @param level Log level of this message.
+  /// @param message Message text.
+  void LogConsole(LogLevel level, const std::string& message);
+
+  /// @brief Records a message to file buffer only.
+  /// @param level Log level of this message.
+  /// @param message Message text.
+  void LogFile(LogLevel level, const std::string& message);
 
   /// @brief Sets the active log level (e.g. at start of a simulation run).
   /// @param level New log level.
-  void SetLogLevel(LogLevel level) noexcept;
+  void SetLogLevel(LogLevel level) noexcept override;
+
+  /// @brief Flushes current buffered JSON to the configured output file.
+  /// @return true when flushed or no output file configured, false on write
+  /// failure.
+  bool Flush() override;
 
   /// @brief Writes the complete log and computed statistics from DataLog to
   /// JSON file and console. Called by DataLog::WriteToOutput() at the end of a
