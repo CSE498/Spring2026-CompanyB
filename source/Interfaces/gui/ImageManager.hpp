@@ -21,8 +21,6 @@ namespace cse498 {
         bool HasImage(const QString &imageId) const;
         void Remove(const QString &imageId);
         void Clear();
-        void Show(const QString &imageId, int x, int y) const;
-        void SetSceneAndView(QGraphicsView &view, int width, int height);
 
     private:
         QGraphicsScene &mScene;

@@ -32,6 +32,7 @@ bool ImageManager::Load(const QString &imageId, const QString &path) {
     return true;
 }
 
+//Returns const reference to map
 const QPixmap &ImageManager::GetImage(const QString &imageId) const {
     auto it = mImages.find(imageId);
     if (it == mImages.end()) {
@@ -58,24 +59,3 @@ void ImageManager::Remove(const QString &imageId) {
 void ImageManager::Clear() {
     mImages.clear();
 }
-
-void ImageManager::Show(const QString &imageId, int x, int y) const {
-    auto it = mImages.find(imageId);
-    if (it == mImages.end()) {
-        qWarning() << "Error: Image '" << imageId << "' not found";
-        return;
-    }
-
-    QGraphicsPixmapItem *item = mScene.addPixmap(it->second);
-    item->setPos(x, y);
-}
-
-void ImageManager::SetSceneAndView(QGraphicsView &view, int width, int height) {
-    mScene.setSceneRect(0, 0, width, height);
-    view.setFixedSize(width, height);
-    
-    view.setScene(&mScene);
-    view.show();
-}
-
-} // namespace cse498e cse498}
