@@ -1,12 +1,11 @@
 #include <catch2/catch_test_macros.hpp>
+
 #include "../../source/tools/GlobalClock.hpp"
 
 TEST_CASE("GlobalClock functionality", "[GlobalClock]") {
   cse498::GlobalClock::Reset();
 
-  SECTION("Initial state") {
-    REQUIRE(cse498::GlobalClock::GetTime() == 0);
-  }
+  SECTION("Initial state") { REQUIRE(cse498::GlobalClock::GetTime() == 0); }
 
   SECTION("Tick with specific delta time") {
     cse498::GlobalClock::Tick(10);
@@ -52,7 +51,6 @@ TEST_CASE("GlobalClock functionality", "[GlobalClock]") {
 
     cse498::GlobalClock::Reset();
     REQUIRE(cse498::GlobalClock::GetTime() == 0);
-
 
     cse498::GlobalClock::Tick(5);
     REQUIRE(cse498::GlobalClock::GetTime() == 5);

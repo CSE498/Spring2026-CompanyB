@@ -14,7 +14,9 @@ constexpr char kEntriesKey[] = "entries";
 constexpr char kStatisticsKey[] = "statistics";
 }  // namespace
 
-void OutputManager::SetLogLevel(LogLevel level) noexcept { mCurrentLevel = level; }
+void OutputManager::SetLogLevel(LogLevel level) noexcept {
+  mCurrentLevel = level;
+}
 
 OutputManager::OutputManager(std::string outputFilePath, LogLevel level)
     : mOutputFilePath(std::move(outputFilePath)), mCurrentLevel(level) {
@@ -53,8 +55,8 @@ bool OutputManager::openOutputStream() {
 
   mOutputStream.open(mOutputFilePath, std::ios::out | std::ios::trunc);
   if (!mOutputStream.is_open()) {
-    std::clog << "[OutputManager] Failed to open output file: " << mOutputFilePath
-              << '\n';
+    std::clog << "[OutputManager] Failed to open output file: "
+              << mOutputFilePath << '\n';
     return false;
   }
   return true;
@@ -71,7 +73,7 @@ bool OutputManager::SetOutputFile(const std::string& path) {
   return openOutputStream();
 }
 
-void OutputManager::LogMessage(LogLevel level, const std::string &message) {
+void OutputManager::LogMessage(LogLevel level, const std::string& message) {
   LogEntry(kMessagesKey, level, message);
 }
 
@@ -113,8 +115,7 @@ void OutputManager::LogMessage(const std::string& message) {
   LogMessage(LogLevel::Normal, message);
 }
 
-void OutputManager::LogEntry(const std::string& category,
-                             LogLevel level,
+void OutputManager::LogEntry(const std::string& category, LogLevel level,
                              const std::string& message) {
   const int levelValue = static_cast<int>(level);
   if (level == LogLevel::Silent ||
@@ -133,17 +134,17 @@ void OutputManager::LogEntry(const std::string& category,
   mBufferedLog[category].push_back({{"level", levelValue}, {"text", message}});
 }
 
-void OutputManager::WriteSimulationOutput(const DataLog &dataLog) {
+void OutputManager::WriteSimulationOutput(const DataLog& dataLog) {
   mBufferedLog[kEntriesKey] = nlohmann::json::array();
-  for (const auto &entry : dataLog.GetEntries()) {
+  for (const auto& entry : dataLog.GetEntries()) {
     mBufferedLog[kEntriesKey].push_back(entry);
   }
-  mBufferedLog[kStatisticsKey] = nlohmann::json::object(
-      {{"count", dataLog.GetCount()},
-       {"mean", dataLog.GetMean().value_or(0.0)},
-       {"median", dataLog.GetMedian().value_or(0.0)},
-       {"min", dataLog.GetMin().value_or(0.0)},
-       {"max", dataLog.GetMax().value_or(0.0)}});
+  mBufferedLog[kStatisticsKey] =
+      nlohmann::json::object({{"count", dataLog.GetCount()},
+                              {"mean", dataLog.GetMean().value_or(0.0)},
+                              {"median", dataLog.GetMedian().value_or(0.0)},
+                              {"min", dataLog.GetMin().value_or(0.0)},
+                              {"max", dataLog.GetMax().value_or(0.0)}});
 
   Flush();
 
@@ -153,10 +154,8 @@ void OutputManager::WriteSimulationOutput(const DataLog &dataLog) {
     const auto max = dataLog.GetMax();
     const auto mean_str =
         mean.has_value() ? std::to_string(mean.value()) : "N/A";
-    const auto min_str =
-        min.has_value() ? std::to_string(min.value()) : "N/A";
-    const auto max_str =
-        max.has_value() ? std::to_string(max.value()) : "N/A";
+    const auto min_str = min.has_value() ? std::to_string(min.value()) : "N/A";
+    const auto max_str = max.has_value() ? std::to_string(max.value()) : "N/A";
     std::clog << "[Simulation output] entries=" << dataLog.GetCount()
               << " mean=" << mean_str << " min=" << min_str
               << " max=" << max_str << '\n';

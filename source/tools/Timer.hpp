@@ -5,37 +5,36 @@
 
 #pragma once
 
-#include <string>
 #include <cstdint>
-
+#include <string>
 
 namespace cse498 {
-    /* Class Description:
-     *  A tool to make precise timing measurements. It should be told when to start and stop,
-     *  but also be giving a name for the timing,
-     *  it acts as a stopwatch that calculate the time in Ticks from GlobalClock
-     *  It can also pause and resume the timing measurements if needed.
-     *  Citation: Used AI responsibly and actively in building the class below.
-     */
+/* Class Description:
+ *  A tool to make precise timing measurements. It should be told when to start
+ * and stop, but also be giving a name for the timing, it acts as a stopwatch
+ * that calculate the time in Ticks from GlobalClock It can also pause and
+ * resume the timing measurements if needed. Citation: Used AI responsibly and
+ * actively in building the class below.
+ */
 
-    class Timer {
-    public:
-        /// Initialize the object with a @param name
-        Timer(const std::string& name);
-        // Start the stopwatch for the object
-        void Start();
-        // Stop the stopwatch for the object
-        void Stop();
-        // Pause the stopwatch for the object
-        void Pause();
-        // Resume the stopwatch for the object
-        void Resume();
-        // Reset the internal variables of the stopwatch for the object
-        void Reset();
-        /// @return total calculated time in ticks
-        [[nodiscard]] uint64_t GetTotalTime() const;
-        /// @return the given name of the object when it was initialized
-        [[nodiscard]] const std::string& GetName() const;
+class Timer {
+ public:
+  /// Initialize the object with a @param name
+  Timer(const std::string& name);
+  // Start the stopwatch for the object
+  void Start();
+  // Stop the stopwatch for the object
+  void Stop();
+  // Pause the stopwatch for the object
+  void Pause();
+  // Resume the stopwatch for the object
+  void Resume();
+  // Reset the internal variables of the stopwatch for the object
+  void Reset();
+  /// @return total calculated time in ticks
+  [[nodiscard]] uint64_t GetTotalTime() const;
+  /// @return the given name of the object when it was initialized
+  [[nodiscard]] const std::string& GetName() const;
 
  private:
   // Name of the object
@@ -51,4 +50,4 @@ namespace cse498 {
   bool mIsPaused{false};
 };
 
-}
+}  // namespace cse498

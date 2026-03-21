@@ -8,8 +8,8 @@ namespace cse498 {
 
 // Took AI's assistance to help with the syntax of this function.
 
-// Currently, we're calculating stats based on "duration" 
-// field in the JSON data, but this can be easily modified to 
+// Currently, we're calculating stats based on "duration"
+// field in the JSON data, but this can be easily modified to
 // accommodate other fields as needed (will be included in new module specs)
 void DataLog::AddEntry(const ActionEventBase& data) {
   // Create log entry with automatic timestamp
@@ -23,7 +23,7 @@ void DataLog::AddEntry(const ActionEventBase& data) {
   // Update statistics based on duration field
   if (data.contains("duration") && data["duration"].is_number()) {
     double duration = data["duration"].get<double>();
-    
+
     // Note: Only non-negative durations are included in statistics, as negative
     // durations do not make physical sense in a simulation context.
     if (duration >= 0.0) {
@@ -68,7 +68,7 @@ std::optional<double> DataLog::GetMedian() const {
   if (mMedianIsValid) {
     return mMedianCache;
   }
-  
+
   size_t size = mDurations.size();
   if (size % 2 == 0) {
     // Even number of elements - return average of middle two
@@ -105,7 +105,7 @@ std::optional<double> DataLog::GetMax() const {
 
 size_t DataLog::GetCount() const { return mCount; }
 
-const std::vector<nlohmann::json> &DataLog::GetEntries() const {
+const std::vector<nlohmann::json>& DataLog::GetEntries() const {
   return mEntries;
 }
 
