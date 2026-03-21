@@ -12,18 +12,16 @@
 #include <unordered_map>
 #include <vector>
 
-#include "Math/Point.hpp"
+#include "Point.hpp"
 #include "WorldPath.hpp"
 
 namespace cse498 {
 
-using Point = Math::Point;
-
 /// Type alias for world query callback functions
-using WorldQueryFunc = std::function<bool(const Point &)>;
+using WorldQueryFunc = std::function<bool(const Point&)>;
 
 /// Type alias for distance heuristic callback functions
-using HeuristicFunc = std::function<double(const Point &, const Point &)>;
+using HeuristicFunc = std::function<double(const Point&, const Point&)>;
 
 /**
  * @brief Pathfinding and path generation for agent navigation.
@@ -33,7 +31,7 @@ using HeuristicFunc = std::function<double(const Point &, const Point &)>;
  * heuristics and step sizes for different world representations.
  */
 class PathGenerator {
-public:
+ public:
   // Fraction of step_size_ below which two points are treated as coincident
   static constexpr double kPointCoincidentFraction = 0.01;
   // Fraction of step_size_ within which a node is considered to have reached
@@ -57,9 +55,10 @@ public:
    * @param canMove Callback to check if a point is traversable
    * @return Optional WorldPath (nullopt if no path exists)
    */
-  [[nodiscard]] std::optional<WorldPath>
-  ShortestPath(const Point &start, const Point &goal,
-               const WorldQueryFunc &canMove) const;
+  [[nodiscard]] std::optional<WorldPath> ShortestPath(
+      const Point& start,
+      const Point& goal,
+      const WorldQueryFunc& canMove) const;
 
   /**
    * @brief Generate a patrol path through waypoints.
@@ -67,8 +66,9 @@ public:
    * @param loop If true, return to start point
    * @return Optional WorldPath (nullopt if waypoints are unreachable)
    */
-  [[nodiscard]] std::optional<WorldPath>
-  PatrolPath(const std::vector<Point> &waypoints, bool loop = true) const;
+  [[nodiscard]] std::optional<WorldPath> PatrolPath(
+      const std::vector<Point>& waypoints,
+      bool loop = true) const;
 
   /**
    * @brief Generate path from start to goal while avoiding a region.
@@ -79,9 +79,12 @@ public:
    * @param canMove Callback to check if a point is traversable
    * @return Optional WorldPath (nullopt if avoidance makes path impossible)
    */
-  [[nodiscard]] std::optional<WorldPath>
-  AvoidancePath(const Point &start, const Point &goal, const Point &avoid,
-                double radius, const WorldQueryFunc &canMove) const;
+  [[nodiscard]] std::optional<WorldPath> AvoidancePath(
+      const Point& start,
+      const Point& goal,
+      const Point& avoid,
+      double radius,
+      const WorldQueryFunc& canMove) const;
 
   // ========== Utility Generation ==========
 
@@ -92,8 +95,9 @@ public:
    * @param canMove Callback to check if a point is traversable
    * @return WorldPath (returns partial path if dead-end reached)
    */
-  [[nodiscard]] WorldPath RandomWalk(const Point &start, size_t steps,
-                                     const WorldQueryFunc &canMove) const;
+  [[nodiscard]] WorldPath RandomWalk(const Point& start,
+                                     size_t steps,
+                                     const WorldQueryFunc& canMove) const;
 
   /**
    * @brief Generate an expanding spiral path centered at a point.
@@ -102,7 +106,8 @@ public:
    * @param turns Number of complete rotations
    * @return WorldPath representing the spiral
    */
-  [[nodiscard]] WorldPath SpiralPath(const Point &center, double spacing,
+  [[nodiscard]] WorldPath SpiralPath(const Point& center,
+                                     double spacing,
                                      size_t turns) const;
 
   // ========== Configuration ==========
@@ -125,23 +130,23 @@ public:
    */
   [[nodiscard]] double GetStepSize() const { return step_size_; }
 
-private:
-  HeuristicFunc heuristic_; ///< Distance estimation function
-  double step_size_;        ///< Granularity for continuous worlds
+ private:
+  HeuristicFunc heuristic_;  ///< Distance estimation function
+  double step_size_;         ///< Granularity for continuous worlds
 
   // ========== Helper Functions ==========
 
   /**
    * @brief Default Euclidean distance heuristic.
    */
-  static double EuclideanDistance(const Point &a, const Point &b);
+  static double EuclideanDistance(const Point& a, const Point& b);
 
   /**
    * @brief Get neighboring points for pathfinding expansion.
    * @param p Current point
    * @return Vector of neighboring points based on step_size_
    */
-  [[nodiscard]] std::vector<Point> GetNeighbors(const Point &p) const;
+  [[nodiscard]] std::vector<Point> GetNeighbors(const Point& p) const;
 
   /**
    * @brief Reconstruct path from A* search results.
@@ -150,8 +155,8 @@ private:
    * @return Reconstructed WorldPath
    */
   [[nodiscard]] WorldPath ReconstructPath(
-      const std::unordered_map<Point, Point, Math::PointHash> &came_from,
-      const Point &current) const;
+      const std::unordered_map<Point, Point>& came_from,
+      const Point& current) const;
 };
 
-} // namespace cse498
+}  // namespace cse498

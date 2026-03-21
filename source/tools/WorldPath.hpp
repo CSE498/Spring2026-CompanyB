@@ -13,7 +13,7 @@
 #include <stdexcept>
 #include <vector>
 
-#include "Math/Point.hpp"
+#include "Point.hpp"
 
 namespace cse498 {
 
@@ -22,21 +22,30 @@ namespace cse498 {
  *
  * Includes helpers for measuring length, checking self-intersection,
  * interpolating along the path, etc.
+ *
+ * @note Performance Architecture: Because the Point struct is exactly
+ * 16 bytes (two doubles), WorldPath strictly passes it intrinsically by
+ * value (Point p), NOT by reference (const Point&). Following ISO C++ Core
+ * Guidelines (F.16), passing 16-byte structs by value skips memory pointer
+ * indirection and loads the data instantly into fast CPU vector registers,
+ * drastically accelerating geometric math at scale.
  */
 class WorldPath {
  public:
   /// Tolerance for floating-point comparisons in geometry helpers.
   static constexpr double kDefaultEps = 1e-9;
 
-  WorldPath() = default;
+  constexpr WorldPath() noexcept = default;
 
-  auto begin() { return points_.begin(); }
-  auto end() { return points_.end(); }
-  auto begin() const { return points_.begin(); }
-  auto end() const { return points_.end(); }
+  constexpr auto begin() noexcept { return points_.begin(); }
+  constexpr auto end() noexcept { return points_.end(); }
+  constexpr auto begin() const noexcept { return points_.begin(); }
+  constexpr auto end() const noexcept { return points_.end(); }
 
-  Point& operator[](std::size_t i) { return points_[i]; }
-  const Point& operator[](std::size_t i) const { return points_[i]; }
+  constexpr Point& operator[](std::size_t i) noexcept { return points_[i]; }
+  constexpr const Point& operator[](std::size_t i) const noexcept {
+    return points_[i];
+  }
 
   /**
    * @brief Bounds-checked access to the i-th point.
@@ -44,60 +53,70 @@ class WorldPath {
    * @return Reference to the point at index i.
    * @throws std::out_of_range if i >= size().
    */
-  [[deprecated("Exceptions are disallowed. Use get() for checked access or [] for unchecked access.")]] Point& at(std::size_t i) {
+  [[deprecated(
+      "Exceptions are disallowed. Use get() for checked access or [] for "
+      "unchecked access.")]] Point&
+  at(std::size_t i) {
     if (i >= points_.size())
       throw std::out_of_range("WorldPath::at");
     return points_[i];
   }
 
   /** @copydoc at(std::size_t) */
-  [[deprecated("Exceptions are disallowed. Use get() for checked access or [] for unchecked access.")]] const Point& at(std::size_t i) const {
+  [[deprecated(
+      "Exceptions are disallowed. Use get() for checked access or [] for "
+      "unchecked access.")]] const Point&
+  at(std::size_t i) const {
     if (i >= points_.size())
       throw std::out_of_range("WorldPath::at");
     return points_[i];
   }
 
-  [[nodiscard]] Point* get(std::size_t i) noexcept {
+  [[nodiscard]] constexpr Point* get(std::size_t i) noexcept {
     return i < points_.size() ? &points_[i] : nullptr;
   }
 
-  [[nodiscard]] const Point* get(std::size_t i) const noexcept {
+  [[nodiscard]] constexpr const Point* get(std::size_t i) const noexcept {
     return i < points_.size() ? &points_[i] : nullptr;
   }
 
-  Point& front() {
+  [[nodiscard]] constexpr Point& front() noexcept {
     assert(!points_.empty());
     return points_.front();
   }
-  const Point& front() const {
+  [[nodiscard]] constexpr const Point& front() const noexcept {
     assert(!points_.empty());
     return points_.front();
   }
-  Point& back() {
+  [[nodiscard]] constexpr Point& back() noexcept {
     assert(!points_.empty());
     return points_.back();
   }
-  const Point& back() const {
+  [[nodiscard]] constexpr const Point& back() const noexcept {
     assert(!points_.empty());
     return points_.back();
   }
 
-  [[nodiscard]] bool empty() const { return points_.empty(); }
-  [[nodiscard]] std::size_t size() const { return points_.size(); }
-  void reserve(std::size_t n) { points_.reserve(n); }
-  void clear() { points_.clear(); }
+  [[nodiscard]] constexpr bool empty() const noexcept {
+    return points_.empty();
+  }
+  [[nodiscard]] constexpr std::size_t size() const noexcept {
+    return points_.size();
+  }
+  constexpr void reserve(std::size_t n) { points_.reserve(n); }
+  constexpr void clear() noexcept { points_.clear(); }
 
   /**
    * @brief Appends a point to the path.
    * @param p Point to add. Must have finite coordinates (asserts on NaN/Inf).
    */
-  void addPoint(const Point& p);
+  void addPoint(Point p);
 
   /**
    * @brief Removes the last point and returns it.
    * @return The removed point, or std::nullopt if the path was already empty.
    */
-  std::optional<Point> popBack() {
+  constexpr std::optional<Point> popBack() noexcept {
     if (points_.empty())
       return std::nullopt;
     Point p = points_.back();
@@ -109,7 +128,9 @@ class WorldPath {
    * @brief Read-only span over the internal point storage.
    * @return A std::span of const Points.
    */
-  [[nodiscard]] std::span<const Point> pointsView() const { return points_; }
+  [[nodiscard]] constexpr std::span<const Point> pointsView() const noexcept {
+    return points_;
+  }
 
   /**
    * @brief Consecutive point pairs along the path.
@@ -122,7 +143,7 @@ class WorldPath {
    *   }
    * @endcode
    */
-  [[nodiscard]] auto segments() const {
+  [[nodiscard]] constexpr auto segments() const {
     return points_ | std::views::pairwise;
   }
 
@@ -145,16 +166,33 @@ class WorldPath {
    * @param i Segment index.
    * @return The segment length, or std::nullopt if i+1 is out of range.
    */
-  [[nodiscard]] std::optional<double> segmentLength(std::size_t i) const;
+  [[nodiscard]] std::optional<double> segmentLengthAt(std::size_t i) const;
 
   /**
-   * @brief Brute-force O(n^2) search for the two most distant points.
-   * @return The two points with the greatest Euclidean distance.
-   *
-   * @note For large paths (millions of points), we will implement a more efficient
-   *       algorithm such as rotating calipers on the convex hull (O(n log n)) ASAP.
+   * @brief Length of the subpath between two point indices.
+   * @param start_idx Index of the start point.
+   * @param end_idx Index of the end point.
+   * @return The distance along the path, or std::nullopt if indices are invalid
+   * or reversed.
+   */
+  [[nodiscard]] std::optional<double> subpathLength(std::size_t start_idx,
+                                                    std::size_t end_idx) const;
+
+  /**
+   * @brief Finds the two points furthest away from each other.
+   *        Uses a Convex Hull + Rotating Calipers algorithm to run fast (O(n
+   * log n)).
+   * @return A pair of the two most distant points.
    */
   [[nodiscard]] std::pair<Point, Point> furthestPair() const;
+
+  /**
+   * @brief O(n) check for adjacent segment foldbacks (path doubling back on
+   * itself).
+   * @return true if any sequence of 3 points strictly overlaps backward into
+   * itself.
+   */
+  [[nodiscard]] bool hasFoldbacks() const;
 
   /**
    * @brief Checks if the path forms a closed loop.
@@ -199,39 +237,43 @@ class WorldPath {
   // but implemented in the .cpp to keep the header clean.
 
   /// @brief Validates that a point's coordinates are not NaN or Infinity.
-  [[nodiscard]] static bool isValidPoint(const Point& p);
+  [[nodiscard]] static bool isValidPoint(Point p);
 
   /// @brief Returns the Euclidean distance between points a and b.
-  [[nodiscard]] static double dist(const Point& a, const Point& b);
+  [[nodiscard]] static double dist(Point a, Point b);
 
   /// @brief Checks if two doubles are equal within a small tolerance.
-  [[nodiscard]] static bool nearlyEq(double a, double b,
+  [[nodiscard]] static bool nearlyEq(double a,
+                                     double b,
                                      double eps = kDefaultEps);
 
   /// @brief Checks if two points share the exact same coordinates (within eps).
-  [[nodiscard]] static bool samePoint(const Point& a,
-                                      const Point& b,
+  [[nodiscard]] static bool samePoint(Point a,
+                                      Point b,
                                       double eps = kDefaultEps);
+
+  /// @brief 2D cross product of vectors AB and AC.
+  [[nodiscard]] static double crossProduct(Point a, Point b, Point c);
 
   /// @brief Finds the orientation of the ordered triplet (a, b, c).
   /// @return 0 if collinear, 1 if clockwise, -1 if counterclockwise.
-  [[nodiscard]] static int orient(const Point& a,
-                                  const Point& b,
-                                  const Point& c,
+  [[nodiscard]] static int orient(Point a,
+                                  Point b,
+                                  Point c,
                                   double eps = kDefaultEps);
 
   /// @brief Checks if a collinear point query lies on the line segment
   /// seg_start-seg_end.
-  [[nodiscard]] static bool onSegment(const Point& seg_start,
-                                      const Point& query,
-                                      const Point& seg_end,
+  [[nodiscard]] static bool onSegment(Point seg_start,
+                                      Point query,
+                                      Point seg_end,
                                       double eps = kDefaultEps);
 
   /// @brief Returns true if line segment a1-a2 intersects with b1-b2.
-  [[nodiscard]] static bool segmentsIntersect(const Point& a1,
-                                              const Point& a2,
-                                              const Point& b1,
-                                              const Point& b2,
+  [[nodiscard]] static bool segmentsIntersect(Point a1,
+                                              Point a2,
+                                              Point b1,
+                                              Point b2,
                                               double eps = kDefaultEps);
 };
 

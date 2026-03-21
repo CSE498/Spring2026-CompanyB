@@ -123,12 +123,15 @@ The following are implemented:
 * `totalLength()` on an empty path just returns `0.0`.
 * Asking for the "Next Point" when an agent is already at the end returns a status flag saying it's done.
 
-### 5) Expected Challenges
+### 5) Architectural Performance Decisions
+* **Pass-by-Value for `Point`:** `Point` is only 16 bytes (two `double`s). Following [C++ Core Guidelines F.16](https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#rf-in:~:text=F%2E16,non%2Dconst), we pass it by value (`Point p`) instead of `const Point&`. Passing small structs by const reference adds pointer indirection overhead, whereas passing by value allows the compiler to pack the struct directly into CPU registers.
+
+### 6) Expected Challenges
 * **Floating Point Precision:** Checking if two lines intersect is tricky with `double` because of precision errors. We'll need an epsilon check or we'll get false positives everywhere.
 * **Performance:** Checking for self-intersections is slow (O(N²)). If paths get really long, we might need to optimize by only checking the most recent segments.
 * **Compiler Support:** This class **requires C++23** and **must be compiled with `g++-15`** (or another GCC 15+ compiler). Apple Clang on macOS does not support `std::views::pairwise` and will fail to compile. Always use `make CXX=g++-15` or `export CXX=g++-15` before building. To run tests, run `make CXX=g++-15 test`.
 
-### 6) Coordination with Other Groups
+### 7) Coordination with Other Groups
 * **Group 13 (Math World):** We're using their `Point` struct. We need to make sure we agree on the coordinate system (Cartesian vs. Polar).
 * **Group 11 (Internal):** `PathGenerator` creates these objects, so our functions need to match what they expect.
 * **Group 20 (Data Analytics):** They can iterate over a `WorldPath` using the standard `begin()`/`end()` interface or `pointsView()` to serialize points however they need. No special serialization method is provided by `WorldPath`. The serialization of individual `Point` objects is Group 13's responsibility.

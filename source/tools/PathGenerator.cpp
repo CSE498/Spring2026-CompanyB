@@ -23,13 +23,16 @@ PathGenerator::PathGenerator()
 // ========== Core Path Generation ==========
 
 std::optional<WorldPath> PathGenerator::ShortestPath(
-    const Point &start, const Point &goal,
-    const WorldQueryFunc &canMove) const {
+    const Point& start,
+    const Point& goal,
+    const WorldQueryFunc& canMove) const {
   assert(canMove && "WorldQueryFunc cannot be null");
 
   // Handle degenerate case: start == goal
-  if (std::abs(start.x() - goal.x()) < step_size_ * kPointCoincidentFraction &&
-      std::abs(start.y() - goal.y()) < step_size_ * kPointCoincidentFraction) {
+  if (std::abs(start.getX() - goal.getX()) <
+          step_size_ * kPointCoincidentFraction &&
+      std::abs(start.getY() - goal.getY()) <
+          step_size_ * kPointCoincidentFraction) {
     WorldPath path;
     path.addPoint(start);
     return path;
@@ -42,22 +45,22 @@ std::optional<WorldPath> PathGenerator::ShortestPath(
 
   // A* algorithm implementation
   using PointDist = std::pair<double, Point>;
-  auto cmp = [](const PointDist &a, const PointDist &b) {
-    return a.first > b.first; // Min-heap based on f-score
+  auto cmp = [](const PointDist& a, const PointDist& b) {
+    return a.first > b.first;  // Min-heap based on f-score
   };
-  std::priority_queue<PointDist, std::vector<PointDist>, decltype(cmp)>
-      openSet(cmp);
+  std::priority_queue<PointDist, std::vector<PointDist>, decltype(cmp)> openSet(
+      cmp);
 
-  std::unordered_set<Point, Math::PointHash> closedSet; // Track visited nodes
-  std::unordered_map<Point, Point, Math::PointHash> cameFrom;
-  std::unordered_map<Point, double, Math::PointHash> gScore;
+  std::unordered_set<Point> closedSet;  // Track visited nodes
+  std::unordered_map<Point, Point> cameFrom;
+  std::unordered_map<Point, double> gScore;
 
   gScore[start] = 0.0;
   double fStart = heuristic_(start, goal);
   openSet.push({fStart, start});
 
   size_t iterations = 0;
-  const size_t maxIterations = 10000; // Prevent infinite loops
+  const size_t maxIterations = 10000;  // Prevent infinite loops
 
   while (!openSet.empty() && iterations++ < maxIterations) {
     Point current = openSet.top().second;
@@ -84,12 +87,11 @@ std::optional<WorldPath> PathGenerator::ShortestPath(
 
     // Explore neighbors
     std::vector<Point> neighbors = GetNeighbors(current);
-    for (const Point &neighbor : neighbors) {
+    for (const Point& neighbor : neighbors) {
       if (closedSet.count(neighbor) > 0 || !canMove(neighbor))
         continue;
 
-      double tentativeGScore =
-          gScore[current] + heuristic_(current, neighbor);
+      double tentativeGScore = gScore[current] + heuristic_(current, neighbor);
 
       if (gScore.find(neighbor) == gScore.end() ||
           tentativeGScore < gScore[neighbor]) {
@@ -105,9 +107,9 @@ std::optional<WorldPath> PathGenerator::ShortestPath(
   return std::nullopt;
 }
 
-std::optional<WorldPath>
-PathGenerator::PatrolPath(const std::vector<Point> &waypoints,
-                          bool loop) const {
+std::optional<WorldPath> PathGenerator::PatrolPath(
+    const std::vector<Point>& waypoints,
+    bool loop) const {
   if (waypoints.empty()) {
     return std::nullopt;
   }
@@ -119,7 +121,7 @@ PathGenerator::PatrolPath(const std::vector<Point> &waypoints,
   }
 
   WorldPath finalPath;
-  auto canMoveAnywhere = [](const Point &) { return true; };
+  auto canMoveAnywhere = [](const Point&) { return true; };
 
   // Connect each waypoint to the next
   for (size_t i = 0; i < waypoints.size() - 1; ++i) {
@@ -151,22 +153,23 @@ PathGenerator::PatrolPath(const std::vector<Point> &waypoints,
     }
   }
 
-  return finalPath.empty() ? std::nullopt
-                           : std::optional<WorldPath>(finalPath);
+  return finalPath.empty() ? std::nullopt : std::optional<WorldPath>(finalPath);
 }
 
-std::optional<WorldPath>
-PathGenerator::AvoidancePath(const Point &start, const Point &goal,
-                              const Point &avoid, double radius,
-                              const WorldQueryFunc &canMove) const {
+std::optional<WorldPath> PathGenerator::AvoidancePath(
+    const Point& start,
+    const Point& goal,
+    const Point& avoid,
+    double radius,
+    const WorldQueryFunc& canMove) const {
   assert(canMove && "WorldQueryFunc cannot be null");
   assert(radius >= 0.0 && "Avoidance radius cannot be negative");
 
   // Create a combined movement validator
-  auto canMoveWithAvoidance = [&](const Point &p) {
+  auto canMoveWithAvoidance = [&](const Point& p) {
     if (!canMove(p))
       return false;
-    double dist = std::hypot(p.x() - avoid.x(), p.y() - avoid.y());
+    double dist = std::hypot(p.getX() - avoid.getX(), p.getY() - avoid.getY());
     return dist >= radius;
   };
 
@@ -175,8 +178,9 @@ PathGenerator::AvoidancePath(const Point &start, const Point &goal,
 
 // ========== Utility Generation ==========
 
-WorldPath PathGenerator::RandomWalk(const Point &start, size_t steps,
-                                    const WorldQueryFunc &canMove) const {
+WorldPath PathGenerator::RandomWalk(const Point& start,
+                                    size_t steps,
+                                    const WorldQueryFunc& canMove) const {
   assert(canMove && "WorldQueryFunc cannot be null");
 
   WorldPath path;
@@ -198,7 +202,7 @@ WorldPath PathGenerator::RandomWalk(const Point &start, size_t steps,
     validNeighbors.clear();
     neighbors = GetNeighbors(current);
 
-    for (const Point &neighbor : neighbors) {
+    for (const Point& neighbor : neighbors) {
       if (canMove(neighbor)) {
         validNeighbors.push_back(neighbor);
       }
@@ -218,8 +222,9 @@ WorldPath PathGenerator::RandomWalk(const Point &start, size_t steps,
   return path;
 }
 
-WorldPath PathGenerator::SpiralPath(const Point &center, double spacing,
-                                     size_t turns) const {
+WorldPath PathGenerator::SpiralPath(const Point& center,
+                                    double spacing,
+                                    size_t turns) const {
   WorldPath path;
 
   if (turns == 0) {
@@ -232,16 +237,16 @@ WorldPath PathGenerator::SpiralPath(const Point &center, double spacing,
 
   // Generate spiral using parametric equations
   // r(t) = spacing * t / (2*pi)
-  // x(t) = center.x() + r(t) * cos(t)
-  // y(t) = center.y() + r(t) * sin(t)
+  // x(t) = center.getX() + r(t) * cos(t)
+  // y(t) = center.getY() + r(t) * sin(t)
 
   const double maxAngle = turns * 2.0 * M_PI;
   const double angleStep = step_size_ / (spacing > 0 ? spacing : 1.0);
 
   for (double angle = angleStep; angle <= maxAngle; angle += angleStep) {
     double r = (spacing * angle) / (2.0 * M_PI);
-    Point p(center.x() + r * std::cos(angle),
-            center.y() + r * std::sin(angle));
+    Point p(center.getX() + r * std::cos(angle),
+            center.getY() + r * std::sin(angle));
     path.addPoint(p);
   }
 
@@ -262,13 +267,13 @@ void PathGenerator::SetStepSize(double size) {
 
 // ========== Helper Functions ==========
 
-double PathGenerator::EuclideanDistance(const Point &a, const Point &b) {
-  double dx = b.x() - a.x();
-  double dy = b.y() - a.y();
+double PathGenerator::EuclideanDistance(const Point& a, const Point& b) {
+  double dx = b.getX() - a.getX();
+  double dy = b.getY() - a.getY();
   return std::hypot(dx, dy);
 }
 
-std::vector<Point> PathGenerator::GetNeighbors(const Point &p) const {
+std::vector<Point> PathGenerator::GetNeighbors(const Point& p) const {
   static constexpr std::array<std::pair<double, double>, 8> kUnitDirections{{
       {1.0, 0.0},
       {-1.0, 0.0},
@@ -284,16 +289,16 @@ std::vector<Point> PathGenerator::GetNeighbors(const Point &p) const {
   neighbors.reserve(kUnitDirections.size());
 
   const double step = step_size_;
-  for (const auto &[ux, uy] : kUnitDirections) {
-    neighbors.emplace_back(p.x() + ux * step, p.y() + uy * step);
+  for (const auto& [ux, uy] : kUnitDirections) {
+    neighbors.emplace_back(p.getX() + ux * step, p.getY() + uy * step);
   }
 
   return neighbors;
 }
 
 WorldPath PathGenerator::ReconstructPath(
-    const std::unordered_map<Point, Point, Math::PointHash> &came_from,
-    const Point &current) const {
+    const std::unordered_map<Point, Point>& came_from,
+    const Point& current) const {
   std::vector<Point> points;
   for (Point node = current;;) {
     points.push_back(node);
@@ -304,9 +309,9 @@ WorldPath PathGenerator::ReconstructPath(
   }
   std::reverse(points.begin(), points.end());
   WorldPath path;
-  for (const auto &p : points)
+  for (const auto& p : points)
     path.addPoint(p);
   return path;
 }
 
-} // namespace cse498
+}  // namespace cse498

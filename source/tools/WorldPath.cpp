@@ -8,13 +8,13 @@
 
 namespace cse498 {
 
-bool WorldPath::isValidPoint(const Point& p) {
-  return std::isfinite(p.x()) && std::isfinite(p.y());
+bool WorldPath::isValidPoint(Point p) {
+  return std::isfinite(p.getX()) && std::isfinite(p.getY());
 }
 
-double WorldPath::dist(const Point& a, const Point& b) {
-  double dx = b.x() - a.x();
-  double dy = b.y() - a.y();
+double WorldPath::dist(Point a, Point b) {
+  double dx = b.getX() - a.getX();
+  double dy = b.getY() - a.getY();
   return std::sqrt(dx * dx + dy * dy);
 }
 
@@ -22,44 +22,55 @@ bool WorldPath::nearlyEq(double a, double b, double eps) {
   return std::abs(a - b) <= eps;
 }
 
-bool WorldPath::samePoint(const Point& a, const Point& b, double eps) {
-  return nearlyEq(a.x(), b.x(), eps) && nearlyEq(a.y(), b.y(), eps);
+bool WorldPath::samePoint(Point a, Point b, double eps) {
+  return nearlyEq(a.getX(), b.getX(), eps) && nearlyEq(a.getY(), b.getY(), eps);
 }
 
-int WorldPath::orient(const Point& a,
-                      const Point& b,
-                      const Point& c,
-                      double eps) {
+double WorldPath::crossProduct(Point a, Point b, Point c) {
+  return (b.getX() - a.getX()) * (c.getY() - a.getY()) -
+         (b.getY() - a.getY()) * (c.getX() - a.getX());
+}
+
+int WorldPath::orient(Point a, Point b, Point c, double eps) {
   // Calculate 2D cross product to determine turn direction.
   // Positive = CCW, Negative = CW, Zero = collinear.
-  double cross =
-      (b.x() - a.x()) * (c.y() - a.y()) - (b.y() - a.y()) * (c.x() - a.x());
+  double cross = crossProduct(a, b, c);
   if (nearlyEq(cross, 0.0, eps))
     return 0;
   return (cross > 0.0) ? 1 : -1;
 }
 
-bool WorldPath::onSegment(const Point& seg_start,
-                          const Point& query,
-                          const Point& seg_end,
+bool WorldPath::onSegment(Point seg_start,
+                          Point query,
+                          Point seg_end,
                           double eps) {
-  return query.x() >= std::min(seg_start.x(), seg_end.x()) - eps &&
-         query.x() <= std::max(seg_start.x(), seg_end.x()) + eps &&
-         query.y() >= std::min(seg_start.y(), seg_end.y()) - eps &&
-         query.y() <= std::max(seg_start.y(), seg_end.y()) + eps;
+  return query.getX() >= std::min(seg_start.getX(), seg_end.getX()) - eps &&
+         query.getX() <= std::max(seg_start.getX(), seg_end.getX()) + eps &&
+         query.getY() >= std::min(seg_start.getY(), seg_end.getY()) - eps &&
+         query.getY() <= std::max(seg_start.getY(), seg_end.getY()) + eps;
 }
 
-bool WorldPath::segmentsIntersect(const Point& a1,
-                                  const Point& a2,
-                                  const Point& b1,
-                                  const Point& b2,
+bool WorldPath::segmentsIntersect(Point a1,
+                                  Point a2,
+                                  Point b1,
+                                  Point b2,
                                   double eps) {
   int d1 = orient(a1, a2, b1, eps);
   int d2 = orient(a1, a2, b2, eps);
 
+  // If points b1 and b2 are strictly on the same side of line a1-a2,
+  // they cannot intersect.
+  if (d1 == d2 && d1 != 0)
+    return false;
+
   // Quick strict-intersection check before collinear work
   int d3 = orient(b1, b2, a1, eps);
   int d4 = orient(b1, b2, a2, eps);
+
+  // If points a1 and a2 are strictly on the same side of line b1-b2,
+  // they cannot intersect.
+  if (d3 == d4 && d3 != 0)
+    return false;
 
   if (d1 != d2 && d3 != d4)
     return true;  // Strictly intersect
@@ -77,7 +88,7 @@ bool WorldPath::segmentsIntersect(const Point& a1,
   return false;
 }
 
-void WorldPath::addPoint(const Point& p) {
+void WorldPath::addPoint(Point p) {
   assert(isValidPoint(p));
   points_.push_back(p);
 }
@@ -91,30 +102,150 @@ double WorldPath::totalLength() const {
       });
 }
 
-std::optional<double> WorldPath::segmentLength(std::size_t i) const {
+std::optional<double> WorldPath::segmentLengthAt(std::size_t i) const {
   if (i + 1 >= points_.size())
     return std::nullopt;
   return dist(points_[i], points_[i + 1]);
 }
 
+std::optional<double> WorldPath::subpathLength(std::size_t start_idx,
+                                               std::size_t end_idx) const {
+  if (start_idx >= points_.size() || end_idx >= points_.size() ||
+      start_idx > end_idx)
+    return std::nullopt;
+
+  double total = 0.0;
+  for (std::size_t i = start_idx; i < end_idx; ++i) {
+    total += dist(points_[i], points_[i + 1]);
+  }
+  return total;
+}
+
 std::pair<Point, Point> WorldPath::furthestPair() const {
   assert(points_.size() >= 2);
-  std::size_t ai = 0;
-  std::size_t bi = 1;
-  double best = dist(points_[ai], points_[bi]);
+  if (points_.size() == 2)
+    return {points_[0], points_[1]};
 
-  // Brute-force O(n^2) comparison of all pairs
-  for (std::size_t i = 0; i < points_.size(); ++i) {
-    for (std::size_t j = i + 1; j < points_.size(); ++j) {
-      double d = dist(points_[i], points_[j]);
-      if (d > best) {
-        best = d;
-        ai = i;
-        bi = j;
+  // sort points by X (then Y)
+  std::vector<Point> sorted = points_;
+  std::ranges::sort(sorted, [](const Point& a, const Point& b) {
+    if (std::abs(a.getX() - b.getX()) > kDefaultEps)
+      return a.getX() < b.getX();
+    return a.getY() < b.getY();
+  });
+
+  // drop duplicates so hull logic works
+  auto unique_end =
+      std::ranges::unique(sorted, [](const Point& a, const Point& b) {
+        return std::abs(a.getX() - b.getX()) < kDefaultEps &&
+               std::abs(a.getY() - b.getY()) < kDefaultEps;
+      });
+  sorted.erase(unique_end.begin(), unique_end.end());
+
+  if (sorted.size() <= 2) {
+    if (sorted.size() == 1)
+      return {sorted[0], sorted[0]};
+    return {sorted[0], sorted[1]};
+  }
+
+  // convex hull via Andrew's Monotone Chain
+  // https://cp-algorithms.com/geometry/convex-hull.html
+  std::vector<Point> hull;
+  hull.reserve(sorted.size() + 1);
+
+  // lower hull
+  for (Point p : sorted) {
+    while (hull.size() >= 2 &&
+           crossProduct(hull[hull.size() - 2], hull.back(), p) <= kDefaultEps) {
+      hull.pop_back();
+    }
+    hull.push_back(p);
+  }
+
+  // upper hull
+  std::size_t lower_size = hull.size();
+  for (auto it = sorted.rbegin(); it != sorted.rend(); ++it) {
+    Point p = *it;
+    while (hull.size() > lower_size &&
+           crossProduct(hull[hull.size() - 2], hull.back(), p) <= kDefaultEps) {
+      hull.pop_back();
+    }
+    hull.push_back(p);
+  }
+  hull.pop_back();  // last point is just a dup of the start point
+
+  std::size_t H = hull.size();
+  if (H <= 2) {
+    return {hull.front(), hull.back()};
+  }
+
+  // rotating calipers to find max distance
+  // http://web.archive.org/web/20120313054937/http://cgm.cs.mcgill.ca/~orm/rotcal.html
+  double max_dist_sq = 0.0;
+  std::size_t best_i = 0, best_j = 1;
+
+  auto distSq = [](Point a, Point b) {
+    double dx = a.getX() - b.getX();
+    double dy = a.getY() - b.getY();
+    return dx * dx + dy * dy;
+  };
+
+  std::size_t j = 1;
+  for (std::size_t i = 0; i < H; ++i) {
+    std::size_t next_i = (i + 1) % H;
+
+    // advance j while area increases (moving further from edge i->next_i)
+    while (true) {
+      std::size_t next_j = (j + 1) % H;
+      double area_j = std::abs(crossProduct(hull[i], hull[next_i], hull[j]));
+      double area_next_j =
+          std::abs(crossProduct(hull[i], hull[next_i], hull[next_j]));
+
+      if (area_next_j > area_j + kDefaultEps) {
+        j = next_j;
+      } else {
+        break;
       }
     }
+
+    // check distances to j
+    double d1 = distSq(hull[i], hull[j]);
+    if (d1 > max_dist_sq) {
+      max_dist_sq = d1;
+      best_i = i;
+      best_j = j;
+    }
+
+    double d2 = distSq(hull[next_i], hull[j]);
+    if (d2 > max_dist_sq) {
+      max_dist_sq = d2;
+      best_i = next_i;
+      best_j = j;
+    }
   }
-  return {points_[ai], points_[bi]};
+
+  return {hull[best_i], hull[best_j]};
+}
+
+bool WorldPath::hasFoldbacks() const {
+  if (points_.size() < 3)
+    return false;
+
+  // 3-point observing window with slide
+  for (const auto& window : points_ | std::views::slide(3)) {
+    const Point& A = window[0];
+    const Point& B = window[1];
+    const Point& C = window[2];
+
+    // Check if points are collinear
+    if (orient(A, B, C, kDefaultEps) == 0) {
+      // If the dot product of vectors BA and BC is distinctly positive,
+      // the path is folding directly back onto itself.
+      if (dot(A - B, C - B) > kDefaultEps)
+        return true;
+    }
+  }
+  return false;
 }
 
 bool WorldPath::isClosed(double eps) const {
@@ -145,8 +276,8 @@ Point WorldPath::pointAtDistance(double distance_along_path) const {
 
     if (remaining <= segment_length) {
       const double t = remaining / segment_length;
-      return {start.x() + t * (end.x() - start.x()),
-              start.y() + t * (end.y() - start.y())};
+      return {start.getX() + t * (end.getX() - start.getX()),
+              start.getY() + t * (end.getY() - start.getY())};
     }
 
     remaining -= segment_length;
@@ -161,18 +292,70 @@ bool WorldPath::selfIntersects() const {
   // exist.
   if (n < 4)
     return false;
+
   bool closed = samePoint(points_.front(), points_.back(), kDefaultEps);
+
+  struct SegNode {
+    double min_x, max_x;
+    double min_y, max_y;
+    std::size_t index;
+  };
+
+  std::vector<SegNode> nodes;
+  nodes.reserve(n - 1);
   for (std::size_t i = 0; i + 1 < n; ++i) {
-    for (std::size_t j = i + 2; j + 1 < n; ++j) {
-      // Skip the first-last segment pair for closed paths (they share a
-      // vertex).
-      if (closed && i == 0 && j == n - 2)
+    const Point& p1 = points_[i];
+    const Point& p2 = points_[i + 1];
+    nodes.push_back(SegNode{
+        std::min(p1.getX(), p2.getX()), std::max(p1.getX(), p2.getX()),
+        std::min(p1.getY(), p2.getY()), std::max(p1.getY(), p2.getY()), i});
+  }
+
+  std::sort(nodes.begin(), nodes.end(), [](const SegNode& a, const SegNode& b) {
+    return a.min_x < b.min_x;
+  });
+
+  for (std::size_t i = 0; i < nodes.size(); ++i) {
+    const auto& nodeA = nodes[i];
+    for (std::size_t j = i + 1; j < nodes.size(); ++j) {
+      const auto& nodeB = nodes[j];
+
+      // Since nodes are sorted by min_x, if nodeB's min_x is strictly beyond
+      // nodeA's max_x (plus eps for floating point safety), we can stop
+      // checking nodeB and all subsequent nodes against nodeA.
+      if (nodeB.min_x > nodeA.max_x + kDefaultEps) {
+        break;
+      }
+
+      // Bounding box overlap check on Y axis
+      if (nodeB.min_y > nodeA.max_y + kDefaultEps ||
+          nodeB.max_y < nodeA.min_y - kDefaultEps) {
         continue;
-      if (segmentsIntersect(points_[i], points_[i + 1], points_[j],
-                            points_[j + 1], kDefaultEps))
+      }
+
+      // Determine adjacency
+      std::size_t idxA = nodeA.index;
+      std::size_t idxB = nodeB.index;
+
+      if (idxA > idxB)
+        std::swap(idxA, idxB);
+
+      // Adjacent segments naturally intersect at their shared vertex
+      if (idxB == idxA + 1)
+        continue;
+
+      // Skip the first-last segment pair for closed paths (they share a vertex)
+      if (closed && idxA == 0 && idxB == n - 2)
+        continue;
+
+      // Exact intersection check
+      if (segmentsIntersect(points_[idxA], points_[idxA + 1], points_[idxB],
+                            points_[idxB + 1], kDefaultEps)) {
         return true;
+      }
     }
   }
+
   return false;
 }
 
