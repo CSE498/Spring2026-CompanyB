@@ -22,7 +22,11 @@ class IOutputManager {
 
   virtual bool SetOutputFile(const std::string& path) = 0;
   virtual void LogMessage(LogLevel level, const std::string& message) = 0;
+  virtual void LogEntry(const std::string& category,
+                        LogLevel level,
+                        const std::string& message) = 0;
   virtual void SetLogLevel(LogLevel level) noexcept = 0;
+  virtual bool Flush() = 0;
   virtual void WriteSimulationOutput(const DataLog& dataLog) = 0;
   virtual const nlohmann::json& GetBufferedLog() const noexcept = 0;
 };
