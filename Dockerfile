@@ -20,6 +20,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/* \
     && update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-14 14 \
     && update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-14 14 \
+    && update-alternatives --install /usr/bin/cc cc /usr/bin/gcc-14 14 \
+    && update-alternatives --install /usr/bin/c++ c++ /usr/bin/g++-14 14 \
     && git config --system --add safe.directory '*'
 
 # Install Emscripten SDK 5.0.0
