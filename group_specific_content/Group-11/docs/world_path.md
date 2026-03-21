@@ -71,7 +71,7 @@ The following are implemented:
   **Returns:** Sum of all segment distances.  
   **Edge Case:** Returns `0.0` if fewer than 2 points.
 
-- `std::optional<double> segmentLength(size_t index) const;`  
+- `std::optional<double> segmentLengthAt(size_t index) const;`  
   **Returns:** Length of segment `index → index+1`.  
   **Returns:** `std::nullopt` if invalid.
 
@@ -87,8 +87,11 @@ The following are implemented:
   **Assert:** Path must not be empty.
 
 - `bool selfIntersects() const;`  
-  **Returns:** Whether any non-adjacent segments intersect (O(N²)).  
+  **Returns:** Whether any non-adjacent segments intersect (O(N log N)).  
   **Note:** Closed paths (last == first) do not count the closing segment as self-intersection.
+
+- `bool hasFoldbacks() const;`  
+  **Returns:** Whether any sequence of 3 points strictly overlaps backward into itself (O(N)).
 
 - `bool isValid() const;`  
   **Returns:** True if all stored points are finite.
@@ -114,7 +117,7 @@ The following are implemented:
 #### (2) Recoverable Error — Exceptions / Optional
 * **File Loading:** If we implement `LoadFromFile` and it fails, we'll throw a `std::runtime_error` because the program shouldn't keep going if it can't load the file.
 * **Invalid Index:** `get(i)` returns `nullptr` when `i` is out of range. `at(i)` is deprecated.
-* **Invalid Queries:** `segmentLength(i)` on the last point returns `std::nullopt`, so the caller can deal with it.
+* **Invalid Queries:** `segmentLengthAt(i)` on the last point returns `std::nullopt`, so the caller can deal with it.
 
 #### (3) User-Level / Soft Errors — Return Condition
 * `totalLength()` on an empty path just returns `0.0`.
