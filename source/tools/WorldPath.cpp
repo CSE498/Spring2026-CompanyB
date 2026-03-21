@@ -88,7 +88,7 @@ bool WorldPath::segmentsIntersect(Point a1,
   return false;
 }
 
-void WorldPath::addPoint(Point p) {
+void WorldPath::addPoint(const Point& p) {
   assert(isValidPoint(p));
   points_.push_back(p);
 }

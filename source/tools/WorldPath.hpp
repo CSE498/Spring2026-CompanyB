@@ -23,12 +23,12 @@ namespace cse498 {
  * Includes helpers for measuring length, checking self-intersection,
  * interpolating along the path, etc.
  *
- * @note Performance Architecture: Because the Point struct is exactly
- * 16 bytes (two doubles), WorldPath strictly passes it intrinsically by
- * value (Point p), NOT by reference (const Point&). Following ISO C++ Core
- * Guidelines (F.16), passing 16-byte structs by value skips memory pointer
- * indirection and loads the data instantly into fast CPU vector registers,
- * drastically accelerating geometric math at scale.
+ * @note Point is a small value type (two doubles, 16 bytes), so many helper
+ * APIs pass it by value. For cheap-to-copy input types, pass-by-value is often
+ * as good as or better than const reference because it can avoid an extra
+ * indirection, depending on the optimizer and ABI. However, public-facing
+ * methods (like addPoint) strictly retain the const Point& convention to
+ * guarantee seamless API compatibility with the broader project ecosystem.
  */
 class WorldPath {
  public:
@@ -110,7 +110,7 @@ class WorldPath {
    * @brief Appends a point to the path.
    * @param p Point to add. Must have finite coordinates (asserts on NaN/Inf).
    */
-  void addPoint(Point p);
+  void addPoint(const Point& p);
 
   /**
    * @brief Removes the last point and returns it.
