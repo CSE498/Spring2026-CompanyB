@@ -6,6 +6,8 @@ export SERVE_PORT="${SERVE_PORT:-8080}"
 export SOURCE_DIR="${SOURCE_DIR:-/app/source}"
 export BUILD_DIR="${BUILD_DIR:-/app/build}"
 export GNUTLS_CPUID_OVERRIDE=0x1
+export CC=/usr/bin/gcc
+export CXX=/usr/bin/g++
 
 # Restore build directory ownership to the host user
 fix_permissions() {
