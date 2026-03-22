@@ -13,7 +13,7 @@ using namespace cse498;
 
 int main() {
   TrafficWorld world;
-  world.AddAgent<DrivingAgent>("Car 1").SetLocation(WorldPosition{5, 5});
+  world.AddAgent<DrivingAgent>("Car 1").SetLocation(WorldPosition{5, 6});
   world.AddAgent<TrashInterface>("Interface")
       .SetSymbol('@');
 

@@ -25,7 +25,7 @@ namespace cse498 {
       grass_id  = main_grid.AddCellType("grass",  "Grass that cars can't go on.", '#');
 
       main_grid.Load(std::vector<std::string>{"#################",
-                                              "########        #"
+                                              "########        #",
                                               "######## ###### #",
                                               "######## ###### #",
                                               "######## ###### #",
