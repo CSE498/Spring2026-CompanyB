@@ -1,0 +1,97 @@
+name: Integration
+
+on:
+  push:
+    branches:
+      - "**"
+  # Allows manually triggering on main to setup caches for existing PRs
+  workflow_dispatch:
+
+jobs:
+  format:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Restore clang-format-21 cache
+        id: cache-clang-format
+        uses: actions/cache/restore@v4
+        with:
+          path: ~/llvm-21-cache
+          key: clang-format-21-${{ runner.os }}
+
+      - name: Install clang-format-21
+        if: steps.cache-clang-format.outputs.cache-hit != 'true'
+        run: |
+          DISTRO=$(lsb_release -cs)
+          wget -qO- https://apt.llvm.org/llvm-snapshot.gpg.key | sudo tee /etc/apt/trusted.gpg.d/apt.llvm.org.asc
+          echo "deb http://apt.llvm.org/${DISTRO}/ llvm-toolchain-${DISTRO}-21 main" | sudo tee /etc/apt/sources.list.d/llvm-21.list
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends clang-format-21
+          mkdir -p ~/llvm-21-cache/bin ~/llvm-21-cache/lib
+          cp /usr/lib/llvm-21/bin/clang-format ~/llvm-21-cache/bin/clang-format-21
+          ldd /usr/lib/llvm-21/bin/clang-format | grep "=> /" | awk '{print $3}' | xargs -I{} cp -L {} ~/llvm-21-cache/lib/
+
+      - name: Add clang-format-21 to PATH
+        run: |
+          echo "$HOME/llvm-21-cache/bin" >> $GITHUB_PATH
+          echo "LD_LIBRARY_PATH=$HOME/llvm-21-cache/lib:$LD_LIBRARY_PATH" >> $GITHUB_ENV
+
+      - name: Save clang-format-21 cache
+        if: always() && steps.cache-clang-format.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: ~/llvm-21-cache
+          key: clang-format-21-${{ runner.os }}
+
+      - name: Formatting Checks
+        run: find source tests -type f \( -name "*.cpp" -o -name "*.hpp" -o -name "*.c" -o -name "*.h" \) | xargs clang-format-21 -n -Werror --verbose
+
+  native-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Qt6
+        uses: jurplel/install-qt-action@v4
+        with:
+          version: "6.*"
+          cache: true
+          install-deps: true
+
+      - name: Run Tests
+        env:
+          # Headless mode
+          QT_QPA_PLATFORM: offscreen
+        run: make test
+
+  emscripten-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Cache Emscripten
+        id: cache-emsdk
+        uses: actions/cache@v4
+        with:
+          path: ~/emsdk
+          key: emsdk-${{ runner.os }}-5.0.0
+
+      - name: Install Emscripten
+        if: steps.cache-emsdk.outputs.cache-hit != 'true'
+        run: |
+          git clone https://github.com/emscripten-core/emsdk.git ~/emsdk
+          ~/emsdk/emsdk install 5.0.0
+          ~/emsdk/emsdk activate 5.0.0
+
+      - name: Activate Emscripten
+        run: |
+          source ~/emsdk/emsdk_env.sh
+          echo "EMSDK=$HOME/emsdk" >> $GITHUB_ENV
+          echo "$HOME/emsdk/upstream/emscripten" >> $GITHUB_PATH
+
+      - name: Run Tests
+        env:
+          SOURCE_DIR: ${{ github.workspace }}/source
+          BUILD_DIR: /tmp/build
+        run: bash scripts/docker-entrypoint.sh test-emscripten
