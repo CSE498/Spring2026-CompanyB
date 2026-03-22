@@ -29,7 +29,7 @@ namespace cse498 {
 class DrivingAgent : public AgentBase {
  protected:
   StateGridPosition
-      grid_pos;  ///< Tracks facing direction (and a local copy of position).
+      grid_pos{};  ///< Tracks facing direction (and a local copy of position).
   // The right thing to do IMO would be to just make GetSymbol virtual
   // but I'll avoid interfering with core files for now.
   const std::map<Direction, char> direction_symbols = {{Direction::North, '^'},
@@ -37,12 +37,14 @@ class DrivingAgent : public AgentBase {
                                                        {Direction::South, 'v'},
                                                        {Direction::West, '<'}}; 
   size_t road_cell_id{};
+  size_t traffic_light_id{};
 
  public:
   DrivingAgent(size_t id, const std::string& name, const WorldBase& world)
       : AgentBase(id, name, world) {
     SetDirection(Direction::East);
     road_cell_id = world.GetGrid().GetCellTypeID("road");
+    traffic_light_id = world.GetGrid().GetCellTypeID("traffic_light");
   }
   ~DrivingAgent() = default;
 
@@ -71,7 +73,11 @@ class DrivingAgent : public AgentBase {
   /// @return Success: are required actions available?
   bool Initialize() override {
     return HasAction("up") && HasAction("down") && HasAction("left") &&
-           HasAction("right");
+           HasAction("right") && HasAction("stay");
+  }
+
+  bool IsTraversableTerrain(const size_t cell_id) const {
+    return cell_id == road_cell_id || cell_id == traffic_light_id;
   }
 
   /// @brief Choose the action to take on this turn.
@@ -82,18 +88,18 @@ class DrivingAgent : public AgentBase {
     grid_pos.SetLocation(GetLocation().AsWorldPosition());
 
     if (action_result == 0) {
-      TurnLeft();
+      return action_map["stay"];
     }
 
     StateGridPosition forward_pos = grid_pos.GetForwardPosition();
 
-    bool can_move_forward = grid[forward_pos.AsWorldPosition()] == road_cell_id;
+    bool can_move_forward = IsTraversableTerrain(grid[forward_pos.AsWorldPosition()]);
     if (!can_move_forward) {
       StateGridPosition left_pos = grid_pos.GetLeftwardPosition();
       StateGridPosition right_pos = grid_pos.GetRightwardPosition();
       
-      bool can_move_left = grid[left_pos.AsWorldPosition()] == road_cell_id;
-      bool can_move_right = grid[right_pos.AsWorldPosition()] == road_cell_id;
+      bool can_move_left = IsTraversableTerrain(grid[left_pos.AsWorldPosition()]);
+      bool can_move_right = IsTraversableTerrain(grid[right_pos.AsWorldPosition()]);
 
       if (can_move_left) {
         TurnLeft();
