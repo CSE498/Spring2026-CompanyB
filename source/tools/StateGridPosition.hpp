@@ -12,6 +12,7 @@
 #include <cstddef>   // For size_t
 
 #include "./StateGrid/StateGrid.hpp"
+#include "../core/WorldPosition.hpp"
 
 namespace cse498 {
 /// @brief Constitutes the direction of an agent
@@ -46,7 +47,16 @@ class StateGridPosition {
   StateGridPosition(const StateGridPosition&) = default;
   StateGridPosition& operator=(const StateGridPosition&) = default;
 
+  WorldPosition AsWorldPosition() const {
+    return WorldPosition(col, row);
+  }
+
   // -- Movement Functions --
+
+  void SetLocation(WorldPosition pos) {
+    col = pos.CellX();
+    row = pos.CellY();
+  }
 
   bool MoveForward(const StateGrid& grid) {
     if (!IsValidForwardMove(grid)) return false;
@@ -177,6 +187,32 @@ class StateGridPosition {
       default:
         assert(false && "Invalid direction in GetBackwardPosition");
         return *this;
+    }
+  }
+
+  [[nodiscard]] StateGridPosition GetLeftwardPosition() const {
+    switch (direction_facing) {
+      case Direction::North:
+        return StateGridPosition(col - 1, row, direction_facing);
+      case Direction::East:
+        return StateGridPosition(col, row - 1, direction_facing);
+      case Direction::South:
+        return StateGridPosition(col + 1, row, direction_facing);
+      case Direction::West:
+        return StateGridPosition(col, row + 1, direction_facing);
+    }
+  }
+
+  [[nodiscard]] StateGridPosition GetRightwardPosition() const {
+    switch (direction_facing) {
+      case Direction::North:
+        return StateGridPosition(col + 1, row, direction_facing);
+      case Direction::East:
+        return StateGridPosition(col, row + 1, direction_facing);
+      case Direction::South:
+        return StateGridPosition(col - 1, row, direction_facing);
+      case Direction::West:
+        return StateGridPosition(col, row - 1, direction_facing);
     }
   }
 

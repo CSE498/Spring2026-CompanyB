@@ -18,9 +18,11 @@
 
 #include <cassert>
 #include <map>
+#include <print>
 
 #include "../core/AgentBase.hpp"
 #include "../tools/StateGridPosition.hpp"
+#include "../core/WorldBase.hpp"
 
 namespace cse498 {
 
@@ -33,12 +35,14 @@ class DrivingAgent : public AgentBase {
   const std::map<Direction, char> direction_symbols = {{Direction::North, '^'},
                                                        {Direction::East, '>'},
                                                        {Direction::South, 'v'},
-                                                       {Direction::West, '<'}};
+                                                       {Direction::West, '<'}}; 
+  size_t road_cell_id{};
 
  public:
   DrivingAgent(size_t id, const std::string& name, const WorldBase& world)
       : AgentBase(id, name, world) {
     SetDirection(Direction::East);
+    road_cell_id = world.GetGrid().GetCellTypeID("road");
   }
   ~DrivingAgent() = default;
 
@@ -74,9 +78,31 @@ class DrivingAgent : public AgentBase {
   ///
   /// Strategy: try to move forward (in the current facing direction).
   /// If the last forward move failed, turn left and try again.
-  size_t SelectAction(const WorldGrid& /* grid */) override {
+  size_t SelectAction(const WorldGrid& grid) override {
+    grid_pos.SetLocation(GetLocation().AsWorldPosition());
+
     if (action_result == 0) {
       TurnLeft();
+    }
+
+    StateGridPosition forward_pos = grid_pos.GetForwardPosition();
+
+    bool can_move_forward = grid[forward_pos.AsWorldPosition()] == road_cell_id;
+    if (!can_move_forward) {
+      StateGridPosition left_pos = grid_pos.GetLeftwardPosition();
+      StateGridPosition right_pos = grid_pos.GetRightwardPosition();
+      
+      bool can_move_left = grid[left_pos.AsWorldPosition()] == road_cell_id;
+      bool can_move_right = grid[right_pos.AsWorldPosition()] == road_cell_id;
+
+      if (can_move_left) {
+        TurnLeft();
+      } else if (can_move_right) {
+        TurnRight();
+      } else {
+        TurnLeft();
+        TurnLeft();
+      }
     }
 
     return GetActionForCurrentDirection();
