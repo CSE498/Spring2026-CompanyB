@@ -17,6 +17,7 @@
 #pragma once
 
 #include <cassert>
+#include <map>
 
 #include "../core/AgentBase.hpp"
 #include "../tools/StateGridPosition.hpp"
@@ -27,15 +28,24 @@ class DrivingAgent : public AgentBase {
  protected:
   StateGridPosition
       grid_pos;  ///< Tracks facing direction (and a local copy of position).
+  // The right thing to do IMO would be to just make GetSymbol virtual
+  // but I'll avoid interfering with core files for now.
+  const std::map<Direction, char> direction_symbols = {{Direction::North, '^'},
+                                                       {Direction::East, '>'},
+                                                       {Direction::South, 'v'},
+                                                       {Direction::West, '<'}};
 
  public:
   DrivingAgent(size_t id, const std::string& name, const WorldBase& world)
-      : AgentBase(id, name, world) {}
+      : AgentBase(id, name, world) {
+    SetDirection(Direction::East);
+  }
   ~DrivingAgent() = default;
 
   /// @brief Set the agent's initial facing direction.
   DrivingAgent& SetDirection(Direction dir) {
     grid_pos.SetDirection(dir);
+    SetSymbol(direction_symbols.at(grid_pos.GetDirection()));
     return *this;
   }
 
@@ -49,6 +59,7 @@ class DrivingAgent : public AgentBase {
   DrivingAgent& SetGridPosition(size_t col, size_t row,
                                 Direction dir = Direction::North) {
     grid_pos = StateGridPosition(col, row, dir);
+    SetSymbol(direction_symbols.at(grid_pos.GetDirection()));
     return *this;
   }
 
@@ -62,15 +73,23 @@ class DrivingAgent : public AgentBase {
   /// @brief Choose the action to take on this turn.
   ///
   /// Strategy: try to move forward (in the current facing direction).
-  /// If the last forward move failed, turn right and try again.
-  /// After a full rotation with no success, just attempt forward anyway
-  /// (the world will report failure and the agent stays put).
+  /// If the last forward move failed, turn left and try again.
   size_t SelectAction(const WorldGrid& /* grid */) override {
     if (action_result == 0) {
-      grid_pos.TurnRight();
+      TurnLeft();
     }
 
     return GetActionForCurrentDirection();
+  }
+
+  void TurnLeft() {
+    grid_pos.TurnLeft();
+    SetSymbol(direction_symbols.at(grid_pos.GetDirection()));
+  }
+
+  void TurnRight() {
+    grid_pos.TurnRight();
+    SetSymbol(direction_symbols.at(grid_pos.GetDirection()));
   }
 
  private:
