@@ -5,7 +5,13 @@
 
 // NOTE - The tests were written with the help of AI.
 
-#include "catch2/catch.hpp"
+// #include "catch2/catch.hpp"
+
+#include <catch2/catch_test_macros.hpp>
+
+// for Catch::Matchers::WithinRel() for approx double in Catchv3
+#include <catch2/matchers/catch_matchers_floating_point.hpp>
+
 #include "tools/PathGenerator.hpp"
 
 using cse498::PathGenerator;
@@ -13,13 +19,13 @@ using cse498::Point;
 
 TEST_CASE("PathGenerator constructs with defaults", "[pathgenerator]") {
   PathGenerator gen;
-  REQUIRE(gen.GetStepSize() == Approx(1.0));
+  REQUIRE_THAT(gen.GetStepSize(), Catch::Matchers::WithinRel(1.0));
 }
 
 TEST_CASE("PathGenerator SetStepSize updates step size", "[pathgenerator]") {
   PathGenerator gen;
   gen.SetStepSize(0.5);
-  REQUIRE(gen.GetStepSize() == Approx(0.5));
+  REQUIRE_THAT(gen.GetStepSize(), Catch::Matchers::WithinRel(0.5));
 }
 
 TEST_CASE("PathGenerator ShortestPath finds direct path", "[pathgenerator]") {
@@ -32,10 +38,10 @@ TEST_CASE("PathGenerator ShortestPath finds direct path", "[pathgenerator]") {
 
   REQUIRE(result.has_value());
   REQUIRE_FALSE(result->empty());
-  REQUIRE(result->front().getX() == Approx(start.getX()));
-  REQUIRE(result->front().getY() == Approx(start.getY()));
-  REQUIRE(result->back().getX() == Approx(goal.getX()));
-  REQUIRE(result->back().getY() == Approx(goal.getY()));
+  REQUIRE_THAT(result->front().getX(), Catch::Matchers::WithinRel(start.getX()));
+  REQUIRE_THAT(result->front().getY(), Catch::Matchers::WithinRel(start.getY()));
+  REQUIRE_THAT(result->back().getX(), Catch::Matchers::WithinRel(goal.getX()));
+  REQUIRE_THAT(result->back().getY(), Catch::Matchers::WithinRel(goal.getY()));
 }
 
 TEST_CASE("PathGenerator ShortestPath returns nullopt when blocked",
@@ -104,9 +110,9 @@ TEST_CASE("PathGenerator PatrolPath connects waypoints", "[pathgenerator]") {
   auto result = gen.PatrolPath(waypoints, false);
 
   REQUIRE(result.has_value());
-  REQUIRE(result->front().getX() == Approx(0.0));
-  REQUIRE(result->back().getX() == Approx(5.0));
-  REQUIRE(result->back().getY() == Approx(5.0));
+  REQUIRE_THAT(result->front().getX(), Catch::Matchers::WithinRel(0.0));
+  REQUIRE_THAT(result->back().getX(), Catch::Matchers::WithinRel(5.0));
+  REQUIRE_THAT(result->back().getY(), Catch::Matchers::WithinRel(5.0));
 }
 
 TEST_CASE("PathGenerator PatrolPath creates loop when requested",
@@ -177,8 +183,8 @@ TEST_CASE("PathGenerator RandomWalk at invalid start returns start only",
   auto result = gen.RandomWalk(start, 10, canMove);
 
   REQUIRE(result.size() == 1);
-  REQUIRE(result.front().getX() == Approx(start.getX()));
-  REQUIRE(result.front().getY() == Approx(start.getY()));
+  REQUIRE_THAT(result.front().getX(), Catch::Matchers::WithinRel(start.getX()));
+  REQUIRE_THAT(result.front().getY(), Catch::Matchers::WithinRel(start.getY()));
 }
 
 TEST_CASE("PathGenerator RandomWalk generates exploration path",
@@ -191,8 +197,8 @@ TEST_CASE("PathGenerator RandomWalk generates exploration path",
   auto result = gen.RandomWalk(start, steps, canMove);
 
   REQUIRE_FALSE(result.empty());
-  REQUIRE(result.front().getX() == Approx(start.getX()));
-  REQUIRE(result.front().getY() == Approx(start.getY()));
+  REQUIRE_THAT(result.front().getX(), Catch::Matchers::WithinRel(start.getX()));
+  REQUIRE_THAT(result.front().getY(), Catch::Matchers::WithinRel(start.getY()));
   // Should generate some steps (may be less than requested if dead-end)
   REQUIRE(result.size() >= 1);
 }
@@ -252,8 +258,8 @@ TEST_CASE("PathGenerator SpiralPath centers at specified point",
 
   REQUIRE_FALSE(result.empty());
   // First point should be at or near center
-  REQUIRE(result.front().getX() == Approx(center.getX()).margin(spacing));
-  REQUIRE(result.front().getY() == Approx(center.getY()).margin(spacing));
+  REQUIRE_THAT(result.front().getX(), Catch::Matchers::WithinAbs(center.getX(), spacing));
+  REQUIRE_THAT(result.front().getY(), Catch::Matchers::WithinAbs(center.getY(), spacing));
 }
 
 TEST_CASE("PathGenerator SetHeuristic changes distance calculation",
@@ -273,10 +279,10 @@ TEST_CASE("PathGenerator SetHeuristic changes distance calculation",
 
   auto result = gen.ShortestPath(start, goal, canMove);
   REQUIRE(result.has_value());
-  REQUIRE(result->front().getX() == Approx(start.getX()));
-  REQUIRE(result->front().getY() == Approx(start.getY()));
-  REQUIRE(result->back().getX() == Approx(goal.getX()));
-  REQUIRE(result->back().getY() == Approx(goal.getY()));
+  REQUIRE_THAT(result->front().getX(), Catch::Matchers::WithinRel(start.getX()));
+  REQUIRE_THAT(result->front().getY(), Catch::Matchers::WithinRel(start.getY()));
+  REQUIRE_THAT(result->back().getX(), Catch::Matchers::WithinRel(goal.getX()));
+  REQUIRE_THAT(result->back().getY(), Catch::Matchers::WithinRel(goal.getY()));
   REQUIRE(result->totalLength() >= 5.0); // Euclidean distance is 5 (3-4-5 triangle)
 }
 
@@ -290,8 +296,8 @@ TEST_CASE("PathGenerator handles same start and goal", "[pathgenerator]") {
 
   REQUIRE(result.has_value());
   REQUIRE(result->size() == 1);
-  REQUIRE(result->front().getX() == Approx(start.getX()));
-  REQUIRE(result->front().getY() == Approx(start.getY()));
+  REQUIRE_THAT(result->front().getX(), Catch::Matchers::WithinRel(start.getX()));
+  REQUIRE_THAT(result->front().getY(), Catch::Matchers::WithinRel(start.getY()));
 }
 
 TEST_CASE("PathGenerator works with different step sizes", "[pathgenerator]") {
@@ -333,8 +339,8 @@ TEST_CASE("PathGenerator RandomWalk with zero steps returns start only",
   auto result = gen.RandomWalk(start, 0, canMove);
 
   REQUIRE(result.size() == 1);
-  REQUIRE(result.front().getX() == Approx(start.getX()));
-  REQUIRE(result.front().getY() == Approx(start.getY()));
+  REQUIRE_THAT(result.front().getX(), Catch::Matchers::WithinRel(start.getX()));
+  REQUIRE_THAT(result.front().getY(), Catch::Matchers::WithinRel(start.getY()));
 }
 
 TEST_CASE("PathGenerator SpiralPath with zero turns returns center only",
@@ -345,8 +351,8 @@ TEST_CASE("PathGenerator SpiralPath with zero turns returns center only",
   auto result = gen.SpiralPath(center, 1.0, 0);
 
   REQUIRE(result.size() == 1);
-  REQUIRE(result.front().getX() == Approx(center.getX()));
-  REQUIRE(result.front().getY() == Approx(center.getY()));
+  REQUIRE_THAT(result.front().getX(), Catch::Matchers::WithinRel(center.getX()));
+  REQUIRE_THAT(result.front().getY(), Catch::Matchers::WithinRel(center.getY()));
 }
 
 TEST_CASE("PathGenerator SpiralPath with zero spacing stays at center",
@@ -359,8 +365,8 @@ TEST_CASE("PathGenerator SpiralPath with zero spacing stays at center",
   // All points should remain at center since r = spacing * angle / 2pi = 0
   REQUIRE_FALSE(result.empty());
   for (const auto &p : result.pointsView()) {
-    REQUIRE(p.getX() == Approx(center.getX()).margin(0.01));
-    REQUIRE(p.getY() == Approx(center.getY()).margin(0.01));
+    REQUIRE_THAT(p.getX(), Catch::Matchers::WithinAbs(center.getX(), 0.01));
+    REQUIRE_THAT(p.getY(), Catch::Matchers::WithinAbs(center.getY(), 0.01));
   }
 }
 
@@ -376,8 +382,8 @@ TEST_CASE("PathGenerator AvoidancePath with zero radius finds normal path",
 
   // radius=0 only excludes the exact avoid point, path should still be found
   REQUIRE(result.has_value());
-  REQUIRE(result->front().getX() == Approx(start.getX()));
-  REQUIRE(result->front().getY() == Approx(start.getY()));
-  REQUIRE(result->back().getX() == Approx(goal.getX()));
-  REQUIRE(result->back().getY() == Approx(goal.getY()));
+  REQUIRE_THAT(result->front().getX(), Catch::Matchers::WithinRel(start.getX()));
+  REQUIRE_THAT(result->front().getY(), Catch::Matchers::WithinRel(start.getY()));
+  REQUIRE_THAT(result->back().getX(), Catch::Matchers::WithinRel(goal.getX()));
+  REQUIRE_THAT(result->back().getY(), Catch::Matchers::WithinRel(goal.getY()));
 }

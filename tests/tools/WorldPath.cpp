@@ -1,5 +1,12 @@
 #include "tools/WorldPath.hpp"
-#include "catch2/catch.hpp"
+// #include "catch2/catch.hpp"
+
+#include <catch2/catch_test_macros.hpp>
+#include <catch2/generators/catch_generators.hpp>
+
+// for Catch::Matchers::WithinRel() for approx double in Catchv3
+#include <catch2/matchers/catch_matchers_floating_point.hpp>
+
 #include <cmath>
 
 using namespace cse498;
@@ -32,8 +39,8 @@ TEST_CASE("WorldPath basic container behavior", "[worldpath]") {
 
     REQUIRE_FALSE(path.empty());
     REQUIRE(path.size() == 2);
-    REQUIRE(path.front().getX() == Approx(0.0));
-    REQUIRE(path.back().getY() == Approx(4.0));
+    REQUIRE_THAT(path.front().getX(), Catch::Matchers::WithinRel(0.0));
+    REQUIRE_THAT(path.back().getY(), Catch::Matchers::WithinRel(4.0));
   }
 
   SECTION("reserve does not change logical size") {
@@ -55,8 +62,8 @@ TEST_CASE("WorldPath basic container behavior", "[worldpath]") {
 
     path.addPoint({9.0, 8.0});
     REQUIRE(path.size() == 1);
-    REQUIRE(path.front().getX() == Approx(9.0));
-    REQUIRE(path.front().getY() == Approx(8.0));
+    REQUIRE_THAT(path.front().getX(), Catch::Matchers::WithinRel(9.0));
+    REQUIRE_THAT(path.front().getY(), Catch::Matchers::WithinRel(8.0));
   }
 
   SECTION("heavy sequential insertions and clearing cycle") {
@@ -75,8 +82,8 @@ TEST_CASE("WorldPath basic container behavior", "[worldpath]") {
     }
 
     REQUIRE(path.size() == 50);
-    REQUIRE(path.front().getX() == Approx(0.0));
-    REQUIRE(path.back().getX() == Approx(-49.0));
+    REQUIRE_THAT(path.front().getX(), Catch::Matchers::WithinRel(0.0));
+    REQUIRE_THAT(path.back().getX(), Catch::Matchers::WithinRel(-49.0));
 
     // Verify iterator state manually
     std::size_t count = 0;
@@ -93,8 +100,8 @@ TEST_CASE("WorldPath operator[] access", "[worldpath]") {
   path.addPoint({1.0, 2.0});
   path.addPoint({3.0, 4.0});
 
-  REQUIRE(path[0].getX() == Approx(1.0));
-  REQUIRE(path[1].getY() == Approx(4.0));
+  REQUIRE_THAT(path[0].getX(), Catch::Matchers::WithinRel(1.0));
+  REQUIRE_THAT(path[1].getY(), Catch::Matchers::WithinRel(4.0));
 }
 
 TEST_CASE("WorldPath get checked access", "[worldpath]") {
@@ -104,7 +111,7 @@ TEST_CASE("WorldPath get checked access", "[worldpath]") {
   SECTION("valid index returns non-null pointer") {
     auto* p = path.get(0);
     REQUIRE(p != nullptr);
-    REQUIRE(p->getX() == Approx(0.0));
+    REQUIRE_THAT(p->getX(), Catch::Matchers::WithinRel(0.0));
   }
 
   SECTION("out-of-range index returns nullptr") {
@@ -115,7 +122,7 @@ TEST_CASE("WorldPath get checked access", "[worldpath]") {
     const WorldPath& cpath = path;
     const auto* cp = cpath.get(0);
     REQUIRE(cp != nullptr);
-    REQUIRE(cp->getX() == Approx(0.0));
+    REQUIRE_THAT(cp->getX(), Catch::Matchers::WithinRel(0.0));
   }
 }
 
@@ -131,8 +138,8 @@ TEST_CASE("WorldPath popBack", "[worldpath]") {
     path.addPoint({5.0, 6.0});
     auto popped = path.popBack();
     REQUIRE(popped.has_value());
-    REQUIRE(popped->getX() == Approx(5.0));
-    REQUIRE(popped->getY() == Approx(6.0));
+    REQUIRE_THAT(popped->getX(), Catch::Matchers::WithinRel(5.0));
+    REQUIRE_THAT(popped->getY(), Catch::Matchers::WithinRel(6.0));
     REQUIRE(path.empty());
   }
 
@@ -142,11 +149,11 @@ TEST_CASE("WorldPath popBack", "[worldpath]") {
     path.addPoint({5.0, 6.0});
 
     auto p3 = path.popBack();
-    REQUIRE(p3->getX() == Approx(5.0));
+    REQUIRE_THAT(p3->getX(), Catch::Matchers::WithinRel(5.0));
     auto p2 = path.popBack();
-    REQUIRE(p2->getX() == Approx(3.0));
+    REQUIRE_THAT(p2->getX(), Catch::Matchers::WithinRel(3.0));
     auto p1 = path.popBack();
-    REQUIRE(p1->getX() == Approx(1.0));
+    REQUIRE_THAT(p1->getX(), Catch::Matchers::WithinRel(1.0));
     REQUIRE(path.empty());
     REQUIRE_FALSE(path.popBack().has_value());
   }
@@ -160,7 +167,7 @@ TEST_CASE("WorldPath popBack", "[worldpath]") {
     for (int i = 99; i >= 0; --i) {
       auto popped = path.popBack();
       REQUIRE(popped.has_value());
-      REQUIRE(popped->getX() == Approx(static_cast<double>(i)));
+      REQUIRE_THAT(popped->getX(), Catch::Matchers::WithinRel(static_cast<double>(i)));
     }
     REQUIRE(path.empty());
     REQUIRE_FALSE(path.popBack().has_value());
@@ -175,8 +182,8 @@ TEST_CASE("WorldPath pointsView provides contiguous view", "[worldpath]") {
 
   auto view = path.pointsView();
   REQUIRE(view.size() == 2);
-  REQUIRE(view[0].getX() == Approx(1.0));
-  REQUIRE(view[1].getY() == Approx(4.0));
+  REQUIRE_THAT(view[0].getX(), Catch::Matchers::WithinRel(1.0));
+  REQUIRE_THAT(view[1].getY(), Catch::Matchers::WithinRel(4.0));
 }
 
 
@@ -203,13 +210,13 @@ TEST_CASE("WorldPath segments", "[worldpath]") {
     auto it = segs.begin();
 
     REQUIRE(it != segs.end());
-    REQUIRE(std::get<0>(*it).getX() == Approx(0.0));
-    REQUIRE(std::get<1>(*it).getX() == Approx(1.0));
+    REQUIRE_THAT(std::get<0>(*it).getX(), Catch::Matchers::WithinRel(0.0));
+    REQUIRE_THAT(std::get<1>(*it).getX(), Catch::Matchers::WithinRel(1.0));
 
     ++it;
     REQUIRE(it != segs.end());
-    REQUIRE(std::get<0>(*it).getY() == Approx(0.0));
-    REQUIRE(std::get<1>(*it).getY() == Approx(2.0));
+    REQUIRE_THAT(std::get<0>(*it).getY(), Catch::Matchers::WithinRel(0.0));
+    REQUIRE_THAT(std::get<1>(*it).getY(), Catch::Matchers::WithinRel(2.0));
 
     ++it;
     REQUIRE(it == segs.end());
@@ -227,7 +234,7 @@ TEST_CASE("WorldPath totalLength", "[worldpath]") {
       path.addPoint({static_cast<double>(i), static_cast<double>(i + 1)});
     }
 
-    REQUIRE(path.totalLength() == Approx(0.0));
+    REQUIRE_THAT(path.totalLength(), Catch::Matchers::WithinRel(0.0));
   }
 
   SECTION("sums segment distances") {
@@ -236,7 +243,7 @@ TEST_CASE("WorldPath totalLength", "[worldpath]") {
     path.addPoint({3.0, 4.0});
     path.addPoint({6.0, 8.0});
 
-    REQUIRE(path.totalLength() == Approx(10.0));
+    REQUIRE_THAT(path.totalLength(), Catch::Matchers::WithinRel(10.0));
   }
 
   SECTION("long zigzag path length matches manual accumulation") {
@@ -252,7 +259,7 @@ TEST_CASE("WorldPath totalLength", "[worldpath]") {
       current = next;
     }
 
-    REQUIRE(p.totalLength() == Approx(manual_length));
+    REQUIRE_THAT(p.totalLength(), Catch::Matchers::WithinRel(manual_length));
     REQUIRE(p.totalLength() > 0.0);
   }
 }
@@ -264,8 +271,8 @@ TEST_CASE("WorldPath segmentLengthAt", "[worldpath]") {
   path.addPoint({6.0, 8.0});
 
   SECTION("valid segment indices") {
-    REQUIRE(path.segmentLengthAt(0).value() == Approx(5.0));
-    REQUIRE(path.segmentLengthAt(1).value() == Approx(5.0));
+    REQUIRE_THAT(path.segmentLengthAt(0).value(), Catch::Matchers::WithinRel(5.0));
+    REQUIRE_THAT(path.segmentLengthAt(1).value(), Catch::Matchers::WithinRel(5.0));
   }
 
   SECTION("out-of-range returns nullopt") {
@@ -280,10 +287,10 @@ TEST_CASE("WorldPath subpathLength", "[worldpath]") {
   path.addPoint({3.0, 4.0});
 
   SECTION("valid indices") {
-    REQUIRE(path.subpathLength(0, 2).value() == Approx(7.0));
-    REQUIRE(path.subpathLength(0, 1).value() == Approx(3.0));
-    REQUIRE(path.subpathLength(1, 2).value() == Approx(4.0));
-    REQUIRE(path.subpathLength(1, 1).value() == Approx(0.0));
+    REQUIRE_THAT(path.subpathLength(0, 2).value(), Catch::Matchers::WithinRel(7.0));
+    REQUIRE_THAT(path.subpathLength(0, 1).value(), Catch::Matchers::WithinRel(3.0));
+    REQUIRE_THAT(path.subpathLength(1, 2).value(), Catch::Matchers::WithinRel(4.0));
+    REQUIRE_THAT(path.subpathLength(1, 1).value(), Catch::Matchers::WithinRel(0.0));
   }
 
   SECTION("invalid indices") {
@@ -302,7 +309,7 @@ TEST_CASE("WorldPath furthestPair", "[worldpath]") {
 
     auto [a, b] = path.furthestPair();
     double d = std::hypot(b.getX() - a.getX(), b.getY() - a.getY());
-    REQUIRE(d == Approx(std::hypot(1.0, 2.0)));
+    REQUIRE_THAT(d, Catch::Matchers::WithinRel(std::hypot(1.0, 2.0)));
   }
 
   SECTION("two points returns those two") {
@@ -311,8 +318,8 @@ TEST_CASE("WorldPath furthestPair", "[worldpath]") {
     path.addPoint({2.0, 0.0});
 
     auto [a, b] = path.furthestPair();
-    REQUIRE(a.getX() == Approx(-1.0));
-    REQUIRE(b.getX() == Approx(2.0));
+    REQUIRE_THAT(a.getX(), Catch::Matchers::WithinRel(-1.0));
+    REQUIRE_THAT(b.getX(), Catch::Matchers::WithinRel(2.0));
   }
 
   SECTION("overlapping points") {
@@ -322,7 +329,7 @@ TEST_CASE("WorldPath furthestPair", "[worldpath]") {
 
     auto [a, b] = path.furthestPair();
     double d = std::hypot(b.getX() - a.getX(), b.getY() - a.getY());
-    REQUIRE(d == Approx(0.0));
+    REQUIRE_THAT(d, Catch::Matchers::WithinRel(0.0));
   }
 
   SECTION("polygon shape furthest pair verification") {
@@ -334,7 +341,7 @@ TEST_CASE("WorldPath furthestPair", "[worldpath]") {
     // Furthest pairs are opposing vertices, distance 10
     auto [a, b] = poly.furthestPair();
     double d = std::hypot(b.getX() - a.getX(), b.getY() - a.getY());
-    REQUIRE(d == Approx(10.0));
+    REQUIRE_THAT(d, Catch::Matchers::WithinRel(10.0));
   }
 }
 
@@ -408,7 +415,7 @@ TEST_CASE("WorldPath append", "[worldpath]") {
 
     a.append(b);
     REQUIRE(a.size() == 4);
-    REQUIRE(a.back().getX() == Approx(3.0));
+    REQUIRE_THAT(a.back().getX(), Catch::Matchers::WithinRel(3.0));
   }
 
   SECTION("append to empty path") {
@@ -419,7 +426,7 @@ TEST_CASE("WorldPath append", "[worldpath]") {
 
     a.append(b);
     REQUIRE(a.size() == 2);
-    REQUIRE(a.front().getX() == Approx(1.0));
+    REQUIRE_THAT(a.front().getX(), Catch::Matchers::WithinRel(1.0));
   }
 
   SECTION("append path to itself") {
@@ -429,8 +436,8 @@ TEST_CASE("WorldPath append", "[worldpath]") {
 
     a.append(a);
     REQUIRE(a.size() == 4);
-    REQUIRE(a[0].getX() == Approx(1.0));
-    REQUIRE(a[2].getX() == Approx(1.0));
+    REQUIRE_THAT(a[0].getX(), Catch::Matchers::WithinRel(1.0));
+    REQUIRE_THAT(a[2].getX(), Catch::Matchers::WithinRel(1.0));
   }
 }
 
@@ -447,8 +454,8 @@ TEST_CASE("WorldPath reversed", "[worldpath]") {
 
     WorldPath r = path.reversed();
     REQUIRE(r.size() == 1);
-    REQUIRE(r.front().getX() == Approx(7.0));
-    REQUIRE(r.front().getY() == Approx(-2.0));
+    REQUIRE_THAT(r.front().getX(), Catch::Matchers::WithinRel(7.0));
+    REQUIRE_THAT(r.front().getY(), Catch::Matchers::WithinRel(-2.0));
   }
 
   SECTION("two-point path swaps start and end") {
@@ -457,8 +464,8 @@ TEST_CASE("WorldPath reversed", "[worldpath]") {
     path.addPoint({5.0, 5.0});
 
     WorldPath r = path.reversed();
-    REQUIRE(r.front().getX() == Approx(5.0));
-    REQUIRE(r.back().getX() == Approx(0.0));
+    REQUIRE_THAT(r.front().getX(), Catch::Matchers::WithinRel(5.0));
+    REQUIRE_THAT(r.back().getX(), Catch::Matchers::WithinRel(0.0));
   }
 
   SECTION("multi-point path") {
@@ -469,8 +476,8 @@ TEST_CASE("WorldPath reversed", "[worldpath]") {
     path.addPoint({3.0, 0.0});
 
     WorldPath r = path.reversed();
-    REQUIRE(r.front().getX() == Approx(3.0));
-    REQUIRE(r.back().getX() == Approx(0.0));
+    REQUIRE_THAT(r.front().getX(), Catch::Matchers::WithinRel(3.0));
+    REQUIRE_THAT(r.back().getX(), Catch::Matchers::WithinRel(0.0));
   }
 }
 
@@ -483,38 +490,38 @@ TEST_CASE("WorldPath pointAtDistance", "[worldpath]") {
 
   SECTION("clamps before start") {
     auto p = path.pointAtDistance(-1.0);
-    REQUIRE(p.getX() == Approx(0.0));
-    REQUIRE(p.getY() == Approx(0.0));
+    REQUIRE_THAT(p.getX(), Catch::Matchers::WithinRel(0.0));
+    REQUIRE_THAT(p.getY(), Catch::Matchers::WithinRel(0.0));
   }
 
   SECTION("returns exact start") {
     auto p = path.pointAtDistance(0.0);
-    REQUIRE(p.getX() == Approx(0.0));
-    REQUIRE(p.getY() == Approx(0.0));
+    REQUIRE_THAT(p.getX(), Catch::Matchers::WithinRel(0.0));
+    REQUIRE_THAT(p.getY(), Catch::Matchers::WithinRel(0.0));
   }
 
   SECTION("interpolates inside first segment") {
     auto p = path.pointAtDistance(2.0);
-    REQUIRE(p.getX() == Approx(2.0));
-    REQUIRE(p.getY() == Approx(0.0));
+    REQUIRE_THAT(p.getX(), Catch::Matchers::WithinRel(2.0));
+    REQUIRE_THAT(p.getY(), Catch::Matchers::WithinRel(0.0));
   }
 
   SECTION("hits exact vertex") {
     auto p = path.pointAtDistance(3.0);
-    REQUIRE(p.getX() == Approx(3.0));
-    REQUIRE(p.getY() == Approx(0.0));
+    REQUIRE_THAT(p.getX(), Catch::Matchers::WithinRel(3.0));
+    REQUIRE_THAT(p.getY(), Catch::Matchers::WithinRel(0.0));
   }
 
   SECTION("interpolates across second segment") {
     auto p = path.pointAtDistance(4.0);
-    REQUIRE(p.getX() == Approx(3.0));
-    REQUIRE(p.getY() == Approx(1.0));
+    REQUIRE_THAT(p.getX(), Catch::Matchers::WithinRel(3.0));
+    REQUIRE_THAT(p.getY(), Catch::Matchers::WithinRel(1.0));
   }
 
   SECTION("clamps after end") {
     auto p = path.pointAtDistance(100.0);
-    REQUIRE(p.getX() == Approx(3.0));
-    REQUIRE(p.getY() == Approx(4.0));
+    REQUIRE_THAT(p.getX(), Catch::Matchers::WithinRel(3.0));
+    REQUIRE_THAT(p.getY(), Catch::Matchers::WithinRel(4.0));
   }
 
   SECTION("handles zero-length segments") {
@@ -524,8 +531,8 @@ TEST_CASE("WorldPath pointAtDistance", "[worldpath]") {
     dup.addPoint({5.0, 0.0});
 
     auto p = dup.pointAtDistance(2.0);
-    REQUIRE(p.getX() == Approx(2.0));
-    REQUIRE(p.getY() == Approx(0.0));
+    REQUIRE_THAT(p.getX(), Catch::Matchers::WithinRel(2.0));
+    REQUIRE_THAT(p.getY(), Catch::Matchers::WithinRel(0.0));
   }
 
   SECTION("interpolation deep inside a complex path") {
@@ -538,8 +545,8 @@ TEST_CASE("WorldPath pointAtDistance", "[worldpath]") {
     // Distance to point 15 is 15 * 10 = 150.
     // 155 is exactly halfway between index 15 and 16 (X=150 and X=160).
     auto p = long_path.pointAtDistance(155.0);
-    REQUIRE(p.getX() == Approx(155.0));
-    REQUIRE(p.getY() == Approx(0.0));
+    REQUIRE_THAT(p.getX(), Catch::Matchers::WithinRel(155.0));
+    REQUIRE_THAT(p.getY(), Catch::Matchers::WithinRel(0.0));
   }
 }
 

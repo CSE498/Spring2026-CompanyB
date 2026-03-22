@@ -1,5 +1,10 @@
 #include "tools/ActionMap.hpp"
-#include "catch2/catch.hpp"
+// #include "catch2/catch.hpp"
+#include <catch2/catch_test_macros.hpp>
+
+// for Catch::Matchers::WithinRel() for approx double in Catchv3
+#include <catch2/matchers/catch_matchers_floating_point.hpp>
+
 #include <memory>
 #include <string>
 
