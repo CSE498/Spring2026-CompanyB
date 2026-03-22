@@ -107,20 +107,12 @@ bool operator==(double lhs, const Point& rhs) {
 }
 
 // The unequal "operators"
-bool operator!=(const Point& lhs, const Point& rhs) {
-  return !(lhs == rhs);
-}
+bool operator!=(const Point& lhs, const Point& rhs) { return !(lhs == rhs); }
 
-bool operator!=(const Point& lhs, double rhs) {
-  return !(lhs == rhs);
-}
+bool operator!=(const Point& lhs, double rhs) { return !(lhs == rhs); }
 
-bool operator!=(double lhs, const Point& rhs) {
-  return !(lhs == rhs);
-}
+bool operator!=(double lhs, const Point& rhs) { return !(lhs == rhs); }
 
-double dot(const Point& A, const Point& B) {
-  return A.dot(B);
-}
+double dot(const Point& A, const Point& B) { return A.dot(B); }
 
 }  // namespace cse498

@@ -23,6 +23,14 @@ using WorldQueryFunc = std::function<bool(const Point&)>;
 /// Type alias for distance heuristic callback functions
 using HeuristicFunc = std::function<double(const Point&, const Point&)>;
 
+struct PointHash {
+  std::size_t operator()(const Point& p) const noexcept {
+    return std::hash<double>{}(p.getX()) ^ (std::hash<double>{}(p.getY()) << 1);
+  }
+};
+
+using PointMap = std::unordered_map<Point, Point, PointHash>;
+
 /**
  * @brief Pathfinding and path generation for agent navigation.
  *
@@ -155,7 +163,7 @@ class PathGenerator {
    * @return Reconstructed WorldPath
    */
   [[nodiscard]] WorldPath ReconstructPath(
-      const std::unordered_map<Point, Point>& came_from,
+      const PointMap& came_from,
       const Point& current) const;
 };
 

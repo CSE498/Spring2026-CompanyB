@@ -45,15 +45,17 @@ std::optional<WorldPath> PathGenerator::ShortestPath(
 
   // A* algorithm implementation
   using PointDist = std::pair<double, Point>;
+  using PointSet = std::unordered_set<Point, PointHash>;
+  using PointScoreMap = std::unordered_map<Point, double, PointHash>;
   auto cmp = [](const PointDist& a, const PointDist& b) {
     return a.first > b.first;  // Min-heap based on f-score
   };
   std::priority_queue<PointDist, std::vector<PointDist>, decltype(cmp)> openSet(
       cmp);
 
-  std::unordered_set<Point> closedSet;  // Track visited nodes
-  std::unordered_map<Point, Point> cameFrom;
-  std::unordered_map<Point, double> gScore;
+  PointSet closedSet;  // Track visited nodes
+  PointMap cameFrom;
+  PointScoreMap gScore;
 
   gScore[start] = 0.0;
   double fStart = heuristic_(start, goal);
@@ -297,7 +299,7 @@ std::vector<Point> PathGenerator::GetNeighbors(const Point& p) const {
 }
 
 WorldPath PathGenerator::ReconstructPath(
-    const std::unordered_map<Point, Point>& came_from,
+    const PointMap& came_from,
     const Point& current) const {
   std::vector<Point> points;
   for (Point node = current;;) {

@@ -1,9 +1,9 @@
+// PointClass.hpp
 #pragma once
 
 #include <algorithm>  // for std::max
 #include <cmath>      // for std::abs, std::sqrt, std::cos, std::sin
 #include <expected>
-#include <functional>
 #include <iostream>
 #include <numbers>  // for std::numbers::pi
 #include <string>
@@ -95,15 +95,12 @@ class Point {
   }
 
   // rotate
-  Point& rotate(double deg,
-                const Point& pivot = {0, 0},
+  Point& rotate(double deg, const Point& pivot = {0, 0},
                 bool counter_clockwise = true) {
     // Skip rotation if angle is effectively zero
     // (within floating-point tolerance)
-    if (tol_equal(deg, 0))
-      return *this;
-    if (!counter_clockwise)
-      deg = -deg;
+    if (tol_equal(deg, 0)) return *this;
+    if (!counter_clockwise) deg = -deg;
 
     double rad = deg * (std::numbers::pi / 180.0);
 
@@ -124,10 +121,7 @@ class Point {
   // 2D cross product yields a fake "k" in ijk system
   // my method will return a scalar, not a point vector
   [[nodiscard]] double cross_product(const Point& other) const {
-    // Since x, y are private in other, we use getters! Wait, inside class Point
-    // we can access private members of other! But since the user's code had
-    // other.y, it works natively! But using getters is also fine.
-    return (x * other.getY()) - (y * other.getX());
+    return (x * other.y) - (y * other.x);
   }
 };
 
@@ -164,12 +158,3 @@ bool operator!=(double lhs, const Point& rhs);
 double dot(const Point& A, const Point& B);
 
 }  // namespace cse498
-
-namespace std {
-template <>
-struct hash<cse498::Point> {
-  std::size_t operator()(const cse498::Point& p) const noexcept {
-    return std::hash<double>{}(p.getX()) ^ (std::hash<double>{}(p.getY()) << 1);
-  }
-};
-}  // namespace std
