@@ -4,7 +4,6 @@
 
 // for Catch::Matchers::WithinRel() for approx double in Catchv3
 #include <catch2/matchers/catch_matchers_floating_point.hpp>
-
 #include <memory>
 #include <string>
 

@@ -35,14 +35,11 @@ int WorldPath::orient(Point a, Point b, Point c, double eps) {
   // Calculate 2D cross product to determine turn direction.
   // Positive = CCW, Negative = CW, Zero = collinear.
   double cross = crossProduct(a, b, c);
-  if (nearlyEq(cross, 0.0, eps))
-    return 0;
+  if (nearlyEq(cross, 0.0, eps)) return 0;
   return (cross > 0.0) ? 1 : -1;
 }
 
-bool WorldPath::onSegment(Point seg_start,
-                          Point query,
-                          Point seg_end,
+bool WorldPath::onSegment(Point seg_start, Point query, Point seg_end,
                           double eps) {
   return query.getX() >= std::min(seg_start.getX(), seg_end.getX()) - eps &&
          query.getX() <= std::max(seg_start.getX(), seg_end.getX()) + eps &&
@@ -50,18 +47,14 @@ bool WorldPath::onSegment(Point seg_start,
          query.getY() <= std::max(seg_start.getY(), seg_end.getY()) + eps;
 }
 
-bool WorldPath::segmentsIntersect(Point a1,
-                                  Point a2,
-                                  Point b1,
-                                  Point b2,
+bool WorldPath::segmentsIntersect(Point a1, Point a2, Point b1, Point b2,
                                   double eps) {
   int d1 = orient(a1, a2, b1, eps);
   int d2 = orient(a1, a2, b2, eps);
 
   // If points b1 and b2 are strictly on the same side of line a1-a2,
   // they cannot intersect.
-  if (d1 == d2 && d1 != 0)
-    return false;
+  if (d1 == d2 && d1 != 0) return false;
 
   // Quick strict-intersection check before collinear work
   int d3 = orient(b1, b2, a1, eps);
@@ -69,21 +62,15 @@ bool WorldPath::segmentsIntersect(Point a1,
 
   // If points a1 and a2 are strictly on the same side of line b1-b2,
   // they cannot intersect.
-  if (d3 == d4 && d3 != 0)
-    return false;
+  if (d3 == d4 && d3 != 0) return false;
 
-  if (d1 != d2 && d3 != d4)
-    return true;  // Strictly intersect
+  if (d1 != d2 && d3 != d4) return true;  // Strictly intersect
 
   // Collinear overlap checks (only reached when orientations match)
-  if (d1 == 0 && onSegment(a1, b1, a2, eps))
-    return true;
-  if (d2 == 0 && onSegment(a1, b2, a2, eps))
-    return true;
-  if (d3 == 0 && onSegment(b1, a1, b2, eps))
-    return true;
-  if (d4 == 0 && onSegment(b1, a2, b2, eps))
-    return true;
+  if (d1 == 0 && onSegment(a1, b1, a2, eps)) return true;
+  if (d2 == 0 && onSegment(a1, b2, a2, eps)) return true;
+  if (d3 == 0 && onSegment(b1, a1, b2, eps)) return true;
+  if (d4 == 0 && onSegment(b1, a2, b2, eps)) return true;
 
   return false;
 }
@@ -103,8 +90,7 @@ double WorldPath::totalLength() const {
 }
 
 std::optional<double> WorldPath::segmentLengthAt(std::size_t i) const {
-  if (i + 1 >= points_.size())
-    return std::nullopt;
+  if (i + 1 >= points_.size()) return std::nullopt;
   return dist(points_[i], points_[i + 1]);
 }
 
@@ -123,14 +109,12 @@ std::optional<double> WorldPath::subpathLength(std::size_t start_idx,
 
 std::pair<Point, Point> WorldPath::furthestPair() const {
   assert(points_.size() >= 2);
-  if (points_.size() == 2)
-    return {points_[0], points_[1]};
+  if (points_.size() == 2) return {points_[0], points_[1]};
 
   // sort points by X (then Y)
   std::vector<Point> sorted = points_;
   std::ranges::sort(sorted, [](const Point& a, const Point& b) {
-    if (std::abs(a.getX() - b.getX()) > kDefaultEps)
-      return a.getX() < b.getX();
+    if (std::abs(a.getX() - b.getX()) > kDefaultEps) return a.getX() < b.getX();
     return a.getY() < b.getY();
   });
 
@@ -143,8 +127,7 @@ std::pair<Point, Point> WorldPath::furthestPair() const {
   sorted.erase(unique_end.begin(), unique_end.end());
 
   if (sorted.size() <= 2) {
-    if (sorted.size() == 1)
-      return {sorted[0], sorted[0]};
+    if (sorted.size() == 1) return {sorted[0], sorted[0]};
     return {sorted[0], sorted[1]};
   }
 
@@ -228,8 +211,7 @@ std::pair<Point, Point> WorldPath::furthestPair() const {
 }
 
 bool WorldPath::hasFoldbacks() const {
-  if (points_.size() < 3)
-    return false;
+  if (points_.size() < 3) return false;
 
   // 3-point observing window with slide
   for (const auto& window : points_ | std::views::slide(3)) {
@@ -241,8 +223,7 @@ bool WorldPath::hasFoldbacks() const {
     if (orient(A, B, C, kDefaultEps) == 0) {
       // If the dot product of vectors BA and BC is distinctly positive,
       // the path is folding directly back onto itself.
-      if (dot(A - B, C - B) > kDefaultEps)
-        return true;
+      if (dot(A - B, C - B) > kDefaultEps) return true;
     }
   }
   return false;
@@ -264,15 +245,13 @@ WorldPath WorldPath::reversed() const {
 
 Point WorldPath::pointAtDistance(double distance_along_path) const {
   assert(!points_.empty());
-  if (distance_along_path <= 0.0)
-    return points_.front();
+  if (distance_along_path <= 0.0) return points_.front();
 
   double remaining = distance_along_path;
 
   for (auto&& [start, end] : segments()) {
     const double segment_length = dist(start, end);
-    if (segment_length <= 0.0)
-      continue;  // skip duplicate points
+    if (segment_length <= 0.0) continue;  // skip duplicate points
 
     if (remaining <= segment_length) {
       const double t = remaining / segment_length;
@@ -290,8 +269,7 @@ bool WorldPath::selfIntersects() const {
   const std::size_t n = points_.size();
   // Need at least 4 points (3 segments) for any non-adjacent segment pair to
   // exist.
-  if (n < 4)
-    return false;
+  if (n < 4) return false;
 
   bool closed = samePoint(points_.front(), points_.back(), kDefaultEps);
 
@@ -337,16 +315,13 @@ bool WorldPath::selfIntersects() const {
       std::size_t idxA = nodeA.index;
       std::size_t idxB = nodeB.index;
 
-      if (idxA > idxB)
-        std::swap(idxA, idxB);
+      if (idxA > idxB) std::swap(idxA, idxB);
 
       // Adjacent segments naturally intersect at their shared vertex
-      if (idxB == idxA + 1)
-        continue;
+      if (idxB == idxA + 1) continue;
 
       // Skip the first-last segment pair for closed paths (they share a vertex)
-      if (closed && idxA == 0 && idxB == n - 2)
-        continue;
+      if (closed && idxA == 0 && idxB == n - 2) continue;
 
       // Exact intersection check
       if (segmentsIntersect(points_[idxA], points_[idxA + 1], points_[idxB],

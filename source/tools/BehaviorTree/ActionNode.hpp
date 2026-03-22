@@ -2,7 +2,8 @@
 
 #include "LeafNode.hpp"
 
-// ATTRIBUTIONS: Used ChatGPT to create Docstrings. Further modifications come from my input
+// ATTRIBUTIONS: Used ChatGPT to create Docstrings. Further modifications come
+// from my input
 
 /**
  * @brief Leaf node that performs a concrete action.
@@ -12,27 +13,26 @@
  * it does not have children and encapsulates a specific action
  * or task.
  */
-class ActionNode: public LeafNode
-{
-    public:
-        using LeafNode::LeafNode;
+class ActionNode : public LeafNode {
+ public:
+  using LeafNode::LeafNode;
 
-        Status tick() override {
-            ++m_tickCount;
+  Status tick() override {
+    ++m_tickCount;
 
-            std::cout << m_name << '\n';
+    std::cout << m_name << '\n';
 
-            m_status = (m_tickDuration > 1) ? Status::Running : Status::Success;
+    m_status = (m_tickDuration > 1) ? Status::Running : Status::Success;
 
-            if ((m_tickDuration > 0)) --m_tickDuration;
+    if ((m_tickDuration > 0)) --m_tickDuration;
 
-            return m_status;
-        };
+    return m_status;
+  };
 
-        int tickCount() const { return m_tickCount; }
+  int tickCount() const { return m_tickCount; }
 
-        std::string getActivePath() override { return m_name; }
+  std::string getActivePath() override { return m_name; }
 
-    private:
-        int m_tickCount{};
+ private:
+  int m_tickCount{};
 };

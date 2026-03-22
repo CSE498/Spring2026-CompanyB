@@ -6,7 +6,6 @@
 
 // for Catch::Matchers::WithinRel() for approx double in Catchv3
 #include <catch2/matchers/catch_matchers_floating_point.hpp>
-
 #include <cmath>
 
 using namespace cse498;
@@ -23,7 +22,6 @@ using namespace cse498;
 // The following modifications were made with AI assistance:
 //   - Restructured all TEST_CASEs into SECTION-based groupings
 //   - Added GENERATE/CAPTURE for parametric small-path tests
-
 
 TEST_CASE("WorldPath basic container behavior", "[worldpath]") {
   WorldPath path;
@@ -94,7 +92,6 @@ TEST_CASE("WorldPath basic container behavior", "[worldpath]") {
   }
 }
 
-
 TEST_CASE("WorldPath operator[] access", "[worldpath]") {
   WorldPath path;
   path.addPoint({1.0, 2.0});
@@ -125,7 +122,6 @@ TEST_CASE("WorldPath get checked access", "[worldpath]") {
     REQUIRE_THAT(cp->getX(), Catch::Matchers::WithinRel(0.0));
   }
 }
-
 
 TEST_CASE("WorldPath popBack", "[worldpath]") {
   WorldPath path;
@@ -167,13 +163,13 @@ TEST_CASE("WorldPath popBack", "[worldpath]") {
     for (int i = 99; i >= 0; --i) {
       auto popped = path.popBack();
       REQUIRE(popped.has_value());
-      REQUIRE_THAT(popped->getX(), Catch::Matchers::WithinRel(static_cast<double>(i)));
+      REQUIRE_THAT(popped->getX(),
+                   Catch::Matchers::WithinRel(static_cast<double>(i)));
     }
     REQUIRE(path.empty());
     REQUIRE_FALSE(path.popBack().has_value());
   }
 }
-
 
 TEST_CASE("WorldPath pointsView provides contiguous view", "[worldpath]") {
   WorldPath path;
@@ -185,7 +181,6 @@ TEST_CASE("WorldPath pointsView provides contiguous view", "[worldpath]") {
   REQUIRE_THAT(view[0].getX(), Catch::Matchers::WithinRel(1.0));
   REQUIRE_THAT(view[1].getY(), Catch::Matchers::WithinRel(4.0));
 }
-
 
 TEST_CASE("WorldPath segments", "[worldpath]") {
   WorldPath path;
@@ -223,7 +218,6 @@ TEST_CASE("WorldPath segments", "[worldpath]") {
   }
 }
 
-
 TEST_CASE("WorldPath totalLength", "[worldpath]") {
   SECTION("zero for fewer than two points") {
     const int point_count = GENERATE(0, 1);
@@ -253,8 +247,10 @@ TEST_CASE("WorldPath totalLength", "[worldpath]") {
     p.addPoint(current);
 
     for (int i = 1; i <= 20; ++i) {
-      Point next{static_cast<double>(i * 3), static_cast<double>((i % 2 == 0) ? 4 : -4)};
-      manual_length += std::hypot(next.getX() - current.getX(), next.getY() - current.getY());
+      Point next{static_cast<double>(i * 3),
+                 static_cast<double>((i % 2 == 0) ? 4 : -4)};
+      manual_length += std::hypot(next.getX() - current.getX(),
+                                  next.getY() - current.getY());
       p.addPoint(next);
       current = next;
     }
@@ -271,8 +267,10 @@ TEST_CASE("WorldPath segmentLengthAt", "[worldpath]") {
   path.addPoint({6.0, 8.0});
 
   SECTION("valid segment indices") {
-    REQUIRE_THAT(path.segmentLengthAt(0).value(), Catch::Matchers::WithinRel(5.0));
-    REQUIRE_THAT(path.segmentLengthAt(1).value(), Catch::Matchers::WithinRel(5.0));
+    REQUIRE_THAT(path.segmentLengthAt(0).value(),
+                 Catch::Matchers::WithinRel(5.0));
+    REQUIRE_THAT(path.segmentLengthAt(1).value(),
+                 Catch::Matchers::WithinRel(5.0));
   }
 
   SECTION("out-of-range returns nullopt") {
@@ -287,18 +285,21 @@ TEST_CASE("WorldPath subpathLength", "[worldpath]") {
   path.addPoint({3.0, 4.0});
 
   SECTION("valid indices") {
-    REQUIRE_THAT(path.subpathLength(0, 2).value(), Catch::Matchers::WithinRel(7.0));
-    REQUIRE_THAT(path.subpathLength(0, 1).value(), Catch::Matchers::WithinRel(3.0));
-    REQUIRE_THAT(path.subpathLength(1, 2).value(), Catch::Matchers::WithinRel(4.0));
-    REQUIRE_THAT(path.subpathLength(1, 1).value(), Catch::Matchers::WithinRel(0.0));
+    REQUIRE_THAT(path.subpathLength(0, 2).value(),
+                 Catch::Matchers::WithinRel(7.0));
+    REQUIRE_THAT(path.subpathLength(0, 1).value(),
+                 Catch::Matchers::WithinRel(3.0));
+    REQUIRE_THAT(path.subpathLength(1, 2).value(),
+                 Catch::Matchers::WithinRel(4.0));
+    REQUIRE_THAT(path.subpathLength(1, 1).value(),
+                 Catch::Matchers::WithinRel(0.0));
   }
 
   SECTION("invalid indices") {
     REQUIRE_FALSE(path.subpathLength(0, 4).has_value());
-    REQUIRE_FALSE(path.subpathLength(2, 0).has_value()); // backward queries
+    REQUIRE_FALSE(path.subpathLength(2, 0).has_value());  // backward queries
   }
 }
-
 
 TEST_CASE("WorldPath furthestPair", "[worldpath]") {
   SECTION("three points returns the most distant pair") {
@@ -347,7 +348,7 @@ TEST_CASE("WorldPath furthestPair", "[worldpath]") {
 
 TEST_CASE("WorldPath hasFoldbacks", "[worldpath]") {
   WorldPath path;
-  
+
   SECTION("no foldbacks") {
     path.addPoint({0.0, 0.0});
     path.addPoint({5.0, 0.0});
@@ -362,7 +363,6 @@ TEST_CASE("WorldPath hasFoldbacks", "[worldpath]") {
     REQUIRE(path.hasFoldbacks());
   }
 }
-
 
 TEST_CASE("WorldPath isClosed", "[worldpath]") {
   SECTION("empty path is not closed") {
@@ -401,7 +401,6 @@ TEST_CASE("WorldPath isClosed", "[worldpath]") {
     REQUIRE_FALSE(path.isClosed(1e-12));
   }
 }
-
 
 TEST_CASE("WorldPath append", "[worldpath]") {
   SECTION("append to non-empty path") {
@@ -481,7 +480,6 @@ TEST_CASE("WorldPath reversed", "[worldpath]") {
   }
 }
 
-
 TEST_CASE("WorldPath pointAtDistance", "[worldpath]") {
   WorldPath path;
   path.addPoint({0.0, 0.0});
@@ -539,7 +537,8 @@ TEST_CASE("WorldPath pointAtDistance", "[worldpath]") {
     WorldPath long_path;
     long_path.addPoint({0.0, 0.0});
     for (int i = 1; i <= 20; ++i) {
-      long_path.addPoint({static_cast<double>(i * 10), 0.0}); // segments of length 10
+      long_path.addPoint(
+          {static_cast<double>(i * 10), 0.0});  // segments of length 10
     }
     // Deep inside segment 15
     // Distance to point 15 is 15 * 10 = 150.
@@ -549,7 +548,6 @@ TEST_CASE("WorldPath pointAtDistance", "[worldpath]") {
     REQUIRE_THAT(p.getY(), Catch::Matchers::WithinRel(0.0));
   }
 }
-
 
 TEST_CASE("WorldPath selfIntersects is false for small paths", "[worldpath]") {
   const int point_count = GENERATE(0, 1, 2, 3);
@@ -636,11 +634,10 @@ TEST_CASE("WorldPath selfIntersects", "[worldpath]") {
     spiral.addPoint({6.0, -6.0});
     spiral.addPoint({-6.0, -6.0});
     spiral.addPoint({-6.0, 4.0});
-    
+
     REQUIRE_FALSE(spiral.selfIntersects());
   }
 }
-
 
 TEST_CASE("WorldPath isValid", "[worldpath]") {
   SECTION("empty path is valid") {

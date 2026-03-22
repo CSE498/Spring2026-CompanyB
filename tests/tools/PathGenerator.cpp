@@ -38,8 +38,10 @@ TEST_CASE("PathGenerator ShortestPath finds direct path", "[pathgenerator]") {
 
   REQUIRE(result.has_value());
   REQUIRE_FALSE(result->empty());
-  REQUIRE_THAT(result->front().getX(), Catch::Matchers::WithinRel(start.getX()));
-  REQUIRE_THAT(result->front().getY(), Catch::Matchers::WithinRel(start.getY()));
+  REQUIRE_THAT(result->front().getX(),
+               Catch::Matchers::WithinRel(start.getX()));
+  REQUIRE_THAT(result->front().getY(),
+               Catch::Matchers::WithinRel(start.getY()));
   REQUIRE_THAT(result->back().getX(), Catch::Matchers::WithinRel(goal.getX()));
   REQUIRE_THAT(result->back().getY(), Catch::Matchers::WithinRel(goal.getY()));
 }
@@ -92,7 +94,8 @@ TEST_CASE("PathGenerator ShortestPath finds path around obstacle",
 
   // Block direct path at x=5
   auto canMove = [](const Point &p) {
-    return !(p.getX() >= 4.5 && p.getX() <= 5.5 && p.getY() >= -1.0 && p.getY() <= 1.0);
+    return !(p.getX() >= 4.5 && p.getX() <= 5.5 && p.getY() >= -1.0 &&
+             p.getY() <= 1.0);
   };
 
   auto result = gen.ShortestPath(start, goal, canMove);
@@ -165,7 +168,7 @@ TEST_CASE("PathGenerator AvoidancePath returns nullopt when impossible",
   Point start{0.0, 0.0};
   Point goal{10.0, 0.0};
   Point avoid{5.0, 0.0};
-  double radius = 20.0; // Huge radius blocks everything
+  double radius = 20.0;  // Huge radius blocks everything
 
   auto canMove = [](const Point &) { return true; };
   auto result = gen.AvoidancePath(start, goal, avoid, radius, canMove);
@@ -211,7 +214,8 @@ TEST_CASE("PathGenerator RandomWalk handles constrained movement",
 
   // Only allow movement in small area
   auto canMove = [](const Point &p) {
-    return p.getX() >= -2.0 && p.getX() <= 2.0 && p.getY() >= -2.0 && p.getY() <= 2.0;
+    return p.getX() >= -2.0 && p.getX() <= 2.0 && p.getY() >= -2.0 &&
+           p.getY() <= 2.0;
   };
 
   auto result = gen.RandomWalk(start, steps, canMove);
@@ -236,13 +240,14 @@ TEST_CASE("PathGenerator SpiralPath creates expanding pattern",
   auto result = gen.SpiralPath(center, spacing, turns);
 
   REQUIRE_FALSE(result.empty());
-  REQUIRE(result.size() > turns * 4); // At least several points per turn
+  REQUIRE(result.size() > turns * 4);  // At least several points per turn
 
   // Check that distances from center increase
   double maxDist = 0.0;
   for (const auto &p : result.pointsView()) {
-    double dist = std::hypot(p.getX() - center.getX(), p.getY() - center.getY());
-    REQUIRE(dist >= maxDist - 0.1); // Allow small fluctuation
+    double dist =
+        std::hypot(p.getX() - center.getX(), p.getY() - center.getY());
+    REQUIRE(dist >= maxDist - 0.1);  // Allow small fluctuation
     maxDist = std::max(maxDist, dist);
   }
 }
@@ -258,8 +263,10 @@ TEST_CASE("PathGenerator SpiralPath centers at specified point",
 
   REQUIRE_FALSE(result.empty());
   // First point should be at or near center
-  REQUIRE_THAT(result.front().getX(), Catch::Matchers::WithinAbs(center.getX(), spacing));
-  REQUIRE_THAT(result.front().getY(), Catch::Matchers::WithinAbs(center.getY(), spacing));
+  REQUIRE_THAT(result.front().getX(),
+               Catch::Matchers::WithinAbs(center.getX(), spacing));
+  REQUIRE_THAT(result.front().getY(),
+               Catch::Matchers::WithinAbs(center.getY(), spacing));
 }
 
 TEST_CASE("PathGenerator SetHeuristic changes distance calculation",
@@ -279,11 +286,14 @@ TEST_CASE("PathGenerator SetHeuristic changes distance calculation",
 
   auto result = gen.ShortestPath(start, goal, canMove);
   REQUIRE(result.has_value());
-  REQUIRE_THAT(result->front().getX(), Catch::Matchers::WithinRel(start.getX()));
-  REQUIRE_THAT(result->front().getY(), Catch::Matchers::WithinRel(start.getY()));
+  REQUIRE_THAT(result->front().getX(),
+               Catch::Matchers::WithinRel(start.getX()));
+  REQUIRE_THAT(result->front().getY(),
+               Catch::Matchers::WithinRel(start.getY()));
   REQUIRE_THAT(result->back().getX(), Catch::Matchers::WithinRel(goal.getX()));
   REQUIRE_THAT(result->back().getY(), Catch::Matchers::WithinRel(goal.getY()));
-  REQUIRE(result->totalLength() >= 5.0); // Euclidean distance is 5 (3-4-5 triangle)
+  REQUIRE(result->totalLength() >=
+          5.0);  // Euclidean distance is 5 (3-4-5 triangle)
 }
 
 TEST_CASE("PathGenerator handles same start and goal", "[pathgenerator]") {
@@ -296,8 +306,10 @@ TEST_CASE("PathGenerator handles same start and goal", "[pathgenerator]") {
 
   REQUIRE(result.has_value());
   REQUIRE(result->size() == 1);
-  REQUIRE_THAT(result->front().getX(), Catch::Matchers::WithinRel(start.getX()));
-  REQUIRE_THAT(result->front().getY(), Catch::Matchers::WithinRel(start.getY()));
+  REQUIRE_THAT(result->front().getX(),
+               Catch::Matchers::WithinRel(start.getX()));
+  REQUIRE_THAT(result->front().getY(),
+               Catch::Matchers::WithinRel(start.getY()));
 }
 
 TEST_CASE("PathGenerator works with different step sizes", "[pathgenerator]") {
@@ -327,7 +339,7 @@ TEST_CASE("PathGenerator EuclideanDistance computes correct distance",
 
   REQUIRE(result.has_value());
   // The total length should be approximately the Euclidean distance
-  REQUIRE(result->totalLength() >= 5.0); // 3-4-5 triangle
+  REQUIRE(result->totalLength() >= 5.0);  // 3-4-5 triangle
 }
 
 TEST_CASE("PathGenerator RandomWalk with zero steps returns start only",
@@ -351,8 +363,10 @@ TEST_CASE("PathGenerator SpiralPath with zero turns returns center only",
   auto result = gen.SpiralPath(center, 1.0, 0);
 
   REQUIRE(result.size() == 1);
-  REQUIRE_THAT(result.front().getX(), Catch::Matchers::WithinRel(center.getX()));
-  REQUIRE_THAT(result.front().getY(), Catch::Matchers::WithinRel(center.getY()));
+  REQUIRE_THAT(result.front().getX(),
+               Catch::Matchers::WithinRel(center.getX()));
+  REQUIRE_THAT(result.front().getY(),
+               Catch::Matchers::WithinRel(center.getY()));
 }
 
 TEST_CASE("PathGenerator SpiralPath with zero spacing stays at center",
@@ -382,8 +396,10 @@ TEST_CASE("PathGenerator AvoidancePath with zero radius finds normal path",
 
   // radius=0 only excludes the exact avoid point, path should still be found
   REQUIRE(result.has_value());
-  REQUIRE_THAT(result->front().getX(), Catch::Matchers::WithinRel(start.getX()));
-  REQUIRE_THAT(result->front().getY(), Catch::Matchers::WithinRel(start.getY()));
+  REQUIRE_THAT(result->front().getX(),
+               Catch::Matchers::WithinRel(start.getX()));
+  REQUIRE_THAT(result->front().getY(),
+               Catch::Matchers::WithinRel(start.getY()));
   REQUIRE_THAT(result->back().getX(), Catch::Matchers::WithinRel(goal.getX()));
   REQUIRE_THAT(result->back().getY(), Catch::Matchers::WithinRel(goal.getY()));
 }

@@ -57,8 +57,7 @@ class WorldPath {
       "Exceptions are disallowed. Use get() for checked access or [] for "
       "unchecked access.")]] Point&
   at(std::size_t i) {
-    if (i >= points_.size())
-      throw std::out_of_range("WorldPath::at");
+    if (i >= points_.size()) throw std::out_of_range("WorldPath::at");
     return points_[i];
   }
 
@@ -67,8 +66,7 @@ class WorldPath {
       "Exceptions are disallowed. Use get() for checked access or [] for "
       "unchecked access.")]] const Point&
   at(std::size_t i) const {
-    if (i >= points_.size())
-      throw std::out_of_range("WorldPath::at");
+    if (i >= points_.size()) throw std::out_of_range("WorldPath::at");
     return points_[i];
   }
 
@@ -117,8 +115,7 @@ class WorldPath {
    * @return The removed point, or std::nullopt if the path was already empty.
    */
   constexpr std::optional<Point> popBack() noexcept {
-    if (points_.empty())
-      return std::nullopt;
+    if (points_.empty()) return std::nullopt;
     Point p = points_.back();
     points_.pop_back();
     return p;
@@ -243,13 +240,11 @@ class WorldPath {
   [[nodiscard]] static double dist(Point a, Point b);
 
   /// @brief Checks if two doubles are equal within a small tolerance.
-  [[nodiscard]] static bool nearlyEq(double a,
-                                     double b,
+  [[nodiscard]] static bool nearlyEq(double a, double b,
                                      double eps = kDefaultEps);
 
   /// @brief Checks if two points share the exact same coordinates (within eps).
-  [[nodiscard]] static bool samePoint(Point a,
-                                      Point b,
+  [[nodiscard]] static bool samePoint(Point a, Point b,
                                       double eps = kDefaultEps);
 
   /// @brief 2D cross product of vectors AB and AC.
@@ -257,22 +252,16 @@ class WorldPath {
 
   /// @brief Finds the orientation of the ordered triplet (a, b, c).
   /// @return 0 if collinear, 1 if clockwise, -1 if counterclockwise.
-  [[nodiscard]] static int orient(Point a,
-                                  Point b,
-                                  Point c,
+  [[nodiscard]] static int orient(Point a, Point b, Point c,
                                   double eps = kDefaultEps);
 
   /// @brief Checks if a collinear point query lies on the line segment
   /// seg_start-seg_end.
-  [[nodiscard]] static bool onSegment(Point seg_start,
-                                      Point query,
-                                      Point seg_end,
-                                      double eps = kDefaultEps);
+  [[nodiscard]] static bool onSegment(Point seg_start, Point query,
+                                      Point seg_end, double eps = kDefaultEps);
 
   /// @brief Returns true if line segment a1-a2 intersects with b1-b2.
-  [[nodiscard]] static bool segmentsIntersect(Point a1,
-                                              Point a2,
-                                              Point b1,
+  [[nodiscard]] static bool segmentsIntersect(Point a1, Point a2, Point b1,
                                               Point b2,
                                               double eps = kDefaultEps);
 };

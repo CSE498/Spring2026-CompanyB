@@ -23,8 +23,7 @@ PathGenerator::PathGenerator()
 // ========== Core Path Generation ==========
 
 std::optional<WorldPath> PathGenerator::ShortestPath(
-    const Point& start,
-    const Point& goal,
+    const Point& start, const Point& goal,
     const WorldQueryFunc& canMove) const {
   assert(canMove && "WorldQueryFunc cannot be null");
 
@@ -90,8 +89,7 @@ std::optional<WorldPath> PathGenerator::ShortestPath(
     // Explore neighbors
     std::vector<Point> neighbors = GetNeighbors(current);
     for (const Point& neighbor : neighbors) {
-      if (closedSet.count(neighbor) > 0 || !canMove(neighbor))
-        continue;
+      if (closedSet.count(neighbor) > 0 || !canMove(neighbor)) continue;
 
       double tentativeGScore = gScore[current] + heuristic_(current, neighbor);
 
@@ -110,8 +108,7 @@ std::optional<WorldPath> PathGenerator::ShortestPath(
 }
 
 std::optional<WorldPath> PathGenerator::PatrolPath(
-    const std::vector<Point>& waypoints,
-    bool loop) const {
+    const std::vector<Point>& waypoints, bool loop) const {
   if (waypoints.empty()) {
     return std::nullopt;
   }
@@ -159,18 +156,14 @@ std::optional<WorldPath> PathGenerator::PatrolPath(
 }
 
 std::optional<WorldPath> PathGenerator::AvoidancePath(
-    const Point& start,
-    const Point& goal,
-    const Point& avoid,
-    double radius,
+    const Point& start, const Point& goal, const Point& avoid, double radius,
     const WorldQueryFunc& canMove) const {
   assert(canMove && "WorldQueryFunc cannot be null");
   assert(radius >= 0.0 && "Avoidance radius cannot be negative");
 
   // Create a combined movement validator
   auto canMoveWithAvoidance = [&](const Point& p) {
-    if (!canMove(p))
-      return false;
+    if (!canMove(p)) return false;
     double dist = std::hypot(p.getX() - avoid.getX(), p.getY() - avoid.getY());
     return dist >= radius;
   };
@@ -180,8 +173,7 @@ std::optional<WorldPath> PathGenerator::AvoidancePath(
 
 // ========== Utility Generation ==========
 
-WorldPath PathGenerator::RandomWalk(const Point& start,
-                                    size_t steps,
+WorldPath PathGenerator::RandomWalk(const Point& start, size_t steps,
                                     const WorldQueryFunc& canMove) const {
   assert(canMove && "WorldQueryFunc cannot be null");
 
@@ -224,8 +216,7 @@ WorldPath PathGenerator::RandomWalk(const Point& start,
   return path;
 }
 
-WorldPath PathGenerator::SpiralPath(const Point& center,
-                                    double spacing,
+WorldPath PathGenerator::SpiralPath(const Point& center, double spacing,
                                     size_t turns) const {
   WorldPath path;
 
@@ -298,21 +289,18 @@ std::vector<Point> PathGenerator::GetNeighbors(const Point& p) const {
   return neighbors;
 }
 
-WorldPath PathGenerator::ReconstructPath(
-    const PointMap& came_from,
-    const Point& current) const {
+WorldPath PathGenerator::ReconstructPath(const PointMap& came_from,
+                                         const Point& current) const {
   std::vector<Point> points;
   for (Point node = current;;) {
     points.push_back(node);
     auto it = came_from.find(node);
-    if (it == came_from.end())
-      break;
+    if (it == came_from.end()) break;
     node = it->second;
   }
   std::reverse(points.begin(), points.end());
   WorldPath path;
-  for (const auto& p : points)
-    path.addPoint(p);
+  for (const auto& p : points) path.addPoint(p);
   return path;
 }
 

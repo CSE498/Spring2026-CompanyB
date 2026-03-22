@@ -34,7 +34,8 @@ struct NullType {};
  * @tparam ...Tail Remaining elements in the sequence of types
  * @return bool
  */
-template <typename Head, typename... Tail> constexpr bool all_unique() {
+template <typename Head, typename... Tail>
+constexpr bool all_unique() {
   // On final element, must be unique
   if constexpr (std::is_same<std::tuple<Tail...>, std::tuple<NullType>>()) {
     return true;
@@ -50,7 +51,7 @@ template <typename Head, typename... Tail> constexpr bool all_unique() {
  */
 template <typename... Ts>
 concept UniqueTypes = all_unique<Ts..., NullType>();
-}; // namespace TemplTools
+};  // namespace TemplTools
 
 enum class ActionMapErr {
   CALLABLE_NOT_FOUND,
@@ -100,8 +101,9 @@ class ActionMap {
     FuncEntry(
         std::function<TypeVariant(std::vector<TypeVariant> &&)> wrapped_func,
         size_t ret_t_idx, std::vector<size_t> &&arg_t_idxs)
-        : wrapped_func(std::move(wrapped_func)), ret_t_idx(ret_t_idx),
-          arg_t_idxs(std::move(arg_t_idxs)) {};
+        : wrapped_func(std::move(wrapped_func)),
+          ret_t_idx(ret_t_idx),
+          arg_t_idxs(std::move(arg_t_idxs)){};
 
     // Delete copy ctors
     FuncEntry(const FuncEntry &) = delete;
@@ -175,7 +177,7 @@ class ActionMap {
     return std::vector<size_t>{variant_index<Params>()...};
   }
 
-public:
+ public:
   // Compile time helpers
   /**
    * @brief Determine whether given type is valid for this ActionMap.
@@ -183,7 +185,8 @@ public:
    * @tparam Type to validate
    * @return bool
    */
-  template <typename T> constexpr bool is_valid_type() const noexcept {
+  template <typename T>
+  constexpr bool is_valid_type() const noexcept {
     return TemplTools::IsOneOf<T, Types...>;
   }
 
@@ -233,8 +236,8 @@ public:
    * @param name Name of entry to remove from map.
    * @return std::expected<std::string, ActionMapErr>
    */
-  [[nodiscard]] std::expected<std::string, ActionMapErr>
-  deregister_callable(const std::string &name) {
+  [[nodiscard]] std::expected<std::string, ActionMapErr> deregister_callable(
+      const std::string &name) {
     auto it = funcs.find(name);
 
     if (it == funcs.end())
@@ -315,11 +318,9 @@ public:
    */
   template <TemplTools::IsOneOf<Types...> Ret,
             TemplTools::IsOneOf<Types...>... Args>
-  [[nodiscard]] std::expected<void, ActionMapErr>
-  register_callable(const std::string &name,
-                    std::function<Ret(Args...)> &&func) {
-    if (exists(name))
-      return std::unexpected(ActionMapErr::NAME_EXISTS);
+  [[nodiscard]] std::expected<void, ActionMapErr> register_callable(
+      const std::string &name, std::function<Ret(Args...)> &&func) {
+    if (exists(name)) return std::unexpected(ActionMapErr::NAME_EXISTS);
 
     // Create function object w/ a lambda wrapping the original function
     std::function<TypeVariant(std::vector<TypeVariant> &&)> wrapped_func =
@@ -338,4 +339,4 @@ public:
     return {};
   }
 };
-}; // namespace cse498
+};  // namespace cse498

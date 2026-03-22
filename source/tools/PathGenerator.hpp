@@ -64,8 +64,7 @@ class PathGenerator {
    * @return Optional WorldPath (nullopt if no path exists)
    */
   [[nodiscard]] std::optional<WorldPath> ShortestPath(
-      const Point& start,
-      const Point& goal,
+      const Point& start, const Point& goal,
       const WorldQueryFunc& canMove) const;
 
   /**
@@ -75,8 +74,7 @@ class PathGenerator {
    * @return Optional WorldPath (nullopt if waypoints are unreachable)
    */
   [[nodiscard]] std::optional<WorldPath> PatrolPath(
-      const std::vector<Point>& waypoints,
-      bool loop = true) const;
+      const std::vector<Point>& waypoints, bool loop = true) const;
 
   /**
    * @brief Generate path from start to goal while avoiding a region.
@@ -88,10 +86,7 @@ class PathGenerator {
    * @return Optional WorldPath (nullopt if avoidance makes path impossible)
    */
   [[nodiscard]] std::optional<WorldPath> AvoidancePath(
-      const Point& start,
-      const Point& goal,
-      const Point& avoid,
-      double radius,
+      const Point& start, const Point& goal, const Point& avoid, double radius,
       const WorldQueryFunc& canMove) const;
 
   // ========== Utility Generation ==========
@@ -103,8 +98,7 @@ class PathGenerator {
    * @param canMove Callback to check if a point is traversable
    * @return WorldPath (returns partial path if dead-end reached)
    */
-  [[nodiscard]] WorldPath RandomWalk(const Point& start,
-                                     size_t steps,
+  [[nodiscard]] WorldPath RandomWalk(const Point& start, size_t steps,
                                      const WorldQueryFunc& canMove) const;
 
   /**
@@ -114,8 +108,7 @@ class PathGenerator {
    * @param turns Number of complete rotations
    * @return WorldPath representing the spiral
    */
-  [[nodiscard]] WorldPath SpiralPath(const Point& center,
-                                     double spacing,
+  [[nodiscard]] WorldPath SpiralPath(const Point& center, double spacing,
                                      size_t turns) const;
 
   // ========== Configuration ==========
@@ -162,9 +155,8 @@ class PathGenerator {
    * @param current Final point reached
    * @return Reconstructed WorldPath
    */
-  [[nodiscard]] WorldPath ReconstructPath(
-      const PointMap& came_from,
-      const Point& current) const;
+  [[nodiscard]] WorldPath ReconstructPath(const PointMap& came_from,
+                                          const Point& current) const;
 };
 
 }  // namespace cse498
