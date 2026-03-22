@@ -10,23 +10,32 @@
 
 ### Error Conditions
 > Note: Recoverable errors represented in code as states under an enum ``ActionMapErr``.
-- Too few arguments / ``TooFewArgs`` : Likely user error, may be recoverable. 
-- Too many arguments / ``TooManyArgs`` : Likely user error, may be recoverable.
-- No matching callable / ``NoMatchingRegistered`` : Likely user error, may be recoverable
-- Invoked function error / ``InvokedError`` : Possibly recoverable
-- Invalid argument types / ``TypeError`` : Likely user error, may be recoverable
+- Too few arguments / ``TOO_FEW_ARGS`` : Likely user error, may be recoverable. 
+- Too many arguments / ``TOO_MANY_ARGS`` : Likely user error, may be recoverable.
+- No matching callable / ``CALLABLE_NOT_FOUND`` : Likely user error, may be recoverable
+- Invoked function error / ``INVOCATION_ERR`` : Possibly recoverable
+- Invalid argument type(s) / ``INVALID_ARG_TYPE`` : Likely user error, may be recoverable
+- Invalid return type / ``INVALID_RET_TYPE`` : User error, recoverable
+- Callable name already exists / ``NAME_EXISTS`` : User error, recoverable
 
 ### Key Functions
 #### Registration
-- Register a callable ``Register(std::string name, std::function<{return type}({args})>)``
+- Register a callable : ``register_callable(std::string name, std::function<{return type}({args...})>)``
   - Returns``std::expected<std::string, ActionMapErr>``supplying the name if successful
-- De-register a callable ``Deregister(std::string name)  ``
+- De-register a callable : ``deregister_callable(std::string name)  ``
   - Returns``std::expected<std::string, ActionMapErr>``supplying the name if successful
-- Check a name is registered ``Exists(std::string name) -> bool``
+  
+#### Map State
+- Check a name is registered : ``exists(std::string name) -> bool``
+- Determine how many callables are currently registered : ``size() -> size_t``
 
 #### Invocation
-- Invoke a registered callable ``Invoke(std::string, {args})``
-  - Returns ``std::expected<{callable return}, ActionMapErr>``
+- Invoke a registered callable : ``invoke<Ret>(std::string, {args...})``
+  - Returns ``std::expected<Ret, ActionMapErr>``
+  
+#### Compile-Time
+- Check if type ``T`` is permissible within a defined ``ActionMap`` : ``is_valid_type<T>() -> constexpr bool``
+- Check if function signature ``RetType(...ArgTypes)`` is permissible within a defined ``ActionMap`` : ``is_valid_signature<Ret(...ArgTypes)> -> constexpr bool``
   
 ### Expected Challenges
 Primary challenge up front is largely around how to keep the allowable functions flexible -- how to keep the map agnostic to function signatures. One solution may be to create a templated "box" object to wrap around function signatures, and allow the box methods to handle invocation. This is just one early solution, further research into implementations of dispatch tables in C++ are likely to shine some light on alternative methods. 

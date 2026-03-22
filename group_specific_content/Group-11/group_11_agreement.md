@@ -30,9 +30,9 @@ This agreement serves to outline the roles, responsibilities, and expectations o
 
 1. **Communication**: We agree to maintain open, respectful, and timely communication within our team. We will use the #group-11-private channel for our discussions.
    
-2. **Team Meeting**: A synchronous (online or offline) team meeting will be held every Friday from 10am-11am to plan for what tasks we will work on for next week as well as reflect on our progress this week. Attendance is mandatory unless a valid reason is provided in advance.
+2. **Team Meeting**: A synchronous (online or offline) team meeting will be held every Friday from 2pm-3pm to plan for what tasks we will work on for next week as well as reflect on our progress this week. Attendance is mandatory unless a valid reason is provided in advance.
 
-3. **Stand Up**: An asynchronous message will be required every Monday and Wednesday before 12pm describing:
+3. **Stand Up**: An asynchronous message will be required every Tuesday and Thursday before 2:30pm describing:
 	1. What you worked on yesterday
 	2. What you will work on today
 	3. If there are any impediments preventing you from progressing
