@@ -37,14 +37,16 @@ class DrivingAgent : public AgentBase {
                                                        {Direction::South, 'v'},
                                                        {Direction::West, '<'}}; 
   size_t road_cell_id{};
-  size_t traffic_light_id{};
+  size_t traffic_light_vertical_id{};
+  size_t traffic_light_horizontal_id{};
 
  public:
   DrivingAgent(size_t id, const std::string& name, const WorldBase& world)
       : AgentBase(id, name, world) {
     SetDirection(Direction::East);
     road_cell_id = world.GetGrid().GetCellTypeID("road");
-    traffic_light_id = world.GetGrid().GetCellTypeID("traffic_light");
+    traffic_light_vertical_id = world.GetGrid().GetCellTypeID("traffic_light_vertical");
+    traffic_light_horizontal_id = world.GetGrid().GetCellTypeID("traffic_light_horizontal");
   }
   ~DrivingAgent() = default;
 
@@ -77,7 +79,7 @@ class DrivingAgent : public AgentBase {
   }
 
   bool IsTraversableTerrain(const size_t cell_id) const {
-    return cell_id == road_cell_id || cell_id == traffic_light_id;
+    return cell_id == road_cell_id || cell_id == traffic_light_vertical_id || cell_id == traffic_light_horizontal_id;
   }
 
   /// @brief Choose the action to take on this turn.
