@@ -27,28 +27,25 @@ class DrivingAgent : public AgentBase {
  protected:
   StateGridPosition
       grid_pos;  ///< Tracks facing direction (and a local copy of position).
-  size_t turn_attempts =
-      0;  ///< How many consecutive turns we've tried without moving.
-  static constexpr size_t MAX_TURN_ATTEMPTS =
-      4;  ///< Full rotation = no way forward.
 
  public:
   DrivingAgent(size_t id, const std::string& name, const WorldBase& world)
       : AgentBase(id, name, world) {}
   ~DrivingAgent() = default;
 
-  /// Set the agent's initial facing direction.
+  /// @brief Set the agent's initial facing direction.
   DrivingAgent& SetDirection(Direction dir) {
     grid_pos.SetDirection(dir);
     return *this;
   }
 
-  /// Get the agent's current facing direction.
+  /// @brief Get the agent's current facing direction.
   [[nodiscard]] Direction GetDirection() const {
     return grid_pos.GetDirection();
   }
 
-  /// Set the agent's initial grid position (col, row) and optional direction.
+  /// @brief Set the agent's initial grid position (col, row) and optional
+  /// direction.
   DrivingAgent& SetGridPosition(size_t col, size_t row,
                                 Direction dir = Direction::North) {
     grid_pos = StateGridPosition(col, row, dir);
@@ -69,20 +66,10 @@ class DrivingAgent : public AgentBase {
   /// After a full rotation with no success, just attempt forward anyway
   /// (the world will report failure and the agent stays put).
   size_t SelectAction(const WorldGrid& /* grid */) override {
-    // If the last action failed, turn right and note the attempt.
     if (action_result == 0) {
       grid_pos.TurnRight();
-      ++turn_attempts;
-      // After a full rotation, reset counter so we don't spin forever.
-      if (turn_attempts >= MAX_TURN_ATTEMPTS) {
-        turn_attempts = 0;
-      }
-    } else {
-      // Successful move — reset turn counter.
-      turn_attempts = 0;
     }
 
-    // Issue the action corresponding to the current facing direction.
     return GetActionForCurrentDirection();
   }
 
