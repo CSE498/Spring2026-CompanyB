@@ -14,6 +14,7 @@ using namespace cse498;
 int main() {
   TrafficWorld world;
   world.AddAgent<DrivingAgent>("Car 1").SetLocation(WorldPosition{5, 6});
+  world.AddAgent<DrivingAgent>("Car 2").SetDirection(Direction::South).SetLocation(WorldPosition{8, 4});
   world.AddAgent<TrashInterface>("Interface")
       .SetSymbol('@');
 
