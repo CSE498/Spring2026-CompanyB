@@ -1,5 +1,5 @@
 /**
- * Written by Claude.
+ * Initially written by Claude, but modified substantially afterward.
  * A simple agent meant for the TrafficWorld demo, which is a bit like
  * PacingAgent, but with direction handled differently using StateGridPosition.
  * It walks in whatever direction it's currently pointing, then turns at
@@ -8,10 +8,7 @@
  * Position is ultimately managed by the world via Entity::Location (a
  * WorldPosition), but this agent keeps a StateGridPosition internally to track
  * its facing direction. The facing direction determines which
- * "up"/"down"/"left"/"right" action is issued each turn. When a forward move
- * fails (action_result == 0), the agent turns right; if a second forward
- * attempt also fails, it turns right again, and so on, until it finds a
- * passable direction or has rotated fully.
+ * "up"/"down"/"left"/"right" action is issued each turn.
  */
 
 #pragma once
