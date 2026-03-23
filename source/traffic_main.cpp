@@ -6,7 +6,7 @@
 
 // Include the modules that we will be using.
 #include "Agents/DrivingAgent.hpp"
-#include "Interfaces/TrashInterface.hpp"
+#include "Interfaces/AutoInterface.hpp"
 #include "Worlds/TrafficWorld.hpp"
 
 using namespace cse498;
@@ -15,8 +15,7 @@ int main() {
   TrafficWorld world;
   world.AddAgent<DrivingAgent>("Car 1").SetLocation(WorldPosition{5, 6});
   world.AddAgent<DrivingAgent>("Car 2").SetDirection(Direction::South).SetLocation(WorldPosition{8, 4});
-  world.AddAgent<TrashInterface>("Interface")
-      .SetSymbol('@');
+  world.AddAgent<AutoInterface>("Viewer");
 
   world.Run();
 }
