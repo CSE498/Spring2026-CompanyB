@@ -27,14 +27,14 @@ enum class SizeUnit { px, em, rem, percent, vw, vh };
  **/
 class WebImage {
  private:
-  /// Image's alt text
-  std::string alt{};
-
   /// Image's DOM element ID
   std::string id{};
 
   /// Image's source
   std::string src{};
+
+  /// Image's alt text
+  std::string alt{};
 
   /// Image's Width
   int width = 0;
