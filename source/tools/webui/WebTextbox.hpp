@@ -9,6 +9,7 @@
 
 #include <algorithm>  // For std::clamp
 #include <expected>   // For std::expected
+#include <functional>
 #include <string>
 
 namespace cse498 {
@@ -132,6 +133,23 @@ class WebTextbox {
    * invalid.
    */
   [[nodiscard]] std::expected<std::string, std::string> GetText() const;
+
+  /**
+     * @brief Template method to append numeric values directly.
+     * @tparam T Any numeric type supported by std::to_string.
+     * @param value The value to append to the textbox.
+     */
+  template <typename T>
+  void AppendValue(const T& value) {
+    // Uses type deduction to convert the raw value to a string
+    AppendText(std::to_string(value));
+  }
+
+  /**
+     * @brief Applies a custom lambda transformation to the current text.
+     * @param transform_fn A lambda function that takes a string and returns a modified string.
+     */
+  void TransformText(const std::function<std::string(const std::string&)>& transform_fn);
 };
 
 }  // namespace cse498

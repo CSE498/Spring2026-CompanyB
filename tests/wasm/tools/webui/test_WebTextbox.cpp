@@ -133,3 +133,19 @@ TEST_CASE("WebTextbox: The Memory Stress Test", "[memory]") {
   REQUIRE(heavyBox.GetText().value().size() ==
           massive_size + (1024 * 1024));  // .value() added here too
 }
+
+TEST_CASE("WebTextbox: Templates and Lambdas", "[webui]") {
+  cse498::WebTextbox box("test_box");
+
+  // Testing the Template
+  REQUIRE_NOTHROW(box.AppendValue<int>(404));
+  REQUIRE(box.GetText().value() == "404");
+
+  // Testing the Lambda (Appending "Error" using a lambda transformation)
+  auto add_error_label = [](const std::string& str) {
+    return str + " Error";
+  };
+
+  box.TransformText(add_error_label);
+  REQUIRE(box.GetText().value() == "404 Error");
+}

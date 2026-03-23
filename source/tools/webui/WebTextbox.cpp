@@ -182,4 +182,17 @@ void WebTextbox::SetMaxLength(size_t length) {
   max_length_ = std::clamp(length, kMinAllowedLength, kMaxAllowedLength);
 }
 
+/**
+ * @brief Retrieves the text, runs it through the provided lambda, and sets the new text.
+ */
+void WebTextbox::TransformText(const std::function<std::string(const std::string&)>& transform_fn) {
+  auto current_text = GetText();
+
+  // Check our value semantics to ensure we actually have text!
+  if (current_text.has_value()) {
+    std::string modified = transform_fn(current_text.value());
+    SetText(modified);
+  }
+}
+
 }  // namespace cse498
