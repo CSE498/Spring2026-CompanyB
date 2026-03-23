@@ -1,11 +1,10 @@
 #include "../../source/tools/WeightedSet.hpp"
 
+#include <catch2/catch_test_macros.hpp>
 #include <cmath>
 #include <set>
 #include <unordered_map>
 #include <vector>
-
-#include "../../third-party/Catch/single_include/catch2/catch.hpp"
 
 void FillSetWithInts(cse498::WeightedSet<int>& ws, const int lower,
                      const int upper, const bool differentWeights = false) {
@@ -155,20 +154,18 @@ TEST_CASE("WeightedSet indexing", "[weighted_set]") {
     CHECK(result.has_value());
     CHECK(result.value() == 1);
 
-    result = ws.GetElementAt(2);
+    result = ws.GetElementAt(1);
     CHECK_FALSE(result.has_value());
 
     ws.Insert(2, 1.0);
     auto result_at_zero = ws.GetElementAt(0.0);
     auto result_at_one = ws.GetElementAt(1.0);
-    auto result_at_two = ws.GetElementAt(2.0);
 
     CHECK(result_at_zero.has_value());
     CHECK(result_at_one.has_value());
-    CHECK(result_at_two.has_value());
     // the point behind the following tests:
     // we could, in principle, end up with 1 having indexes in the range [0, 1)
-    // and 2 having indexes in the range [1, 2]--or vice versa. The spec doesn't
+    // and 2 having indexes in the range [1, 2)--or vice versa. The spec doesn't
     // specify, and the user shouldn't count on a particular one of those
     // possibilities being true. So we can test for one or the other happening
     // without requiring that a specific one happens.
@@ -183,6 +180,10 @@ TEST_CASE("WeightedSet indexing", "[weighted_set]") {
     SECTION("bad indexes") {
       result = ws.GetElementAt(-1);
       CHECK(result == std::nullopt);
+
+      result = ws.GetElementAt(2);
+      CHECK(result == std::nullopt);
+
       result = ws.GetElementAt(5);
       CHECK(result == std::nullopt);
     }
@@ -192,7 +193,7 @@ TEST_CASE("WeightedSet indexing", "[weighted_set]") {
     ws.Insert(1, 2.0);
 
     double index = 0;
-    while (index <= 2) {
+    while (index < 2) {
       CHECK(ws.GetElementAt(index) == 1);
       index += 0.5;
     }
@@ -201,13 +202,10 @@ TEST_CASE("WeightedSet indexing", "[weighted_set]") {
     auto result_at_zero = ws.GetElementAt(0);
     auto result_at_one = ws.GetElementAt(1);
     auto result_at_two = ws.GetElementAt(2);
-    auto result_at_three = ws.GetElementAt(3);
-    // two possibilities: 1 gets [0, 2) and 2 gets [2, 3]
-    // or 2 gets [0, 1) and 1 gets [1, 3]
-    CHECK(((result_at_zero == 1 && result_at_one == 1 && result_at_two == 2 &&
-            result_at_three == 2) ||
-           (result_at_zero == 2 && result_at_one == 1 && result_at_two == 1 &&
-            result_at_three == 1)));
+    // two possibilities: 1 gets [0, 2) and 2 gets [2, 3)
+    // or 2 gets [0, 1) and 1 gets [1, 3)
+    CHECK(((result_at_zero == 1 && result_at_one == 1 && result_at_two == 2) ||
+           (result_at_zero == 2 && result_at_one == 1 && result_at_two == 1)));
   }
 
   SECTION("handling many elements") {
