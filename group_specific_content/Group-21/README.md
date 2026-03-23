@@ -37,7 +37,9 @@ g++ -std=c++23 -I../source -I../third-party/qt/include -I../third-party/Catch/si
 PATH="../third-party/qt/bin:$PATH" ./TextTest
 
 #### Menu
+
 on my machine, to test the individual MenuTest class I ran:
+
 c++ -std=c++23 \      
   -I./source \
   -I./third-party/Catch/single_include \
@@ -49,3 +51,23 @@ c++ -std=c++23 \
 and then:
 
 ./tests/build/MenuTest
+
+to run test for app window:
+
+mkdir -p build
+
+c++ -std=c++23 \
+  source/Interfaces/gui/AnnikaQtTest.cpp \
+  source/Interfaces/gui/Menu.cpp \
+  -I./source \
+  -I./third-party/qt/include \
+  -I./third-party/qt/include/QtWidgets \
+  -I./third-party/qt/include/QtGui \
+  -I./third-party/qt/include/QtCore \
+  -F./third-party/qt/lib \
+  -framework QtWidgets \
+  -framework QtGui \
+  -framework QtCore \
+  -o build/AnnikaQtTest
+
+./build/AnnikaQtTest
