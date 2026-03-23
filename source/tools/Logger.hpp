@@ -18,19 +18,23 @@ class Logger : public ILogger {
   std::unique_ptr<IActionLog<AgentBase>> mActionLog;
   std::unique_ptr<IOutputManager> mOutputManager;
   std::unique_ptr<void> mReplayDriver;
+  std::string mOutputFilePath;
 
  public:
   Logger(std::unique_ptr<IActionLog<AgentBase>> actionLog,
          std::unique_ptr<IOutputManager> outputManager,
+         const std::string& outputFilePath = "",
          std::unique_ptr<void> replayDriver = nullptr)
       : mActionLog(std::move(actionLog)),
         mOutputManager(std::move(outputManager)),
-        mReplayDriver(std::move(replayDriver)) {}
+        mReplayDriver(std::move(replayDriver)),
+        mOutputFilePath(outputFilePath) {}
 
   ~Logger() override = default;
 
   bool SetOutputFile(const std::string& path) override {
     if (!mOutputManager) return false;
+    mOutputFilePath = path;
     return mOutputManager->SetOutputFile(path);
   }
 
@@ -49,7 +53,7 @@ class Logger : public ILogger {
 
     auto failedEvents = mActionLog->LogAgentActions(agentCopies);
 
-    // TODO: Persist validated events via IOutputManager, if we still want to write to console
+    // todo: send failed events from actionlogto output manager, if we still want to write to console
     return failedEvents;
   }
 
@@ -58,8 +62,17 @@ class Logger : public ILogger {
       return false;
     }
 
-    // TODO: Implement replay loading logic, filling up container with data from file
+    // todo: Create IReplayDriver interface to replace void* mReplayDriver
+    // Currently mReplayDriver is stored as void* which prevents direct method calls.
+    // Once IReplayDriver interface exists, we can:
+    // 1. Cast mReplayDriver to IReplayDriver*
+    // 2. Call ReplayFromFile(filePath) through the interface
+    // 3. Properly handle the returned data (if needed or can pass to world directly) without type safety issues
     return true;
+  }
+
+  const std::string& GetOutputFilePath() const { 
+    return mOutputFilePath; 
   }
 };
 
