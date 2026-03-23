@@ -5,16 +5,15 @@
 # - Tests live under: tests/ (and mirror source/ directory structure)
 #
 # Usage:
-#   make            # build + run tests
-#   make test       # run tests
-#   make build      # build test binary only
-#   make clean
+#   make              # build + run tests
+#   make test         # run test
+#   make build        # build test binary only
+#   make clean        # remove build directory
+#   make list         # show source and test files cmake will pick up
 
-SRC_DIR   := ../source
-TEST_DIR  := ../tests
-BUILD_DIR := ../tests/build/
-BIN       := $(BUILD_DIR)/run_tests
+BUILD_DIR := ../build/tests/native
 
+<<<<<<< HEAD
 CATCH_INC := ../third-party/Catch/single_include
 QT_INC := ../third-party/qt/include
 QT_FLAGS := $(shell pkg-config --cflags Qt6Widgets 2>/dev/null || pkg-config --cflags Qt5Widgets)
@@ -41,41 +40,34 @@ OBJ_FILES := \
 DEP_FILES := $(OBJ_FILES:.o=.d)
 
 .PHONY: all build test clean list
+=======
+# Pass NO_QT=1 in the command line to skip Qt and its GUI sources.
+NO_QT ?= 0
+ifeq ($(NO_QT),1)
+  CMAKE_NO_QT := -DNO_QT=ON
+else
+  CMAKE_NO_QT :=
+endif
+
+.PHONY: all build test list
+>>>>>>> origin/main
 
 all: test
 
-build: $(BIN)
+build:
+	cmake -S ../source -B $(BUILD_DIR) -DBUILD_TESTS=ON $(CMAKE_NO_QT)
+	cmake --build $(BUILD_DIR) --parallel
 
-test: $(BIN)
-	$(BIN)
+test: build
+	$(BUILD_DIR)/tests
 
-# Link test runner
-$(BIN): $(OBJ_FILES) | $(BUILD_DIR)
-	$(CXX) -std=c++23 $(CXXFLAGS) $(WARNFLAGS) $(LDFLAGS) $^ $(LDLIBS) -o $@
-
-# Compile source/ -> build/tests/source/...
-$(BUILD_DIR)/source/%.o: $(SRC_DIR)/% | $(BUILD_DIR)
-	@mkdir -p $(dir $@)
-	$(CXX) -std=c++23 $(CPPFLAGS) $(CXXFLAGS) $(WARNFLAGS) -MMD -MP -c $< -o $@
-
-# Compile tests/ -> build/tests/tests/...
-$(BUILD_DIR)/tests/%.o: $(TEST_DIR)/% | $(BUILD_DIR)
-	@mkdir -p $(dir $@)
-	$(CXX) -std=c++23 $(CPPFLAGS) $(CXXFLAGS) $(WARNFLAGS) -MMD -MP -c $< -o $@
-
-$(BUILD_DIR):
-	@mkdir -p $(BUILD_DIR)
-
-# Sanity helper
 list:
-	@echo "Sources:"; echo "$(SRC_FILES)" | tr ' ' '\n'
+	@echo "Sources:"; \
+	for hpp in $$(find ../source -type f -name '*.hpp' | sort); do \
+		cpp="$${hpp%.hpp}.cpp"; \
+		[ -f "$$cpp" ] && echo "$$cpp" || true; \
+	done
 	@echo
-	@echo "Tests:";   echo "$(TEST_FILES)" | tr ' ' '\n'
+	@echo "Tests:"; find ../tests -type f -name '*.cpp' | sort
 	@echo
-	@echo "Objects:"; echo "$(OBJ_FILES)" | tr ' ' '\n'
-
-clean:
-	rm -rf build
-
-# Auto-deps
--include $(DEP_FILES)
+	@echo "Objects:"; find $(BUILD_DIR) -type f -name '*.o' ! -path '*/_deps/*' 2>/dev/null | sort || echo "  (no object files: run make build first)"

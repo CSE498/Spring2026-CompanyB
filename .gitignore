@@ -1,6 +1,10 @@
 # Local files
 /.vscode/
 
+# Build system outputs
+/output/
+/build/
+
 # Prerequisites
 *.d
 
@@ -46,8 +50,15 @@
 **/.DS_Store
 
 # JetBrains IDE
+<<<<<<< HEAD
 .ideabuild/
 
 build/
 
 source/Interfaces/gui/build/
+=======
+.idea
+
+# Generated docs from Doxygen
+/docs
+>>>>>>> origin/main

@@ -1,0 +1,89 @@
+services:
+  # Build with Emscripten
+  build-emscripten:
+    build:
+      context: .
+    volumes:
+      - ./source:/app/source:ro
+      - ./build:/app/build
+      - ./scripts/docker-entrypoint.sh:/app/docker-entrypoint.sh:ro
+    environment:
+      - HOST_UID=${HOST_UID}
+      - HOST_GID=${HOST_GID}
+    command: build-emscripten
+
+  # Build natively with Qt
+  build-native:
+    build:
+      context: .
+    volumes:
+      - ./source:/app/source:ro
+      - ./build:/app/build
+      - ./scripts/docker-entrypoint.sh:/app/docker-entrypoint.sh:ro
+    environment:
+      - HOST_UID=${HOST_UID}
+      - HOST_GID=${HOST_GID}
+    command: build-native
+
+  # Build and run emscripten tests
+  test-emscripten:
+    build:
+      context: .
+    volumes:
+      - ./source:/app/source:ro
+      - ./third-party:/app/third-party:ro
+      - ./build:/app/build
+      - ./tests:/app/tests:ro
+      - ./scripts/docker-entrypoint.sh:/app/docker-entrypoint.sh:ro
+    environment:
+      - HOST_UID=${HOST_UID}
+      - HOST_GID=${HOST_GID}
+    command: test-emscripten
+
+  # Build and run native tests
+  test-native:
+    build:
+      context: .
+    volumes:
+      - ./source:/app/source:ro
+      - ./build:/app/build
+      - ./tests:/app/tests:ro
+      - ./scripts/docker-entrypoint.sh:/app/docker-entrypoint.sh:ro
+    environment:
+      - HOST_UID=${HOST_UID}
+      - HOST_GID=${HOST_GID}
+    command: test-native
+
+  # Build and serve with emrun web server
+  serve:
+    build:
+      context: .
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./source:/app/source:ro
+      - ./build:/app/build
+      - ./scripts/docker-entrypoint.sh:/app/docker-entrypoint.sh:ro
+    environment:
+      - SERVE_PORT=8080
+      - HOST_UID=${HOST_UID}
+      - HOST_GID=${HOST_GID}
+    command: serve
+
+  # Interactive development shell
+  dev:
+    build:
+      context: .
+    stdin_open: true
+    tty: true
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./source:/app/source
+      - ./build:/app/build
+      - ./scripts/docker-entrypoint.sh:/app/docker-entrypoint.sh:ro
+    environment:
+      - HOST_UID=${HOST_UID}
+      - HOST_GID=${HOST_GID}
+    working_dir: /app
+    command: shell
