@@ -11,23 +11,23 @@
 
 using namespace cse498;
 
-int main(int argc, char *argv[])
-{
-    QApplication app(argc, argv);
+// int main(int argc, char *argv[])
+// {
+//     QApplication app(argc, argv);
 
-    QGraphicsView view;
-    QGraphicsScene scene;
+//     QGraphicsView view;
+//     QGraphicsScene scene;
 
-    ImageManager imageManager(scene);
+//     ImageManager imageManager(scene);
 
-    QString appDir = QCoreApplication::applicationDirPath();
-    imageManager.Load("image1", appDir + "/../images/test1.png");
-    imageManager.Load("image2", appDir + "/../images/test2.png");
+//     QString appDir = QCoreApplication::applicationDirPath();
+//     imageManager.Load("image1", appDir + "/../images/test1.png");
+//     imageManager.Load("image2", appDir + "/../images/test2.png");
 
-    imageManager.Show("image1", 0, 0);
-    imageManager.Show("image2", 64, 0);
+//     imageManager.Show("image1", 0, 0);
+//     imageManager.Show("image2", 64, 0);
 
-    imageManager.SetSceneAndView(view, 256, 256);
+//     imageManager.SetSceneAndView(view, 256, 256);
 
-    return app.exec();
-}
+//     return app.exec();
+// }

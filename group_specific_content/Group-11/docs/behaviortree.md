@@ -13,27 +13,26 @@ Load/Create from JSON files containing a Behavior Tree
 - **`std::unique_ptr`**: Used for exclusive ownership and automatic memory management for the tree node.
 - **`std::vector`**: Used to store child nodes for composite behaviors.
 - **`std::function`**: Used to encapsulate action and condition callbacks in leaf nodes.
-- **`std::stack`/`std::queue`**: Used for tree traversal and debugging.
 - **`std::map`**: Used to implement the shared memory blackboard.
-- **`std::print`**: Used for formatted debugging and introspection output
+- **`std::algorithm`**: Used for operations such as deleting composite node children
 
 ### 3) Key Functions
 
 We plan to implement the following:
 
 **Core Modification**
-- **`addNode()`**: Adds a new node to a specified parent
-- **`deleteNode()`**: Removes a new node from a specified parent along with it's subtrees
+- **`void addNode(std::unique_ptr<Node> node)`**: Adds a new node to a specified parent
+- **`void deleteNode(Node* node)`**: Removes a new node from a specified parent along with it's subtrees
 - **`loadTree(const std::string& path)`**: Loads and constructs a behavior tree from a JSON file, validates its schema, and initializes all node relationships.
 
 **Accessors & Views**
-- **`void getActivePath()`**: Prints the currently active path
-- **`int tickCount()`**: Returns the number of times the specified node has been evaluated (ticked) during execution.
-- **`void debugView(std::ostream& out) const`**: Outputs a formatted representation of the tree structure, execution state, and recent transitions to the provided output stream.
+- **`std::string getActivePath()`**: Returns string of the currently active path
+- **`int tickCount() const`**: Returns the number of times the specified node has been evaluated (ticked) during execution.
+- **`void debugView() const`**: Outputs a formatted representation of the tree structure, execution state, and recent transitions to the provided output stream.
 
 
 **Calling**
-- **`int tick() virtual = 0`**: Runs the action and returns one of three statuses: Success (1), Failure (0), or Running (-1)
+- **`Status tick() virtual = 0`**: Runs the action and returns an enum class Status of the following types: Success (1), Failure (0), or Running (-1)
 
 ### 4) Error Conditions
 

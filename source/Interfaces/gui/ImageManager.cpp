@@ -59,3 +59,5 @@ void ImageManager::Remove(const QString &imageId) {
 void ImageManager::Clear() {
     mImages.clear();
 }
+
+}

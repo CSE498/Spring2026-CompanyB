@@ -10,6 +10,7 @@
 
 #include "../core/WorldBase.hpp"
 
+// clang-format off
 namespace cse498 {
 
   class MazeWorld : public WorldBase {
@@ -70,5 +71,5 @@ namespace cse498 {
     }
 
   };
-
-} // End of namespace cse498
+// clang-format on
+}  // End of namespace cse498

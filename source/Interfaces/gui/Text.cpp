@@ -2,16 +2,24 @@
 
 #include <cassert>
 
-#include "../../../third-party/qt/include/QtCore/QString"
-#include "../../../third-party/qt/include/QtGui/QFont"
-#include "../../../third-party/qt/include/QtGui/QColor"
+// #include "../../../third-party/qt/include/QtCore/QString"
+#include <QString>
+// #include "../../../third-party/qt/include/QtGui/QFont"
+#include <QFont>
+// #include "../../../third-party/qt/include/QtGui/QColor"
+#include <QColor>
 
 // for sample display
-#include "../../../third-party/qt/include/QtWidgets/QApplication"
-#include "../../../third-party/qt/include/QtWidgets/QPushButton"
-#include "../../../third-party/qt/include/QtWidgets/QGraphicsScene"
-#include "../../../third-party/qt/include/QtWidgets/QGraphicsTextItem"
-#include "../../../third-party/qt/include/QtWidgets/QGraphicsView"
+// #include "../../../third-party/qt/include/QtWidgets/QApplication"
+#include <QApplication>
+// #include "../../../third-party/qt/include/QtWidgets/QPushButton"
+#include <QPushButton>
+// #include "../../../third-party/qt/include/QtWidgets/QGraphicsScene"
+#include <QGraphicsScene>
+// #include "../../../third-party/qt/include/QtWidgets/QGraphicsTextItem"
+#include <QGraphicsTextItem>
+// #include "../../../third-party/qt/include/QtWidgets/QGraphicsView"
+#include <QGraphicsView>
 
 namespace cse498 {
 
