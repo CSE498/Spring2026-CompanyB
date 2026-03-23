@@ -29,22 +29,22 @@ TEST_CASE("WebTextbox: New UI & Memory Features", "[features]") {
 
   // 1. Test Clear()
   box.SetText("Initialize Data");
-  REQUIRE(box.GetText() == "Initialize Data");
+  REQUIRE(box.GetText().value() == "Initialize Data");
   box.Clear();
-  REQUIRE(box.GetText() == "");
+  REQUIRE(box.GetText().value() == "");
 
   // 2. Test MaxLength Trimming on SetText
   box.SetMaxLength(10);
   box.SetText("This is way too long for a 10 char limit");
   // Should only keep the last 10 characters
-  REQUIRE(box.GetText() == "char limit");
+  REQUIRE(box.GetText().value() == "char limit");
 
   // 3. Test MaxLength Trimming on AppendText
   box.Clear();
   box.SetText("1234567890");
   box.AppendText("ABC");
   // Should drop '123' to keep the total length at 10
-  REQUIRE(box.GetText() == "4567890ABC");
+  REQUIRE(box.GetText().value() == "4567890ABC");
 
   // 4. Test UI Methods (Ensure they don't crash in Headless Node.js)
   REQUIRE_NOTHROW(box.SetVisible(false));
@@ -79,12 +79,12 @@ TEST_CASE("WebTextbox: The Naughty String List", "[edge_case]") {
 
   for (const auto& nasty : naughty_strings) {
     REQUIRE_NOTHROW(box.SetText(nasty));
-    REQUIRE(box.GetText() == nasty);
+    REQUIRE(box.GetText().value() == nasty);
 
     REQUIRE_NOTHROW(box.AppendText(nasty));
     // Note: we might hit the default 50KB limit here, but these strings are
     // small enough
-    REQUIRE(box.GetText() == nasty + nasty);
+    REQUIRE(box.GetText().value() == nasty + nasty);
   }
 }
 
@@ -92,10 +92,11 @@ TEST_CASE("WebTextbox: Numeric Extremes", "[limits]") {
   WebTextbox box("limit_box");
   TextStyle style;
 
-  style.font_size = std::numeric_limits<int>::max();
+  // Swapped from integer limits to their literal string px equivalents to avoid -Wconstant-conversion
+  style.font_size = "2147483647px";
   REQUIRE_NOTHROW(box.SetStyle(style));
 
-  style.font_size = std::numeric_limits<int>::min();
+  style.font_size = "-2147483648px";
   REQUIRE_NOTHROW(box.SetStyle(style));
 
   REQUIRE_NOTHROW(box.SetPosition(-1000, -1000));
@@ -112,7 +113,7 @@ TEST_CASE("WebTextbox: High-Volume Fuzzing (10,000 Iterations)", "[fuzz]") {
     std::string junk = GenerateGarbage(len);
 
     REQUIRE_NOTHROW(fuzzer.SetText(junk));
-    REQUIRE(fuzzer.GetText() == junk);
+    REQUIRE(fuzzer.GetText().value() == junk);
   }
 }
 
