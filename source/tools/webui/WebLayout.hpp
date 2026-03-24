@@ -40,7 +40,7 @@ class WebLayout : public WebElement {
    * given ID.
    * @param id The HTML element ID to assign to the layout container.
    */
-  WebLayout(std::string id);
+  WebLayout(const std::string& id);
 
   /**
    * @brief Destructor. Removes the layout container from the DOM.
@@ -72,21 +72,23 @@ class WebLayout : public WebElement {
    * @param dir The flex direction value (e.g., "row", "column").
    * @return Reference to this layout for method chaining.
    */
-  WebLayout& SetDirection(std::string dir);
+  WebLayout& SetDirection(const std::string& dir);
+  
+  WebLayout& SetHeight(const std::string& height);
 
   /**
    * @brief Sets the justify-content CSS property of the layout container.
    * @param justify The justify-content value (e.g., "center", "space-between").
    * @return Reference to this layout for method chaining.
    */
-  WebLayout& SetJustifyContent(std::string justify);
+  WebLayout& SetJustifyContent(const std::string& justify);
 
   /**
    * @brief Sets the align-items CSS property of the layout container.
    * @param align The align-items value (e.g., "center", "flex-start").
    * @return Reference to this layout for method chaining.
    */
-  WebLayout& SetAlignItems(std::string align);
+  WebLayout& SetAlignItems(const std::string& align);
 
   /**
    * @brief Sets the align-content CSS property of the layout container.
@@ -94,14 +96,14 @@ class WebLayout : public WebElement {
    * "space-around").
    * @return Reference to this layout for method chaining.
    */
-  WebLayout& SetAlignContent(std::string alignContent);
+  WebLayout& SetAlignContent(const std::string& alignContent);
 
   /**
    * @brief Sets the gap CSS property of the layout container.
    * @param gap The gap value (e.g., "10px", "1rem").
    * @return Reference to this layout for method chaining.
    */
-  WebLayout& SetGap(std::string gap);
+  WebLayout& SetGap(const std::string& gap);
 };
 
 }  // End of namespace cse498

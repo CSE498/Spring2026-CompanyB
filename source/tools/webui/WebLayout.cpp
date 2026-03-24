@@ -15,7 +15,7 @@ using emscripten::val;
 
 namespace cse498 {
 
-WebLayout::WebLayout(std::string id) : WebElement(id, false) {
+WebLayout::WebLayout(const std::string& id) : WebElement(id, false) {
   val document = val::global("document");
   val existing = document.call<val>("getElementById", id);
 
@@ -84,27 +84,32 @@ bool WebLayout::ContainsChild(std::shared_ptr<WebElement> elem) const {
   return std::find(elements.begin(), elements.end(), elem) != elements.end();
 }
 
-WebLayout& WebLayout::SetDirection(std::string dir) {
+WebLayout& WebLayout::SetDirection(const std::string& dir) {
   dom_element["style"].set("flexDirection", dir);
   return *this;
 }
 
-WebLayout& WebLayout::SetJustifyContent(std::string justify) {
+WebLayout& WebLayout::SetJustifyContent(const std::string& justify) {
   dom_element["style"].set("justifyContent", justify);
   return *this;
 }
 
-WebLayout& WebLayout::SetAlignItems(std::string align) {
+WebLayout& WebLayout::SetHeight(const std::string& height) {
+  dom_element["style"].set("height", height);
+  return *this;
+}
+
+WebLayout& WebLayout::SetAlignItems(const std::string& align) {
   dom_element["style"].set("alignItems", align);
   return *this;
 }
 
-WebLayout& WebLayout::SetAlignContent(std::string alignContent) {
+WebLayout& WebLayout::SetAlignContent(const std::string& alignContent) {
   dom_element["style"].set("alignContent", alignContent);
   return *this;
 }
 
-WebLayout& WebLayout::SetGap(std::string gap) {
+WebLayout& WebLayout::SetGap(const std::string& gap) {
   dom_element["style"].set("gap", gap);
   return *this;
 }
