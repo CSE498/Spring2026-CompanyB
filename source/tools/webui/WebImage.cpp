@@ -49,40 +49,6 @@ void WebImage::SetSource(const std::string& new_src) {
   img_element.set("src", src);
 }
 
-void WebImage::SetSize(int w, int h, SizeUnit unit) {
-  assert(w >= 0 && "Width must be non-negative");
-  assert(h >= 0 && "Height must be non-negative");
-
-  width = w;
-  height = h;
-
-  std::string unit_str;
-
-  switch (unit) {
-    case SizeUnit::px:
-      unit_str = "px";
-      break;
-    case SizeUnit::em:
-      unit_str = "em";
-      break;
-    case SizeUnit::rem:
-      unit_str = "rem";
-      break;
-    case SizeUnit::percent:
-      unit_str = "%";
-      break;
-    case SizeUnit::vw:
-      unit_str = "vw";
-      break;
-    case SizeUnit::vh:
-      unit_str = "vh";
-      break;
-  }
-
-  img_element["style"].set("width", std::to_string(width) + unit_str);
-  img_element["style"].set("height", std::to_string(height) + unit_str);
-}
-
 void WebImage::SetPosition(int x, int y) {
   x_pos = x;
   y_pos = y;
