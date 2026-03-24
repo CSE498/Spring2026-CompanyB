@@ -11,7 +11,9 @@
 
 #include <fstream>
 #include <string>
+#include <vector>
 
+#include "../Interfaces/IActionLog.hpp"
 #include "../Interfaces/IOutputManager.hpp"
 #include "nlohmann/json.hpp"
 
@@ -97,6 +99,10 @@ class OutputManager : public IOutputManager {
   /// @return Const reference to the accumulated JSON (messages, entries,
   /// statistics).
   [[nodiscard]] const nlohmann::json& GetBufferedLog() const noexcept;
+
+  /// @brief Writes action events to output file with auto-generated file naming.
+  /// @param events Vector of ActionEventBase objects to be persisted.
+  void WriteActionEvents(const std::vector<ActionEventBase>& events) override;
 };
 
 }  // namespace cse498
