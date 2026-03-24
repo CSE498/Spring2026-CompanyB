@@ -388,6 +388,27 @@ class WeightedSet {
    *         or deleting elements. The only guarantee is that the length of the
    * interval will be equal to the weight of the element--which is needed for
    * GetRandomElement to work properly.
+   *
+   * To illustrate how the indexing works (the code in the while loop
+   * below--keeping this comment here, not there, to avoid cluttering the code)
+   * here's an example tree where each element has weight 1 (converted from a
+   * diagram drawn by hand to ASCII art by Claude):
+   *
+   *          [3,4)
+   *         /     \
+   *   [0,3)/       \[4,7)
+   *       /         \
+   *   [1,2)        [5,6)
+   *   /   \        /   \
+   * [0,1) [2,3)  [4,5) [6,7)
+   *
+   * The set has a total weight of 7, so the set of possible indices is [0, 7).
+   * The element in the topmost node has weight 1, the left subtree has total
+   * weight 3, and so does the right subtree, so [0, 7) gets divided into the
+   * intervals [0, 3), [3, 4), and [4, 7). Indices in the first interval
+   * correspond to elements in the left subtree, indices in the middle interval
+   * correspond to the element in the topmost node, and indices in the right
+   * interval correspond to elements in the right subtree.
    */
   [[nodiscard]] std::optional<T> GetElementAt(const double index) const {
     Node* current_node = root_.get();
@@ -397,16 +418,6 @@ class WeightedSet {
     }
     double lower_bound = 0;
     while (current_node != nullptr) {
-      /**
-       * On the first iteration of this loop, we divide the whole interval [0,
-       * total weight] into 3 subintervals: [0, left subtree weight), [left
-       * subtree weight, left subtree weight + root weight), and [left subtree
-       * weight + root weight, total weight). Note that the middle interval has
-       * length equal to the weight of the root. If the index is in the middle
-       * interval, we just return the root. If in the first interval: we enter
-       * the left subtree and continue from there, dividing up that interval in
-       * the same way. Same idea for the third interval and the right subtree.
-       */
       double current_node_interval_lower =
           lower_bound + LeftSubtreeWeight(current_node);
       double current_node_interval_upper =
