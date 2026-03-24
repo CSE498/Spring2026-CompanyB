@@ -3,6 +3,8 @@
 
 #include "tools/webui/WebButton.h"
 
+using namespace cse498;
+
 TEST_CASE("WebButton basics") {
   WebButton b("Start", "startBtn");
 
