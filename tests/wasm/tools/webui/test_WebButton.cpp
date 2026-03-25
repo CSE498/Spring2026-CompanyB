@@ -7,8 +7,13 @@
 
 using namespace cse498;
 
-TEST_CASE("WebButton basics") {
-  WebButton b("Start", "startBtn");
+struct SetupMockDOM {
+  SetupMockDOM() {
+    // clang-format off
+    EM_ASM({
+      if (typeof document === 'undefined') {
+        globalThis.document = {};
+      }
 
       var elements = {};
 
