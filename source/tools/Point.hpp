@@ -33,8 +33,8 @@ class Point {
   Point(double X, double Y) : x(X), y(Y) {}
 
   // getters to get value of x and y
-  double getX() const { return x; }
-  double getY() const { return y; }
+  constexpr double getX() const { return x; }
+  constexpr double getY() const { return y; }
 
   // setters to set value of x and y
   Point& setX(double x_value = 0.0) {
@@ -63,7 +63,7 @@ class Point {
 
   // 3. Geometry: dot and cross product, magnitude, normalize(return unit
   // vector),
-  [[nodiscard]] double dot(const Point& other) const {
+  [[nodiscard]] constexpr double dot(const Point& other) const {
     return ((x * other.getX()) + (y * other.getY()));
   }
 
@@ -123,7 +123,56 @@ class Point {
   [[nodiscard]] double cross_product(const Point& other) const {
     return (x * other.y) - (y * other.x);
   }
+
+  //Additional geometric operations
+
+  // Squared length.
+  [[nodiscard]] double lengthSq() const { return x * x + y * y; }
+
+  //Distance to another point.
+  [[nodiscard]] double distanceTo(const Point& other) const {
+    return std::sqrt(distanceSqTo(other));
+  }
+
+  // Squared distance to another point.
+  [[nodiscard]] double distanceSqTo(const Point& other) const {
+    double dx = x - other.x;
+    double dy = y - other.y;
+    return dx * dx + dy * dy;
+  }
+
+  // Return a new point translate.
+  [[nodiscard]] Point translated(const Point& delta) const {
+    return Point(x + delta.x, y + delta.y);
+  }
+
+  // Return a new point scaled.
+  [[nodiscard]] Point scaled(double factor) const {
+    return Point(x * factor, y * factor);
+  }
+
+  // Return a perpendicular vector.
+  [[nodiscard]] Point perp() const {
+    return Point(-y, x);
+  }
+
+  // Angle of the vector.
+  [[nodiscard]] double angle() const {
+    return std::atan2(y, x);
+  }
+
+  // Linear interpolation.
+  [[nodiscard]] Point lerp(const Point& other, double t) const {
+    return Point(x + (other.x - x) * t, y + (other.y - y) * t);
+  }
+
+  // Construct a point from polar coordinates.
+  static Point fromPolar(double r, double theta) {
+    return Point(r * std::cos(theta), r * std::sin(theta));
+  }
+
 };
+
 
 inline std::ostream& operator<<(std::ostream& os, const Point& p) {
   return os << "(" << p.getX() << ", " << p.getY() << ")";
