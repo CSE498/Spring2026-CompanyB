@@ -4,6 +4,8 @@
 #include <cassert>
 #include <cmath>
 #include <utility>
+#include <range/v3/view/sliding.hpp>
+#include <range/v3/algorithm/fold.hpp>
 
 namespace cse498 {
 

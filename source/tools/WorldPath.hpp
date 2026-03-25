@@ -11,7 +11,8 @@
 #include <span>
 #include <stdexcept>
 #include <vector>
-#include <range/v3/all.hpp>
+#include <range/v3/view/zip.hpp>
+#include <range/v3/view/drop.hpp>
 
 #include "Point.hpp"
 
