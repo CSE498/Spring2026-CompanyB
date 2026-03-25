@@ -188,5 +188,29 @@ TEST_CASE("WebLayout can set properties with chained function calls",
                       .SetJustifyContent("flex-start")
                       .SetAlignItems("center")
                       .SetAlignContent("center")
-                      .SetGap("5px"));
+                      .SetGap("5px")
+                      .SetHeight("100px"));
+}
+
+TEST_CASE("WebLayout properties can be retrieved via getters", "[WebLayout]") {
+  SetupMockDOMWebLayout mock;
+  WebLayout layout("layout2");
+
+  layout.SetDirection("row");
+  CHECK(layout.GetDirection() == "row");
+
+  layout.SetJustifyContent("space-between");
+  CHECK(layout.GetJustifyContent() == "space-between");
+
+  layout.SetAlignItems("stretch");
+  CHECK(layout.GetAlignItems() == "stretch");
+
+  layout.SetAlignContent("flex-end");
+  CHECK(layout.GetAlignContent() == "flex-end");
+
+  layout.SetGap("1rem");
+  CHECK(layout.GetGap() == "1rem");
+
+  layout.SetHeight("50%");
+  CHECK(layout.GetHeight() == "50%");
 }
