@@ -69,7 +69,7 @@ if(BUILD_WASM_TESTS)
     endif()
     add_executable(tests ${TEST_SOURCES})
     target_link_libraries(tests PRIVATE project_lib Catch2::Catch2WithMain)
-    target_link_libraries(index PRIVATE range-v3)
+    target_link_libraries(project_lib PUBLIC range-v3)
 
     # Emscripten compatibility: disable POSIX signals
     target_compile_definitions(tests PRIVATE CATCH_CONFIG_NO_POSIX_SIGNALS)
