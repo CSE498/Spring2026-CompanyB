@@ -1,11 +1,12 @@
-#ifndef RANDOM_H
-#define RANDOM_H
+#pragma once
 
 #include <cassert>
 #include <chrono>
 #include <cmath>
 #include <cstdint>
 #include <limits>
+#include <numbers>
+#include <optional>
 
 namespace cse498 {
 
@@ -36,13 +37,13 @@ Usage:
 */
 class Random {
  public:
-  // If seed is 0, use wall-clock time.
-  explicit Random(uint64_t seed = 0) {
-    if (seed == 0) {
+  // If no seed is provided, use wall-clock time.
+  explicit Random(std::optional<uint64_t> seed = std::nullopt) {
+    if (!seed.has_value()) {
       seed = static_cast<uint64_t>(
           std::chrono::high_resolution_clock::now().time_since_epoch().count());
     }
-    reseed(seed);
+    reseed(seed.value());
   }
 
   void reseed(uint64_t seed) {
@@ -77,6 +78,13 @@ class Random {
     assert(min <= max &&
            "The minimum value can't be larger than the maximum value.");
     return min + nextUnitDouble() * (max - min);
+  }
+
+  // Uniform in [min, max), defaults to [0, 1).
+  [[nodiscard]] float nextFloat(float min = 0.0f, float max = 1.0f) {
+    assert(min <= max &&
+           "The minimum value can't be larger than the maximum value.");
+    return min + nextUnitFloat() * (max - min);
   }
 
   // Uniform in [min, max].
@@ -115,16 +123,8 @@ class Random {
       u1 = nextUnitDouble();
     }
     const double u2 = nextUnitDouble();
-    constexpr double kTwoPi = 6.283185307179586476925286766559;
-    const double z = std::sqrt(-2.0 * std::log(u1)) * std::cos(kTwoPi * u2);
+    const double z = std::sqrt(-2.0 * std::log(u1)) * std::cos(2.0 * std::numbers::pi * u2);
     return mean + stddev * z;
-  }
-
-  // Uniform in [min, max), defaults to [0, 1).
-  [[nodiscard]] float nextFloat(float min = 0.0f, float max = 1.0f) {
-    assert(min <= max &&
-           "The minimum value can't be larger than the maximum value.");
-    return min + nextUnitFloat() * (max - min);
   }
 
  private:
@@ -134,6 +134,7 @@ class Random {
   // SplitMix64 for initializing the state.
   // Recommended for initializing the state of xoshiro256++.
   // First constant is the golden ratio.
+  // The rest are tried and tested for best performance
   static uint64_t splitMix64(uint64_t& x) {
     constexpr uint64_t kConst1 = 0x9e3779b97f4a7c15ULL;
     constexpr uint64_t kConst2 = 0xbf58476d1ce4e5b9ULL;
@@ -169,8 +170,6 @@ class Random {
 };
 
 }  // namespace cse498
-
-#endif
 
 /*
 Sources and implementations:
