@@ -86,7 +86,7 @@ TEST_CASE("Test StateGrid") {
   std::vector<std::vector<char>> premadeMap = {{'P', 'P', 'W'},
                                                {'P', 'W', 'P'}};
 
-  StateGrid Stategrid1(3, 2, premadeMap);
+  StateGrid Stategrid1(premadeMap);
 
   CHECK(Stategrid1.getWidth() == 3);
   CHECK(Stategrid1.getHeight() == 2);
@@ -104,28 +104,13 @@ TEST_CASE("Test StateGrid") {
   CHECK(Stategrid1.inBounds(0, 3) == false);
 }
 
-TEST_CASE("Test StateGrid Error Conditions") {
-  // Premade map and the height, width inputs dont match
-  std::vector<std::vector<char>> badHeight = {{'P', 'P', 'W'}};
-  CHECK_THROWS(StateGrid(3, 2, badHeight));
-
-  std::vector<std::vector<char>> badWidth = {{'P', 'P'}, {'P', 'W'}};
-  CHECK_THROWS(StateGrid(3, 2, badWidth));
-
-  std::vector<std::vector<char>> tiny = {{'P'}};
-  CHECK_THROWS(StateGrid(0, 1, tiny));
-  CHECK_THROWS(StateGrid(1, 0, tiny));
-  CHECK_THROWS(StateGrid(-1, 1, tiny));
-  CHECK_THROWS(StateGrid(1, -1, tiny));
-}
-
 // AI helped with conversting test case from using Agent* to shared pointers
 TEST_CASE("Test StateGrid, Tile Integration") {
   // Innits
   std::vector<std::vector<char>> premadeMap = {{'P', 'W', 'W'},
                                                {'P', 'W', 'P'}};
 
-  StateGrid Stategrid1(3, 2, premadeMap);
+  StateGrid Stategrid1(premadeMap);
 
   // Checks the tiles were initialized correctly and we can pull them
   auto& tiles = Stategrid1.getAllTiles();
@@ -177,7 +162,7 @@ TEST_CASE("Tests Moving agents") {
   std::vector<std::vector<char>> premadeMap = {{'P', 'W', 'P'},
                                                {'P', 'W', 'P'}};
 
-  StateGrid Stategrid1(3, 2, premadeMap);
+  StateGrid Stategrid1(premadeMap);
 
   auto& tiles = Stategrid1.getAllTiles();
 

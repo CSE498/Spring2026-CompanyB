@@ -21,13 +21,10 @@ class StateGrid {
   /***********************************************
    * Constructs a grid using a premadeMap of symbols.
    *
-   * @param width Width of the grid
-   * @param height Height of the grid
    * @param premadeMap A 2D grid of characters describing the initial tile
    *symbols.
    ***********************************************/
-  StateGrid(int width, int height,
-            const std::vector<std::vector<char>>& premadeMap);
+  StateGrid(const std::vector<std::vector<char>>& premadeMap);
 
   /***********************************************
    * Width getter

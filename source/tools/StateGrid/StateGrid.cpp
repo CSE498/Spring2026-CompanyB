@@ -1,6 +1,6 @@
 #include "StateGrid.hpp"
 
-#include <stdexcept>
+#include <cassert>
 
 namespace cse498 {
 
@@ -17,27 +17,17 @@ Tile tileFromSymbol(char symbol, int r, int c) {
   }
 }
 
-StateGrid::StateGrid(int width, int height,
-                     const std::vector<std::vector<char>>& premadeMap)
-    : width(width), height(height) {
+StateGrid::StateGrid(const std::vector<std::vector<char>>& premadeMap)
+{
   // An LLM helped with error handling
 
   // Double checking the map's height and widt with the enterd height and width
   // feels like good sanity checking, validation but i might be wrong, i could
   // just change it to use the map and pull it's height and width
-  if (width <= 0 || height <= 0) {
-    throw std::invalid_argument("Width and height must be positive.");
-  }
 
-  if (static_cast<int>(premadeMap.size()) != height) {
-    throw std::invalid_argument("premadeMap height does not match height.");
-  }
-
-  for (int r = 0; r < height; ++r) {
-    if (static_cast<int>(premadeMap[r].size()) != width) {
-      throw std::invalid_argument("premadeMap width does not match width.");
-    }
-  }
+  height = premadeMap.size();
+  width = premadeMap[0].size();
+  assert(height > 0 && width > 0);
 
   tiles.resize(height);
   for (int r = 0; r < height; ++r) {
