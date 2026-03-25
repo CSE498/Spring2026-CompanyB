@@ -33,6 +33,8 @@ class TrafficWorld : public WorldBase {
       traffic_light_positions;  ///< Positions of all traffic lights.
   WeightedSet<WorldPosition>
       destination_positions;  // Weighted set to randomly assign destinations
+  std::vector<std::pair<WorldPosition, std::string>>
+      destination_colours;  ///< Per-destination ANSI colour codes.
 
   enum TrafficLightPhase : int { ALLOW_VERTICAL = 0, ALLOW_HORIZONTAL = 1 };
   TrafficLightPhase traffic_light_phase{};
@@ -86,16 +88,16 @@ class TrafficWorld : public WorldBase {
         "#..S.....|...............|........#",
         "#.#######.###############.#######.#",
         "#.#######.###############.#######D#",
-        "#.#######D###############.#######.#",
         "#.#######.###############.#######.#",
+        "#D#######.###############.#######.#",
         "#.#######.###############.#######.#",
         "#|.......|...............|.......|#",
         "#.#######.###############.#######.#",
         "#.#######.###############.#######.#",
-        "#.#######.###############D#######.#",
         "#.#######.###############.#######.#",
         "#.#######.###############.#######.#",
-        "#|.......|.......D.......|.......|#",
+        "#.#######.###############.#######.#",
+        "#|.......|...............|.......|#",
         "#.#######.###############.#######.#",
         "#D#######.###############.#######.#",
         "#.#######.###############.#######.#",
@@ -111,14 +113,39 @@ class TrafficWorld : public WorldBase {
         }
       }
     }
+    const std::vector<std::string> colour_palette = {
+        "\033[91m",  // bright red
+        "\033[92m",  // bright green
+        "\033[93m",  // bright yellow
+        "\033[94m",  // bright blue
+        "\033[95m",  // bright magenta
+    };
+    size_t colour_idx = 0;
     for (size_t y = 0; y < main_grid.GetHeight(); ++y) {
       for (size_t x = 0; x < main_grid.GetWidth(); ++x) {
         WorldPosition pos(x, y);
         if (main_grid[pos] == destination_id) {
           destination_positions.Insert(pos, 1.0);  // equal weight for now
+          destination_colours.emplace_back(
+              pos, colour_palette[colour_idx % colour_palette.size()]);
+          ++colour_idx;
         }
       }
     }
+  }
+
+  /// @brief Return the ANSI colour code pre-assigned to a destination tile,
+  ///        or an empty string if the position is not a destination.
+  [[nodiscard]] const std::string &GetDestinationColour(
+      const WorldPosition &pos) const {
+    for (const auto &[dest_pos, col] : destination_colours) {
+      if (dest_pos.CellX() == pos.CellX() &&
+          dest_pos.CellY() == pos.CellY()) {
+        return col;
+      }
+    }
+    static const std::string empty{};
+    return empty;
   }
   ~TrafficWorld() = default;
 
@@ -236,6 +263,7 @@ class TrafficWorld : public WorldBase {
               auto &agent = AddAgent<DrivingAgent>("Car 1");
               agent.SetLocation(pos);
               agent.SetGridDestination(dest_pos.CellX(), dest_pos.CellY());
+              agent.SetColour(GetDestinationColour(dest_pos));
             }
           }
         }

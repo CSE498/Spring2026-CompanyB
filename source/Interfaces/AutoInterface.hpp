@@ -13,6 +13,8 @@
 #include <thread>
 #include <vector>
 
+#include "../Agents/DrivingAgent.hpp"
+#include "../Worlds/TrafficWorld.hpp"
 #include "../core/InterfaceBase.hpp"
 #include "../core/WorldBase.hpp"
 
@@ -33,13 +35,31 @@ namespace cse498 {
                   const std::vector<size_t> & item_ids,
                   const std::vector<size_t> & agent_ids)
     {
-      std::vector<std::string> symbol_grid(grid.GetHeight());
+      const size_t W = grid.GetWidth();
+      const size_t H = grid.GetHeight();
+
+      std::vector<std::string> symbol_grid(H);
+      // colour_grid stores the ANSI code for each cell, or "" for no colour.
+      std::vector<std::vector<std::string>> colour_grid(
+          H, std::vector<std::string>(W));
 
       // Load the world into the symbol_grid.
-      for (size_t y = 0; y < grid.GetHeight(); ++y) {
-        symbol_grid[y].resize(grid.GetWidth());
-        for (size_t x = 0; x < grid.GetWidth(); ++x) {
+      for (size_t y = 0; y < H; ++y) {
+        symbol_grid[y].resize(W);
+        for (size_t x = 0; x < W; ++x) {
           symbol_grid[y][x] = grid.GetSymbol(WorldPosition{x, y});
+        }
+      }
+
+      // Colour destination tiles if the world is a TrafficWorld.
+      const auto *traffic_world = dynamic_cast<const TrafficWorld *>(&world);
+      if (traffic_world) {
+        for (size_t y = 0; y < H; ++y) {
+          for (size_t x = 0; x < W; ++x) {
+            const std::string &col =
+                traffic_world->GetDestinationColour(WorldPosition{x, y});
+            if (!col.empty()) colour_grid[y][x] = col;
+          }
         }
       }
 
@@ -56,17 +76,28 @@ namespace cse498 {
         const AgentBase & agent = world.GetAgent(agent_id);
         WorldPosition pos = agent.GetLocation().AsWorldPosition();
         symbol_grid[pos.CellY()][pos.CellX()] = agent.GetSymbol();
+        const auto *driver = dynamic_cast<const DrivingAgent *>(&agent);
+        if (driver && !driver->GetColour().empty()) {
+          colour_grid[pos.CellY()][pos.CellX()] = driver->GetColour();
+        }
       }
 
       // Clear screen with ANSI escape, then print the grid with a box around it.
       std::cout << "\033[2J\033[H";
-      std::cout << '+' << std::string(grid.GetWidth(), '-') << "+\n";
-      for (const auto & row : symbol_grid) {
+      std::cout << '+' << std::string(W, '-') << "+\n";
+      for (size_t y = 0; y < H; ++y) {
         std::cout << '|';
-        for (char cell : row) std::cout << cell;
+        for (size_t x = 0; x < W; ++x) {
+          const std::string &col = colour_grid[y][x];
+          if (!col.empty()) {
+            std::cout << col << symbol_grid[y][x] << "\033[0m";
+          } else {
+            std::cout << symbol_grid[y][x];
+          }
+        }
         std::cout << "|\n";
       }
-      std::cout << '+' << std::string(grid.GetWidth(), '-') << "+\n";
+      std::cout << '+' << std::string(W, '-') << "+\n";
       std::cout.flush();
     }
 

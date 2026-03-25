@@ -44,6 +44,8 @@ class DrivingAgent : public AgentBase {
   StateGridPosition destination_pos{};
   bool reached_destination = false;
 
+  std::string colour{};  ///< ANSI escape code for this agent's display colour.
+
  public:
   DrivingAgent(size_t id, const std::string &name, const WorldBase &world)
       : AgentBase(id, name, world) {
@@ -145,6 +147,9 @@ class DrivingAgent : public AgentBase {
     grid_pos.TurnRight();
     SetSymbol(direction_symbols.at(grid_pos.GetDirection()));
   }
+  DrivingAgent &SetColour(const std::string &c) { colour = c; return *this; }
+  [[nodiscard]] const std::string &GetColour() const { return colour; }
+
   // In DrivingAgent, public section:
   [[nodiscard]] const StateGridPosition &GetDestination() const {
     return destination_pos;
