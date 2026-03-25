@@ -54,7 +54,7 @@ class TrafficWorld : public WorldBase {
 
  public:
   TrafficWorld() {
-    road_id = main_grid.AddCellType("road", "Road to drive in", ' ');
+    road_id = main_grid.AddCellType("road", "Road to drive in", '.');
     grass_id =
         main_grid.AddCellType("grass", "Grass that cars can't go on.", '#');
     // Written by Claude — register both traffic light phases with directional
@@ -75,20 +75,23 @@ class TrafficWorld : public WorldBase {
         "destination", "Destination for driving agents", 'D');
 
     // Initial phase is ALLOW_VERTICAL, so traffic lights start as '|'
+    // Two rectangular loops sharing a central intersection (traffic light).
+    // Right loop: top-right quadrant. Left loop: bottom-left quadrant.
+    // '.' = road, '#' = grass, 'S' = spawn, 'D' = destination, '|'/'-' = light
     main_grid.Load(std::vector<std::string>{
-        "#################",
-		"########        #",
-		"######## ###### #",
-        "######## ###### #",
-		"########D###### #",
-		"######## ###### #",
-        "# S     |       #",
-		"# ###### ########",
-		"# ###### ########",
-        "#D###### ########",
-		"# ###### ########",
-		"#        ########",
-        "#################"});
+        "#####################",
+        "##########..........#",
+        "##########.########.#",
+        "##########D########.#",
+        "##########.########.#",
+        "##########.########.#",
+        "#.S.......|.........#",
+        "#.########.##########",
+        "#.########.##########",
+        "#D########.##########",
+        "#.########.##########",
+        "#..........##########",
+        "#####################"});
 
     // Written by Claude — record all traffic light positions for phase swapping
     for (size_t y = 0; y < main_grid.GetHeight(); ++y) {
