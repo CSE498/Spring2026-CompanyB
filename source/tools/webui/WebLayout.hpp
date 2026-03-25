@@ -22,7 +22,7 @@ namespace cse498 {
  * children.
  */
 class WebLayout : public WebElement {
- protected:
+ private:
   std::vector<std::shared_ptr<WebElement>> elements;
   /// The DOM layout element
   emscripten::val dom_element = emscripten::val::null();
@@ -63,7 +63,7 @@ class WebLayout : public WebElement {
   std::expected<void, WebLayout::Error> RemoveChild(
       std::shared_ptr<WebElement> elem);
 
-  size_t GetNumChildren() const;
+  [[nodiscard]] size_t GetNumChildren() const;
 
   bool ContainsChild(std::shared_ptr<WebElement> elem) const;
 
@@ -73,8 +73,25 @@ class WebLayout : public WebElement {
    * @return Reference to this layout for method chaining.
    */
   WebLayout& SetDirection(const std::string& dir);
-  
+
+  /**
+   * @brief Gets the flex-direction CSS property of the layout container.
+   * @return The current flex direction value.
+   */
+  [[nodiscard]] std::string GetDirection() const;
+
+  /**
+   * @brief Sets the height CSS property of the layout container.
+   * @param height The height value (e.g., "100px", "50%").
+   * @return Reference to this layout for method chaining.
+   */
   WebLayout& SetHeight(const std::string& height);
+
+  /**
+   * @brief Gets the height CSS property of the layout container.
+   * @return The current height value.
+   */
+  [[nodiscard]] std::string GetHeight() const;
 
   /**
    * @brief Sets the justify-content CSS property of the layout container.
@@ -84,11 +101,23 @@ class WebLayout : public WebElement {
   WebLayout& SetJustifyContent(const std::string& justify);
 
   /**
+   * @brief Gets the justify-content CSS property of the layout container.
+   * @return The current justify-content value.
+   */
+  [[nodiscard]] std::string GetJustifyContent() const;
+
+  /**
    * @brief Sets the align-items CSS property of the layout container.
    * @param align The align-items value (e.g., "center", "flex-start").
    * @return Reference to this layout for method chaining.
    */
   WebLayout& SetAlignItems(const std::string& align);
+
+  /**
+   * @brief Gets the align-items CSS property of the layout container.
+   * @return The current align-items value.
+   */
+  [[nodiscard]] std::string GetAlignItems() const;
 
   /**
    * @brief Sets the align-content CSS property of the layout container.
@@ -99,11 +128,23 @@ class WebLayout : public WebElement {
   WebLayout& SetAlignContent(const std::string& alignContent);
 
   /**
+   * @brief Gets the align-content CSS property of the layout container.
+   * @return The current align-content value.
+   */
+  [[nodiscard]] std::string GetAlignContent() const;
+
+  /**
    * @brief Sets the gap CSS property of the layout container.
    * @param gap The gap value (e.g., "10px", "1rem").
    * @return Reference to this layout for method chaining.
    */
   WebLayout& SetGap(const std::string& gap);
+
+  /**
+   * @brief Gets the gap CSS property of the layout container.
+   * @return The current gap value.
+   */
+  [[nodiscard]] std::string GetGap() const;
 };
 
 }  // End of namespace cse498
