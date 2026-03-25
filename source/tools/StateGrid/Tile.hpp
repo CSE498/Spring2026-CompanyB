@@ -12,8 +12,17 @@
 namespace cse498 {
 /***********************************************
  * Forward declaration for Agent
- ***********************************************/
-class Agent;
+ * Just to be used for testing
+***********************************************/
+ class Agent {
+ public:
+  explicit Agent(int id) : id(id) {}
+  int getId() const { return id; }
+
+ private:
+  int id;
+ };
+
 
 /***********************************************
  *  Holds Possible weather conditions
@@ -41,7 +50,7 @@ class Tile {
   std::string name = "";   // Name of the tile
   MetaData metadata;  // Meta data to simplify class variables
 
-  std::shared_ptr<Agent> agent;  // Single occupant (nullptr if empty)
+  std::unique_ptr<Agent> agent;  // Single occupant (nullptr if empty)
 
  public:
   Tile(size_t row, size_t column, char symbol, bool canTraverse,
@@ -54,7 +63,7 @@ class Tile {
    *
    * @returns True if successful, false if it is occupied
    ***********************************************/
-  bool addAgent(const std::shared_ptr<Agent>& newAgent);
+  bool addAgent(std::unique_ptr<Agent> newAgent);
 
   /***********************************************
    *  Removes the agent
@@ -64,12 +73,18 @@ class Tile {
   bool removeAgent();
 
   /***********************************************
-   *  Returns an Agent pointer, needs to be able to move from tile to tile
-   * so i use a shared pointer
+   *  Releases and returns ownership of the agent
    *
-   * @returns the shared pointer to the agent
+   * @returns unique_ptr to the agent, nullptr if empty
    ***********************************************/
-  [[nodiscard]] std::shared_ptr<Agent> getAgent() const;
+  [[nodiscard]] std::unique_ptr<Agent> releaseAgent();
+
+  /***********************************************
+   *  Returns a non-owning pointer to the agent on this tile
+   *
+   * @returns raw pointer to the agent, nullptr if empty
+   ***********************************************/
+  [[nodiscard]] Agent* getAgent() const;
 
   /***********************************************
    *  Returns whether this tile stores an agent

@@ -4,18 +4,6 @@
 #include "../../source/tools/StateGrid/Tile.hpp"
 
 namespace cse498 {
-/***********************************************
- * Just to be used for testing
- ***********************************************/
-class Agent {
- public:
-  explicit Agent(int id) : id(id) {}
-  int getId() const { return id; }
-
- private:
-  int id;
-};
-
 // AI helped with conversting test case from using Agent* to shared pointers
 TEST_CASE("Test Tile") {
   // Setting new values
@@ -52,20 +40,22 @@ TEST_CASE("Test Tile") {
   CHECK(Tile1.hasAgent() == false);
 
   // Default innits
-  auto Agent1 = std::make_shared<Agent>(1);
-  auto Agent2 = std::make_shared<Agent>(2);
+  auto Agent1 = std::make_unique<Agent>(1);
+  auto Agent2 = std::make_unique<Agent>(2);
+
+  // Save raw pointer before moving ownership
+  Agent* Agent1_raw = Agent1.get();
 
   // Sets agent and ensure only one may exist
-  CHECK(Tile1.addAgent(Agent1) == true);
+  CHECK(Tile1.addAgent(std::move(Agent1)) == true);
   CHECK(Tile1.hasAgent() == true);
 
-  CHECK(Tile1.addAgent(Agent2) == false);
+  CHECK(Tile1.addAgent(std::move(Agent2)) == false);
 
   // Ensure that the agent is the same
-  std::shared_ptr<Agent> found =
-      Tile1.getAgent();  // FIXED: Changed to shared_ptr
+  Agent* found = Tile1.getAgent();
   CHECK(found != nullptr);
-  CHECK(found.get() == Agent1.get());  // FIXED: Compare raw pointers
+  CHECK(found == Agent1_raw);
   CHECK(found->getId() == 1);
 
   // Removes agent and esure you can remove an agent if there isnt one
@@ -142,16 +132,16 @@ TEST_CASE("Test StateGrid, Tile Integration") {
   CHECK(Tile_1_1.getAgent() == nullptr);
 
   // Ensures mutability of the tiles
-  auto agent = std::make_shared<Agent>(42);
-  CHECK(Tile_0_0.addAgent(agent) == true);
+  auto agent = std::make_unique<Agent>(42);
+  Agent* agent_raw = agent.get();
+  CHECK(Tile_0_0.addAgent(std::move(agent)) == true);
   CHECK(Tile_0_0.hasAgent() == true);
-  CHECK(Tile_0_0.getAgent() == agent);  // FIXED: Compare shared_ptrs directly
+  CHECK(Tile_0_0.getAgent() == agent_raw);
 
   // Checks pulling single tiles, getTile with coords
   Tile* Tile_0_0_again = Stategrid1.getTile(0, 0);
   CHECK(Tile_0_0_again->hasAgent() == true);
-  CHECK(Tile_0_0_again->getAgent() ==
-        agent);  // FIXED: Compare shared_ptrs directly
+  CHECK(Tile_0_0_again->getAgent() == agent_raw);
 
   // OOB tiles returns null ptr
   Tile* Tile_OOB = Stategrid1.getTile(5, 3);
@@ -166,21 +156,19 @@ TEST_CASE("Tests Moving agents") {
 
   auto& tiles = Stategrid1.getAllTiles();
 
-  auto agent = std::make_shared<Agent>(42);
-  CHECK(tiles[0][0].addAgent(agent) == true);
+  auto agent = std::make_unique<Agent>(42);
+  CHECK(tiles[0][0].addAgent(std::move(agent)) == true);
   CHECK(tiles[0][0].hasAgent() == true);
   CHECK(tiles[0][0].getAgent()->getId() == 42);
 
-  // Get the shared_ptr before removing
-  std::shared_ptr<Agent> moveAgent = tiles[0][0].getAgent();
-
-  CHECK(tiles[0][0].removeAgent() == true);
+  // Release the agent to transfer ownership
+  std::unique_ptr<Agent> movedAgent = tiles[0][0].releaseAgent();
   CHECK(tiles[0][0].hasAgent() == false);
   CHECK(tiles[0][0].getAgent() == nullptr);
 
   CHECK(tiles[0][1].getCanTraverse() == false);  // Fixed missing parentheses
 
-  CHECK(tiles[0][2].addAgent(moveAgent) == true);
+  CHECK(tiles[0][2].addAgent(std::move(movedAgent)) == true);
   CHECK(tiles[0][2].hasAgent() == true);
   CHECK(tiles[0][2].getAgent()->getId() == 42);
 }
