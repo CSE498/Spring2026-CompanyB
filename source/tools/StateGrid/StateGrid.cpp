@@ -1,3 +1,4 @@
+#include <iostream>
 #include "StateGrid.hpp"
 
 namespace cse498
@@ -149,13 +150,13 @@ bool StateGrid::moveAgent(size_t fromRow, size_t fromCol, size_t toRow, size_t t
     return tiles[row][col].hasAgent();
 }
 
-void print()
+void StateGrid::print()
 {
-    for (int i = 0; i < (getHeight(); i++)
+    for (int i = 0; i < getHeight(); i++)
     {
         for (int j = 0; j < (getWidth()); j++)
             {
-                std::cout << getTile(i, j).getSymbol();
+                std::cout << getTile(i, j)->getSymbol();
             }
         std::cout << std::endl;
     }
