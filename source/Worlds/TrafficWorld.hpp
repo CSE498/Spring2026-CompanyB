@@ -2,6 +2,7 @@
 // N.B. most of this was cannibalized from MazeWorld to start with
 #include "../core/WorldBase.hpp"
 #include "../tools/WeightedSet.hpp"
+#include <algorithm>
 
 namespace cse498 {
 
@@ -143,6 +144,23 @@ class TrafficWorld : public WorldBase {
         new_position = cur_position.Right();
         break;
     }
+    // The following code is for collision detection between agents, which works in a somewhat bizarre-looking way
+    // to simulate 2-lane roads with agents moving in both directions.
+    // If an agent is stopped and an agent coming up from behind it runs into it, like this: >  >|
+    // then we want to make the moving agent stop behind the stopped agent: >>|
+    // Similarly if the agent is trying to move into an agent moving perpendicular to it, like: >^ or >v
+    // then that move shouldn't be allowed either.
+    // But if two agents move into each other while moving in opposite directions, like this: ><
+    // we should let them move past each other, ending up like this: <>, then this: <  >
+    auto new_pos_dir = DirectionOfDrivingAgentAt(new_position);
+    auto cur_pos_dir = DirectionOfDrivingAgentAt(cur_position);
+    
+    if (cur_position != new_position && cur_pos_dir.has_value() && new_pos_dir.has_value()) {
+      auto opposite_of_current = static_cast<Direction>((static_cast<int>(cur_pos_dir.value()) + 2) % 4);
+      if (new_pos_dir != opposite_of_current) {
+        return false;
+      }
+    }
 
     if (!main_grid.IsValid(new_position)) {
       return false;
@@ -163,8 +181,29 @@ class TrafficWorld : public WorldBase {
 
     // Set the agent to its new postion.
     agent.SetLocation(new_position);
-
     return true;
+  }
+  // This code and everything related to it is bad and I'm sorry for writing it. 
+  // In the future we'll definitely need better ways for agents to interact with each other.
+  // Pushing it now because it works, at least.
+  std::optional<Direction> DirectionOfDrivingAgentAt(WorldPosition pos) {
+    auto it = std::find_if(agent_set.begin(), agent_set.end(), [&pos](agent_ptr_t& agent) { return agent->GetLocation().AsWorldPosition() == pos; });
+    if (it == agent_set.end()) {
+      return std::nullopt;
+    }
+    if (auto agentAt = dynamic_cast<DrivingAgent*>(it->get())) {
+      // effectively this turns off collision detection for agents that have reached their destination
+      if (agentAt->get_reached_destination()) {
+        return std::nullopt;
+      }
+      return std::make_optional(agentAt->GetDirection());
+    }
+    return std::nullopt;
+  }
+
+  bool AgentExistsAt(WorldPosition pos) {
+    auto it = std::find_if(agent_set.begin(), agent_set.end(), [&pos](agent_ptr_t& agent) { return agent->GetLocation().AsWorldPosition() == pos; });
+    return it != agent_set.end();
   }
 
   // Reworked by Claude — swap traffic light cell types to update both
@@ -189,7 +228,8 @@ class TrafficWorld : public WorldBase {
       for (size_t y = 0; y < main_grid.GetHeight(); ++y) {
         for (size_t x = 0; x < main_grid.GetWidth(); ++x) {
           WorldPosition pos(x, y);
-          if (main_grid[pos] == spawn_id) {
+          // Don't spawn on top of an existing agent
+          if (main_grid[pos] == spawn_id && !AgentExistsAt(pos)) {
             auto dest = destination_positions.GetRandomElement();
             if (dest.has_value()) {
               WorldPosition dest_pos = dest.value();
@@ -213,7 +253,6 @@ class TrafficWorld : public WorldBase {
       if (pos.CellX() == dest.CellX() && pos.CellY() == dest.CellY()) {
         driver->set_reached_destination(true);
         driver->SetSymbol('D');
-        // driver->SetLocation(WorldPosition(-1.0, -1.0));  // move off-grid
       }
     }
   }
