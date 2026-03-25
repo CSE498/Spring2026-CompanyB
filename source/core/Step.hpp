@@ -1,10 +1,12 @@
 #pragma once
 
-#include "core/core.hpp"
-#include <catch2/catch.hpp>
+#include "core.hpp"
+// #include <catch2/catch.hpp>
 #include <expected>
 #include <variant>
 #include <vector>
+
+namespace cse498 {
 
 /* Gonna redefine things that I know are already
 built, this will be updated once this is more than a POC */
@@ -20,7 +22,7 @@ namespace steps {
 using InfoType = std::variant<int, double, bool>;
 
   /* TODO
-   */
+    */
 template <Concepts::IsOneOf<int, double, bool> T, typename Err,
           typename TypeMismatchErr>
 struct InfoHandler {
@@ -87,3 +89,5 @@ struct StepContainer {
 };
 
 }; // namespace steps
+
+}; // namespace cse498
