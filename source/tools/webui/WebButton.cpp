@@ -9,7 +9,7 @@ namespace cse498 {
 using emscripten::val;
 
 WebButton::WebButton(const std::string& label, const std::string& id)
-    : label_(label), id_(id) {
+    : WebElement(id, true), label_(label), id_(id) {
   assert(!id_.empty() && "Button id must not be empty");
 
   val document = val::global("document");
@@ -82,4 +82,4 @@ void WebButton::Click() {
   if (on_click_) on_click_();
 }
 
-} 
+}

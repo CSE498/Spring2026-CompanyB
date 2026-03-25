@@ -1,0 +1,36 @@
+body {
+    background: #85b790;
+}
+
+#main-layout {
+    width: 100%;
+}
+
+#left-column {
+    flex: 1 0 150px;
+    background: #555;
+    border-radius: 20px;
+}
+
+#menu-bar {
+    width: 100%;
+    background: #363636;
+    border-radius: 20px;
+}
+
+#game-canvas {
+    background: #363636;
+    border-radius: 20px;
+}
+
+#start-btn,
+#pause-btn,
+#stop-btn,
+#exit-btn,
+#upload-btn,
+#save-btn,
+#exit-btn {
+    size: 20px;
+    margin-left: 1em;
+    border-radius: 20px;
+}

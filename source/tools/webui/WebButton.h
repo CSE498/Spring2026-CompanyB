@@ -3,6 +3,7 @@
 #include <emscripten/val.h>
 #include <functional>
 #include <string>
+#include "WebElement.hpp"
 
 /**
  * @brief C++ wrapper for a web UI button (HTML <button>) in the Emscripten
@@ -14,7 +15,7 @@
 
 namespace cse498 {
 
-class WebButton {
+class WebButton : public WebElement{
  public:
   explicit WebButton(const std::string& label, const std::string& id);
   ~WebButton();
