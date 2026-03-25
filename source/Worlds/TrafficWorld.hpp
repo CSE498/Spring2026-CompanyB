@@ -74,24 +74,32 @@ class TrafficWorld : public WorldBase {
     destination_id = main_grid.AddCellType(
         "destination", "Destination for driving agents", 'D');
 
-    // Initial phase is ALLOW_VERTICAL, so traffic lights start as '|'
-    // Two rectangular loops sharing a central intersection (traffic light).
-    // Right loop: top-right quadrant. Left loop: bottom-left quadrant.
-    // '.' = road, '#' = grass, 'S' = spawn, 'D' = destination, '|'/'-' = light
+    // City-block grid: perimeter road + 2 inner horizontal + 2 inner vertical
+    // roads forming 12 intersections.
+    // '.' = road  '#' = grass/block  'S' = spawn  'D' = destination
+    // '|' = traffic light (vertical phase, allows up/down)
+    // '-' = traffic light (horizontal phase, allows left/right)
+    // All lights start as '|' so they are found by the vertical-scan below.
     main_grid.Load(std::vector<std::string>{
-        "#####################",
-        "##########..........#",
-        "##########.########.#",
-        "##########D########.#",
-        "##########.########.#",
-        "##########.########.#",
-        "#.S.......|.........#",
-        "#.########.##########",
-        "#.########.##########",
-        "#D########.##########",
-        "#.########.##########",
-        "#..........##########",
-        "#####################"});
+        "###################################",
+        "#..S.....|...............|........#",
+        "#.#######.###############.#######.#",
+        "#.#######.###############.#######D#",
+        "#.#######D###############.#######.#",
+        "#.#######.###############.#######.#",
+        "#.#######.###############.#######.#",
+        "#|.......|...............|.......|#",
+        "#.#######.###############.#######.#",
+        "#.#######.###############.#######.#",
+        "#.#######.###############D#######.#",
+        "#.#######.###############.#######.#",
+        "#.#######.###############.#######.#",
+        "#|.......|.......D.......|.......|#",
+        "#.#######.###############.#######.#",
+        "#D#######.###############.#######.#",
+        "#.#######.###############.#######.#",
+        "#........|...............|........#",
+        "###################################"});
 
     // Written by Claude — record all traffic light positions for phase swapping
     for (size_t y = 0; y < main_grid.GetHeight(); ++y) {
