@@ -32,19 +32,58 @@ namespace cse498 {
  * guarantee seamless API compatibility with the broader project ecosystem.
  */
 class WorldPath {
- public:
+public:
   /// Tolerance for floating-point comparisons in geometry helpers.
   static constexpr double kDefaultEps = 1e-9;
 
   constexpr WorldPath() noexcept = default;
+
+  /**
+   * @brief Constructs a path from a braced list of points.
+   * @param pts Initializer list of points. All must have finite coordinates
+   *
+   * @code
+   *   // patrol route inline
+   *   WorldPath patrol = {{0, 0}, {10, 0}, {10, 10}, {0, 10}, {0, 0}};
+   *
+   *   // two-point path for distance queries
+   *   WorldPath segment{{0, 0}, {3, 4}};
+   *   assert(segment.totalLength() == 5.0);
+   * @endcode
+   */
+  WorldPath(std::initializer_list<Point> pts) : points_(pts) {
+    assert(isValid());
+  }
+
+  /**
+   * @brief Constructs a path from any range whose elements can build a Point.
+   * @tparam R An input range whose elements satisfy
+   *           std::constructible_from<Point, range_reference_t<R>>.
+   * @param range The source range of points.
+   *
+   * @code
+   *   // Convert an existing container of waypoints
+   *   std::vector<Point> waypoints = computeWaypoints();
+   *   WorldPath path(waypoints);
+   *
+   *   // Build from a reversed view without copying twice
+   *   WorldPath returnTrip(waypoints | std::views::reverse);
+   * @endcode
+   */
+  template <std::ranges::input_range R>
+    requires std::constructible_from<Point, std::ranges::range_reference_t<R>>
+  explicit WorldPath(R &&range)
+      : points_(std::from_range, std::forward<R>(range)) {
+    assert(isValid());
+  }
 
   constexpr auto begin() noexcept { return points_.begin(); }
   constexpr auto end() noexcept { return points_.end(); }
   constexpr auto begin() const noexcept { return points_.begin(); }
   constexpr auto end() const noexcept { return points_.end(); }
 
-  constexpr Point& operator[](std::size_t i) noexcept { return points_[i]; }
-  constexpr const Point& operator[](std::size_t i) const noexcept {
+  constexpr Point &operator[](std::size_t i) noexcept { return points_[i]; }
+  constexpr const Point &operator[](std::size_t i) const noexcept {
     return points_[i];
   }
 
@@ -56,42 +95,44 @@ class WorldPath {
    */
   [[deprecated(
       "Exceptions are disallowed. Use get() for checked access or [] for "
-      "unchecked access.")]] Point&
+      "unchecked access.")]] Point &
   at(std::size_t i) {
-    if (i >= points_.size()) throw std::out_of_range("WorldPath::at");
+    if (i >= points_.size())
+      throw std::out_of_range("WorldPath::at");
     return points_[i];
   }
 
   /** @copydoc at(std::size_t) */
   [[deprecated(
       "Exceptions are disallowed. Use get() for checked access or [] for "
-      "unchecked access.")]] const Point&
+      "unchecked access.")]] const Point &
   at(std::size_t i) const {
-    if (i >= points_.size()) throw std::out_of_range("WorldPath::at");
+    if (i >= points_.size())
+      throw std::out_of_range("WorldPath::at");
     return points_[i];
   }
 
-  [[nodiscard]] constexpr Point* get(std::size_t i) noexcept {
+  [[nodiscard]] constexpr Point *get(std::size_t i) noexcept {
     return i < points_.size() ? &points_[i] : nullptr;
   }
 
-  [[nodiscard]] constexpr const Point* get(std::size_t i) const noexcept {
+  [[nodiscard]] constexpr const Point *get(std::size_t i) const noexcept {
     return i < points_.size() ? &points_[i] : nullptr;
   }
 
-  [[nodiscard]] constexpr Point& front() noexcept {
+  [[nodiscard]] constexpr Point &front() noexcept {
     assert(!points_.empty());
     return points_.front();
   }
-  [[nodiscard]] constexpr const Point& front() const noexcept {
+  [[nodiscard]] constexpr const Point &front() const noexcept {
     assert(!points_.empty());
     return points_.front();
   }
-  [[nodiscard]] constexpr Point& back() noexcept {
+  [[nodiscard]] constexpr Point &back() noexcept {
     assert(!points_.empty());
     return points_.back();
   }
-  [[nodiscard]] constexpr const Point& back() const noexcept {
+  [[nodiscard]] constexpr const Point &back() const noexcept {
     assert(!points_.empty());
     return points_.back();
   }
@@ -109,14 +150,15 @@ class WorldPath {
    * @brief Appends a point to the path.
    * @param p Point to add. Must have finite coordinates (asserts on NaN/Inf).
    */
-  void addPoint(const Point& p);
+  void addPoint(const Point &p);
 
   /**
    * @brief Removes the last point and returns it.
    * @return The removed point, or std::nullopt if the path was already empty.
    */
   constexpr std::optional<Point> popBack() noexcept {
-    if (points_.empty()) return std::nullopt;
+    if (points_.empty())
+      return std::nullopt;
     Point p = points_.back();
     points_.pop_back();
     return p;
@@ -203,7 +245,7 @@ class WorldPath {
    * @brief Tacks another path's points onto the end of this one.
    * @param other Path whose points will be appended.
    */
-  void append(const WorldPath& other);
+  void append(const WorldPath &other);
 
   /**
    * @brief Returns a copy with points in reverse order.
@@ -227,7 +269,7 @@ class WorldPath {
    */
   [[nodiscard]] bool selfIntersects() const;
 
- private:
+private:
   std::vector<Point> points_{};
 
   // Geometry Helpers
@@ -267,4 +309,4 @@ class WorldPath {
                                               double eps = kDefaultEps);
 };
 
-}  // namespace cse498
+} // namespace cse498
