@@ -32,7 +32,7 @@ namespace cse498 {
  * guarantee seamless API compatibility with the broader project ecosystem.
  */
 class WorldPath {
-public:
+ public:
   /// Tolerance for floating-point comparisons in geometry helpers.
   static constexpr double kDefaultEps = 1e-9;
 
@@ -71,8 +71,9 @@ public:
    * @endcode
    */
   template <std::ranges::input_range R>
-    requires std::constructible_from<Point, std::ranges::range_reference_t<R>>
-  explicit WorldPath(R &&range)
+    requires(!std::same_as<std::remove_cvref_t<R>, WorldPath>) &&
+            std::constructible_from<Point, std::ranges::range_reference_t<R>>
+  explicit WorldPath(R&& range)
       : points_(std::from_range, std::forward<R>(range)) {
     assert(isValid());
   }
@@ -82,8 +83,8 @@ public:
   constexpr auto begin() const noexcept { return points_.begin(); }
   constexpr auto end() const noexcept { return points_.end(); }
 
-  constexpr Point &operator[](std::size_t i) noexcept { return points_[i]; }
-  constexpr const Point &operator[](std::size_t i) const noexcept {
+  constexpr Point& operator[](std::size_t i) noexcept { return points_[i]; }
+  constexpr const Point& operator[](std::size_t i) const noexcept {
     return points_[i];
   }
 
@@ -95,44 +96,42 @@ public:
    */
   [[deprecated(
       "Exceptions are disallowed. Use get() for checked access or [] for "
-      "unchecked access.")]] Point &
+      "unchecked access.")]] Point&
   at(std::size_t i) {
-    if (i >= points_.size())
-      throw std::out_of_range("WorldPath::at");
+    if (i >= points_.size()) throw std::out_of_range("WorldPath::at");
     return points_[i];
   }
 
   /** @copydoc at(std::size_t) */
   [[deprecated(
       "Exceptions are disallowed. Use get() for checked access or [] for "
-      "unchecked access.")]] const Point &
+      "unchecked access.")]] const Point&
   at(std::size_t i) const {
-    if (i >= points_.size())
-      throw std::out_of_range("WorldPath::at");
+    if (i >= points_.size()) throw std::out_of_range("WorldPath::at");
     return points_[i];
   }
 
-  [[nodiscard]] constexpr Point *get(std::size_t i) noexcept {
+  [[nodiscard]] constexpr Point* get(std::size_t i) noexcept {
     return i < points_.size() ? &points_[i] : nullptr;
   }
 
-  [[nodiscard]] constexpr const Point *get(std::size_t i) const noexcept {
+  [[nodiscard]] constexpr const Point* get(std::size_t i) const noexcept {
     return i < points_.size() ? &points_[i] : nullptr;
   }
 
-  [[nodiscard]] constexpr Point &front() noexcept {
+  [[nodiscard]] constexpr Point& front() noexcept {
     assert(!points_.empty());
     return points_.front();
   }
-  [[nodiscard]] constexpr const Point &front() const noexcept {
+  [[nodiscard]] constexpr const Point& front() const noexcept {
     assert(!points_.empty());
     return points_.front();
   }
-  [[nodiscard]] constexpr Point &back() noexcept {
+  [[nodiscard]] constexpr Point& back() noexcept {
     assert(!points_.empty());
     return points_.back();
   }
-  [[nodiscard]] constexpr const Point &back() const noexcept {
+  [[nodiscard]] constexpr const Point& back() const noexcept {
     assert(!points_.empty());
     return points_.back();
   }
@@ -150,15 +149,14 @@ public:
    * @brief Appends a point to the path.
    * @param p Point to add. Must have finite coordinates (asserts on NaN/Inf).
    */
-  void addPoint(const Point &p);
+  void addPoint(const Point& p);
 
   /**
    * @brief Removes the last point and returns it.
    * @return The removed point, or std::nullopt if the path was already empty.
    */
   constexpr std::optional<Point> popBack() noexcept {
-    if (points_.empty())
-      return std::nullopt;
+    if (points_.empty()) return std::nullopt;
     Point p = points_.back();
     points_.pop_back();
     return p;
@@ -245,7 +243,7 @@ public:
    * @brief Tacks another path's points onto the end of this one.
    * @param other Path whose points will be appended.
    */
-  void append(const WorldPath &other);
+  void append(const WorldPath& other);
 
   /**
    * @brief Returns a copy with points in reverse order.
@@ -269,7 +267,7 @@ public:
    */
   [[nodiscard]] bool selfIntersects() const;
 
-private:
+ private:
   std::vector<Point> points_{};
 
   // Geometry Helpers
@@ -309,4 +307,4 @@ private:
                                               double eps = kDefaultEps);
 };
 
-} // namespace cse498
+}  // namespace cse498
