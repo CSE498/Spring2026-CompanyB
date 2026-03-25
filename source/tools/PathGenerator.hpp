@@ -40,19 +40,16 @@ using PointMap = std::unordered_map<Point, Point, PointHash>;
  */
 class PathGenerator {
  public:
-  // Fraction of step_size_ below which two points are treated as coincident
-  static constexpr double kPointCoincidentFraction = 0.01;
-  // Fraction of step_size_ within which a node is considered to have reached
-  // the goal
-  static constexpr double kGoalReachedFraction = 0.6;
+  // Two points closer than (step_size_ * kCoincidentEps) are treated as the
+  // same location. E.g., with step_size_=1.0, points within 0.01 units apart
+  // are considered coincident.
+  static constexpr double kCoincidentEps = 0.01;
+  // A node is considered to have reached the goal when its distance to the
+  // goal is less than (step_size_ * kGoalEps). E.g., with step_size_=1.0, a
+  // node within 0.6 units of the goal is accepted as "arrived".
+  static constexpr double kGoalEps = 0.6;
 
-  /**
-   * @brief Construct a PathGenerator with default settings.
-   *
-   * Default heuristic: Euclidean distance
-   * Default step size: 1.0
-   */
-  PathGenerator();
+  PathGenerator() = default;
 
   // ========== Core Path Generation ==========
 
@@ -132,8 +129,8 @@ class PathGenerator {
   [[nodiscard]] double GetStepSize() const { return step_size_; }
 
  private:
-  HeuristicFunc heuristic_;  ///< Distance estimation function
-  double step_size_;         ///< Granularity for continuous worlds
+  HeuristicFunc heuristic_{EuclideanDistance};  ///< Distance estimation function
+  double step_size_{1.0};                       ///< Granularity for continuous worlds
 
   // ========== Helper Functions ==========
 

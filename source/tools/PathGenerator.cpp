@@ -17,9 +17,6 @@
 
 namespace cse498 {
 
-PathGenerator::PathGenerator()
-    : heuristic_(EuclideanDistance), step_size_(1.0) {}
-
 // ========== Core Path Generation ==========
 
 std::optional<WorldPath> PathGenerator::ShortestPath(
@@ -29,9 +26,9 @@ std::optional<WorldPath> PathGenerator::ShortestPath(
 
   // Handle degenerate case: start == goal
   if (std::abs(start.getX() - goal.getX()) <
-          step_size_ * kPointCoincidentFraction &&
+          step_size_ * kCoincidentEps &&
       std::abs(start.getY() - goal.getY()) <
-          step_size_ * kPointCoincidentFraction) {
+          step_size_ * kCoincidentEps) {
     WorldPath path;
     path.addPoint(start);
     return path;
@@ -76,9 +73,9 @@ std::optional<WorldPath> PathGenerator::ShortestPath(
 
     // Check if we reached the goal
     double distToGoal = heuristic_(current, goal);
-    if (distToGoal < step_size_ * kGoalReachedFraction) {
+    if (distToGoal < step_size_ * kGoalEps) {
       // Close enough to goal - add goal point and return
-      if (distToGoal > step_size_ * kPointCoincidentFraction) {
+      if (distToGoal > step_size_ * kCoincidentEps) {
         cameFrom[goal] = current;
         return ReconstructPath(cameFrom, goal);
       } else {
