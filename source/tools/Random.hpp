@@ -80,6 +80,13 @@ class Random {
     return min + nextUnitDouble() * (max - min);
   }
 
+  // Uniform in [min, max), defaults to [0, 1).
+  [[nodiscard]] float nextFloat(float min = 0.0f, float max = 1.0f) {
+    assert(min <= max &&
+           "The minimum value can't be larger than the maximum value.");
+    return min + nextUnitFloat() * (max - min);
+  }
+
   // Uniform in [min, max].
   [[nodiscard]] int nextInt(int min, int max) {
     assert(min <= max &&
@@ -118,13 +125,6 @@ class Random {
     const double u2 = nextUnitDouble();
     const double z = std::sqrt(-2.0 * std::log(u1)) * std::cos(2.0 * std::numbers::pi * u2);
     return mean + stddev * z;
-  }
-
-  // Uniform in [min, max), defaults to [0, 1).
-  [[nodiscard]] float nextFloat(float min = 0.0f, float max = 1.0f) {
-    assert(min <= max &&
-           "The minimum value can't be larger than the maximum value.");
-    return min + nextUnitFloat() * (max - min);
   }
 
  private:
