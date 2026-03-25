@@ -274,3 +274,43 @@ struct SetupMockDOM {
     REQUIRE(img.GetWidth() == 20);
     REQUIRE(img.GetHeight() == 15);
   }
+
+  TEST_CASE("WebImage SetSize supports fractional dimensions", "[WebImage]") {
+    SetupMockDOM mock;
+    cse498::WebImage img("test-img-fractional", "test.png",
+                         "Fractional size test image");
+
+    img.SetSize(150.5, 75.25);
+    REQUIRE(img.GetWidth() == 150.5);
+    REQUIRE(img.GetHeight() == 75.25);
+  }
+
+  TEST_CASE("WebImage SetSize supports all SizeUnit values", "[WebImage]") {
+    SetupMockDOM mock;
+    cse498::WebImage img("test-img-all-units", "test.png",
+                         "All units test image");
+
+    img.SetSize(100, 50, cse498::SizeUnit::px);
+    REQUIRE(img.GetWidth() == 100);
+    REQUIRE(img.GetHeight() == 50);
+
+    img.SetSize(10, 5, cse498::SizeUnit::em);
+    REQUIRE(img.GetWidth() == 10);
+    REQUIRE(img.GetHeight() == 5);
+
+    img.SetSize(20, 15, cse498::SizeUnit::rem);
+    REQUIRE(img.GetWidth() == 20);
+    REQUIRE(img.GetHeight() == 15);
+
+    img.SetSize(50, 25, cse498::SizeUnit::percent);
+    REQUIRE(img.GetWidth() == 50);
+    REQUIRE(img.GetHeight() == 25);
+
+    img.SetSize(30, 20, cse498::SizeUnit::vw);
+    REQUIRE(img.GetWidth() == 30);
+    REQUIRE(img.GetHeight() == 20);
+
+    img.SetSize(40, 30, cse498::SizeUnit::vh);
+    REQUIRE(img.GetWidth() == 40);
+    REQUIRE(img.GetHeight() == 30);
+  }

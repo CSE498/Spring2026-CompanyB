@@ -37,10 +37,10 @@ class WebImage {
   std::string alt{};
 
   /// Image's Width
-  int width = 0;
+  double width = 0;
 
   /// Image's Height
-  int height = 0;
+  double height = 0;
 
   /// Image's X position
   int x_pos = 0;
@@ -105,11 +105,43 @@ class WebImage {
 
   /**
    * @brief Set the display size of the image.
-   * @param w The width value. Must be non-negative.
-   * @param h The height value. Must be non-negative.
+   * @param w The width value. Must be numeric.
+   * @param h The height value. Must be numeric.
    * @param unit The CSS unit enum with defaults to SizeUnit::px.
    **/
-  void SetSize(int w, int h, SizeUnit unit = SizeUnit::px);
+  template <typename T>
+  void SetSize(T w, T h, SizeUnit unit = SizeUnit::px) {
+    static_assert(std::is_arithmetic_v<T>, "Dimensions must be numeric");
+
+    width = w;
+    height = h;
+
+    std::string unit_str;
+
+    switch (unit) {
+      case SizeUnit::px:
+        unit_str = "px";
+        break;
+      case SizeUnit::em:
+        unit_str = "em";
+        break;
+      case SizeUnit::rem:
+        unit_str = "rem";
+        break;
+      case SizeUnit::percent:
+        unit_str = "%";
+        break;
+      case SizeUnit::vw:
+        unit_str = "vw";
+        break;
+      case SizeUnit::vh:
+        unit_str = "vh";
+        break;
+    }
+
+    img_element["style"].set("width", std::to_string(w) + unit_str);
+    img_element["style"].set("height", std::to_string(h) + unit_str);
+  }
 
   /**
    * @brief Show or hide the image element.
@@ -121,7 +153,9 @@ class WebImage {
    * @brief Get the current width and height of the image.
    * @return A pair containing (width, height) in pixels.
    **/
-  [[nodiscard]] std::pair<int, int> GetSize() const { return {width, height}; }
+  [[nodiscard]] std::pair<double, double> GetSize() const {
+    return {width, height};
+  }
 
   /**
    * @brief Get the current position of the image.
@@ -153,13 +187,13 @@ class WebImage {
    * @brief Get the current width of the image in pixels.
    * @return The image width.
    **/
-  [[nodiscard]] int GetWidth() const { return width; }
+  [[nodiscard]] double GetWidth() const { return width; }
 
   /**
    * @brief Get the current height of the image in pixels.
    * @return The image height.
    **/
-  [[nodiscard]] int GetHeight() const { return height; }
+  [[nodiscard]] double GetHeight() const { return height; }
 };
 
 }  // namespace cse498
