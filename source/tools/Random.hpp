@@ -5,6 +5,7 @@
 #include <cmath>
 #include <cstdint>
 #include <limits>
+#include <numbers>
 #include <optional>
 
 namespace cse498 {
@@ -115,8 +116,7 @@ class Random {
       u1 = nextUnitDouble();
     }
     const double u2 = nextUnitDouble();
-    constexpr double kTwoPi = 6.283185307179586476925286766559;
-    const double z = std::sqrt(-2.0 * std::log(u1)) * std::cos(kTwoPi * u2);
+    const double z = std::sqrt(-2.0 * std::log(u1)) * std::cos(2.0 * std::numbers::pi * u2);
     return mean + stddev * z;
   }
 
