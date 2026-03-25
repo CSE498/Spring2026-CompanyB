@@ -2,6 +2,7 @@
 
 #include <string>
 #include <vector>
+#include <cassert>
 
 #include "Tile.hpp"
 
@@ -13,8 +14,6 @@ namespace cse498 {
  **********************************************/
 class StateGrid {
  private:
-  int width;                             // Width of the grid
-  int height;                            // Height of the grid
   std::vector<std::vector<Tile>> tiles;  // 2D storage for tiles
 
  public:
@@ -31,14 +30,14 @@ class StateGrid {
    *
    * @returns the width of the 2d tiles vector
    ************************************************/
-  int getWidth() const;
+  [[nodiscard]] size_t getWidth() const;
 
   /***********************************************
    * Height getter
    *
    * @returns the height of the 2d tiles vector
    ************************************************/
-  int getHeight() const;
+  [[nodiscard]] size_t getHeight() const;
 
   /***********************************************
    * Specific tile getter
@@ -48,14 +47,14 @@ class StateGrid {
    *
    * @returns a pointer to the tile, null pointer if out of bounds
    ************************************************/
-  Tile* getTile(int row, int col);
+  [[nodiscard]] Tile* getTile(size_t row, size_t col);
 
   /***********************************************
    * All tile getter
    *
    * @returns a reference to the tiles vector so it's mutable
    ************************************************/
-  std::vector<std::vector<Tile>>& getAllTiles();
+  [[nodiscard]] std::vector<std::vector<Tile>>& getAllTiles();
 
   /***********************************************
    * Checks whether a grid coordinate is within bounds and traversable.
@@ -65,6 +64,6 @@ class StateGrid {
    *
    * @returns True if (row, col) is inside the grid and the tile is traversable.
    ************************************************/
-  bool inBounds(int row, int col) const;
+  bool inBounds(size_t row, size_t col) const;
 };
 }  // namespace cse498

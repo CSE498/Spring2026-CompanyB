@@ -1,6 +1,5 @@
 #include "StateGrid.hpp"
 
-#include <cassert>
 
 namespace cse498 {
 
@@ -25,36 +24,34 @@ StateGrid::StateGrid(const std::vector<std::vector<char>>& premadeMap)
   // feels like good sanity checking, validation but i might be wrong, i could
   // just change it to use the map and pull it's height and width
 
-  height = premadeMap.size();
-  width = premadeMap[0].size();
-  assert(height > 0 && width > 0);
+  assert(premadeMap.size() > 0 && premadeMap[0].size() > 0 && "Map not empty");
 
-  tiles.resize(height);
-  for (int r = 0; r < height; ++r) {
-    tiles[r].reserve(width);
-    for (int c = 0; c < width; ++c) {
+  tiles.resize(premadeMap.size());
+  for (int r = 0; r < premadeMap.size(); ++r) {
+    tiles[r].reserve(premadeMap[0].size());
+    for (int c = 0; c < premadeMap[0].size(); ++c) {
       tiles[r].push_back(tileFromSymbol(premadeMap[r][c], r, c));
     }
   }
 }
 
-int StateGrid::getWidth() const { return width; }
+[[nodiscard]] size_t StateGrid::getWidth() const { return tiles[0].size(); }
 
-int StateGrid::getHeight() const { return height; }
+[[nodiscard]] size_t StateGrid::getHeight() const { return tiles.size(); }
 
-Tile* StateGrid::getTile(int row, int col) {
-  if (row < 0 || row >= height || col < 0 || col >= width) {
+[[nodiscard]] Tile* StateGrid::getTile(size_t row, size_t col) {
+  if (row >= getHeight() || col >= getWidth()) {
     return nullptr;
   }
 
   return &tiles[row][col];
 }
 
-std::vector<std::vector<Tile>>& StateGrid::getAllTiles() { return tiles; }
+[[nodiscard]] std::vector<std::vector<Tile>>& StateGrid::getAllTiles() { return tiles; }
 
-bool StateGrid::inBounds(int row, int col) const {
+bool StateGrid::inBounds(size_t row, size_t col) const {
   // inbounds check
-  if (row < 0 || row >= height || col < 0 || col >= width) return false;
+  if (row >= getHeight() || col >= getWidth()) return false;
   // Checks for if the tile is a wall to ensure you cant walk through, on them
   return tiles[row][col].getCanTraverse();
 }

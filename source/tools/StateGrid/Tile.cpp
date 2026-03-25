@@ -1,7 +1,7 @@
 #include "Tile.hpp"
 
 namespace cse498 {
-Tile::Tile(int row, int column, char symbol, bool canTraverse,
+Tile::Tile(size_t row, size_t column, char symbol, bool canTraverse,
            const std::string& name, const MetaData& metaData)
     : row(row),
       column(column),
@@ -13,7 +13,7 @@ Tile::Tile(int row, int column, char symbol, bool canTraverse,
 
 bool Tile::addAgent(const std::shared_ptr<Agent>& newAgent) {
   // Reject null
-  if (!newAgent) return false;
+  assert(newAgent);
 
   // Reject if occupied
   if (agent) return false;
@@ -28,21 +28,21 @@ bool Tile::removeAgent() {
   return true;
 }
 
-std::shared_ptr<Agent> Tile::getAgent() const { return agent; }
+[[nodiscard]] std::shared_ptr<Agent> Tile::getAgent() const { return agent; }
 
 bool Tile::hasAgent() const { return static_cast<bool>(agent); }
 
-bool Tile::getCanTraverse() const { return canTraverse; }
+[[nodiscard]] bool Tile::getCanTraverse() const { return canTraverse; }
 
 void Tile::setCanTraverse(bool traversability) { canTraverse = traversability; }
 
-int Tile::getRow() const { return row; }
+[[nodiscard]] size_t Tile::getRow() const { return row; }
 
-int Tile::getColumn() const { return column; }
+[[nodiscard]] size_t Tile::getColumn() const { return column; }
 
-char Tile::getSymbol() const { return symbol; }
+[[nodiscard]] char Tile::getSymbol() const { return symbol; }
 
-const std::string& Tile::getName() const { return name; }
+[[nodiscard]] const std::string& Tile::getName() const { return name; }
 
-const MetaData& Tile::getMetaData() const { return metadata; }
+[[nodiscard]] const MetaData& Tile::getMetaData() const { return metadata; }
 }  // namespace cse498

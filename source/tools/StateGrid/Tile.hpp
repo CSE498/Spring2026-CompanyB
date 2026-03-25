@@ -7,6 +7,7 @@
 
 #include <memory>
 #include <string>
+#include <cassert>
 
 namespace cse498 {
 /***********************************************
@@ -33,17 +34,17 @@ struct MetaData {
  ***********************************************/
 class Tile {
  private:
-  int row;            // Row of the tile in the State grid, vector[row, col]
-  int column;         // Column of the tile in the State grid, vector[row, col]
-  char symbol;        // Simple single symbol representation
-  bool canTraverse;   // Stores if you can walk on it
-  std::string name;   // Name of the tile
+  size_t row = 0;            // Row of the tile in the State grid, vector[row, col]
+  size_t column = 0;         // Column of the tile in the State grid, vector[row, col]
+  char symbol = ' ';        // Simple single symbol representation
+  bool canTraverse = true;   // Stores if you can walk on it
+  std::string name = "";   // Name of the tile
   MetaData metadata;  // Meta data to simplify class variables
 
   std::shared_ptr<Agent> agent;  // Single occupant (nullptr if empty)
 
  public:
-  Tile(int row, int column, char symbol, bool canTraverse,
+  Tile(size_t row, size_t column, char symbol, bool canTraverse,
        const std::string& name, const MetaData& metaData);
 
   /***********************************************
@@ -68,7 +69,7 @@ class Tile {
    *
    * @returns the shared pointer to the agent
    ***********************************************/
-  std::shared_ptr<Agent> getAgent() const;
+  [[nodiscard]] std::shared_ptr<Agent> getAgent() const;
 
   /***********************************************
    *  Returns whether this tile stores an agent
@@ -82,11 +83,11 @@ class Tile {
    *
    * @returns bool to indicate traversability
    ***********************************************/
-  bool getCanTraverse() const;
+  [[nodiscard]] bool getCanTraverse() const;
 
   /***********************************************
-   *  Sets traverseability, not no error checking, If its set to true
-   *  and you try to se it to true anyway, this will work
+   *  Sets traverseability, no error checking, If its set to true
+   *  and you try to set it to true anyway, this will work
    *
    * @param traversability to set the new status
    ***********************************************/
@@ -97,34 +98,34 @@ class Tile {
    *
    * @returns int, row of the tile
    ***********************************************/
-  int getRow() const;
+  [[nodiscard]] size_t getRow() const;
 
   /***********************************************
    *  Col getter
    *
    * @returns int, col of the tile
    ***********************************************/
-  int getColumn() const;
+  [[nodiscard]] size_t getColumn() const;
 
   /***********************************************
    *  Symbol getter
    *
    * @returns char, symbol of the tile
    ***********************************************/
-  char getSymbol() const;
+  [[nodiscard]] char getSymbol() const;
 
   /***********************************************
    *  Name getter
    *
    * @returns string ref, name of the tile
    ***********************************************/
-  const std::string& getName() const;
+  [[nodiscard]] const std::string& getName() const;
 
   /***********************************************
    *  MetaData getter
    *
    * @returns MetaData ref, metadata of the tile
    ***********************************************/
-  const MetaData& getMetaData() const;
+  [[nodiscard]] const MetaData& getMetaData() const;
 };
 }  // namespace cse498
