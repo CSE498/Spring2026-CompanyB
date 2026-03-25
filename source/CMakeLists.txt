@@ -25,6 +25,15 @@ set(HEADER_DIRS
     ${CMAKE_CURRENT_SOURCE_DIR}/worlds
 )
 
+include(FetchContent)
+FetchContent_Declare(
+    range-v3
+    GIT_REPOSITORY https://github.com/ericniebler/range-v3.git
+    GIT_TAG 0.12.0
+)
+FetchContent_MakeAvailable(range-v3)
+
+
 if(BUILD_WASM_TESTS)
     # Exclude Qt GUI files (Qt can't be compiled by emcc)
     list(FILTER SOURCES EXCLUDE REGEX ".*/Interfaces/gui/.*")
@@ -60,6 +69,7 @@ if(BUILD_WASM_TESTS)
     endif()
     add_executable(tests ${TEST_SOURCES})
     target_link_libraries(tests PRIVATE project_lib Catch2::Catch2WithMain)
+    target_link_libraries(index PRIVATE range-v3)
 
     # Emscripten compatibility: disable POSIX signals
     target_compile_definitions(tests PRIVATE CATCH_CONFIG_NO_POSIX_SIGNALS)
@@ -131,6 +141,7 @@ elseif(BUILD_TESTS)
     endif()
     add_executable(tests ${TEST_SOURCES})
     target_link_libraries(tests PRIVATE project_lib Catch2::Catch2WithMain)
+    target_link_libraries(project_lib PUBLIC range-v3)
     target_compile_options(tests PRIVATE -O2 -g -Wall -Wextra -Wpedantic)
 
 elseif(DEFINED EMSCRIPTEN)
@@ -143,6 +154,7 @@ elseif(DEFINED EMSCRIPTEN)
     add_executable(index ${SOURCES})
     set_target_properties(index PROPERTIES SUFFIX ".js")
     target_include_directories(index PRIVATE ${HEADER_DIRS})
+    target_link_libraries(index PRIVATE range-v3)
 
     # Emscripten compile options
     target_compile_options(index PRIVATE
@@ -178,6 +190,7 @@ else()
     endif()
 
     add_executable(app ${SOURCES})
+    target_link_libraries(app PRIVATE range-v3)
     target_include_directories(app PRIVATE ${HEADER_DIRS})
     if(NOT NO_QT)
         target_link_libraries(app PRIVATE Qt6::Core Qt6::Gui Qt6::Widgets)

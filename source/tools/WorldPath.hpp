@@ -8,10 +8,10 @@
 #include <cassert>
 #include <cstddef>
 #include <optional>
-#include <ranges>
 #include <span>
 #include <stdexcept>
 #include <vector>
+#include <range/v3/all.hpp>
 
 #include "Point.hpp"
 
@@ -141,7 +141,7 @@ class WorldPath {
    * @endcode
    */
   [[nodiscard]] constexpr auto segments() const {
-    return points_ | std::views::pairwise;
+    return ranges::views::zip(points_, points_ | ranges::views::drop(1));
   }
 
   /**

@@ -54,7 +54,8 @@ do_build-emscripten() {
     emcmake cmake \
         -S "${SOURCE_DIR}" \
         -B "${BUILD_DIR}/emscripten" \
-        -DCMAKE_RUNTIME_OUTPUT_DIRECTORY="${BUILD_DIR}/emscripten"
+        -DCMAKE_RUNTIME_OUTPUT_DIRECTORY="${BUILD_DIR}/emscripten" \
+        -DCMAKE_BUILD_TYPE=Release
 
     # Build with emmake
     # The j flag is for parallel compilation which should help speed up compile jobs later
@@ -87,7 +88,7 @@ do_build_native() {
         -B "${NATIVE_BUILD_DIR}" \
         ${QT6_DIR:+-DQt6_DIR="${QT6_DIR}"}
 
-    cmake --build "${NATIVE_BUILD_DIR}" --parallel
+    cmake --build "${NATIVE_BUILD_DIR}" --parallel -DCMAKE_BUILD_TYPE=Release
 
     echo "==> Native build complete! <==="
     fix_permissions
