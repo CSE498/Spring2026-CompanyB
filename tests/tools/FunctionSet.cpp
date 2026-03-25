@@ -4,7 +4,7 @@
 // #include "catch2/catch.hpp"
 
 #include "tools/FunctionSet.hpp"
-
+#include <type_traits>
 #include <catch2/catch_test_macros.hpp>
 
 TEST_CASE("FunctionSet - Construction and basic operations") {
@@ -33,7 +33,7 @@ TEST_CASE("FunctionSet - Add functions") {
   REQUIRE(fs.size() == 2);
 }
 
-TEST_CASE("FunctionSet - Invoke all functions") {
+TEST_CASE("FunctionSet - Invoke all functions with void return") {
   int counter = 0;
   cse498::FunctionSet<void, int> fs;
 
@@ -41,9 +41,31 @@ TEST_CASE("FunctionSet - Invoke all functions") {
   fs.add([&counter](int x) { counter += x * 2; });
   fs.add([&counter](int x) { counter += x * 3; });
 
+  STATIC_REQUIRE(std::is_void_v<decltype(fs.invoke(5))>);
+
   fs.invoke(5);
+  REQUIRE(counter == 30);
+}
+
+TEST_CASE("FunctionSet - Invoke all functions with storable return") {
+  int counter = 0;
+  cse498::FunctionSet<int, int> fs;
+
+  fs.add([&counter](int x) { counter += x; return 1; });
+  fs.add([&counter](int x) { counter += x * 2; return 2; });
+  fs.add([&counter](int x) { counter += x * 3; return 3;});
+
+  STATIC_REQUIRE(std::is_same_v<decltype(fs.invoke(5)), std::vector<int>>);
+
+  std::vector<int> res = fs.invoke(5);
 
   REQUIRE(counter == 30);
+  REQUIRE(res == std::vector<int>{1,2,3});
+}
+
+TEST_CASE("FunctionSet - Ensure references cannot be returned into a vector") {
+  cse498::FunctionSet<int&, int> fs;
+  STATIC_REQUIRE(std::is_void_v<decltype(fs.invoke(5))>);
 }
 
 TEST_CASE("FunctionSet - Call operator") {
@@ -75,7 +97,7 @@ TEST_CASE("FunctionSet - Index access with operator[]") {
   REQUIRE(fs[1](4) == 2);
 }
 
-TEST_CASE("FunctionSet - invoke_catch with no errors") {
+TEST_CASE("FunctionSet - invoke_catch with no errors, non storable return") {
   int result = 0;
   cse498::FunctionSet<void, int> fs;
 
@@ -85,6 +107,22 @@ TEST_CASE("FunctionSet - invoke_catch with no errors") {
   auto outcome = fs.invoke_catch(5);
 
   REQUIRE(outcome.has_value());
+  REQUIRE(result == 10);
+}
+
+TEST_CASE("FunctionSet - invoke_catch with no errors, storable return") {
+  int result = 0;
+  cse498::FunctionSet<int, int> fs;
+
+  fs.add([&result](int x) { result += x; return 5; });
+  fs.add([&result]([[maybe_unused]] int x) { result *= 2; return 6;});
+
+  auto outcome = fs.invoke_catch(5);
+  REQUIRE(outcome.has_value());
+
+  STATIC_REQUIRE(std::is_same_v<std::remove_reference_t<decltype(*outcome)>, std::vector<int>>);
+  
+  REQUIRE(*outcome == std::vector<int>{5,6});
   REQUIRE(result == 10);
 }
 
@@ -217,4 +255,11 @@ TEST_CASE("FunctionSet - void return type") {
   REQUIRE(results.size() == 2);
   REQUIRE(results[0] == 5);
   REQUIRE(results[1] == 10);
+}
+
+TEST_CASE("FunctionSet - check_storable") {
+  cse498::FunctionSet<void, int> fs;
+  REQUIRE(fs.check_storable([]([[maybe_unused]] int x) {  }));
+  REQUIRE_FALSE(fs.check_storable([]([[maybe_unused]] std::string x) {  }));
+
 }
