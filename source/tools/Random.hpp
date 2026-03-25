@@ -5,6 +5,7 @@
 #include <cmath>
 #include <cstdint>
 #include <limits>
+#include <optional>
 
 namespace cse498 {
 
@@ -35,13 +36,16 @@ Usage:
 */
 class Random {
  public:
-  // If seed is 0, use wall-clock time.
-  explicit Random(uint64_t seed = 0) {
-    if (seed == 0) {
-      seed = static_cast<uint64_t>(
+  // If no seed is provided, use wall-clock time.
+  explicit Random(std::optional<uint64_t> seed = std::nullopt) {
+    uint64_t actual_seed;
+    if (!seed.has_value()) {
+      actual_seed = static_cast<uint64_t>(
           std::chrono::high_resolution_clock::now().time_since_epoch().count());
+    } else {
+      actual_seed = seed.value();
     }
-    reseed(seed);
+    reseed(actual_seed);
   }
 
   void reseed(uint64_t seed) {
