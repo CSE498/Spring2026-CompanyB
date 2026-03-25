@@ -8,7 +8,6 @@
 #include <optional>
 
 #include "../Interfaces/IActionLog.hpp"
-#include "../Interfaces/IDataLog.hpp"
 
 namespace cse498 {
 
@@ -16,9 +15,6 @@ namespace cse498 {
 template <typename AgentType>
 class ActionLog : public IActionLog<AgentType> {
  private:
-  /// @brief Reference to the DataLog instance where events will be recorded.
-  IDataLog& dataLog;
-
   /// @brief Validates that the event payload contains all required fields with
   /// correct types.
   /// @param eventPayload ActionEventBase object representing the event to
@@ -51,30 +47,29 @@ class ActionLog : public IActionLog<AgentType> {
   }
 
  public:
-  ActionLog() = delete;  // Delete default constructor
-  /// @brief Basic constructor taking a reference to a DataLog instance.
-  /// @param log Reference to DataLog where events will be recorded.
-  explicit ActionLog(IDataLog& log) : dataLog(log) {}
+  ActionLog() = default;
   ~ActionLog() = default;
 
   /// @brief Logs actions performed by all agents of a world
   /// @param agents List of agents in the world
-  /// @return Pointer to a vector of failed log events
-  [[nodiscard]] std::unique_ptr<std::vector<LogEventFailure>> LogAgentActions(
+  /// @return Flattened list of events from all agents that passed validation
+  /// checks
+  [[nodiscard]] std::vector<ActionEventBase> LogAgentActions(
       const std::vector<AgentType>& agents) override {
-    auto failedEvents = std::make_unique<std::vector<LogEventFailure>>();
+    // auto failedEvents = std::make_unique<std::vector<LogEventFailure>>();
+    std::vector<ActionEventBase> events;
     for (const auto& agent : agents) {
       const auto& actions = agent.GetActions();
       for (const auto& action : actions) {
         auto validationResult = ValidateBase(action);
         if (validationResult.has_value()) {
-          failedEvents->push_back(validationResult.value());
-          continue;  // Skip logging this event
+          // failedEvents->push_back(validationResult.value());
+          continue;  // Skip logging this event and silently ignore it
         }
-        dataLog.AddEntry(action);
+        events.push_back(action);
       }
     }
-    return failedEvents;
+    return events;
   }
 };
 

@@ -100,7 +100,8 @@ class OutputManager : public IOutputManager {
   /// statistics).
   [[nodiscard]] const nlohmann::json& GetBufferedLog() const noexcept;
 
-  /// @brief Writes action events to output file with auto-generated file naming.
+  /// @brief Writes action events to output file with auto-generated file
+  /// naming.
   /// @param events Vector of ActionEventBase objects to be persisted.
   void WriteActionEvents(const std::vector<ActionEventBase>& events) override;
 };

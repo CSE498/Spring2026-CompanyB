@@ -31,9 +31,9 @@ class ILogger {
 
   /// @brief Save action events to a file.
   /// @param events Vector of ActionEventBase objects to be saved.
-  /// @return true if successfully saved to file through output manager, false otherwise.
-  virtual bool SaveToFile(
-      const std::vector<ActionEventBase>& events) = 0;
+  /// @return true if successfully saved to file through output manager, false
+  /// otherwise.
+  virtual bool SaveToFile(const std::vector<ActionEventBase>& events) = 0;
 };
 
 }  // namespace cse498

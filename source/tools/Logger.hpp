@@ -32,7 +32,8 @@ class Logger : public ILogger {
   /// @brief Interface for extracting and validating agent actions.
   std::unique_ptr<IActionLog<AgentBase>> mActionLog;
 
-  /// @brief Interface for persisting log data to file with auto-generated names.
+  /// @brief Interface for persisting log data to file with auto-generated
+  /// names.
   std::unique_ptr<IOutputManager> mOutputManager;
 
   /// @brief Interface for replaying recorded events from file.
@@ -42,7 +43,8 @@ class Logger : public ILogger {
   /// @brief Constructs a Logger with action logging and output management.
   /// @param actionLog Unique pointer to IActionLog implementation.
   /// @param outputManager Unique pointer to IOutputManager implementation.
-  /// @param replayDriver Optional unique pointer to IReplayDriver implementation.
+  /// @param replayDriver Optional unique pointer to IReplayDriver
+  /// implementation.
   Logger(std::unique_ptr<IActionLog<AgentBase>> actionLog,
          std::unique_ptr<IOutputManager> outputManager,
          std::unique_ptr<IReplayDriver> replayDriver = nullptr)
@@ -66,9 +68,9 @@ class Logger : public ILogger {
 
   // SAVING DURING LIVE SIMULATION:
   // to do
-  // to implement a method that calls ActionLog's function 
-  // and returns a vector of ActionEventBase objects that 
-  // can be passed to the Logger's LogActionEvents method 
+  // to implement a method that calls ActionLog's function
+  // and returns a vector of ActionEventBase objects that
+  // can be passed to the Logger's LogActionEvents method
   // (can make a call to this method inside the func to do).
 
   /// @brief Log action events from agents and persist to output.
