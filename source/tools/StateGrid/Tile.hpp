@@ -112,7 +112,7 @@ class Tile
      *
      * @returns bool to indicate traversability
      ***********************************************/
-    [[nodiscard]] bool getCanTraverse() const;
+    [[nodiscard]] constexpr bool getCanTraverse() const { return canTraverse; };
 
     /***********************************************
      *  Sets traverseability, no error checking, If its set to true
@@ -127,21 +127,21 @@ class Tile
      *
      * @returns int, row of the tile
      ***********************************************/
-    [[nodiscard]] size_t getRow() const;
+    [[nodiscard]] constexpr size_t getRow() const { return row; };
 
     /***********************************************
      *  Col getter
      *
      * @returns int, col of the tile
      ***********************************************/
-    [[nodiscard]] size_t getColumn() const;
+    [[nodiscard]] constexpr size_t getColumn() const { return column; };
 
     /***********************************************
      *  Symbol getter
      *
      * @returns char, symbol of the tile
      ***********************************************/
-    [[nodiscard]] char getSymbol() const;
+    [[nodiscard]] constexpr char getSymbol() const { return symbol; };
 
     /***********************************************
      *  Name getter

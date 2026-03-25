@@ -43,30 +43,12 @@ std::unique_ptr<Agent> Tile::releaseAgent()
     return static_cast<bool>(agent);
 }
 
-[[nodiscard]] bool Tile::getCanTraverse() const
-{
-    return canTraverse;
-}
 
 void Tile::setCanTraverse(bool traversability)
 {
     canTraverse = traversability;
 }
 
-[[nodiscard]] size_t Tile::getRow() const
-{
-    return row;
-}
-
-[[nodiscard]] size_t Tile::getColumn() const
-{
-    return column;
-}
-
-[[nodiscard]] char Tile::getSymbol() const
-{
-    return symbol;
-}
 
 [[nodiscard]] const std::string &Tile::getName() const
 {
