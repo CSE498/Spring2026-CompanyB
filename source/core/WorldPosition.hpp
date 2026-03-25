@@ -10,6 +10,7 @@
 #include <compare>   // For operator<=>
 #include <concepts>  // For std::integral
 #include <cstddef>   // For size_t
+#include <functional>
 
 namespace cse498 {
 
