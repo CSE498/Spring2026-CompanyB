@@ -4,26 +4,7 @@
 
 namespace cse498
 {
-
-// Helper to move symbol table logic up here for easy access
-// Remade this into a lambda
-//Tile tileFromSymbol(char symbol, size_t r, size_t c)
-//{
-//    if (symbol == 'W')
-//    {
-//        return Tile(r, c, 'W', false, "Wall", MetaData());
-//    }
-//    else if (symbol == 'P')
-//    {
-//        return Tile(r, c, 'P', true, "Path", MetaData());
-//    }
-//    else
-//    {
-//        throw std::invalid_argument("Only supported symbols rn are W and P for walls, paths");
-//    }
-//}
-
-StateGrid::StateGrid(const std::vector<std::vector<char>> &premadeMap)
+    StateGrid::StateGrid(const std::vector<std::vector<char>> &premadeMap)
 {
     assert(premadeMap.size() > 0 && premadeMap[0].size() > 0 && "Map not empty");
 
