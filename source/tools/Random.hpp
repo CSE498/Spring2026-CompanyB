@@ -1,5 +1,4 @@
-#ifndef RANDOM_H
-#define RANDOM_H
+#pragma once
 
 #include <cassert>
 #include <chrono>
@@ -169,8 +168,6 @@ class Random {
 };
 
 }  // namespace cse498
-
-#endif
 
 /*
 Sources and implementations:
