@@ -132,9 +132,11 @@ bool StateGrid::moveAgent(size_t fromRow, size_t fromCol, size_t toRow, size_t t
     if (tiles[toRow][toCol].hasAgent())
         return false;
 
-    // Safe to transfer — source has agent, destination is empty
+
     std::unique_ptr<Agent> agent = tiles[fromRow][fromCol].releaseAgent();
-    tiles[toRow][toCol].addAgent(agent);
+    if (!tiles[toRow][toCol].addAgent(agent)) {
+        return false;
+    }
     return true;
 }
 
