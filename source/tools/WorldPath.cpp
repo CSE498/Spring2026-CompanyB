@@ -3,8 +3,9 @@
 #include <algorithm>
 #include <cassert>
 #include <cmath>
-#include <ranges>
 #include <utility>
+#include <range/v3/view/sliding.hpp>
+#include <range/v3/algorithm/fold.hpp>
 
 namespace cse498 {
 
@@ -83,7 +84,7 @@ void WorldPath::addPoint(const Point& p) {
 double WorldPath::totalLength() const {
   // fold_left aggregates the distances of all consecutive point pairs
   // (segments)
-  return std::ranges::fold_left(
+  return ranges::fold_left(
       segments(), 0.0, [](double acc, const auto& seg) {
         return acc + dist(std::get<0>(seg), std::get<1>(seg));
       });
@@ -213,8 +214,8 @@ std::pair<Point, Point> WorldPath::furthestPair() const {
 bool WorldPath::hasFoldbacks() const {
   if (points_.size() < 3) return false;
 
-  // 3-point observing window with slide
-  for (const auto& window : points_ | std::views::slide(3)) {
+  // 3-point observing window with sliding
+  for (const auto& window : points_ | ranges::views::sliding(3)) {
     const Point& A = window[0];
     const Point& B = window[1];
     const Point& C = window[2];
