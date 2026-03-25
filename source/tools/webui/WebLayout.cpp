@@ -89,9 +89,17 @@ WebLayout& WebLayout::SetDirection(const std::string& dir) {
   return *this;
 }
 
+std::string WebLayout::GetDirection() const {
+  return dom_element["style"]["flexDirection"].as<std::string>();
+}
+
 WebLayout& WebLayout::SetJustifyContent(const std::string& justify) {
   dom_element["style"].set("justifyContent", justify);
   return *this;
+}
+
+std::string WebLayout::GetJustifyContent() const {
+  return dom_element["style"]["justifyContent"].as<std::string>();
 }
 
 WebLayout& WebLayout::SetHeight(const std::string& height) {
@@ -99,9 +107,17 @@ WebLayout& WebLayout::SetHeight(const std::string& height) {
   return *this;
 }
 
+std::string WebLayout::GetHeight() const {
+  return dom_element["style"]["height"].as<std::string>();
+}
+
 WebLayout& WebLayout::SetAlignItems(const std::string& align) {
   dom_element["style"].set("alignItems", align);
   return *this;
+}
+
+std::string WebLayout::GetAlignItems() const {
+  return dom_element["style"]["alignItems"].as<std::string>();
 }
 
 WebLayout& WebLayout::SetAlignContent(const std::string& alignContent) {
@@ -109,8 +125,16 @@ WebLayout& WebLayout::SetAlignContent(const std::string& alignContent) {
   return *this;
 }
 
+std::string WebLayout::GetAlignContent() const {
+  return dom_element["style"]["alignContent"].as<std::string>();
+}
+
 WebLayout& WebLayout::SetGap(const std::string& gap) {
   dom_element["style"].set("gap", gap);
   return *this;
+}
+
+std::string WebLayout::GetGap() const {
+  return dom_element["style"]["gap"].as<std::string>();
 }
 }  // namespace cse498
