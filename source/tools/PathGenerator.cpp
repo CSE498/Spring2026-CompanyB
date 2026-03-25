@@ -12,8 +12,9 @@
 #include <cassert>
 #include <cmath>
 #include <queue>
-#include <random>
 #include <unordered_set>
+
+#include "tools/Random.hpp"
 
 namespace cse498 {
 
@@ -57,10 +58,9 @@ std::optional<WorldPath> PathGenerator::ShortestPath(
   double fStart = heuristic_(start, goal);
   openSet.push({fStart, start});
 
-  size_t iterations = 0;
-  const size_t maxIterations = 10000;  // Prevent infinite loops
+  std::size_t iterations = 0;
 
-  while (!openSet.empty() && iterations++ < maxIterations) {
+  while (!openSet.empty() && iterations++ < kMaxIterations) {
     Point current = openSet.top().second;
     openSet.pop();
 
@@ -181,8 +181,7 @@ WorldPath PathGenerator::RandomWalk(const Point& start, size_t steps,
     return path;
   }
 
-  static std::random_device rd;
-  static std::mt19937 gen(rd());
+  static Random rng;
 
   Point current = start;
   std::vector<Point> neighbors;
@@ -205,8 +204,7 @@ WorldPath PathGenerator::RandomWalk(const Point& start, size_t steps,
     }
 
     // Pick random valid neighbor
-    std::uniform_int_distribution<> neighborDis(0, validNeighbors.size() - 1);
-    current = validNeighbors[neighborDis(gen)];
+    current = validNeighbors[rng.nextInt(0, validNeighbors.size() - 1)];
     path.addPoint(current);
   }
 

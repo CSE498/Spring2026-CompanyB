@@ -48,6 +48,9 @@ class PathGenerator {
   // goal is less than (step_size_ * kGoalEps). E.g., with step_size_=1.0, a
   // node within 0.6 units of the goal is accepted as "arrived".
   static constexpr double kGoalEps = 0.6;
+  // Maximum A* iterations before giving up, to prevent infinite loops in
+  // pathological cases (e.g., very large or disconnected worlds).
+  static constexpr std::size_t kMaxIterations = 10000;
 
   PathGenerator() = default;
 
