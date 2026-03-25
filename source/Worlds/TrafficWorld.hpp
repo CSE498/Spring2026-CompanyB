@@ -1,8 +1,9 @@
 #pragma once
 // N.B. most of this was cannibalized from MazeWorld to start with
+#include <algorithm>
+
 #include "../core/WorldBase.hpp"
 #include "../tools/WeightedSet.hpp"
-#include <algorithm>
 
 namespace cse498 {
 
@@ -83,6 +84,8 @@ class TrafficWorld : public WorldBase {
     // '|' = traffic light (vertical phase, allows up/down)
     // '-' = traffic light (horizontal phase, allows left/right)
     // All lights start as '|' so they are found by the vertical-scan below.
+
+    // clang-format off
     main_grid.Load(std::vector<std::string>{
         "###################################",
         "#..S.....|...............|........#",
@@ -103,6 +106,8 @@ class TrafficWorld : public WorldBase {
         "#.#######.###############.#######.#",
         "#........|...............|........#",
         "###################################"});
+
+    // clang-format on
 
     // Written by Claude — record all traffic light positions for phase swapping
     for (size_t y = 0; y < main_grid.GetHeight(); ++y) {
@@ -139,8 +144,7 @@ class TrafficWorld : public WorldBase {
   [[nodiscard]] const std::string &GetDestinationColour(
       const WorldPosition &pos) const {
     for (const auto &[dest_pos, col] : destination_colours) {
-      if (dest_pos.CellX() == pos.CellX() &&
-          dest_pos.CellY() == pos.CellY()) {
+      if (dest_pos.CellX() == pos.CellX() && dest_pos.CellY() == pos.CellY()) {
         return col;
       }
     }
@@ -171,19 +175,23 @@ class TrafficWorld : public WorldBase {
         new_position = cur_position.Right();
         break;
     }
-    // The following code is for collision detection between agents, which works in a somewhat bizarre-looking way
-    // to simulate 2-lane roads with agents moving in both directions.
-    // If an agent is stopped and an agent coming up from behind it runs into it, like this: >  >|
-    // then we want to make the moving agent stop behind the stopped agent: >>|
-    // Similarly if the agent is trying to move into an agent moving perpendicular to it, like: >^ or >v
+    // The following code is for collision detection between agents, which works
+    // in a somewhat bizarre-looking way to simulate 2-lane roads with agents
+    // moving in both directions. If an agent is stopped and an agent coming up
+    // from behind it runs into it, like this: >  >| then we want to make the
+    // moving agent stop behind the stopped agent: >>| Similarly if the agent is
+    // trying to move into an agent moving perpendicular to it, like: >^ or >v
     // then that move shouldn't be allowed either.
-    // But if two agents move into each other while moving in opposite directions, like this: ><
-    // we should let them move past each other, ending up like this: <>, then this: <  >
+    // But if two agents move into each other while moving in opposite
+    // directions, like this: >< we should let them move past each other, ending
+    // up like this: <>, then this: <  >
     auto new_pos_dir = DirectionOfDrivingAgentAt(new_position);
     auto cur_pos_dir = DirectionOfDrivingAgentAt(cur_position);
-    
-    if (cur_position != new_position && cur_pos_dir.has_value() && new_pos_dir.has_value()) {
-      auto opposite_of_current = static_cast<Direction>((static_cast<int>(cur_pos_dir.value()) + 2) % 4);
+
+    if (cur_position != new_position && cur_pos_dir.has_value() &&
+        new_pos_dir.has_value()) {
+      auto opposite_of_current = static_cast<Direction>(
+          (static_cast<int>(cur_pos_dir.value()) + 2) % 4);
       if (new_pos_dir != opposite_of_current) {
         return false;
       }
@@ -210,16 +218,20 @@ class TrafficWorld : public WorldBase {
     agent.SetLocation(new_position);
     return true;
   }
-  // This code and everything related to it is bad and I'm sorry for writing it. 
-  // In the future we'll definitely need better ways for agents to interact with each other.
-  // Pushing it now because it works, at least.
+  // This code and everything related to it is bad and I'm sorry for writing it.
+  // In the future we'll definitely need better ways for agents to interact with
+  // each other. Pushing it now because it works, at least.
   std::optional<Direction> DirectionOfDrivingAgentAt(WorldPosition pos) {
-    auto it = std::find_if(agent_set.begin(), agent_set.end(), [&pos](agent_ptr_t& agent) { return agent->GetLocation().AsWorldPosition() == pos; });
+    auto it = std::find_if(
+        agent_set.begin(), agent_set.end(), [&pos](agent_ptr_t &agent) {
+          return agent->GetLocation().AsWorldPosition() == pos;
+        });
     if (it == agent_set.end()) {
       return std::nullopt;
     }
-    if (auto agentAt = dynamic_cast<DrivingAgent*>(it->get())) {
-      // effectively this turns off collision detection for agents that have reached their destination
+    if (auto agentAt = dynamic_cast<DrivingAgent *>(it->get())) {
+      // effectively this turns off collision detection for agents that have
+      // reached their destination
       if (agentAt->get_reached_destination()) {
         return std::nullopt;
       }
@@ -229,7 +241,10 @@ class TrafficWorld : public WorldBase {
   }
 
   bool AgentExistsAt(WorldPosition pos) {
-    auto it = std::find_if(agent_set.begin(), agent_set.end(), [&pos](agent_ptr_t& agent) { return agent->GetLocation().AsWorldPosition() == pos; });
+    auto it = std::find_if(
+        agent_set.begin(), agent_set.end(), [&pos](agent_ptr_t &agent) {
+          return agent->GetLocation().AsWorldPosition() == pos;
+        });
     return it != agent_set.end();
   }
 

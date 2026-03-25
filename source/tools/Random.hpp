@@ -123,7 +123,8 @@ class Random {
       u1 = nextUnitDouble();
     }
     const double u2 = nextUnitDouble();
-    const double z = std::sqrt(-2.0 * std::log(u1)) * std::cos(2.0 * std::numbers::pi * u2);
+    const double z =
+        std::sqrt(-2.0 * std::log(u1)) * std::cos(2.0 * std::numbers::pi * u2);
     return mean + stddev * z;
   }
 

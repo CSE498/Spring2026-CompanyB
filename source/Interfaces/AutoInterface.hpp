@@ -2,8 +2,14 @@
  * This file is part of the Fall 2026, CSE 498, section 2, course project.
  * @brief An automated text interface that prints the world to the console
  * on a timed interval, with no player-controlled character.
- * @note Status: PROPOSAL
- * @note Written by Claude.
+ * @note Status: TEMPORARY (will end up being discarded soon enough in favor of
+ * the web and native GUIs). This is purely meant to help demo TrafficWorld and
+ *won't necessarily work outside of that. This means you probably shouldn't
+ *spend too much time reviewing it, as very little of it is likely to make it
+ *into the end product.
+ * @note Written by Claude. (Initially written as a modification of
+ *TrashInterface that got rid of the controls and ran automatically; color stuff
+ *was added later, also by Claude.)
  **/
 
 #pragma once

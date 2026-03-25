@@ -147,7 +147,10 @@ class DrivingAgent : public AgentBase {
     grid_pos.TurnRight();
     SetSymbol(direction_symbols.at(grid_pos.GetDirection()));
   }
-  DrivingAgent &SetColour(const std::string &c) { colour = c; return *this; }
+  DrivingAgent &SetColour(const std::string &c) {
+    colour = c;
+    return *this;
+  }
   [[nodiscard]] const std::string &GetColour() const { return colour; }
 
   // In DrivingAgent, public section:

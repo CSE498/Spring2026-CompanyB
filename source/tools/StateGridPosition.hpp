@@ -11,8 +11,8 @@
 #include <concepts>  // For std::integral
 #include <cstddef>   // For size_t
 
-#include "./StateGrid/StateGrid.hpp"
 #include "../core/WorldPosition.hpp"
+#include "./StateGrid/StateGrid.hpp"
 
 namespace cse498 {
 /// @brief Constitutes the direction of an agent
@@ -47,9 +47,7 @@ class StateGridPosition {
   StateGridPosition(const StateGridPosition&) = default;
   StateGridPosition& operator=(const StateGridPosition&) = default;
 
-  WorldPosition AsWorldPosition() const {
-    return WorldPosition(col, row);
-  }
+  WorldPosition AsWorldPosition() const { return WorldPosition(col, row); }
 
   // -- Movement Functions --
 

@@ -5,11 +5,11 @@
 #include <fstream>
 #include <functional>
 #include <iostream>
+#include <ranges>
 #include <sstream>
 #include <string>
 #include <utility>
 #include <vector>
-#include <ranges>
 
 namespace cse498 {
 
@@ -89,7 +89,8 @@ class DataFileManager {
 
     // Uses ranges for clearer looping
     for (const auto& [i, name] : std::views::enumerate(m_columnNames)) {
-        file << name << (static_cast<size_t>(i) == m_columnNames.size() - 1 ? "" : ",");
+      file << name
+           << (static_cast<size_t>(i) == m_columnNames.size() - 1 ? "" : ",");
     }
     file << "\n";
 
@@ -97,7 +98,7 @@ class DataFileManager {
     for (const auto& row : m_table) {
       // Uses ranges for clearer looping
       for (const auto& [i, value] : std::views::enumerate(row)) {
-          file << value << (static_cast<size_t>(i) == row.size() - 1 ? "" : ",");
+        file << value << (static_cast<size_t>(i) == row.size() - 1 ? "" : ",");
       }
       file << "\n";
     }
