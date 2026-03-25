@@ -15,11 +15,11 @@
 
 #include <cassert>
 #include <map>
-#include <print>
+// #include <print>
 
 #include "../core/AgentBase.hpp"
-#include "../tools/StateGridPosition.hpp"
 #include "../core/WorldBase.hpp"
+#include "../tools/StateGridPosition.hpp"
 
 namespace cse498 {
 
@@ -32,27 +32,41 @@ class DrivingAgent : public AgentBase {
   const std::map<Direction, char> direction_symbols = {{Direction::North, '^'},
                                                        {Direction::East, '>'},
                                                        {Direction::South, 'v'},
-                                                       {Direction::West, '<'}}; 
+                                                       {Direction::West, '<'}};
   size_t road_cell_id{};
   size_t traffic_light_vertical_id{};
   size_t traffic_light_horizontal_id{};
 
+  size_t spawn_cell_id{};
+  size_t destination_cell_id{};
+
+  // The destination that is assigned at spawn, if it reaches this it despawns
+  StateGridPosition destination_pos{};
+  bool reached_destination = false;
+
  public:
-  DrivingAgent(size_t id, const std::string& name, const WorldBase& world)
+  DrivingAgent(size_t id, const std::string &name, const WorldBase &world)
       : AgentBase(id, name, world) {
     SetDirection(Direction::East);
     road_cell_id = world.GetGrid().GetCellTypeID("road");
-    traffic_light_vertical_id = world.GetGrid().GetCellTypeID("traffic_light_vertical");
-    traffic_light_horizontal_id = world.GetGrid().GetCellTypeID("traffic_light_horizontal");
+    spawn_cell_id = world.GetGrid().GetCellTypeID("spawn");
+    destination_cell_id = world.GetGrid().GetCellTypeID("destination");
+    traffic_light_vertical_id =
+        world.GetGrid().GetCellTypeID("traffic_light_vertical");
+    traffic_light_horizontal_id =
+        world.GetGrid().GetCellTypeID("traffic_light_horizontal");
   }
   ~DrivingAgent() = default;
 
   /// @brief Set the agent's initial facing direction.
-  DrivingAgent& SetDirection(Direction dir) {
+  DrivingAgent &SetDirection(Direction dir) {
     grid_pos.SetDirection(dir);
     SetSymbol(direction_symbols.at(grid_pos.GetDirection()));
     return *this;
   }
+
+  [[nodiscard]] bool get_reached_destination() { return reached_destination; }
+  void set_reached_destination(bool reached) { reached_destination = reached; }
 
   /// @brief Get the agent's current facing direction.
   [[nodiscard]] Direction GetDirection() const {
@@ -61,10 +75,15 @@ class DrivingAgent : public AgentBase {
 
   /// @brief Set the agent's initial grid position (col, row) and optional
   /// direction.
-  DrivingAgent& SetGridPosition(size_t col, size_t row,
+  DrivingAgent &SetGridPosition(size_t col, size_t row,
                                 Direction dir = Direction::North) {
     grid_pos = StateGridPosition(col, row, dir);
     SetSymbol(direction_symbols.at(grid_pos.GetDirection()));
+    return *this;
+  }
+
+  DrivingAgent &SetGridDestination(size_t col, size_t row) {
+    destination_pos = StateGridPosition(col, row);
     return *this;
   }
 
@@ -76,14 +95,16 @@ class DrivingAgent : public AgentBase {
   }
 
   bool IsTraversableTerrain(const size_t cell_id) const {
-    return cell_id == road_cell_id || cell_id == traffic_light_vertical_id || cell_id == traffic_light_horizontal_id;
+    return cell_id == road_cell_id || cell_id == traffic_light_vertical_id ||
+           cell_id == traffic_light_horizontal_id || cell_id == spawn_cell_id ||
+           cell_id == destination_cell_id;
   }
 
   /// @brief Choose the action to take on this turn.
   ///
   /// Strategy: try to move forward (in the current facing direction).
   /// If the last forward move failed, turn left and try again.
-  size_t SelectAction(const WorldGrid& grid) override {
+  size_t SelectAction(const WorldGrid &grid) override {
     grid_pos.SetLocation(GetLocation().AsWorldPosition());
 
     if (action_result == 0) {
@@ -92,13 +113,15 @@ class DrivingAgent : public AgentBase {
 
     StateGridPosition forward_pos = grid_pos.GetForwardPosition();
 
-    bool can_move_forward = IsTraversableTerrain(grid[forward_pos.AsWorldPosition()]);
+    bool can_move_forward =
+        IsTraversableTerrain(grid[forward_pos.AsWorldPosition()]);
     if (!can_move_forward) {
       StateGridPosition left_pos = grid_pos.GetLeftwardPosition();
       StateGridPosition right_pos = grid_pos.GetRightwardPosition();
-      
-      bool can_move_left = IsTraversableTerrain(grid[left_pos.AsWorldPosition()]);
-      bool can_move_right = IsTraversableTerrain(grid[right_pos.AsWorldPosition()]);
+      bool can_move_left =
+          IsTraversableTerrain(grid[left_pos.AsWorldPosition()]);
+      bool can_move_right =
+          IsTraversableTerrain(grid[right_pos.AsWorldPosition()]);
 
       if (can_move_left) {
         TurnLeft();
@@ -121,6 +144,10 @@ class DrivingAgent : public AgentBase {
   void TurnRight() {
     grid_pos.TurnRight();
     SetSymbol(direction_symbols.at(grid_pos.GetDirection()));
+  }
+  // In DrivingAgent, public section:
+  [[nodiscard]] const StateGridPosition &GetDestination() const {
+    return destination_pos;
   }
 
  private:
