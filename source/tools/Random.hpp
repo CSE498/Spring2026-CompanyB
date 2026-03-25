@@ -38,14 +38,11 @@ class Random {
  public:
   // If no seed is provided, use wall-clock time.
   explicit Random(std::optional<uint64_t> seed = std::nullopt) {
-    uint64_t actual_seed;
     if (!seed.has_value()) {
-      actual_seed = static_cast<uint64_t>(
+      seed = static_cast<uint64_t>(
           std::chrono::high_resolution_clock::now().time_since_epoch().count());
-    } else {
-      actual_seed = seed.value();
     }
-    reseed(actual_seed);
+    reseed(seed.value());
   }
 
   void reseed(uint64_t seed) {
