@@ -11,6 +11,8 @@
 #include <expected>
 #include <string>
 
+#include "WebElement.hpp"
+
 namespace cse498 {
 
 /// CSS units supported for image sizing (to help avoid wrong unit inputs)
@@ -25,11 +27,8 @@ enum class SizeUnit { px, em, rem, percent, vw, vh };
  * allowing programmers to control image source, position, size, alt text,
  * and visibility using C++ functions.
  **/
-class WebImage {
+class WebImage : public WebElement {
  private:
-  /// Image's DOM element ID
-  std::string id{};
-
   /// Image's source
   std::string src{};
 
@@ -170,12 +169,6 @@ class WebImage {
    * @return The alternative text string.
    **/
   [[nodiscard]] std::string GetAlt() const { return alt; }
-
-  /**
-   * @brief Get the DOM element ID of the image.
-   * @return The image element's unique identifier.
-   **/
-  [[nodiscard]] std::string GetId() const { return id; }
 
   /**
    * @brief Get the current image source path or URL.

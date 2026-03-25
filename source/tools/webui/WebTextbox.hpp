@@ -12,6 +12,8 @@
 #include <functional>
 #include <string>
 
+#include "WebElement.hpp"
+
 namespace cse498 {
 
 /**
@@ -32,10 +34,9 @@ struct TextStyle {
  * Designed for high-throughput logging with memory constraints and headless CI
  * support.
  */
-class WebTextbox {
+class WebTextbox : public WebElement {
  private:
   // Google Style: Member variables end with a trailing underscore.
-  std::string id_;
   emscripten::val div_element_ = emscripten::val::null();
 
   std::string mock_text_content_;

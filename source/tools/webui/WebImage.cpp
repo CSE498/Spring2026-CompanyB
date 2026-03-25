@@ -17,7 +17,7 @@ namespace cse498 {
 
 WebImage::WebImage(const std::string& img_id, const std::string& src,
                    const std::string& alt_text)
-    : id(img_id), src(src), alt(alt_text) {
+    : WebElement(img_id, true), src(src), alt(alt_text) {
   val document = val::global("document");
 
   // Check if ID already exists

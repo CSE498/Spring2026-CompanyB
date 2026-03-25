@@ -27,16 +27,16 @@ bool WebTextbox::IsHeadless() const {
  * to the body. If running headlessly, it bypasses DOM creation entirely.
  */
 WebTextbox::WebTextbox(const std::string& id, const TextStyle& style)
-    : id_(id) {
+    : WebElement(id, true) {
   if (IsHeadless()) return;
 
   val document = val::global("document");
-  val existing = document.call<val>("getElementById", id_);
+  val existing = document.call<val>("getElementById", id);
   assert((existing.isNull() || existing.isUndefined()) &&
          "WebTextbox ID already exists in DOM");
 
   div_element_ = document.call<val>("createElement", std::string("div"));
-  div_element_.set("id", id_);
+  div_element_.set("id", id);
 
   div_element_["style"].set("position", "absolute");
   div_element_["style"].set("border", kDefaultBorder);

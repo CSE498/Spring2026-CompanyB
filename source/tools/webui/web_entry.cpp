@@ -9,6 +9,7 @@
 
 #include "WebButton.h"
 #include "WebCanvas.hpp"
+#include "WebImage.hpp"
 #include "WebLayout.hpp"
 #include "WebTextbox.hpp"
 
@@ -23,15 +24,15 @@ int main() {
   layout->SetDirection("column").SetAlignItems("center").SetGap("10px").SetHeight("100vh").SetJustifyContent("flex-start");
 
   auto menu_bar = std::make_shared<WebLayout>("menu-bar");
-  menu_bar->SetHeight("80px");
+  menu_bar->SetHeight("60px");
 
-  // auto start_btn = std::make_shared<WebButton>("Start", "start-btn");
-  // start_btn->SetOnClick([]() {
-  //   canvas->Clear();
-  //   canvas->SetFillColor({0, 200, 100});
-  //   canvas->DrawText("Running...", 10, 30);
-  // });
-  // menu_bar->AddChild(start_btn);
+  auto start_btn = std::make_shared<WebButton>("Start", "start-btn");
+  start_btn->SetOnClick([]() {
+    canvas->Clear();
+    canvas->SetFillColor({0, 200, 100});
+    canvas->DrawText("Running...", 10, 30);
+  });
+  menu_bar->AddChild(start_btn);
 
   layout->AddChild(menu_bar);
 
@@ -43,9 +44,13 @@ int main() {
   left_column->SetHeight("100%").SetDirection("column").SetGap("10px").SetAlignItems("stretch");
   main_layout->AddChild(left_column);
 
-  // auto text = std::make_shared<WebTextbox>("test-button");
-  // text->SetText("Example text");
-  // left_column->AddChild(text);
+  auto text = std::make_shared<WebTextbox>("test-button");
+  text->SetText("Example text");
+  left_column->AddChild(text);
+
+  auto logo = std::make_shared<WebImage>("logo", "assets/logo.png", "Company Logo");
+  logo->SetSize(100, 100);
+  left_column->AddChild(logo);
 
   canvas = std::make_shared<WebCanvas>(800, 600, "game-canvas");
   canvas->SetBackgroundColor({0, 0, 0});
@@ -72,6 +77,7 @@ int main() {
       width: "100%",
       background: "#363636",
       borderRadius: "20px",
+      boxShadow: "0px 4px 4px 0px #00000026"
     });
   });
 
