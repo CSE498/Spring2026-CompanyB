@@ -177,6 +177,29 @@ elseif(DEFINED EMSCRIPTEN)
         COPYONLY
     )
 
+    configure_file(
+        ${CMAKE_CURRENT_SOURCE_DIR}/tools/webui/menu.html
+        ${CMAKE_BINARY_DIR}/menu.html
+        COPYONLY
+    )
+
+    configure_file(
+        ${CMAKE_CURRENT_SOURCE_DIR}/tools/webui/style.css
+        ${CMAKE_BINARY_DIR}/style.css
+        COPYONLY
+    )
+
+    set(ASSETS_SOURCE_DIR "/app/assets")
+    set(ASSETS_BUILD_DIR "${CMAKE_BINARY_DIR}/assets")
+    add_custom_target(copy_assets
+        COMMAND ${CMAKE_COMMAND} -E copy_directory_if_different
+            "${ASSETS_SOURCE_DIR}"
+            "${ASSETS_BUILD_DIR}"
+        COMMENT "Copying assets directory"
+    )
+    add_dependencies(index copy_assets)
+
+
 else()
     # Native build
     list(FILTER SOURCES EXCLUDE REGEX ".*/tools/webui/.*")

@@ -9,7 +9,6 @@
 
 #include "WebButton.h"
 #include "WebCanvas.hpp"
-#include "WebImage.hpp"
 #include "WebLayout.hpp"
 #include "WebTextbox.hpp"
 
@@ -24,7 +23,7 @@ int main() {
   layout->SetDirection("column").SetAlignItems("center").SetGap("10px").SetHeight("100vh").SetJustifyContent("flex-start");
 
   auto menu_bar = std::make_shared<WebLayout>("menu-bar");
-  menu_bar->SetHeight("60px");
+  menu_bar->SetHeight("80px");
 
   auto start_btn = std::make_shared<WebButton>("Start", "start-btn");
   start_btn->SetOnClick([]() {
@@ -32,7 +31,48 @@ int main() {
     canvas->SetFillColor({0, 200, 100});
     canvas->DrawText("Running...", 10, 30);
   });
+
+  auto pause_btn = std::make_shared<WebButton>("Pause", "pause-btn");
+  start_btn->SetOnClick([]() {
+    canvas->Clear();
+    canvas->SetFillColor({0, 200, 100});
+    canvas->DrawText("Running...", 10, 30);
+  });
+
+  auto stop_btn = std::make_shared<WebButton>("Stop", "stop-btn");
+  start_btn->SetOnClick([]() {
+    canvas->Clear();
+    canvas->SetFillColor({0, 200, 100});
+    canvas->DrawText("Running...", 10, 30);
+  });
+
+  auto upload_btn = std::make_shared<WebButton>("Upload", "upload-btn");
+  start_btn->SetOnClick([]() {
+    canvas->Clear();
+    canvas->SetFillColor({0, 200, 100});
+    canvas->DrawText("Running...", 10, 30);
+  });
+
+  auto save_btn = std::make_shared<WebButton>("Save", "save-btn");
+  start_btn->SetOnClick([]() {
+    canvas->Clear();
+    canvas->SetFillColor({0, 200, 100});
+    canvas->DrawText("Running...", 10, 30);
+  });
+
+  auto exit_btn = std::make_shared<WebButton>("Exit", "exit-btn");
+  start_btn->SetOnClick([]() {
+    canvas->Clear();
+    canvas->SetFillColor({0, 200, 100});
+    canvas->DrawText("Running...", 10, 30);
+  });
+
   menu_bar->AddChild(start_btn);
+  menu_bar->AddChild(pause_btn);
+  menu_bar->AddChild(stop_btn);
+  menu_bar->AddChild(upload_btn);
+  menu_bar->AddChild(save_btn);
+  menu_bar->AddChild(exit_btn);
 
   layout->AddChild(menu_bar);
 
@@ -44,42 +84,17 @@ int main() {
   left_column->SetHeight("100%").SetDirection("column").SetGap("10px").SetAlignItems("stretch");
   main_layout->AddChild(left_column);
 
-  auto text = std::make_shared<WebTextbox>("test-button");
-  text->SetText("Example text");
-  left_column->AddChild(text);
-
-  auto logo = std::make_shared<WebImage>("logo", "assets/logo.png", "Company Logo");
-  logo->SetSize(100, 100);
-  left_column->AddChild(logo);
+  // auto text = std::make_shared<WebTextbox>("test-button");
+  // text->SetText("Example text");
+  // left_column->AddChild(text);
 
   canvas = std::make_shared<WebCanvas>(800, 600, "game-canvas");
   canvas->SetBackgroundColor({0, 0, 0});
   canvas->SetFillColor({255, 255, 255});
   canvas->SetFont("48px arial");
-  canvas->DrawText("Hello from WebAssembly!", 10, 50);
+  canvas->DrawImage("assets/images/map.svg", 0, 0, 800, 600);
 
   main_layout->AddChild(canvas);
-
-  EM_ASM({
-    document.querySelector("body").style.background = "#85B790";
-
-    Object.assign(document.getElementById("main-layout").style, {
-      width: "100%",
-    });
-
-    Object.assign(document.getElementById("left-column").style, {
-      flex: "1 0 150px",
-      background: "#555",
-      borderRadius: "20px",
-    });
-
-    Object.assign(document.getElementById("menu-bar").style, {
-      width: "100%",
-      background: "#363636",
-      borderRadius: "20px",
-      boxShadow: "0px 4px 4px 0px #00000026"
-    });
-  });
 
   return 0;
 }
