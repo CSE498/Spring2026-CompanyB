@@ -1,5 +1,6 @@
 body {
     background: #85b790;
+    background-image: url("assets/images/contour-map.svg");
 }
 
 #main-layout {
@@ -83,13 +84,23 @@ body {
     cursor: pointer;
 }
 
-#start-btn  { background-image: url('assets/images/start.svg');  }
-#pause-btn  { background-image: url('assets/images/pause.svg');  }
-#stop-btn   { background-image: url('assets/images/stop.svg');   }
-#upload-btn { background-image: url('assets/images/upload.svg'); }
-#save-btn   { background-image: url('assets/images/save.svg');   }
-#exit-btn   {
-    background-image: url('assets/images/exit.svg');
+#start-btn {
+    background-image: url("assets/images/start.svg");
+}
+#pause-btn {
+    background-image: url("assets/images/pause.svg");
+}
+#stop-btn {
+    background-image: url("assets/images/stop.svg");
+}
+#upload-btn {
+    background-image: url("assets/images/upload.svg");
+}
+#save-btn {
+    background-image: url("assets/images/save.svg");
+}
+#exit-btn {
+    background-image: url("assets/images/exit.svg");
     margin-left: auto;
     margin-right: 1em;
 }
