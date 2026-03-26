@@ -2,7 +2,6 @@
 
 #include <filesystem>
 #include <iostream>
-#include <utility>
 
 #include "DataLog.hpp"
 
@@ -12,24 +11,35 @@ namespace {
 constexpr char kMessagesKey[] = "messages";
 constexpr char kEntriesKey[] = "entries";
 constexpr char kStatisticsKey[] = "statistics";
+constexpr char kActionEventsKey[] = "action_events";
+
+/// @brief Default relative path for the JSON log when no path is set
+/// explicitly.
+std::string MakeDefaultLogFilePath() {
+  namespace fs = std::filesystem;
+  const fs::path dir = fs::current_path() / "logs";
+  return (dir / "simulation_log.json").string();
+}
 }  // namespace
 
+/// @brief Stores the active log level threshold for ShouldLog.
 void OutputManager::SetLogLevel(LogLevel level) noexcept {
   mCurrentLevel = level;
 }
 
-OutputManager::OutputManager(std::string outputFilePath, LogLevel level)
-    : mOutputFilePath(std::move(outputFilePath)), mCurrentLevel(level) {
-  openOutputStream();
-}
+/// @brief Initializes default output path and level; file is opened on first
+/// Flush().
+OutputManager::OutputManager(LogLevel level)
+    : mOutputFilePath(MakeDefaultLogFilePath()), mCurrentLevel(level) {}
 
+/// @brief Closes the file stream if it was opened.
 OutputManager::~OutputManager() {
   if (mOutputStream.is_open()) {
     mOutputStream.close();
   }
 }
 
-bool OutputManager::openOutputStream() {
+bool OutputManager::OpenOutputStream() {
   if (mOutputFilePath.empty()) {
     return true;
   }
@@ -42,9 +52,13 @@ bool OutputManager::openOutputStream() {
   const fs::path parent = path.parent_path();
   if (!parent.empty()) {
     if (!fs::exists(parent)) {
-      std::clog << "[OutputManager] Output directory does not exist: "
-                << parent.string() << '\n';
-      return false;
+      std::error_code ec;
+      fs::create_directories(parent, ec);
+      if (ec) {
+        std::clog << "[OutputManager] Failed to create output directory: "
+                  << parent.string() << '\n';
+        return false;
+      }
     }
     if (!fs::is_directory(parent)) {
       std::clog << "[OutputManager] Output path is not a directory: "
@@ -62,6 +76,36 @@ bool OutputManager::openOutputStream() {
   return true;
 }
 
+bool OutputManager::ShouldLog(LogLevel messageLevel) const noexcept {
+  if (messageLevel == LogLevel::Silent) {
+    return false;
+  }
+  const int levelValue = static_cast<int>(messageLevel);
+  return levelValue <= static_cast<int>(mCurrentLevel);
+}
+
+void OutputManager::WriteConsole(const std::string& message) {
+  std::clog << "[OutputManager] " << message << '\n';
+}
+
+void OutputManager::BufferMessage(LogLevel level, const std::string& message) {
+  const int levelValue = static_cast<int>(level);
+  if (!mBufferedLog.contains(kMessagesKey) ||
+      !mBufferedLog[kMessagesKey].is_array()) {
+    mBufferedLog[kMessagesKey] = nlohmann::json::array();
+  }
+  mBufferedLog[kMessagesKey].push_back(
+      {{"level", levelValue}, {"text", message}});
+}
+
+void OutputManager::LogMessage(LogLevel level, const std::string& message) {
+  if (!ShouldLog(level)) {
+    return;
+  }
+  WriteConsole(message);
+  BufferMessage(level, message);
+}
+
 bool OutputManager::SetOutputFile(const std::string& path) {
   if (mOutputStream.is_open()) {
     mOutputStream.close();
@@ -70,68 +114,36 @@ bool OutputManager::SetOutputFile(const std::string& path) {
     }
   }
   mOutputFilePath = path;
-  return openOutputStream();
+  return true;
 }
 
-void OutputManager::LogMessage(LogLevel level, const std::string& message) {
-  LogEntry(kMessagesKey, level, message);
-}
-
-void OutputManager::LogConsole(LogLevel level, const std::string& message) {
-  const int levelValue = static_cast<int>(level);
-  if (level == LogLevel::Silent ||
-      levelValue > static_cast<int>(mCurrentLevel)) {
-    return;
-  }
-  std::clog << "[OutputManager] " << message << '\n';
-}
-
-void OutputManager::LogFile(LogLevel level, const std::string& message) {
-  const int levelValue = static_cast<int>(level);
-  if (level == LogLevel::Silent ||
-      levelValue > static_cast<int>(mCurrentLevel)) {
-    return;
-  }
-  if (mOutputStream.is_open()) {
-    if (!mBufferedLog.contains(kMessagesKey) ||
-        !mBufferedLog[kMessagesKey].is_array()) {
-      mBufferedLog[kMessagesKey] = nlohmann::json::array();
-    }
-    mBufferedLog[kMessagesKey].push_back(
-        {{"level", levelValue}, {"text", message}});
+void OutputManager::RebuildActionEventsJson() {
+  mBufferedLog[kActionEventsKey] = nlohmann::json::array();
+  for (const auto& r : mPendingActionEvents) {
+    mBufferedLog[kActionEventsKey].push_back({
+        {"agentId", r.agentId},
+        {"actionType", r.actionType},
+        {"logLevel", static_cast<int>(r.logLevel)},
+        {"timestamp", r.timestamp},
+    });
   }
 }
 
 bool OutputManager::Flush() {
-  if (!mOutputStream.is_open()) {
-    return mOutputFilePath.empty();
+  RebuildActionEventsJson();
+  if (mOutputFilePath.empty()) {
+    return true;
+  }
+  if (!mOutputStream.is_open() && !OpenOutputStream()) {
+    return false;
   }
   mOutputStream << mBufferedLog.dump(2) << '\n';
   mOutputStream.flush();
-  return !mOutputStream.fail();
-}
-
-void OutputManager::LogMessage(const std::string& message) {
-  LogMessage(LogLevel::Normal, message);
-}
-
-void OutputManager::LogEntry(const std::string& category, LogLevel level,
-                             const std::string& message) {
-  const int levelValue = static_cast<int>(level);
-  if (level == LogLevel::Silent ||
-      levelValue > static_cast<int>(mCurrentLevel)) {
-    return;
+  const bool ok = !mOutputStream.fail();
+  if (ok) {
+    std::clog << "log saved in " << mOutputFilePath << '\n';
   }
-
-  LogConsole(level, message);
-
-  if (!mOutputStream.is_open()) {
-    return;
-  }
-  if (!mBufferedLog.contains(category) || !mBufferedLog[category].is_array()) {
-    mBufferedLog[category] = nlohmann::json::array();
-  }
-  mBufferedLog[category].push_back({{"level", levelValue}, {"text", message}});
+  return ok;
 }
 
 void OutputManager::WriteSimulationOutput(const DataLog& dataLog) {
@@ -163,7 +175,17 @@ void OutputManager::WriteSimulationOutput(const DataLog& dataLog) {
 }
 
 const nlohmann::json& OutputManager::GetBufferedLog() const noexcept {
+  const_cast<OutputManager*>(this)->RebuildActionEventsJson();
   return mBufferedLog;
+}
+
+void OutputManager::WriteActionEvents(
+    const std::vector<ActionEventBase>& events) {
+  for (const auto& e : events) {
+    mPendingActionEvents.push_back(ActionEventRecord{std::string(e.agentId),
+                                                     std::string(e.actionType),
+                                                     e.logLevel, e.timestamp});
+  }
 }
 
 }  // namespace cse498
