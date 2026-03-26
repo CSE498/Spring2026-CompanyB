@@ -9,6 +9,7 @@
 
 #include "WebButton.h"
 #include "WebCanvas.hpp"
+#include "WebImage.hpp"
 #include "WebLayout.hpp"
 #include "WebTextbox.hpp"
 
@@ -16,7 +17,10 @@ using namespace cse498;
 
 // Globals kept alive for the duration of the page
 static std::shared_ptr<WebCanvas> canvas;
+static std::shared_ptr<WebImage> map_image;
 static std::unique_ptr<WebLayout> layout;
+static std::shared_ptr<WebTextbox> top_textbox;
+static std::shared_ptr<WebTextbox> bottom_textbox;
 
 int main() {
   layout = std::make_unique<WebLayout>("app-layout");
@@ -84,17 +88,25 @@ int main() {
   left_column->SetHeight("100%").SetDirection("column").SetGap("10px").SetAlignItems("stretch");
   main_layout->AddChild(left_column);
 
-  // auto text = std::make_shared<WebTextbox>("test-button");
-  // text->SetText("Example text");
-  // left_column->AddChild(text);
+  top_textbox = std::make_shared<WebTextbox>("top-textbox");
+  top_textbox->SetText("Info");
+  left_column->AddChild(top_textbox);
 
-  canvas = std::make_shared<WebCanvas>(800, 600, "game-canvas");
-  canvas->SetBackgroundColor({0, 0, 0});
+  bottom_textbox = std::make_shared<WebTextbox>("bottom-textbox");
+  bottom_textbox->SetText("Log");
+  left_column->AddChild(bottom_textbox);
+
+  auto game_area = std::make_shared<WebLayout>("game-area");
+  main_layout->AddChild(game_area);
+
+  map_image = std::make_shared<WebImage>("map-image", "assets/images/map2.svg", "Game map");
+  map_image->SetPosition(0, 0);
+  game_area->AddChild(map_image);
+
+  canvas = std::make_shared<WebCanvas>(1000, 500, "game-canvas");
   canvas->SetFillColor({255, 255, 255});
   canvas->SetFont("48px arial");
-  canvas->DrawImage("assets/images/map.svg", 0, 0, 800, 600);
-
-  main_layout->AddChild(canvas);
+  game_area->AddChild(canvas);
 
   return 0;
 }
