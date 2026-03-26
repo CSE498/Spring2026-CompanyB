@@ -3,6 +3,7 @@
 #include <cassert>
 #include <chrono>
 #include <cmath>
+#include <concepts>
 #include <cstdint>
 #include <limits>
 #include <numbers>
@@ -73,18 +74,16 @@ class Random {
     return static_cast<float>(random_bits >> 40) * kFloatUnit;
   }
 
-  // Uniform in [min, max), defaults to [0, 1).
-  [[nodiscard]] double nextDouble(double min = 0.0, double max = 1.0) {
+  // Uniform in [min, max) for any floating-point type; defaults to [0, 1).
+  template <std::floating_point T = double>
+  [[nodiscard]] T nextReal(T min = T{0}, T max = T{1}) {
     assert(min <= max &&
            "The minimum value can't be larger than the maximum value.");
-    return min + nextUnitDouble() * (max - min);
-  }
-
-  // Uniform in [min, max), defaults to [0, 1).
-  [[nodiscard]] float nextFloat(float min = 0.0f, float max = 1.0f) {
-    assert(min <= max &&
-           "The minimum value can't be larger than the maximum value.");
-    return min + nextUnitFloat() * (max - min);
+    if constexpr (std::is_same_v<T, float>) {
+      return min + nextUnitFloat() * (max - min);
+    } else {
+      return min + nextUnitDouble() * (max - min);
+    }
   }
 
   // Uniform in [min, max].
@@ -147,14 +146,14 @@ class Random {
     return z ^ (z >> 31);
   }
 
-  static inline uint64_t rotL(uint64_t x, unsigned int k) {
+  static constexpr uint64_t rotL(uint64_t x, unsigned int k) {
     assert(k < kWordBits && "rotation amount must be in [0, 63]");
     return (x << k) | (x >> (kWordBits - k));
   }
 
   // xoshiro256++ algorithm.
   // Found implementation online and adapted for this class.
-  uint64_t nextUint64() {
+  [[nodiscard]] uint64_t nextUint64() {
     const uint64_t result = rotL(state[0] + state[3], 23) + state[0];
     const uint64_t t = state[1] << 17;
 
