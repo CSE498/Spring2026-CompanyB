@@ -5,9 +5,9 @@
  **/
 
 // Include the modules that we will be using.
-#include "Agents/DrivingAgent.hpp"
-#include "Interfaces/AutoInterface.hpp"
-#include "Worlds/TrafficWorld.hpp"
+#include "../source/Agents/DrivingAgent.hpp"
+#include "../source/Interfaces/AutoInterface.hpp"
+#include "../source/Worlds/TrafficWorld.hpp"
 
 using namespace cse498;
 
