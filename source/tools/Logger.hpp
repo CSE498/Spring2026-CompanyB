@@ -41,16 +41,11 @@ class Logger : public ILogger {
 
  public:
   /// @brief Constructs a Logger with action logging and output management.
-  /// @param actionLog Unique pointer to IActionLog implementation.
-  /// @param outputManager Unique pointer to IOutputManager implementation.
-  /// @param replayDriver Optional unique pointer to IReplayDriver
-  /// implementation.
-  Logger(std::unique_ptr<IActionLog<AgentBase>> actionLog,
-         std::unique_ptr<IOutputManager> outputManager,
-         std::unique_ptr<IReplayDriver> replayDriver = nullptr)
-      : mActionLog(std::move(actionLog)),
-        mOutputManager(std::move(outputManager)),
-        mReplayDriver(std::move(replayDriver)) {}
+  Logger() {
+    mActionLog = std::make_unique<IActionLog<AgentBase>>();
+    mOutputManager = std::make_unique<IOutputManager>();
+    mReplayDriver = std::make_unique<IReplayDriver>();
+  }
 
   ~Logger() override = default;
 
@@ -58,6 +53,8 @@ class Logger : public ILogger {
   /// @brief Replay recorded events from a file.
   /// @param filePath Path to the JSON file containing logged events.
   /// @return true if replay was successful, false if no ReplayDriver is set.
+  /// NOTE: need to have another param that takes in a ref to an empty container 
+  /// from world to populate with agents and their action info for replay
   bool BeginReplay(const std::string& filePath) override {
     if (!mReplayDriver) {
       return false;
@@ -67,22 +64,11 @@ class Logger : public ILogger {
   }
 
   // SAVING DURING LIVE SIMULATION:
-  // to do
-  // to implement a method that calls ActionLog's function
-  // and returns a vector of ActionEventBase objects that
-  // can be passed to the Logger's LogActionEvents method
-  // (can make a call to this method inside the func to do).
-
-  /// @brief Log action events from agents and persist to output.
-  /// @param events Vector of ActionEventBase objects to be logged.
-  /// @return true if successfully logged to output manager, false if no
-  /// OutputManager is set.
-  bool SaveToFile(const std::vector<ActionEventBase>& events) override {
-    if (!mOutputManager) {
-      return false;
-    }
+  /// @brief Extract and validate action events from all agents.
+  /// @param agents Vector of agents to extract actions from.
+void ExtractAgentActions(const std::vector<AgentType>& agents) override {
+    std::vector<ActionEventBase> events = mActionLog->LogAgentActions(agents);
     mOutputManager->WriteActionEvents(events);
-    return true;
   }
 };
 

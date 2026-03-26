@@ -9,6 +9,7 @@
 #include <vector>
 
 #include "IActionLog.hpp"
+#include "IReplayDriver.hpp"
 #include "IOutputManager.hpp"
 
 namespace cse498 {
@@ -29,11 +30,9 @@ class ILogger {
   /// @return true if replay was successful, false otherwise.
   virtual bool BeginReplay(const std::string& filePath) = 0;
 
-  /// @brief Save action events to a file.
-  /// @param events Vector of ActionEventBase objects to be saved.
-  /// @return true if successfully saved to file through output manager, false
-  /// otherwise.
-  virtual bool SaveToFile(const std::vector<ActionEventBase>& events) = 0;
+  /// @brief Extract and validate action events from agents.
+  /// @param agents Vector of agents to extract actions from.
+  virtual void ExtractAgentActions(const std::vector<AgentType>& agents) = 0;
 };
 
 }  // namespace cse498
