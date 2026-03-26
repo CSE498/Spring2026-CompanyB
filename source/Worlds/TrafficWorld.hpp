@@ -17,8 +17,8 @@ class TrafficWorld : public WorldBase {
     MOVE_RIGHT
   };
 
-  size_t road_id;   ///< Easy access to road CellType ID.
-  size_t grass_id;  ///< Easy access to grass CellType ID.
+  size_t road_id;   ///< ID of road cells, which agents can move on.
+  size_t grass_id;  ///< ID of grass cells, which agents can't move on..
 
   // Reworked by Claude — two cell types for traffic light phases,
   // with symbols showing which direction traffic may flow.
@@ -27,8 +27,9 @@ class TrafficWorld : public WorldBase {
   size_t traffic_light_horizontal_id;  ///< Traffic light allowing horizontal
                                        ///< movement ('-')
 
-  size_t spawn_id;        ///< Easy access to spawn CellType ID.
-  size_t destination_id;  ///< Easy access to destination CellType ID.
+  size_t spawn_id;        ///< ID of cells that spawn agents.
+  size_t destination_id;  ///< ID of cells which are destinations that agents
+                          ///< try to reach.
 
   std::vector<WorldPosition>
       traffic_light_positions;  ///< Positions of all traffic lights.
@@ -37,17 +38,32 @@ class TrafficWorld : public WorldBase {
   std::vector<std::pair<WorldPosition, std::string>>
       destination_colours;  ///< Per-destination ANSI colour codes.
 
+  /// @brief Indicates whether traffic lights in the world allow agents to pass
+  /// through intersections vertically or horizontally.
   enum TrafficLightPhase : int { ALLOW_VERTICAL = 0, ALLOW_HORIZONTAL = 1 };
+  /// @brief The TrafficLightPhase (allow vertical or horizontal movement) held
+  /// by all traffic lights in the world.
   TrafficLightPhase traffic_light_phase{};
-  int traffic_light_clock = 0;
+  /// @brief The number of turns that pass before all traffic lights flip to the
+  /// opposite of what they currently are.
   const int traffic_light_period = 3;
+  /// @brief Counts up each turn and gets reset when it reaches
+  /// traffic_light_period.
+  int traffic_light_clock = 0;
 
-  // THis is for the spawn, tile timer
-  // Set to 9 to instantly spawn 1 agent
-  int spawn_clock = 9;
+  /// @brief The number of turns that pass before a new agent is spawned from
+  /// each spawner with a random destination.
   const int spawn_period = 20;
 
+  /// @brief Counts up each turn and gets reset when it reaches spawn_period.
+  int spawn_clock = 0;
+
+  /// @brief The number of currently-active agents that have been spawned by
+  /// spawner tiles. Incremented whenever a spawner spawns something,
+  /// decremented whenever an agent reaches its destination and despawns.
   int num_spawned_agents = 0;
+  /// @brief Cap on the number of active spawned agents that can exist at a
+  /// time, to prevent the world from getting too chaotic.
   const int max_spawned_agents = 15;
 
   /// Provide the agent with movement actions.
@@ -73,11 +89,9 @@ class TrafficWorld : public WorldBase {
         "traffic_light_horizontal",
         "Traffic light allowing horizontal (left/right) movement.", '-');
 
-    // Spawner id
     spawn_id =
         main_grid.AddCellType("spawn", "Spawner for driving agents", 'S');
 
-    // Destination id
     destination_id = main_grid.AddCellType(
         "destination", "Destination for driving agents", 'D');
 
@@ -193,6 +207,9 @@ class TrafficWorld : public WorldBase {
 
     if (cur_position != new_position && cur_pos_dir.has_value() &&
         new_pos_dir.has_value()) {
+      // Directions correspond to ints as follows: N = 0, E = 1, S = 2, W = 3
+      // So taking a direction and adding 1 mod 4 corresponds to turning right,
+      // and adding 2 mod 4 corresponds to turning around.
       auto opposite_of_current = static_cast<Direction>(
           (static_cast<int>(cur_pos_dir.value()) + 2) % 4);
       if (new_pos_dir != opposite_of_current) {
@@ -256,7 +273,7 @@ class TrafficWorld : public WorldBase {
     UpdateSpawners();
     HandleDestinations();
   }
-  
+
   void RunAgents() override {
     for (const auto &agent_ptr : agent_set) {
       auto *driver = dynamic_cast<DrivingAgent *>(agent_ptr.get());
@@ -267,7 +284,7 @@ class TrafficWorld : public WorldBase {
     }
   }
 
-private:
+ private:
   // Reworked by Claude — swap traffic light cell types to update both
   // movement rules and display symbol in one step
   void UpdateTrafficLights() {
@@ -295,7 +312,8 @@ private:
         for (size_t x = 0; x < main_grid.GetWidth(); ++x) {
           WorldPosition pos(x, y);
           // Don't spawn on top of an existing agent
-          if (main_grid[pos] == spawn_id && !AgentExistsAt(pos) && num_spawned_agents < max_spawned_agents) {
+          if (main_grid[pos] == spawn_id && !AgentExistsAt(pos) &&
+              num_spawned_agents < max_spawned_agents) {
             auto dest = destination_positions.GetRandomElement();
             if (dest.has_value()) {
               WorldPosition dest_pos = dest.value();
@@ -328,7 +346,5 @@ private:
       }
     }
   }
-
 };
-// clang-format on
 }  // End of namespace cse498
