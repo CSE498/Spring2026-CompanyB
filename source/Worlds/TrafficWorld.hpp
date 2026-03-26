@@ -33,6 +33,8 @@ class TrafficWorld : public WorldBase {
 
   std::vector<WorldPosition>
       traffic_light_positions;  ///< Positions of all traffic lights.
+  std::vector<WorldPosition>
+      spawner_positions;  ///< Positions of all spawner tiles.
   WeightedSet<WorldPosition>
       destination_positions;  // Weighted set to randomly assign destinations
   std::vector<std::pair<WorldPosition, std::string>>
@@ -126,12 +128,15 @@ class TrafficWorld : public WorldBase {
 
     // clang-format on
 
-    // Written by Claude — record all traffic light positions for phase swapping
+    // Initially written by Claude, then modified — record all traffic light and
+    // spawner positions
     for (size_t y = 0; y < main_grid.GetHeight(); ++y) {
       for (size_t x = 0; x < main_grid.GetWidth(); ++x) {
         WorldPosition pos(x, y);
         if (main_grid[pos] == traffic_light_vertical_id) {
           traffic_light_positions.push_back(pos);
+        } else if (main_grid[pos] == spawn_id) {
+          spawner_positions.push_back(pos);
         }
       }
     }
@@ -308,22 +313,19 @@ class TrafficWorld : public WorldBase {
   void UpdateSpawners() {
     if (++spawn_clock >= spawn_period) {
       spawn_clock = 0;
-      for (size_t y = 0; y < main_grid.GetHeight(); ++y) {
-        for (size_t x = 0; x < main_grid.GetWidth(); ++x) {
-          WorldPosition pos(x, y);
-          // Don't spawn on top of an existing agent
-          if (main_grid[pos] == spawn_id && !AgentExistsAt(pos) &&
-              num_spawned_agents < max_spawned_agents) {
-            auto dest = destination_positions.GetRandomElement();
-            if (dest.has_value()) {
-              WorldPosition dest_pos = dest.value();
-              auto &agent = AddAgent<DrivingAgent>("Car");
-              agent.SetLocation(pos);
-              agent.SetGridDestination(dest_pos.CellX(), dest_pos.CellY());
-              agent.SetColour(GetDestinationColour(dest_pos));
+      for (const WorldPosition &pos : spawner_positions) {
+        // Don't spawn on top of an existing agent
+        if (main_grid[pos] == spawn_id && !AgentExistsAt(pos) &&
+            num_spawned_agents < max_spawned_agents) {
+          auto dest = destination_positions.GetRandomElement();
+          if (dest.has_value()) {
+            WorldPosition dest_pos = dest.value();
+            auto &agent = AddAgent<DrivingAgent>("Car");
+            agent.SetLocation(pos);
+            agent.SetGridDestination(dest_pos.CellX(), dest_pos.CellY());
+            agent.SetColour(GetDestinationColour(dest_pos));
 
-              ++num_spawned_agents;
-            }
+            ++num_spawned_agents;
           }
         }
       }
