@@ -130,6 +130,7 @@ class Random {
  private:
   static constexpr unsigned int kWordBits = 64;
   uint64_t state[4]{};
+  std::optional<double> cached_normal_{};
 
   // SplitMix64 for initializing the state.
   // Recommended for initializing the state of xoshiro256++.
