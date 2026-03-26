@@ -125,8 +125,7 @@ class DrivingAgent : public AgentBase {
     StateGridPosition right_pos = grid_pos.GetRightwardPosition();
     bool can_move_forward =
         IsTraversableTerrain(grid[forward_pos.AsWorldPosition()]);
-    bool can_move_left =
-        IsTraversableTerrain(grid[left_pos.AsWorldPosition()]);
+    bool can_move_left = IsTraversableTerrain(grid[left_pos.AsWorldPosition()]);
     bool can_move_right =
         IsTraversableTerrain(grid[right_pos.AsWorldPosition()]);
     if (!can_move_forward && !can_move_left && !can_move_right) {
