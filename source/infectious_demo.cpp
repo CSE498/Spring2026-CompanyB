@@ -2,17 +2,18 @@
  * infectious_demo.cpp
  * @brief Demo of InfectiousWorld 
  * @note Status: PROPOSAL
+ * @code
+ *   c++ -std=c++23 -DCSE498_INFECTIOUS_DEMO_STANDALONE -I. \
+ *   infectious_demo.cpp -o infectious_demo tools/Point.cpp tools/Box.cpp
+ * @endcode
  *
- * Compile: % c++ -std=c++23 -I. infectious_demo.cpp tools/Box.cpp tools/Point.cpp -o infectious_demo
- * Run:     ./infectious_demo
+  * To run this demo from the normal app entry point with RunInfectiousDemo()
  **/
 
 #include <iostream>
 #include <iomanip>
 #include <thread>
-#include <chrono>
 #include <vector>
-#include <string>
 
 #include "Agents/PacingAgent.hpp"
 #include "Worlds/InfectiousWorld.hpp"
@@ -26,8 +27,8 @@ namespace ansi {
   constexpr const char* RED         = "\033[31m";
   constexpr const char* BLUE        = "\033[34m";
   constexpr const char* GREY        = "\033[90m";
-}
-
+} 
+ 
 /// Draw the grid with agents color-coded by health state.
 void DrawWorld(const InfectiousWorld & world) {
   const WorldGrid & grid = world.GetGrid();
@@ -83,8 +84,8 @@ void DrawWorld(const InfectiousWorld & world) {
             << "  Recovered: " << world.GetRecoveredCount() << "\n";
 }
 
-int main() {
-  // Create a 20x10 open world with some walls.
+/// Runs the infectious-world demo; safe to call from another translation unit.
+int RunInfectiousDemo() {
   InfectiousWorld world(20, 10);
 
   WorldGrid & grid = world.GetGrid();
@@ -97,6 +98,7 @@ int main() {
     grid[x, 0] = world.GetWallID();
     grid[x, 9] = world.GetWallID();
   }
+  // Internal wall
   // Internal wall
   for (size_t y = 1; y < 6; ++y) {
     grid[10, y] = world.GetWallID();
@@ -136,3 +138,8 @@ int main() {
 
   return 0;
 }
+
+// Needed so as not to conflict with main in simple_main.cpp 
+#if defined(CSE498_INFECTIOUS_DEMO_STANDALONE)
+int main() { return RunInfectiousDemo(); }
+#endif
