@@ -1,0 +1,30 @@
+Surface Class - Overview
+
+Overall Design and Goals:
+
+The purpose of the Surface class is to provide a spatial manager for 2D shapes including circle and box objects. It aims to provide overlap detection efficiently and quickly enough with a significant number of objects, while being easy to use and maintain. The class allows for detecting all overlaps between objects and more specific checks. 
+
+The key aspects of the program include the ability to work with both Circle and Box Shapes, using sectors to identify overlaps between shapes. The class assigns unique IDs to each shape for fast updating.
+
+The internal structure of the program involves entries for each shape consisting of a shape type, ShapedID, and an occupied_cells vector. Sectors use an unordered map which sends cell keys to shape lists. The program is able to increment next ID values for simple management.
+
+The world is partitioned into cells of specified size. Each shape is inserted into all cells that overlap with its boundary. Collision checks are restricted to shapes that share sectors, which allows for efficient checking. The overall benefits of this design is that it is simple, has predictable patterns of memory access, and provides easy incremental updates. 
+
+
+	Many of the key functions implemented by the class include: ShapeID AddCircle(const Circle&) / ShapeID AddBox(const Box&)
+bool RemoveShape(ShapeID)
+ bool UpdateCircle(ShapeID, const Circle&) / bool UpdateBox(ShapeID, const Box&) 
+bool TranslateShape(ShapeID, const Point&) 
+std::vector<ShapeID> AllShapeIDs() const 
+std::vector<ShapeID> QueryRadius(const Point& center, double radius) const std::vector<pair<ShapeID,ShapeID>> DetectAllOverlaps() const 
+void SetOverlapCallback(OverlapCallback cb), void step()
+void clear()
+
+Example Code Usage:
+Surface s({.sector_size=5.0});
+auto c1 = s.AddCircle(Circle(Point(0,0), 1.0));
+auto b1 = s.AddBox(Box(Point(-1,-1), Point(1,1)));
+auto nearby = s.QueryRadius(Point(0,0), 2.0);
+
+Performance - Depending on the size of the sectors, there is a tradeoff between objects occupying many cells when it is too small, and more shapes per cell when it is too large. Overall, the Surface class is a spatial manager which performs collision detection using sectors and can be effective for reasonably large-sized uses.
+
