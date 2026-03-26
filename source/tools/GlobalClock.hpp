@@ -9,7 +9,7 @@
 
 namespace cse498 {
 
-/* Class Description:
+/** Class Description:
  *  Global clock for tracking simulation time in ticks.
  *  It is a static utility class and cannot be instantiated.
  *  I expect this class to be used by everyone who need to know the current time
@@ -22,7 +22,7 @@ namespace cse498 {
  */
 class GlobalClock {
  public:
-  // GlobalClock is a static utility class and cannot be instantiated
+  /// GlobalClock is a static utility class and cannot be instantiated
   GlobalClock() = delete;
 
   /// @return current global time in ticks
@@ -31,11 +31,11 @@ class GlobalClock {
   /// Advance global time by a @param deltaTime amount
   static void Tick(uint64_t deltaTime = 1);
 
-  // Reset global time to zero
+  /// Reset global time to zero
   static void Reset();
 
  private:
-  // The current global time
+  /// The current global time
   static uint64_t mGlobalTime;
 };
 

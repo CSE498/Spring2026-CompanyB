@@ -9,27 +9,28 @@
 #include <string>
 
 namespace cse498 {
-/* Class Description:
+/** Class Description:
  *  A tool to make precise timing measurements. It should be told when to start
  * and stop, but also be giving a name for the timing, it acts as a stopwatch
  * that calculate the time in Ticks from GlobalClock It can also pause and
  * resume the timing measurements if needed. Citation: Used AI responsibly and
- * actively in building the class below.
+ * actively in building the class below to generate the functions based on the
+ * design I created of the functions while also making sure it was built as intended.
  */
 
 class Timer {
  public:
   /// Initialize the object with a @param name
   Timer(const std::string& name);
-  // Start the stopwatch for the object
+  /// Start the stopwatch for the object
   void Start();
-  // Stop the stopwatch for the object
+  /// Stop the stopwatch for the object
   void Stop();
-  // Pause the stopwatch for the object
+  /// Pause the stopwatch for the object
   void Pause();
-  // Resume the stopwatch for the object
+  /// Resume the stopwatch for the object
   void Resume();
-  // Reset the internal variables of the stopwatch for the object
+  /// Reset the internal variables of the stopwatch for the object
   void Reset();
   /// @return total calculated time in ticks
   [[nodiscard]] uint64_t GetTotalTime() const;
@@ -37,16 +38,16 @@ class Timer {
   [[nodiscard]] const std::string& GetName() const;
 
  private:
-  // Name of the object
+  /// Name of the object
   std::string mName;
-  // Time when the stop watch is either started or resumed
+  /// Time when the stop watch is either started or resumed
   uint64_t mStartTime{0};
-  // The accumulated total Time when the stopwatch is running, NOT including
-  // when the stopwatch is paused
+  /// The accumulated total Time when the stopwatch is running, NOT including
+  /// when the stopwatch is paused
   uint64_t mAccumulatedTime{0};
-  // Check if the stopwatch has started and not stopped
+  /// Check if the stopwatch has started and not stopped
   bool mIsRunning{false};
-  // Check if the stopwatch has been paused
+  /// Check if the stopwatch has been paused
   bool mIsPaused{false};
 };
 
