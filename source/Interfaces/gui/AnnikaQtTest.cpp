@@ -113,44 +113,44 @@ static void rebuildMenuUI(QWidget* parent, QVBoxLayout* layout, Menu& menu)
 }
 
 // main generate window
-int main(int argc, char** argv)
-{
-    QApplication app(argc, argv);
+// int main(int argc, char** argv)
+// {
+//     QApplication app(argc, argv);
 
-    QWidget window;
-    window.setWindowTitle("Menu Test");
-    window.resize(480, 360);
-    applyStyle(&window);
+//     QWidget window;
+//     window.setWindowTitle("Menu Test");
+//     window.resize(480, 360);
+//     applyStyle(&window);
 
-    Menu menu("Test Menu");
+//     Menu menu("Test Menu");
 
-    bool debugMode = false;
-    QVBoxLayout* layout = nullptr;
+//     bool debugMode = false;
+//     QVBoxLayout* layout = nullptr;
 
-    menu.addItem("info", "Info", [&window]() {
-        QMessageBox::information(&window, "Info", "Menu action works!");
-    });
+//     menu.addItem("info", "Info", [&window]() {
+//         QMessageBox::information(&window, "Info", "Menu action works!");
+//     });
 
-    menu.addItem("quit", "Quit", [&app]() {
-        app.quit();
-    });
+//     menu.addItem("quit", "Quit", [&app]() {
+//         app.quit();
+//     });
 
-    auto debugId = menu.addItem("debug", "Debug Tools", [&window]() {
-        QMessageBox::information(&window, "Debug", "Debug clicked!");
-    });
+//     auto debugId = menu.addItem("debug", "Debug Tools", [&window]() {
+//         QMessageBox::information(&window, "Debug", "Debug clicked!");
+//     });
 
-    menu.setVisiblePredicate(debugId, [&debugMode]() {
-        return debugMode;
-    });
+//     menu.setVisiblePredicate(debugId, [&debugMode]() {
+//         return debugMode;
+//     });
 
-    menu.addItem("toggleDebug", "Toggle Debug", [&]() {
-        debugMode = !debugMode;
-        rebuildMenuUI(&window, layout, menu);
-    });
+//     menu.addItem("toggleDebug", "Toggle Debug", [&]() {
+//         debugMode = !debugMode;
+//         rebuildMenuUI(&window, layout, menu);
+//     });
 
-    layout = buildMenuUI(&window, menu);
-    rebuildMenuUI(&window, layout, menu);
+//     layout = buildMenuUI(&window, menu);
+//     rebuildMenuUI(&window, layout, menu);
 
-    window.show();
-    return app.exec();
-}
+//     window.show();
+//     return app.exec();
+// }
