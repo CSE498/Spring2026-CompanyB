@@ -21,6 +21,7 @@ namespace cse498 {
  * Provides methods for logging action events from agents during simulation
  * and replaying previously recorded events from file.
  */
+template <typename AgentType>
 class ILogger {
  public:
   virtual ~ILogger() = default;
@@ -33,6 +34,7 @@ class ILogger {
   /// @brief Extract and validate action events from agents.
   /// @param agents Vector of agents to extract actions from.
   virtual void ExtractAgentActions(const std::vector<AgentType>& agents) = 0;
+
 };
 
 }  // namespace cse498

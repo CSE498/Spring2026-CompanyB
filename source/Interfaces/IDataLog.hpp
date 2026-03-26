@@ -25,7 +25,7 @@ class IDataLog {
    * @brief Adds a log entry.
    * @param data JSON object containing entry details.
    */
-  virtual void AddEntry(const ActionEventBase& data) = 0;
+  // virtual void AddEntry(const ActionEventBase& data) = 0;
 
   /**
    * @brief Gets the mean of all logged action durations.

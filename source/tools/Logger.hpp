@@ -16,8 +16,6 @@
 
 namespace cse498 {
 
-class AgentBase;
-
 /**
  * @class Logger
  * @brief Implements action logging workflow and replay operations.
@@ -27,10 +25,11 @@ class AgentBase;
  * events and persists them to file. Supports replaying previously recorded
  * events to reconstruct simulation states.
  */
-class Logger : public ILogger {
+template <typename AgentType>
+class Logger : public ILogger<AgentType> {
  private:
   /// @brief Interface for extracting and validating agent actions.
-  std::unique_ptr<IActionLog<AgentBase>> mActionLog;
+  std::unique_ptr<IActionLog<AgentType>> mActionLog;
 
   /// @brief Interface for persisting log data to file with auto-generated
   /// names.
@@ -40,9 +39,9 @@ class Logger : public ILogger {
   std::unique_ptr<IReplayDriver> mReplayDriver;
 
  public:
-  /// @brief Constructs a Logger with action logging and output management.
+  /// @brief Constructs a logger with explicit dependencies.
   Logger() {
-    mActionLog = std::make_unique<IActionLog<AgentBase>>();
+    mActionLog = std::make_unique<IActionLog<AgentType>>();
     mOutputManager = std::make_unique<IOutputManager>();
     mReplayDriver = std::make_unique<IReplayDriver>();
   }
@@ -66,10 +65,14 @@ class Logger : public ILogger {
   // SAVING DURING LIVE SIMULATION:
   /// @brief Extract and validate action events from all agents.
   /// @param agents Vector of agents to extract actions from.
-void ExtractAgentActions(const std::vector<AgentType>& agents) override {
+  void ExtractAgentActions(const std::vector<AgentType>& agents) override {
+    if (!mActionLog || !mOutputManager) {
+      return;
+    }
     std::vector<ActionEventBase> events = mActionLog->LogAgentActions(agents);
     mOutputManager->WriteActionEvents(events);
   }
+
 };
 
 }  // namespace cse498

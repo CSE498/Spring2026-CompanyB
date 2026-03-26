@@ -1,8 +1,14 @@
 #include <catch2/catch_test_macros.hpp>
 #include <memory>
-#include <optional>
 #include <string>
 #include <vector>
+
+#include "Interfaces/IActionLog.hpp"
+#include "Interfaces/IDataLog.hpp"
+
+#include "Interfaces/ILogger.hpp"
+#include "Interfaces/IOutputManager.hpp"
+#include "Interfaces/IReplayDriver.hpp"
 
 namespace cse498 {
 
@@ -12,21 +18,14 @@ namespace cse498 {
 class AgentBase {
  public:
   virtual ~AgentBase() = default;
-  void GetActions() const {}
+
+  const std::vector<ActionEventBase>& GetActions() const { return actions; }
+
+ private:
+  std::vector<ActionEventBase> actions;
 };
 
 }  // namespace cse498
-
-#include "Interfaces/IActionLog.hpp"
-#include "Interfaces/IDataLog.hpp"
-
-namespace cse498 {
-using AgentType = AgentBase;
-}
-
-#include "Interfaces/ILogger.hpp"
-#include "Interfaces/IOutputManager.hpp"
-#include "Interfaces/IReplayDriver.hpp"
 
 namespace cse498 {
 
@@ -99,7 +98,7 @@ class MockReplayDriver : public IReplayDriver {
 #undef IActionLog
 
 TEST_CASE("Test Logger replay and file saving functionalities", "[Logger]") {
-  cse498::Logger logger;
+  cse498::Logger<cse498::AgentBase> logger;
 
   auto* rawActionLog = logger.mActionLog.get();
   auto* rawOutputManager = logger.mOutputManager.get();
