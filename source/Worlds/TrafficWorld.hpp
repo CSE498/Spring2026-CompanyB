@@ -1,5 +1,4 @@
 #pragma once
-// N.B. most of this was cannibalized from MazeWorld to start with
 #include <algorithm>
 
 #include "../core/WorldBase.hpp"
@@ -246,6 +245,10 @@ class TrafficWorld : public WorldBase {
   // This code and everything related to it is bad and I'm sorry for writing it.
   // In the future we'll definitely need better ways for agents to interact with
   // each other. Pushing it now because it works, at least.
+
+  /// @brief Returns the direction of the DrivingAgent at the given position,
+  /// if there is a DrivingAgent with that position and it hasn't been
+  /// despawned. Otherwise, returns nullopt.
   std::optional<Direction> DirectionOfDrivingAgentAt(WorldPosition pos) {
     auto it = std::find_if(
         agent_set.begin(), agent_set.end(), [&pos](agent_ptr_t &agent) {
@@ -309,7 +312,9 @@ class TrafficWorld : public WorldBase {
       }
     }
   }
-
+  /// @brief Update the spawn clock by 1 tick. If it's time to spawn more
+  /// agents, go to each spawner without an agent currently on top of it and
+  /// spawn a new DrivingAgent with a randomly chosen destination.
   void UpdateSpawners() {
     if (++spawn_clock >= spawn_period) {
       spawn_clock = 0;
@@ -331,9 +336,8 @@ class TrafficWorld : public WorldBase {
       }
     }
   }
-
+  /// @brief Despawn any agents that have reached their destination.
   void HandleDestinations() {
-    // Despawn agents that reached their destination
     for (auto &agent_ptr : agent_set) {
       auto *driver = dynamic_cast<DrivingAgent *>(agent_ptr.get());
       if (!driver || driver->get_reached_destination()) continue;
