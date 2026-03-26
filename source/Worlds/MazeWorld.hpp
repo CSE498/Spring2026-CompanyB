@@ -20,13 +20,13 @@ namespace cse498 {
     size_t floor_id; ///< Easy access to floor CellType ID.
     size_t wall_id;  ///< Easy access to wall CellType ID.
 
-    /// Provide the agent with movement actions.
-    void ConfigAgent(AgentBase & agent) override {
-      agent.AddAction("up", MOVE_UP);
-      agent.AddAction("down", MOVE_DOWN);
-      agent.AddAction("left", MOVE_LEFT);
-      agent.AddAction("right", MOVE_RIGHT);
-    }
+    // /// Provide the agent with movement actions.
+    // void ConfigAgent(AgentBase & agent) override {
+    //   agent.AddAction("up", MOVE_UP);
+    //   agent.AddAction("down", MOVE_DOWN);
+    //   agent.AddAction("left", MOVE_LEFT);
+    //   agent.AddAction("right", MOVE_RIGHT);
+    // }
 
   public:
     MazeWorld() {
@@ -48,26 +48,29 @@ namespace cse498 {
     ~MazeWorld() = default;
 
     /// Allow the agents to move around the maze.
-    int DoAction(AgentBase & agent, size_t action_id) override {
+    DummyAgentData DoAction(AgentBase<DummyAgentData>& agent, [[maybe_unused]] const StepContainer& steps) override {
       // Determine where the agent is trying to move.
-      WorldPosition cur_position = agent.GetLocation().AsWorldPosition();
+      WorldPosition cur_position = agent.GetState().pos;
       WorldPosition new_position;
-      switch (action_id) {
-      case REMAIN_STILL: new_position = cur_position; break;
-      case MOVE_UP:      new_position = cur_position.Up(); break;
-      case MOVE_DOWN:    new_position = cur_position.Down(); break;
-      case MOVE_LEFT:    new_position = cur_position.Left(); break;
-      case MOVE_RIGHT:   new_position = cur_position.Right(); break;
-      }
+
+      // TODO PARSE THE STEPS HERE AND DO ACCORDING ACTIONS
+      // switch (action_id) {
+      // case REMAIN_STILL: new_position = cur_position; break;
+      // case MOVE_UP:      new_position = cur_position.Up(); break;
+      // case MOVE_DOWN:    new_position = cur_position.Down(); break;
+      // case MOVE_LEFT:    new_position = cur_position.Left(); break;
+      // case MOVE_RIGHT:   new_position = cur_position.Right(); break;
+      // }
+
+      // do this as a placeholder
+      new_position = std::get<MovementStep>(steps.steps[0]).loc;
 
       // Don't let the agent move off the world or into a wall.
-      if (!main_grid.IsValid(new_position)) { return false; }
-      if (main_grid[new_position] == wall_id) { return false; }
+      if (!main_grid.IsValid(new_position)) { return DummyAgentData(cur_position); }
+      if (main_grid[new_position] == wall_id) { return DummyAgentData(cur_position); }
 
       // Set the agent to its new postion.
-      agent.SetLocation(new_position);
-
-      return true;
+      return DummyAgentData(new_position);
     }
 
   };

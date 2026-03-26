@@ -16,13 +16,20 @@
 #include "AgentBase.hpp"
 #include "ItemBase.hpp"
 #include "WorldGrid.hpp"
+#include "Step.hpp"
 
 namespace cse498 {
 
+struct DummyAgentData {
+  WorldPosition pos;  
+  char symbol = '@';
+};
+
 using item_ptr_t = std::unique_ptr<ItemBase>;
 using item_set_t = std::vector<item_ptr_t>;
-using agent_ptr_t = std::unique_ptr<AgentBase>;
+using agent_ptr_t = std::unique_ptr<AgentBase<DummyAgentData>>;
 using agent_set_t = std::vector<agent_ptr_t>;
+using cse498::steps::StepContainer;
 
 class WorldBase {
  protected:
@@ -37,7 +44,7 @@ class WorldBase {
   /// Helper function that is run whenever a new agent is created.
   /// @note Override this function to provide agents with actions or other
   /// setup.
-  virtual void ConfigAgent(AgentBase& /* agent */) {}
+  virtual void ConfigAgent(AgentBase<DummyAgentData>& /* agent */) {}
 
  public:
   WorldBase() = default;
@@ -64,13 +71,13 @@ class WorldBase {
   }
 
   /// Return a reference to an Agent with a given ID.
-  [[nodiscard]] AgentBase& GetAgent(size_t id) {
+  [[nodiscard]] AgentBase<DummyAgentData> & GetAgent(size_t id) {
     assert(id < agent_set.size());
     return *agent_set[id];
   }
 
   /// Return a CONST reference to an Agent with a given ID.
-  [[nodiscard]] const AgentBase& GetAgent(size_t id) const {
+  [[nodiscard]] const AgentBase<DummyAgentData> & GetAgent(size_t id) const {
     assert(id < agent_set.size());
     return *agent_set[id];
   }
@@ -92,15 +99,15 @@ class WorldBase {
   /// @param agent_name The name of this agent
   /// @return A reference to the newly created agent
   template <typename AGENT_T>
-  AGENT_T& AddAgent(std::string agent_name = "None") {
+  AGENT_T& AddAgent(DummyAgentData data) {
     auto agent_ptr =
-        std::make_unique<AGENT_T>(agent_set.size(), agent_name, *this);
+        std::make_unique<AGENT_T>(data);
     AGENT_T& agent_ref = *agent_ptr;
     ConfigAgent(*agent_ptr);
-    if (agent_ptr->Initialize() == false) {
-      std::cerr << "Failed to initialize agent '" << agent_name << "'."
-                << std::endl;
-    }
+    // if (agent_ptr->Initialize() == false) {
+    //   std::cerr << "Failed to initialize agent '" << agent_name << "'."
+    //             << std::endl;
+    // }
     agent_set.emplace_back(
         std::move(agent_ptr));  // Move unique ptr for agent into set.
     return agent_ref;
@@ -113,16 +120,16 @@ class WorldBase {
   /// @param action The id of the action to take
   /// @return The result of this action (usually 0/1 to indicate success)
   /// @note Thus function must be overridden in any derived world.
-  virtual int DoAction(AgentBase& agent, size_t action_id) = 0;
+  virtual DummyAgentData DoAction(AgentBase<DummyAgentData>& agent, const StepContainer& steps) = 0;
 
   /// @brief Step through each agent giving them a chance to take an action.
   /// @note Override function to control execution order of agents.
   /// @note Override function to control which grid each agent receives.
   virtual void RunAgents() {
-    for (const auto& agent_ptr : agent_set) {
-      size_t action_id = agent_ptr->SelectAction(main_grid);
-      int result = DoAction(*agent_ptr, action_id);
-      agent_ptr->SetActionResult(result);
+    for (const agent_ptr_t& agent_ptr : agent_set) {
+      StepContainer steps = agent_ptr->GetTurn();
+      DummyAgentData new_data = DoAction(*agent_ptr, steps);
+      agent_ptr->SetState(new_data);
     }
   }
 
@@ -143,7 +150,7 @@ class WorldBase {
        * This more closely mimicks the compy design
        */
       DrawGrid(main_grid);
-      std::this_thread::sleep_for(std::chrono::milliseconds(250)); // Simulate a tick
+      std::this_thread::sleep_for(std::chrono::milliseconds(750)); // Simulate a SLOW tick
     }
   }
 
@@ -167,8 +174,8 @@ class WorldBase {
 
       // Substitute in agents.
       for (auto & agent : agent_set) {
-        WorldPosition pos = agent->GetLocation().AsWorldPosition();
-        symbol_grid[pos.CellY()][pos.CellX()] = agent->GetSymbol();
+        WorldPosition pos = agent->GetState().pos;
+        symbol_grid[pos.CellY()][pos.CellX()] = agent->GetState().symbol;
       }
 
       // Print out the symbol_grid with a box around it.
@@ -191,21 +198,21 @@ class WorldBase {
 
   // Provide a vector of IDs for other agents that the input agent is aware of.
   // (If not overridden, return ALL agents.)
-  virtual std::vector<size_t> GetKnownAgents(
-      [[maybe_unused]] const AgentBase& agent) const {
-    std::vector<size_t> out_ids;
-    for (const agent_ptr_t& ptr : agent_set) out_ids.push_back(ptr->GetID());
-    return out_ids;
-  }
+  // virtual std::vector<size_t> GetKnownAgents(
+  //     [[maybe_unused]] const AgentBase<DummyAgentData>& agent) const {
+  //   std::vector<size_t> out_ids;
+  //   for (const agent_ptr_t& ptr : agent_set) out_ids.push_back(ptr->GetID());
+  //   return out_ids;
+  // }
 
-  // Provide a vector of IDs for items that the input agent is aware of.
-  // (If not overridden, return ALL items.)
-  std::vector<size_t> GetKnownItems(
-      [[maybe_unused]] const AgentBase& agent) const {
-    std::vector<size_t> out_ids;
-    for (const item_ptr_t& ptr : item_set) out_ids.push_back(ptr->GetID());
-    return out_ids;
-  }
+  // // Provide a vector of IDs for items that the input agent is aware of.
+  // // (If not overridden, return ALL items.)
+  // std::vector<size_t> GetKnownItems(
+  //     [[maybe_unused]] const AgentBase<DummyAgentData>& agent) const {
+  //   std::vector<size_t> out_ids;
+  //   for (const item_ptr_t& ptr : item_set) out_ids.push_back(ptr->GetID());
+  //   return out_ids;
+  // }
 };
 
 }  // End of namespace cse498

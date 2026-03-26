@@ -3,7 +3,7 @@
 #include <catch2/catch_test_macros.hpp>
 
 TEST_CASE("InfoStep basic functionality", "[InfoStep]") {
-  using namespace steps;
+  using namespace cse498::steps;
   InfoHandler test_handler(
       [](int i) -> std::expected<bool, StepErr> { return i == 0; });
   // InfoHandler test_handler(std::function<std::expected<bool, StepErr>(int)>(
