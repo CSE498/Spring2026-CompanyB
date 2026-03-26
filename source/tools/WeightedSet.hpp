@@ -444,7 +444,7 @@ class WeightedSet {
     if (!root_) {
       return std::nullopt;
     }
-    return GetElementAt(rng_.nextDouble(0, total_weight()));
+    return GetElementAt(rng_.nextReal(0.0, total_weight()));
   }
 
   /**

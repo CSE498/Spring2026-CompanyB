@@ -113,18 +113,27 @@ class Random {
     assert(stddev >= 0.0 && "stddev must be non-negative");
     if (stddev == 0.0) return mean;
 
-    // Box-Muller transform to convert uniform random variables to standard
-    // normal, then scale and shift.
-
-    // AI helped me with the logic here
-    double u1 = nextUnitDouble();
-    while (u1 <= std::numeric_limits<double>::min()) {
-      u1 = nextUnitDouble();
+    // Return the cached second Box-Muller sample if available.
+    if (cached_normal_.has_value()) {
+      const double z = *cached_normal_;
+      cached_normal_.reset();
+      return mean + stddev * z;
     }
+
+    // Box-Muller transform: produces two independent normal samples.
+    // AI helped me with the logic here
+    auto freshU1 = [&] {
+      double u = nextUnitDouble();
+      while (u <= std::numeric_limits<double>::min()) u = nextUnitDouble();
+      return u;
+    };
+
+    const double u1 = freshU1();
     const double u2 = nextUnitDouble();
-    const double z =
-        std::sqrt(-2.0 * std::log(u1)) * std::cos(2.0 * std::numbers::pi * u2);
-    return mean + stddev * z;
+    const double r = std::sqrt(-2.0 * std::log(u1));
+    const double theta = 2.0 * std::numbers::pi * u2;
+    cached_normal_ = r * std::sin(theta);  // cache second sample for next call
+    return mean + stddev * (r * std::cos(theta));
   }
 
  private:
