@@ -193,6 +193,19 @@ public:
   constexpr void operator()(Params... args) const { invoke(args...); }
 
   /**
+   * @brief Get underlying function container if the caller wants to do any modification or uncommon operations
+   * that hasnt been implemented in the FunctionSet. We can do this because the FunctionSet holds no state on the function vector
+   * ,so it being modified without our knowledge doesnt break any invariant.
+   */
+  [[nodiscard]] constexpr std::vector<FuncType>& GetFunctions() noexcept {
+    return functions;
+  }
+
+  [[nodiscard]] constexpr const std::vector<FuncType>& GetFunctions() const noexcept {
+    return functions;
+  }
+
+  /**
    * @brief Access a function by index with bounds checking.
    *
    * @param index Index of the function to access.
