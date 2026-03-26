@@ -251,10 +251,27 @@ class TrafficWorld : public WorldBase {
     return it != agent_set.end();
   }
 
+  void UpdateWorld() override {
+    UpdateTrafficLights();
+    UpdateSpawners();
+    HandleDestinations();
+  }
+  
+  void RunAgents() override {
+    for (const auto &agent_ptr : agent_set) {
+      auto *driver = dynamic_cast<DrivingAgent *>(agent_ptr.get());
+      if (driver && driver->get_reached_destination()) continue;
+      size_t action_id = agent_ptr->SelectAction(main_grid);
+      int result = DoAction(*agent_ptr, action_id);
+      agent_ptr->SetActionResult(result);
+    }
+  }
+
+private:
   // Reworked by Claude — swap traffic light cell types to update both
   // movement rules and display symbol in one step
-  void UpdateWorld() override {
-    if (++traffic_light_clock == traffic_light_period) {
+  void UpdateTrafficLights() {
+    if (++traffic_light_clock >= traffic_light_period) {
       traffic_light_clock = 0;
       traffic_light_phase =
           traffic_light_phase == TrafficLightPhase::ALLOW_HORIZONTAL
@@ -269,7 +286,11 @@ class TrafficWorld : public WorldBase {
         main_grid[pos] = new_type;
       }
     }
-    if (++spawn_clock == spawn_period) {
+  }
+
+  void UpdateSpawners() {
+    if (++spawn_clock >= spawn_period) {
+      spawn_clock = 0;
       for (size_t y = 0; y < main_grid.GetHeight(); ++y) {
         for (size_t x = 0; x < main_grid.GetWidth(); ++x) {
           WorldPosition pos(x, y);
@@ -288,8 +309,10 @@ class TrafficWorld : public WorldBase {
           }
         }
       }
-      spawn_clock = 0;
     }
+  }
+
+  void HandleDestinations() {
     // Despawn agents that reached their destination
     for (auto &agent_ptr : agent_set) {
       auto *driver = dynamic_cast<DrivingAgent *>(agent_ptr.get());
@@ -305,15 +328,7 @@ class TrafficWorld : public WorldBase {
       }
     }
   }
-  void RunAgents() override {
-    for (const auto &agent_ptr : agent_set) {
-      auto *driver = dynamic_cast<DrivingAgent *>(agent_ptr.get());
-      if (driver && driver->get_reached_destination()) continue;
-      size_t action_id = agent_ptr->SelectAction(main_grid);
-      int result = DoAction(*agent_ptr, action_id);
-      agent_ptr->SetActionResult(result);
-    }
-  }
+
 };
 // clang-format on
 }  // End of namespace cse498
