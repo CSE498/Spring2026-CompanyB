@@ -36,14 +36,14 @@ class Logger : public ILogger<AgentType> {
   std::unique_ptr<IOutputManager> mOutputManager;
 
   /// @brief Interface for replaying recorded events from file.
-  std::unique_ptr<IReplayDriver> mReplayDriver;
+  std::unique_ptr<IReplayDriver<AgentType>> mReplayDriver;
 
  public:
   /// @brief Constructs a logger with explicit dependencies.
   Logger() {
     mActionLog = std::make_unique<IActionLog<AgentType>>();
     mOutputManager = std::make_unique<IOutputManager>();
-    mReplayDriver = std::make_unique<IReplayDriver>();
+    mReplayDriver = std::make_unique<IReplayDriver<AgentType>>();
   }
 
   ~Logger() override = default;
@@ -51,15 +51,15 @@ class Logger : public ILogger<AgentType> {
   // REPLAY:
   /// @brief Replay recorded events from a file.
   /// @param filePath Path to the JSON file containing logged events.
+  /// @param agents Reference vector of agents updated during replay.
   /// @return true if replay was successful, false if no ReplayDriver is set.
-  /// NOTE: need to have another param that takes in a ref to an empty container 
-  /// from world to populate with agents and their action info for replay
-  bool BeginReplay(const std::string& filePath) override {
+  bool BeginReplay(const std::string& filePath,
+                   std::vector<AgentType*>& agents) override {
     if (!mReplayDriver) {
       return false;
     }
 
-    return mReplayDriver->ReplayFromFile(filePath);
+    return mReplayDriver->ReplayFromFile(filePath, agents);
   }
 
   // SAVING DURING LIVE SIMULATION:
@@ -72,7 +72,6 @@ class Logger : public ILogger<AgentType> {
     std::vector<ActionEventBase> events = mActionLog->LogAgentActions(agents);
     mOutputManager->WriteActionEvents(events);
   }
-
 };
 
 }  // namespace cse498

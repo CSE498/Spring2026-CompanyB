@@ -5,7 +5,6 @@
 
 #include "Interfaces/IActionLog.hpp"
 #include "Interfaces/IDataLog.hpp"
-
 #include "Interfaces/ILogger.hpp"
 #include "Interfaces/IOutputManager.hpp"
 #include "Interfaces/IReplayDriver.hpp"
@@ -13,11 +12,15 @@
 namespace cse498 {
 
 // Minimal AgentBase to satisfy AgentConcept without pulling in full engine deps
-// This allows us to test Logger isolated from the heavy WorldGrid and Entity dependencies
-// Used AI to help with the test cases.
+// This allows us to test Logger isolated from the heavy WorldGrid and Entity
+// dependencies Used AI to help with the test cases.
 class AgentBase {
  public:
   virtual ~AgentBase() = default;
+
+  int id = 0;
+
+  void loadFromJson(const nlohmann::json& /*eventData*/) {}
 
   const std::vector<ActionEventBase>& GetActions() const { return actions; }
 
@@ -30,7 +33,8 @@ class AgentBase {
 namespace cse498 {
 
 // Mock implementation of IActionLog that just returns empty events
-// Required because Logger needs an IActionLog, but we don't need its real logic here
+// Required because Logger needs an IActionLog, but we don't need its real logic
+// here
 template <typename T>
 class MockActionLog : public IActionLog<T> {
  public:
@@ -50,14 +54,14 @@ class MockOutputManager : public IOutputManager {
   mutable bool mWriteCalled = false;
   mutable std::vector<ActionEventBase> mReceivedEvents;
 
-  void WriteActionEvents(
-      const std::vector<ActionEventBase>& events) override {
+  void WriteActionEvents(const std::vector<ActionEventBase>& events) override {
     mWriteCalled = true;
     mReceivedEvents = events;
   }
 
   bool SetOutputFile(const std::string& /*path*/) override { return true; }
-  void LogMessage(LogLevel /*level*/, const std::string& /*message*/) override {}
+  void LogMessage(LogLevel /*level*/, const std::string& /*message*/) override {
+  }
   void SetLogLevel(LogLevel /*level*/) noexcept override {}
   bool Flush() override { return true; }
   void WriteSimulationOutput(const DataLog& /*dataLog*/) override {}
@@ -68,26 +72,33 @@ class MockOutputManager : public IOutputManager {
 };
 
 // Mock replay driver to simulate reading replay files
-// We can toggle 'should_succeed' to test both the success and error paths of the Logger
-class MockReplayDriver : public IReplayDriver {
+// We can toggle 'should_succeed' to test both the success and error paths of
+// the Logger
+class MockReplayDriver : public IReplayDriver<AgentBase> {
  public:
   mutable bool mReplayCalled = false;
   mutable std::string mLastFile;
+  mutable size_t mLastAgentCount = 0;
   bool mShouldSucceed = true;
 
-  bool ReplayFromFile(const std::string& filePath) override {
+  bool ReplayFromFile(const std::string& filePath,
+                      std::vector<AgentBase*>& agents) override {
     mReplayCalled = true;
     mLastFile = filePath;
+    mLastAgentCount = agents.size();
     return mShouldSucceed;
   }
 };
+
+template <typename>
+using MockReplayDriverT = MockReplayDriver;
 
 }  // namespace cse498
 
 // Hack to inject mocks into Logger and expose private members
 #define IActionLog MockActionLog
 #define IOutputManager MockOutputManager
-#define IReplayDriver MockReplayDriver
+#define IReplayDriver MockReplayDriverT
 #define private public
 
 #include "tools/Logger.hpp"
@@ -107,33 +118,38 @@ TEST_CASE("Test Logger replay and file saving functionalities", "[Logger]") {
   SECTION("Test BeginReplay with a valid driver that succeeds") {
     // configure our mock to simulate a successful file read
     rawReplayDriver->mShouldSucceed = true;
-    
+    std::vector<cse498::AgentBase*> replayAgents;
+
     // logger should bubble up the true result
-    REQUIRE(logger.BeginReplay("test.json"));
+    REQUIRE(logger.BeginReplay("test.json", replayAgents));
 
     // verify the logger actually tried to replay from the driver
     REQUIRE(rawReplayDriver->mReplayCalled);
     REQUIRE(rawReplayDriver->mLastFile == "test.json");
+    REQUIRE(rawReplayDriver->mLastAgentCount == replayAgents.size());
   }
 
   SECTION("Test BeginReplay with a failing driver") {
     // configure our mock to simulate a failed file read
     rawReplayDriver->mShouldSucceed = false;
+    std::vector<cse498::AgentBase*> replayAgents;
 
     // logger should return false if the underlying driver fails
-    REQUIRE_FALSE(logger.BeginReplay("test.json"));
+    REQUIRE_FALSE(logger.BeginReplay("test.json", replayAgents));
     REQUIRE(rawReplayDriver->mReplayCalled);
   }
 
   SECTION("Test BeginReplay when no driver was provided") {
     // simulate a missing replay driver to test null safety
     logger.mReplayDriver.reset();
+    std::vector<cse498::AgentBase*> replayAgents;
 
     // should safely return false without crashing
-    REQUIRE_FALSE(logger.BeginReplay("test.json"));
+    REQUIRE_FALSE(logger.BeginReplay("test.json", replayAgents));
   }
 
-  SECTION("Test ExtractAgentActions successfully writes to the output manager") {
+  SECTION(
+      "Test ExtractAgentActions successfully writes to the output manager") {
     std::vector<cse498::ActionEventBase> events = {
         {"agent1", "move", cse498::LogLevel::Normal, 123}};
 

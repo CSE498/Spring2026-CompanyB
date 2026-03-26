@@ -5,56 +5,42 @@
 
 #pragma once
 
+#include <algorithm>
 #include <concepts>
 #include <expected>
-#include <memory>
+#include <fstream>
+#include <string>
+#include <vector>
 
-#include "../../tests/tools/MockWorld.hpp"
 #include "nlohmann/json.hpp"
 
 namespace cse498 {
 
-// Concept: Ensures a type has a getLoggable() method
-template <typename A>
-concept IsLoggableAgent = requires(A a) {
-  { a->getLoggable() };
+// Concept: Ensures an agent pointer supports replay operations.
+template <typename AgentT>
+concept ReplayAgent = requires(AgentT* agent, const nlohmann::json& eventData) {
+  { agent->loadFromJson(eventData) };
+  { agent->id };
 };
-
-// Concept: Ensures a type has a getAgents() method returning a range of
-// IsLoggableAgents
-template <typename W>
-concept ValidWorld =
-    requires(W w) {
-      // Ensures getAgents() exists and returns something iterable (like
-      // std::vector)
-      { w.getAgents() } -> std::ranges::range;
-    } &&
-    // Ensures the elements inside that iterable satisfy IsLoggableAgent
-    IsLoggableAgent<
-        std::ranges::range_value_t<decltype(std::declval<W>().getAgents())>>;
 
 /* Class Description:
  *  ReplayDriver is responsible for replaying logged events from a JSON file.
- *  It reads the events and sends instructions to the world based on the event
- * data. Citation: Used AI responsibly and actively in building the class below.
+ *  It reads the events and sends instructions to matching agents by id.
  */
 
-template <ValidWorld WorldT>
+template <ReplayAgent AgentT>
 class ReplayDriver {
- private:
-  // world* world; need a pointer to the world object to instuct addtions and
-  std::shared_ptr<WorldT> world;  // This is a placeholder. Replace with actual
-                                  // world class pointer when available.
  public:
-  /// @brief Basic constructor for the ReplayDriver.
-  ReplayDriver(std::shared_ptr<WorldT> world) : world(world){};
+  ReplayDriver() = default;
   ~ReplayDriver() = default;
 
   /// @brief Method to replay logged events from a JSON file.
   /// @param filePath Path to the JSON file containing logged events.
+  /// @param agents Reference vector of replayable agents.
   /// @return Success status of the replay operation. True if successful and
   /// SendInstructions is called, false otherwise.
-  std::expected<bool, std::string> ReplayFromFile(const std::string &filePath) {
+  std::expected<bool, std::string> ReplayFromFile(
+      const std::string& filePath, std::vector<AgentT*>& agents) {
     std::ifstream inFile(filePath);
     if (!inFile.is_open()) {
       return std::unexpected("Failed to open file" + filePath);
@@ -63,26 +49,46 @@ class ReplayDriver {
     nlohmann::json eventData;
     try {
       inFile >> eventData;
-    } catch (const nlohmann::json::parse_error &e) {
+    } catch (const nlohmann::json::parse_error& e) {
       return std::unexpected("Failed to parse JSON: " + std::string(e.what()));
     }
 
-    SendInstructions(eventData);
+    if (eventData.is_array()) {
+      for (const auto& event : eventData) {
+        if (!SendInstructions(event, agents)) {
+          return std::unexpected("Failed to replay event: agent not found");
+        }
+      }
+      return true;
+    }
 
-    // Here we would add logic to process the eventData and replay the events.
-    // For now, we will just print the loaded JSON data.
-    // std::cout << "Loaded event data: " << eventData.dump(4) << std::endl;
+    if (!SendInstructions(eventData, agents)) {
+      return std::unexpected("Failed to replay event: agent not found");
+    }
 
     return true;
   }
-  /// @brief Method to send instructions to the world based on the event data.
+  /// @brief Method to send instructions to a matching agent.
   /// @param eventData JSON data containing the events to be replayed.
-  void SendInstructions(const nlohmann::json &eventData) {
-    // This function would contain logic to send instructions to the world based
-    // on the event data. For now, we will pretend to send it to the world
-    // Here we would have logic to interpret the event and send instructions to
-    // the world.
-    world->getAgent(eventData.at("id"))->loadFromJson(eventData);
+  /// @param agents Reference vector of replayable agents.
+  /// @return true when a matching agent is updated, false otherwise.
+  bool SendInstructions(const nlohmann::json& eventData,
+                        std::vector<AgentT*>& agents) {
+    if (!eventData.contains("id") || !eventData.at("id").is_number_integer()) {
+      return false;
+    }
+
+    const int targetId = eventData.at("id").get<int>();
+    const auto found = std::ranges::find_if(agents, [targetId](AgentT* agent) {
+      return agent != nullptr && agent->id == targetId;
+    });
+
+    if (found == agents.end()) {
+      return false;
+    }
+
+    (*found)->loadFromJson(eventData);
+    return true;
   }
 };
 }  // namespace cse498

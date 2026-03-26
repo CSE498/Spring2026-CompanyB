@@ -15,7 +15,8 @@ namespace cse498 {
  * that calculate the time in Ticks from GlobalClock It can also pause and
  * resume the timing measurements if needed. Citation: Used AI responsibly and
  * actively in building the class below to generate the functions based on the
- * design I created of the functions while also making sure it was built as intended.
+ * design I created of the functions while also making sure it was built as
+ * intended.
  */
 
 class Timer {

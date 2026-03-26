@@ -12,44 +12,44 @@ namespace cse498 {
 // field in the JSON data, but this can be easily modified to
 // accommodate other fields as needed (will be included in new module specs)
 // void DataLog::AddEntry(const ActionEventBase& data) {
-  // Create log entry with automatic timestamp
-  /*
-  nlohmann::json logEntry = data;
-  logEntry["timestamp"] = GlobalClock::GetTime();
+// Create log entry with automatic timestamp
+/*
+nlohmann::json logEntry = data;
+logEntry["timestamp"] = GlobalClock::GetTime();
 
-  // Store the complete entry
-  mEntries.push_back(logEntry);
+// Store the complete entry
+mEntries.push_back(logEntry);
 
-  // Update statistics based on duration field
-  if (data.contains("duration") && data["duration"].is_number()) {
-    double duration = data["duration"].get<double>();
+// Update statistics based on duration field
+if (data.contains("duration") && data["duration"].is_number()) {
+  double duration = data["duration"].get<double>();
 
-    // Note: Only non-negative durations are included in statistics, as negative
-    // durations do not make physical sense in a simulation context.
-    if (duration >= 0.0) {
-      mRunningSum += duration;
+  // Note: Only non-negative durations are included in statistics, as negative
+  // durations do not make physical sense in a simulation context.
+  if (duration >= 0.0) {
+    mRunningSum += duration;
 
-      if (mCount == 0) {
-        // First entry with duration
+    if (mCount == 0) {
+      // First entry with duration
+      mMinValue = duration;
+      mMaxValue = duration;
+    } else {
+      // Subsequent entries
+      if (duration < mMinValue) {
         mMinValue = duration;
-        mMaxValue = duration;
-      } else {
-        // Subsequent entries
-        if (duration < mMinValue) {
-          mMinValue = duration;
-        }
-        if (duration > mMaxValue) {
-          mMaxValue = duration;
-        }
       }
-
-      // Increment count
-      mCount++;
-      mDurations.insert(duration);
-      mMedianIsValid = false;  // Invalidate cache when new data is added
+      if (duration > mMaxValue) {
+        mMaxValue = duration;
+      }
     }
+
+    // Increment count
+    mCount++;
+    mDurations.insert(duration);
+    mMedianIsValid = false;  // Invalidate cache when new data is added
   }
-    */
+}
+  */
 // }
 
 std::optional<double> DataLog::GetMean() const {

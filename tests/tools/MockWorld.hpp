@@ -50,5 +50,8 @@ class MockWorld {
   }
 
   std::vector<MockAgent*>& getAgents() { return agents; }
+  const std::vector<MockAgent*>& getAgents() const { return agents; }
+
+  std::vector<MockAgent*>& getReplayAgents() { return agents; }
 };
 }  // namespace cse498

@@ -74,7 +74,7 @@ class DataLog : public IDataLog {
   // / @param data ActionEventBase containing agentId, actionType, duration, and
   // / summary.
   // void AddEntry(const ActionEventBase& data) override;
-  
+
   /// @brief Gets the mean of all logged action durations.
   /// @return Mean duration value, or std::nullopt if no data has been logged.
   std::optional<double> GetMean() const override;

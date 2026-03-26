@@ -3,21 +3,23 @@
 #include <nlohmann/json.hpp>
 
 #include "../../source/tools/ReplayDriver.hpp"
+#include "MockWorld.hpp"
 
 TEST_CASE("ReplayDriver can read and replay events from a JSON file",
           "[ReplayDriver]") {
   // Create a sample JSON file with event data
-  auto mockWorld = std::make_shared<cse498::MockWorld>();
+  cse498::MockWorld mockWorld;
 
   cse498::MockAgent agent;
 
-  mockWorld->agents.push_back(&agent);
-  cse498::MockAgent* mockAgent = mockWorld->agents[0];
+  mockWorld.agents.push_back(&agent);
+  cse498::MockAgent* mockAgent = mockWorld.agents[0];
 
   mockAgent->getLoggable();
 
-  cse498::ReplayDriver replayDriver(mockWorld);
-  auto result = replayDriver.ReplayFromFile("test_events.json");
+  cse498::ReplayDriver<cse498::MockAgent> replayDriver;
+  auto& agents = mockWorld.getReplayAgents();
+  auto result = replayDriver.ReplayFromFile("test_events.json", agents);
 
   REQUIRE(result.value());
 
@@ -32,10 +34,11 @@ TEST_CASE("ReplayDriver can read and replay events from a JSON file",
 
 TEST_CASE("ReplayDriver handles invalid file paths gracefully",
           "[ReplayDriver]") {
-  auto mockWorld = std::make_shared<cse498::MockWorld>();
-  cse498::ReplayDriver<cse498::MockWorld> replayDriver(mockWorld);
+  cse498::MockWorld mockWorld;
+  cse498::ReplayDriver<cse498::MockAgent> replayDriver;
 
-  auto result = replayDriver.ReplayFromFile("non_existent_file.json");
+  auto& agents = mockWorld.getReplayAgents();
+  auto result = replayDriver.ReplayFromFile("non_existent_file.json", agents);
 
   REQUIRE(!result);
 }
@@ -46,10 +49,11 @@ TEST_CASE("ReplayDriver handles malformed JSON gracefully", "[ReplayDriver]") {
   outFile << "{ invalid json }";
   outFile.close();
 
-  auto mockWorld = std::make_shared<cse498::MockWorld>();
-  cse498::ReplayDriver<cse498::MockWorld> replayDriver(mockWorld);
+  cse498::MockWorld mockWorld;
+  cse498::ReplayDriver<cse498::MockAgent> replayDriver;
 
-  auto result = replayDriver.ReplayFromFile("malformed.json");
+  auto& agents = mockWorld.getReplayAgents();
+  auto result = replayDriver.ReplayFromFile("malformed.json", agents);
 
   REQUIRE(!result);
 
