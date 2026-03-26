@@ -1,73 +1,72 @@
 /**
  * @file Scheduler.hpp
  * @brief Generic priority scheduler: deterministic (deficit round-robin) or
- *        probabilistic (weighted random), optional rebalancing and failure/backoff.
+ *        probabilistic (weighted random), optional rebalancing and
+ * failure/backoff.
  * @details Examples and behavior notes: see tests/tools/SchedulerTest.cpp.
  */
 
 #pragma once
 
 #include <algorithm>
-#include <cassert>      
-#include <cmath>        
-#include <cstddef>      // for std::size_t
-#include <expected>     // for std::expected (error handling for return values)
-#include <optional>     // for std::optional, to signal the presence or absence of a value
-#include <random>       // for RNG, std::mt19937, std::uniform_real_distribution
-#include <unordered_map>
-#include <utility>      // for std::pair,
-#include <vector>
-#include <ranges>  // for views and std::transform
 #include <array>
+#include <cassert>
+#include <cmath>
+#include <cstddef>   // for std::size_t
+#include <expected>  // for std::expected (error handling for return values)
+#include <optional>  // for std::optional, to signal the presence or absence of a value
+#include <random>  // for RNG, std::mt19937, std::uniform_real_distribution
+#include <ranges>  // for views and std::transform
 #include <string_view>
-
+#include <unordered_map>
+#include <utility>  // for std::pair,
+#include <vector>
 
 namespace cse498 {
 
 /// Error codes for Scheduler operations
 enum class SchedulerError {
-  EmptyScheduler,              
-  ProcessNotFound,             
-  ProcessAlreadyExists,       
-  InvalidWeight,               
-  NegativeWeight,              
-  NoSchedulableProcesses,      
-  InvalidParameter,            
+  EmptyScheduler,
+  ProcessNotFound,
+  ProcessAlreadyExists,
+  InvalidWeight,
+  NegativeWeight,
+  NoSchedulableProcesses,
+  InvalidParameter,
   WeightBlockedByRebalancing,  ///< Cannot set base weight while rebalancing is
                                ///< enabled
-  ZeroMaxFailures,            
-  InvalidBackoffMultiplier,    ///< Backoff multiplier must be >= 1.0
-  ZeroRecoveryThreshold        ///< Recovery threshold must be > 0
+  ZeroMaxFailures,
+  InvalidBackoffMultiplier,  ///< Backoff multiplier must be >= 1.0
+  ZeroRecoveryThreshold      ///< Recovery threshold must be > 0
 };
 
-// Convert SchedulerError to a readable string using a constexpr array of string views
+// Convert SchedulerError to a readable string using a constexpr array of string
+// views
 constexpr std::array<std::string_view, 12> SchedulerErrorStrings = {
-  "Scheduler has no processes",
-  "Process not found in scheduler",
-  "Process with this ID already exists",
-  "Invalid weight value",
-  "Weight must be non-negative",
-  "No schedulable processes available",
-  "Invalid configuration parameter",
-  "Cannot set base weight while rebalancing is enabled; call EnableRebalancing(false) first",
-  "Max consecutive failures must be greater than zero",
-  "Backoff multiplier must be >= 1.0",
-  "Recovery success threshold must be greater than zero",
-  "Unknown error"
-};
+    "Scheduler has no processes",
+    "Process not found in scheduler",
+    "Process with this ID already exists",
+    "Invalid weight value",
+    "Weight must be non-negative",
+    "No schedulable processes available",
+    "Invalid configuration parameter",
+    "Cannot set base weight while rebalancing is enabled; call "
+    "EnableRebalancing(false) first",
+    "Max consecutive failures must be greater than zero",
+    "Backoff multiplier must be >= 1.0",
+    "Recovery success threshold must be greater than zero",
+    "Unknown error"};
 
 constexpr const char* to_string(SchedulerError error) noexcept {
   std::size_t idx = static_cast<std::size_t>(error);
   return (idx < SchedulerErrorStrings.size() - 1)
-    ? SchedulerErrorStrings[idx].data()
-    : SchedulerErrorStrings.back().data();
+             ? SchedulerErrorStrings[idx].data()
+             : SchedulerErrorStrings.back().data();
 }
 
+// Weighted scheduler: DETERMINISTIC (deficit round-robin) or PROBABILISTIC.
+// Optional rebalancing (adjusted weights) and optional failure/backoff.
 
-
- // Weighted scheduler: DETERMINISTIC (deficit round-robin) or PROBABILISTIC.
-  // Optional rebalancing (adjusted weights) and optional failure/backoff.
- 
 template <typename ID_TYPE = size_t>
 class Scheduler {
  public:
@@ -97,18 +96,18 @@ class Scheduler {
  private:
   /// Internal metadata for each scheduled process
   struct ProcessState {
-    double base_weight{};      // Base priority weight
+    double base_weight{};  // Base priority weight
 
     // dynamically adjusted weight (used when rebalancing is enabled)
-    double adjusted_weight{};  
+    double adjusted_weight{};
 
     // round-robin accumulator (goes negative after selection)
-    double deficit{};  
+    double deficit{};
 
     size_t execution_count{};  // times this process has been scheduled
     size_t wait_cycles{};      // no of cycles since last execution
-    size_t last_execution_cycle{};  
-    size_t insertion_order{};  
+    size_t last_execution_cycle{};
+    size_t insertion_order{};
 
     // Failure handling
     bool enabled{};               // Is this process currently enabled?
@@ -146,28 +145,28 @@ class Scheduler {
 
   // Member Variables
 
-  std::unordered_map<ID_TYPE, ProcessState>
-      process_map;                
-  Mode scheduling_mode;           
-  size_t next_insertion_order{};  
+  std::unordered_map<ID_TYPE, ProcessState> process_map;
+  Mode scheduling_mode;
+  size_t next_insertion_order{};
 
   // Random number generation for probabilistic mode
   // Remember to use Random.hpp from Group 19
-  mutable std::mt19937 rng;  
+  mutable std::mt19937 rng;
 
   // Whether to RebalanceWeights() after each GetNext()
-  bool rebalance_enabled{};    
+  bool rebalance_enabled{};
   double weight_floor{};       // Lower bound for adjusted
   double weight_ceiling{};     // Upper bound for adjusted weights
   double wait_boost_factor{};  // Weight increase per wait cycle
   double frequency_penalty{};  // Weight reduction for frequent execution
   size_t scheduling_cycle{};   // Current scheduling cycle number
 
-  bool failure_handling_enabled{};    
+  bool failure_handling_enabled{};
   size_t max_consecutive_failures{};  // Max failures before disabling process
   size_t initial_backoff_cycles{};    // Initial backoff period after failure
   double backoff_multiplier{};        // Exponential backoff growth factor
-  size_t max_backoff_cycles{};        // Limits exponential backoff after repeated failures to prevent excessively long delays.
+  size_t max_backoff_cycles{};  // Limits exponential backoff after repeated
+                                // failures to prevent excessively long delays.
   size_t recovery_success_threshold{};  // Successes needed to clear failure
                                         // count
 
@@ -206,7 +205,6 @@ class Scheduler {
     return rebalance_enabled ? state.adjusted_weight : state.base_weight;
   }
 
-  
   /// Check if a process is currently schedulable
   [[nodiscard]] bool IsSchedulable(const ProcessState& state) const {
     return state.enabled && state.cycles_until_retry == 0;
@@ -218,12 +216,12 @@ class Scheduler {
   void UpdateBackoffCounters() {
     if (!failure_handling_enabled) return;
 
-    std::ranges::for_each(
-        process_map | std::views::values, [](ProcessState& state) {
-          if (state.cycles_until_retry > 0) {
-            --state.cycles_until_retry;
-          }
-        });
+    std::ranges::for_each(process_map | std::views::values,
+                          [](ProcessState& state) {
+                            if (state.cycles_until_retry > 0) {
+                              --state.cycles_until_retry;
+                            }
+                          });
   }
 
   /**
@@ -261,8 +259,7 @@ class Scheduler {
       // deficit, allowing it to build up credit for selection if not chosen.
       state.deficit += GetEffectiveWeight(state);
 
-     
-      // chooses process with highest deficit(most credit) 
+      // chooses process with highest deficit(most credit)
       // breaks ties using insertion order
       bool is_better = !best || (state.deficit > best->weight) ||
                        (state.deficit == best->weight &&
@@ -324,7 +321,7 @@ class Scheduler {
           GetEffectiveWeight(state);  // move to the next process's interval
       // checks if interval contains random_value
       if (random_value < cumulative) {
-        selected_id = id; 
+        selected_id = id;
         break;
       }
     }
@@ -337,11 +334,10 @@ class Scheduler {
   }
 
  public:
-  
-
   // Constructor
   explicit Scheduler(Mode mode = Mode::DETERMINISTIC,
-                     unsigned int seed = std::random_device{}(), Config cfg = {})
+                     unsigned int seed = std::random_device{}(),
+                     Config cfg = {})
       : scheduling_mode(mode),
         next_insertion_order(0),
         rng(seed),
@@ -360,7 +356,6 @@ class Scheduler {
 
   // Core API
 
-  
   ///  weight must be non-negative and finite
   [[nodiscard]] std::expected<void, SchedulerError> AddProcess(ID_TYPE id,
                                                                double weight) {
@@ -396,8 +391,6 @@ class Scheduler {
     scheduling_cycle = 0;
   }
 
-  
-  
   [[nodiscard]] std::expected<ID_TYPE, SchedulerError> GetNext() {
     if (process_map.empty()) {
       return std::unexpected(SchedulerError::EmptyScheduler);
@@ -478,9 +471,8 @@ class Scheduler {
     return it->second.base_weight;
   }
 
-
   // Get the highest effective weight among all schedulable processes
-  //Returns adjusted weight when rebalancing is enabled, base weight otherwise.
+  // Returns adjusted weight when rebalancing is enabled, base weight otherwise.
   [[nodiscard]] std::expected<double, SchedulerError> GetHighestWeight() const {
     if (process_map.empty()) {
       return std::unexpected(SchedulerError::EmptyScheduler);
@@ -505,16 +497,15 @@ class Scheduler {
   }
 
   /// Get the sum of all effective weights for schedulable processes
-  /// Returns adjusted weights when rebalancing is enabled, base weights otherwise. 
+  /// Returns adjusted weights when rebalancing is enabled, base weights
+  /// otherwise.
   [[nodiscard]] double GetTotalWeight() const noexcept {
     auto schedulable_effective_weights =
         process_map | std::views::values |
-        std::views::filter([this](const ProcessState& s) {
-          return IsSchedulable(s);
-        }) |
-        std::views::transform([this](const ProcessState& s) {
-          return GetEffectiveWeight(s);
-        });
+        std::views::filter(
+            [this](const ProcessState& s) { return IsSchedulable(s); }) |
+        std::views::transform(
+            [this](const ProcessState& s) { return GetEffectiveWeight(s); });
     return std::ranges::fold_left(schedulable_effective_weights, 0.0,
                                   std::plus<>{});
   }
@@ -551,7 +542,7 @@ class Scheduler {
     }
   }
 
-    /// checks if weight rebalancing is enabled
+  /// checks if weight rebalancing is enabled
   [[nodiscard]] bool IsRebalancingEnabled() const noexcept {
     return rebalance_enabled;
   }
@@ -566,7 +557,6 @@ class Scheduler {
     return {};
   }
 
-  
   [[nodiscard]] double GetWeightFloor() const noexcept { return weight_floor; }
 
   /// Set the weight ceiling for rebalancing must be positive and finite
@@ -578,12 +568,10 @@ class Scheduler {
     return {};
   }
 
-  
   [[nodiscard]] double GetWeightCeiling() const noexcept {
     return weight_ceiling;
   }
 
-  
   /// Set the wait boost factor (weight increase per wait cycle)
   [[nodiscard]] std::expected<void, SchedulerError> SetWaitBoostFactor(
       const double factor) {
@@ -594,7 +582,6 @@ class Scheduler {
     return {};
   }
 
- 
   [[nodiscard]] double GetWaitBoostFactor() const noexcept {
     return wait_boost_factor;
   }
@@ -616,7 +603,6 @@ class Scheduler {
     return {};
   }
 
-  
   [[nodiscard]] double GetFrequencyPenalty() const noexcept {
     return frequency_penalty;
   }
@@ -872,7 +858,7 @@ class Scheduler {
   }
 
   /// Get cycles remaining until process can retry
-  // Used to check when a failed process will be eligible 
+  // Used to check when a failed process will be eligible
   // to run again according to backoff policy.
   [[nodiscard]] std::expected<size_t, SchedulerError>
   GetProcessCyclesUntilRetry(ID_TYPE id) const {
@@ -925,17 +911,17 @@ class Scheduler {
     return backoff_multiplier;
   }
 
-  // Set maximum backoff period cap: 
-  // Limits exponential backoff after repeated failures to prevent excessively long delays.
-  // Must be > 0 (Default: 64)
+  // Set maximum backoff period cap:
+  // Limits exponential backoff after repeated failures to prevent excessively
+  // long delays. Must be > 0 (Default: 64)
   void SetMaxBackoffCycles(const size_t max) { max_backoff_cycles = max; }
 
   [[nodiscard]] size_t GetMaxBackoffCycles() const noexcept {
     return max_backoff_cycles;
   }
 
- 
-  /// Sets the number of consecutive successful attempts to recover a process (must be > 0) [prevent flapping]
+  /// Sets the number of consecutive successful attempts to recover a process
+  /// (must be > 0) [prevent flapping]
   [[nodiscard]] std::expected<void, SchedulerError> SetRecoverySuccessThreshold(
       size_t threshold) {
     if (threshold == 0) {
@@ -949,21 +935,18 @@ class Scheduler {
     return recovery_success_threshold;
   }
 
-  
   /// get the number of enabled processes
   [[nodiscard]] size_t GetEnabledProcessCount() const noexcept {
-    return std::ranges::count_if(process_map | std::views::values,
-                                 [](const ProcessState& s) noexcept {
-                                   return s.enabled;
-                                 });
+    return std::ranges::count_if(
+        process_map | std::views::values,
+        [](const ProcessState& s) noexcept { return s.enabled; });
   }
 
   /// get the number of processes that can be scheduled now
   [[nodiscard]] size_t GetSchedulableProcessCount() const noexcept {
     return std::ranges::count_if(
-        process_map | std::views::values, [this](const ProcessState& s) noexcept {
-          return IsSchedulable(s);
-        });
+        process_map | std::views::values,
+        [this](const ProcessState& s) noexcept { return IsSchedulable(s); });
   }
 };
 

@@ -4,10 +4,6 @@
  * @author Joshua Twumasi
  */
 
-
-
-
-
 /**
  * @class Scheduler
  * @brief Generic template-based scheduler for priority-weighted process
@@ -31,9 +27,12 @@
  *
  * Each process tracks three weight values:
  *
- *   - base_weight    — the user-configured weight (set via AddProcess or SetBaseWeight)
- *   - adjusted_weight  — adjusted copy of base_weight (only changes when rebalancing is on)
- *   - deficit          — round-robin accumulator used by deterministic mode (can go negative)
+ *   - base_weight    — the user-configured weight (set via AddProcess or
+ * SetBaseWeight)
+ *   - adjusted_weight  — adjusted copy of base_weight (only changes when
+ * rebalancing is on)
+ *   - deficit          — round-robin accumulator used by deterministic mode
+ * (can go negative)
  *
  * GetEffectiveWeight() returns adjusted_weight when rebalancing is enabled,
  * otherwise base_weight. This is the weight used in both scheduling algorithms.
@@ -190,7 +189,6 @@
  * @endcode
  *
  */
-
 
 #include <cmath>
 #include <limits>

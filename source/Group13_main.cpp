@@ -1,6 +1,6 @@
 /**
  * infectious_demo.cpp
- * @brief Demo of InfectiousWorld 
+ * @brief Demo of InfectiousWorld
  * @note Status: PROPOSAL
  * compile with:
  * g++ -std=c++23 -DCSE498_INFECTIOUS_DEMO_STANDALONE -I. \
@@ -9,8 +9,8 @@
  * ./infectious_demo
  **/
 
-#include <iostream>
 #include <iomanip>
+#include <iostream>
 #include <thread>
 #include <vector>
 
@@ -20,17 +20,17 @@
 using namespace cse498;
 
 namespace ansi {
-  constexpr const char* CLEAR_SCREEN = "\033[2J\033[H";
-  constexpr const char* RESET       = "\033[0m";
-  constexpr const char* GREEN       = "\033[32m";
-  constexpr const char* RED         = "\033[31m";
-  constexpr const char* BLUE        = "\033[34m";
-  constexpr const char* GREY        = "\033[90m";
-} 
- 
+constexpr const char* CLEAR_SCREEN = "\033[2J\033[H";
+constexpr const char* RESET = "\033[0m";
+constexpr const char* GREEN = "\033[32m";
+constexpr const char* RED = "\033[31m";
+constexpr const char* BLUE = "\033[34m";
+constexpr const char* GREY = "\033[90m";
+}  // namespace ansi
+
 /// Draw the grid with agents color-coded by health state.
-void DrawWorld(const InfectiousWorld & world) {
-  const WorldGrid & grid = world.GetGrid();
+void DrawWorld(const InfectiousWorld& world) {
+  const WorldGrid& grid = world.GetGrid();
 
   // Build a character grid from the world tiles.
   std::vector<std::string> display(grid.GetHeight());
@@ -43,13 +43,19 @@ void DrawWorld(const InfectiousWorld & world) {
 
   // Stamp agents onto the grid.
   for (size_t id = 0; id < world.GetNumAgents(); ++id) {
-    const AgentBase & agent = world.GetAgent(id);
+    const AgentBase& agent = world.GetAgent(id);
     WorldPosition pos = agent.GetLocation().AsWorldPosition();
     char sym;
     switch (world.GetAgentHealth(id)) {
-      case InfectiousWorld::HealthState::SUSCEPTIBLE: sym = 'S'; break;
-      case InfectiousWorld::HealthState::INFECTED:    sym = 'I'; break;
-      case InfectiousWorld::HealthState::RECOVERED:   sym = 'R'; break;
+      case InfectiousWorld::HealthState::SUSCEPTIBLE:
+        sym = 'S';
+        break;
+      case InfectiousWorld::HealthState::INFECTED:
+        sym = 'I';
+        break;
+      case InfectiousWorld::HealthState::RECOVERED:
+        sym = 'R';
+        break;
     }
     display[pos.CellY()][pos.CellX()] = sym;
   }
@@ -60,15 +66,24 @@ void DrawWorld(const InfectiousWorld & world) {
   std::cout << "Tick: " << world.GetTickCount() << "\n\n";
 
   std::cout << '+' << std::string(grid.GetWidth(), '-') << "+\n";
-  for (const auto & row : display) {
+  for (const auto& row : display) {
     std::cout << '|';
     for (char c : row) {
       switch (c) {
-        case 'S': std::cout << ansi::GREEN << c << ansi::RESET; break;
-        case 'I': std::cout << ansi::RED   << c << ansi::RESET; break;
-        case 'R': std::cout << ansi::BLUE  << c << ansi::RESET; break;
-        case '#': std::cout << ansi::GREY  << c << ansi::RESET; break;
-        default:  std::cout << c;
+        case 'S':
+          std::cout << ansi::GREEN << c << ansi::RESET;
+          break;
+        case 'I':
+          std::cout << ansi::RED << c << ansi::RESET;
+          break;
+        case 'R':
+          std::cout << ansi::BLUE << c << ansi::RESET;
+          break;
+        case '#':
+          std::cout << ansi::GREY << c << ansi::RESET;
+          break;
+        default:
+          std::cout << c;
       }
     }
     std::cout << "|\n";
@@ -76,8 +91,8 @@ void DrawWorld(const InfectiousWorld & world) {
   std::cout << '+' << std::string(grid.GetWidth(), '-') << "+\n";
 
   std::cout << "\n  " << ansi::GREEN << "S" << ansi::RESET << " = Susceptible  "
-            << ansi::RED << "I" << ansi::RESET << " = Infected  "
-            << ansi::BLUE << "R" << ansi::RESET << " = Recovered\n";
+            << ansi::RED << "I" << ansi::RESET << " = Infected  " << ansi::BLUE
+            << "R" << ansi::RESET << " = Recovered\n";
   std::cout << "  Susceptible: " << world.GetSusceptibleCount()
             << "  Infected: " << world.GetInfectedCount()
             << "  Recovered: " << world.GetRecoveredCount() << "\n";
@@ -87,10 +102,10 @@ void DrawWorld(const InfectiousWorld & world) {
 int RunInfectiousDemo() {
   InfectiousWorld world(20, 10);
 
-  WorldGrid & grid = world.GetGrid();
-  // Add some walls 
+  WorldGrid& grid = world.GetGrid();
+  // Add some walls
   for (size_t y = 0; y < 10; ++y) {
-    grid[0, y]  = world.GetWallID();
+    grid[0, y] = world.GetWallID();
     grid[19, y] = world.GetWallID();
   }
   for (size_t x = 0; x < 20; ++x) {
@@ -138,7 +153,7 @@ int RunInfectiousDemo() {
   return 0;
 }
 
-// Needed so as not to conflict with main in simple_main.cpp 
+// Needed so as not to conflict with main in simple_main.cpp
 #if defined(CSE498_INFECTIOUS_DEMO_STANDALONE)
 int main() { return RunInfectiousDemo(); }
 #endif

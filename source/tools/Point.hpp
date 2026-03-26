@@ -121,12 +121,12 @@ class Point {
     return (x * other.y) - (y * other.x);
   }
 
-  //Additional geometric operations
+  // Additional geometric operations
 
   // Squared length.
   [[nodiscard]] constexpr double lengthSq() const { return x * x + y * y; }
 
-  //Distance to another point.
+  // Distance to another point.
   [[nodiscard]] constexpr double distanceTo(const Point& other) const {
     return std::sqrt(distanceSqTo(other));
   }
@@ -144,14 +144,10 @@ class Point {
   }
 
   // Return a perpendicular vector.
-  [[nodiscard]] constexpr Point perpendicular() const {
-    return Point(-y, x);
-  }
+  [[nodiscard]] constexpr Point perpendicular() const { return Point(-y, x); }
 
   // Angle of the vector.
-  [[nodiscard]] double angle() const {
-    return std::atan2(y, x);
-  }
+  [[nodiscard]] double angle() const { return std::atan2(y, x); }
 
   // Linear interpolation.
   [[nodiscard]] Point lerp(const Point& other, double t) const {
@@ -162,9 +158,7 @@ class Point {
   static Point fromPolar(double r, double theta) {
     return Point(r * std::cos(theta), r * std::sin(theta));
   }
-
 };
-
 
 inline std::ostream& operator<<(std::ostream& os, const Point& p) {
   return os << "(" << p.getX() << ", " << p.getY() << ")";
