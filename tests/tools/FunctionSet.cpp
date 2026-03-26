@@ -152,6 +152,30 @@ TEST_CASE("FunctionSet - invoke_catch with errors") {
   REQUIRE_THROWS_AS(std::rethrow_exception(err2), std::logic_error);
 }
 
+TEST_CASE("FunctionSet - invoke_until_catch with errors") {
+  cse498::FunctionSet<void, int&> fs;
+  
+  fs.add([](int& x) {x += 5;});
+  fs.add([](int& x) {
+    if (x > 0) throw std::runtime_error("error");
+  });
+  fs.add([](int& x) {
+    x+=5;
+  });
+
+  int x = 0;
+  auto outcome = fs.invoke_until_catch(x);
+
+  REQUIRE_FALSE(outcome.has_value());
+  auto err = outcome.error();
+
+  auto [index1, err1] = err;
+  REQUIRE(index1 == 1);
+  REQUIRE_THROWS_AS(std::rethrow_exception(err1), std::runtime_error);
+
+  REQUIRE(x == 5); // Only the first incriment
+}
+
 TEST_CASE("FunctionSet - pop_at") {
   cse498::FunctionSet<int, int> fs = {[](int x) { return x; },
                                       [](int x) { return x * 2; },

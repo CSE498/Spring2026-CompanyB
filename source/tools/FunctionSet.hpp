@@ -38,14 +38,14 @@ template <typename Ret, typename... Params> class FunctionSet {
 
 public:
   /** @brief Default constructor, creates an empty FunctionSet. */
-  FunctionSet() = default;
+  constexpr FunctionSet() = default;
 
   /**
    * @brief Construct a FunctionSet from an initializer list of functions.
    *
    * @param list The initializer list of std::function objects.
    */
-  FunctionSet(std::initializer_list<FuncType> list) {
+  constexpr FunctionSet(std::initializer_list<FuncType> list) {
     for (const auto &val : list) {
       add(val);
     }
@@ -97,15 +97,16 @@ public:
    * @brief Invoke all functions and collect any errors.
    *
    * Executes each function in the set. If a function throws, its index
-   * is recorded. Returns a std::expected:
-   * - `std::vector<Ret> / void` on success
-   * - `std::vector<std::pair<size_t, std::exception_ptr>>` of function indexes
-   * that threw and the exception
+   * and the exception are recorded and execution continues with the next
+   * function. Returns a std::expected:
+   * - On success: std::vector<Ret> (if Ret is VectorReturnable), or void
+   * - On failure: std::vector<std::pair<size_t, std::exception_ptr>> containing
+   *   the index and exception pointer for each function that threw
    *
    * @param args Arguments to pass to each function.
-   * @return std::expected<std::vector<Ret>, std::vector<size_t>> if return type
-   * is storable, std::expected<void, std::vector<size_t>> Otherwise
-   *
+   * @return std::expected<std::vector<Ret>, ErrorType> if Ret is VectorReturnable,
+   *         std::expected<void, ErrorType> otherwise,
+   *         where ErrorType = std::vector<std::pair<size_t, std::exception_ptr>>
    */
   constexpr auto invoke_catch(const Params &...args) const {
     using ErrorType = std::vector<std::pair<size_t, std::exception_ptr>>;
@@ -137,6 +138,49 @@ public:
         return std::expected<void, ErrorType>{std::unexpected{errors}};
       return std::expected<void, ErrorType>{};
     }
+  }
+
+  /**
+   * @brief Invoke functions in the set until one throws.
+   *
+   * Executes each function in order. If a function throws, execution stops
+   * immediately and the index of the failing function and its exception are
+   * returned. Returns a std::expected:
+   * - On success: std::vector<Ret> (if Ret is VectorReturnable), or void
+   * - On failure: std::pair<size_t, std::exception_ptr> containing the index
+   *   and exception pointer of the first function that threw
+   *
+   * @param args Arguments to pass to each function.
+   * @return std::expected<std::vector<Ret>, ErrorType> if Ret is VectorReturnable,
+   *         std::expected<void, ErrorType> otherwise,
+   *         where ErrorType = std::pair<size_t, std::exception_ptr>
+   */
+  constexpr auto invoke_until_catch(const Params &...args) const {
+      using ErrorType = std::pair<size_t, std::exception_ptr>;
+
+      if constexpr (VectorReturnable<Ret>) {
+          std::vector<Ret> results;
+          results.reserve(functions.size());
+          for (size_t index{0}; index < functions.size(); ++index) {
+              try {
+                  results.emplace_back(functions[index](args...));
+              } catch (...) {
+                  return std::expected<std::vector<Ret>, ErrorType>{
+                      std::unexpected{ErrorType{index, std::current_exception()}}};
+              }
+          }
+          return std::expected<std::vector<Ret>, ErrorType>{results};
+      } else {
+          for (size_t index{0}; index < functions.size(); ++index) {
+              try {
+                  functions[index](args...);
+              } catch (...) {
+                  return std::expected<void, ErrorType>{
+                      std::unexpected{ErrorType{index, std::current_exception()}}};
+              }
+          }
+          return std::expected<void, ErrorType>{};
+      }
   }
 
   /**
