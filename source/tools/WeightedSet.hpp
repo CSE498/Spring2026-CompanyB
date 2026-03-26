@@ -493,6 +493,11 @@ class WeightedSet {
     return std::make_optional(removed_value);
   }
 
+  void Clear() {
+    root_ = nullptr;
+    element_to_node_.clear();
+  }
+
   /** @brief Returns the total number of elements in the set. */
   [[nodiscard]] size_t size() const { return element_to_node_.size(); }
 
