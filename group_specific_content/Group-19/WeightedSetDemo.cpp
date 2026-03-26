@@ -22,10 +22,21 @@ int main() {
    * GetElementAt in WeightedSet for more on this. (Note, though, that they are stored as 
    * keys in a map, which is used to speed up some operations; the tree just has pointers
    * to those elements in the map.) After inserting 1, the tree just has a single node (the root) 
-   * pointing to 1. 2 gets inserted on the left branch--it could go in 
+   * pointing to 1. 2 gets inserted on the left branch--it could go in either branch, but we arbitrarily pick
+   * left.
+   * 
+   * When we insert 3, it goes in the right branch. We always insert a new element in the branch with the lowest
+   * total weight, which helps keep the tree balanced by weight, which in turn helps make GetRandomElement faster.
+   * So, after these 3 insertions, the tree has a 1 at the root, with 2 and 3 as its children. If we inserted another 
+   * element, it would go in the left branch, under 2.
    */
 
   std::println("Total weight: {}", ws.total_weight());
+  std::println("Number of elements: {}", ws.size());
+
+  /* Here we do a bunch of samples from the set and compare the observed frequency of each element
+   * to the proportion of times we sampled it. E.g. 1 should get chosen about 1/6 of the time.
+   */
   const int num_samples = 60000;
 
   std::unordered_map<int, int> counts;
@@ -38,12 +49,18 @@ int main() {
     const double p = static_cast<double>(elem) / ws.total_weight();
     const double p_hat = static_cast<double>(counts[elem]) / num_samples;
 
-    std::cout << "element " << elem << ": expected=" << p << " actual=" << p_hat
-              << std::endl;
+    std::println("Element {}: expected={}, actual={}", elem, p, p_hat);
   }
   ws.Remove(3);
+
+  /* The same thing as above, but after removing 3. The weights of the remaining elements
+   * don't change, but since the total weight is down to 3 now, the probability of getting 1
+   * is 1/3, and the probability of getting 2 is 2/3.
+  */
   std::println("After removing 3");
   std::println("Total weight: {}", ws.total_weight());
+  std::println("Number of elements: {}", ws.size());
+
   counts.clear();
   for (int i = 0; i < num_samples; ++i) {
     auto result = ws.GetRandomElement();
@@ -53,7 +70,6 @@ int main() {
     const double p = static_cast<double>(elem) / ws.total_weight();
     const double p_hat = static_cast<double>(counts[elem]) / num_samples;
 
-    std::cout << "element " << elem << ": expected=" << p << " actual=" << p_hat
-              << std::endl;
+    std::println("Element {}: expected={}, actual={}", elem, p, p_hat);
   }
 }
