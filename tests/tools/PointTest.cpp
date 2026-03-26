@@ -18,7 +18,7 @@ TEST_CASE("Testing Constructors, setters/getters", "[Point][constructor]") {
   CHECK(A.getX() == 8);
   CHECK(A.getY() == 51.6);
 
-  B.setY(7).setX();
+  B.setY(7).setX(0);
   CHECK(B.getY() == 7);
   CHECK(B.getX() == 0);
 

@@ -26,9 +26,6 @@ class Point {
   // default constructor
   Point() : x(0.0), y(0.0) {}
 
-  // disable assignment constructor
-  // Point& operator=(const Point&) = delete;
-
   // parameterized constructor
   Point(double X, double Y) : x(X), y(Y) {}
 
@@ -37,25 +34,25 @@ class Point {
   constexpr double getY() const { return y; }
 
   // setters to set value of x and y
-  Point& setX(double x_value = 0.0) {
+  Point& setX(double x_value) {
     x = x_value;
     return *this;
   }
-  Point& setY(double y_value = 0.0) {
+  Point& setY(double y_value) {
     y = y_value;
     return *this;
   }
 
   // operators
   // addition (+=)
-  Point& operator+=(const Point& other) {
+  constexpr Point& operator+=(const Point& other) {
     x += other.x;
     y += other.y;
     return *this;
   }
 
   // subtraction (-=)
-  Point& operator-=(const Point& other) {
+  constexpr Point& operator-=(const Point& other) {
     x -= other.x;
     y -= other.y;
     return *this;
@@ -70,7 +67,7 @@ class Point {
   [[nodiscard]] double magnitude() const { return std::sqrt(x * x + y * y); }
 
   // 4. Transforms: rotate, scale
-  Point& scale(double scalar) {
+  constexpr Point& scale(double scalar) {
     x = x * scalar;
     y = y * scalar;
     return *this;
@@ -120,17 +117,17 @@ class Point {
   // area of triangle, possibly torque
   // 2D cross product yields a fake "k" in ijk system
   // my method will return a scalar, not a point vector
-  [[nodiscard]] double cross_product(const Point& other) const {
+  [[nodiscard]] constexpr double cross_product(const Point& other) const {
     return (x * other.y) - (y * other.x);
   }
 
   //Additional geometric operations
 
   // Squared length.
-  [[nodiscard]] double lengthSq() const { return x * x + y * y; }
+  [[nodiscard]] constexpr double lengthSq() const { return x * x + y * y; }
 
   //Distance to another point.
-  [[nodiscard]] double distanceTo(const Point& other) const {
+  [[nodiscard]] constexpr double distanceTo(const Point& other) const {
     return std::sqrt(distanceSqTo(other));
   }
 
@@ -142,17 +139,12 @@ class Point {
   }
 
   // Return a new point translate.
-  [[nodiscard]] Point translated(const Point& delta) const {
+  [[nodiscard]] constexpr Point translated(const Point& delta) const {
     return Point(x + delta.x, y + delta.y);
   }
 
-  // Return a new point scaled.
-  [[nodiscard]] Point scaled(double factor) const {
-    return Point(x * factor, y * factor);
-  }
-
   // Return a perpendicular vector.
-  [[nodiscard]] Point perp() const {
+  [[nodiscard]] constexpr Point perpendicular() const {
     return Point(-y, x);
   }
 
