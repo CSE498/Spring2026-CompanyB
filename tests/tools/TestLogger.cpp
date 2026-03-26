@@ -1,13 +1,8 @@
 #include <catch2/catch_test_macros.hpp>
+#include <memory>
 #include <optional>
 #include <string>
 #include <vector>
-
-#include "Interfaces/IActionLog.hpp"
-#include "Interfaces/IDataLog.hpp"
-#include "Interfaces/IOutputManager.hpp"
-#include "Interfaces/IReplayDriver.hpp"
-#include "tools/Logger.hpp"
 
 namespace cse498 {
 
@@ -22,35 +17,51 @@ class AgentBase {
 
 }  // namespace cse498
 
+#include "Interfaces/IActionLog.hpp"
+#include "Interfaces/IDataLog.hpp"
+
+namespace cse498 {
+using AgentType = AgentBase;
+}
+
+#include "Interfaces/ILogger.hpp"
+#include "Interfaces/IOutputManager.hpp"
+#include "Interfaces/IReplayDriver.hpp"
+
+namespace cse498 {
+
 // Mock implementation of IActionLog that just returns empty events
 // Required because Logger needs an IActionLog, but we don't need its real logic here
-class MockActionLog : public cse498::IActionLog<cse498::AgentBase> {
+template <typename T>
+class MockActionLog : public IActionLog<T> {
  public:
-  std::vector<cse498::ActionEventBase> LogAgentActions(
-      const std::vector<cse498::AgentBase>& /*agents*/) override {
-    return {};
+  std::vector<ActionEventBase> mEventsToReturn;
+
+  std::vector<ActionEventBase> LogAgentActions(
+      const std::vector<T>& /*agents*/) override {
+    return mEventsToReturn;
   }
 };
 
 // Mock output manager that acts as a "spy"
 // Instead of writing to a real file, it just remembers what was passed to it
 // so we can verify the Logger's behavior later
-class MockOutputManager : public cse498::IOutputManager {
+class MockOutputManager : public IOutputManager {
  public:
   mutable bool mWriteCalled = false;
-  mutable std::vector<cse498::ActionEventBase> mReceivedEvents;
+  mutable std::vector<ActionEventBase> mReceivedEvents;
 
   void WriteActionEvents(
-      const std::vector<cse498::ActionEventBase>& events) override {
+      const std::vector<ActionEventBase>& events) override {
     mWriteCalled = true;
     mReceivedEvents = events;
   }
 
   bool SetOutputFile(const std::string& /*path*/) override { return true; }
-  void LogMessage(cse498::LogLevel /*level*/, const std::string& /*message*/) override {}
-  void SetLogLevel(cse498::LogLevel /*level*/) noexcept override {}
+  void LogMessage(LogLevel /*level*/, const std::string& /*message*/) override {}
+  void SetLogLevel(LogLevel /*level*/) noexcept override {}
   bool Flush() override { return true; }
-  void WriteSimulationOutput(const cse498::DataLog& /*dataLog*/) override {}
+  void WriteSimulationOutput(const DataLog& /*dataLog*/) override {}
   const nlohmann::json& GetBufferedLog() const noexcept override {
     static nlohmann::json j;
     return j;
@@ -59,7 +70,7 @@ class MockOutputManager : public cse498::IOutputManager {
 
 // Mock replay driver to simulate reading replay files
 // We can toggle 'should_succeed' to test both the success and error paths of the Logger
-class MockReplayDriver : public cse498::IReplayDriver {
+class MockReplayDriver : public IReplayDriver {
  public:
   mutable bool mReplayCalled = false;
   mutable std::string mLastFile;
@@ -72,21 +83,27 @@ class MockReplayDriver : public cse498::IReplayDriver {
   }
 };
 
+}  // namespace cse498
+
+// Hack to inject mocks into Logger and expose private members
+#define IActionLog MockActionLog
+#define IOutputManager MockOutputManager
+#define IReplayDriver MockReplayDriver
+#define private public
+
+#include "tools/Logger.hpp"
+
+#undef private
+#undef IReplayDriver
+#undef IOutputManager
+#undef IActionLog
+
 TEST_CASE("Test Logger replay and file saving functionalities", "[Logger]") {
-  // Create our mock dependencies
-  auto actionLog = std::make_unique<MockActionLog>();
-  auto outputManager = std::make_unique<MockOutputManager>();
-  auto replayDriver = std::make_unique<MockReplayDriver>();
+  cse498::Logger logger;
 
-  // Keep raw pointers to our mocks before we give ownership to the Logger.
-  // This is crucial because std::move will clear our unique_ptrs, and we still 
-  // need a way to check if the Logger actually called the right methods on them.
-  auto* rawOutputManager = outputManager.get();
-  auto* rawReplayDriver = replayDriver.get();
-
-  // Pass ownership of the mocks to the Logger
-  cse498::Logger logger(std::move(actionLog), std::move(outputManager),
-                        std::move(replayDriver));
+  auto* rawActionLog = logger.mActionLog.get();
+  auto* rawOutputManager = logger.mOutputManager.get();
+  auto* rawReplayDriver = logger.mReplayDriver.get();
 
   SECTION("Test BeginReplay with a valid driver that succeeds") {
     // configure our mock to simulate a successful file read
@@ -110,32 +127,26 @@ TEST_CASE("Test Logger replay and file saving functionalities", "[Logger]") {
   }
 
   SECTION("Test BeginReplay when no driver was provided") {
-    // create a new logger without a replay driver to test null safety
-    cse498::Logger noReplayLogger(std::make_unique<MockActionLog>(),
-                                    std::make_unique<MockOutputManager>(), nullptr);
+    // simulate a missing replay driver to test null safety
+    logger.mReplayDriver.reset();
 
     // should safely return false without crashing
-    REQUIRE_FALSE(noReplayLogger.BeginReplay("test.json"));
+    REQUIRE_FALSE(logger.BeginReplay("test.json"));
   }
 
-  SECTION("Test SaveToFile successfully writes to the output manager") {
+  SECTION("Test ExtractAgentActions successfully writes to the output manager") {
     std::vector<cse498::ActionEventBase> events = {
         {"agent1", "move", cse498::LogLevel::Normal, 123}};
 
-    // logger should return true on successful write
-    REQUIRE(logger.SaveToFile(events));
+    rawActionLog->mEventsToReturn = events;
+
+    std::vector<cse498::AgentBase> agents;
+    // logger should successfully extract and write
+    logger.ExtractAgentActions(agents);
 
     // verify the output manager received our events
     REQUIRE(rawOutputManager->mWriteCalled);
     REQUIRE(rawOutputManager->mReceivedEvents.size() == 1);
     REQUIRE(rawOutputManager->mReceivedEvents[0].agentId == "agent1");
-  }
-
-  SECTION("Test SaveToFile when no output manager was provided") {
-    // create a new logger without an output manager to test null safety
-    cse498::Logger noOutputLogger(std::make_unique<MockActionLog>(), nullptr, nullptr);
-
-    // should safely return false without crashing
-    REQUIRE_FALSE(noOutputLogger.SaveToFile({{}}));
   }
 }
