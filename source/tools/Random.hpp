@@ -3,6 +3,7 @@
 #include <cassert>
 #include <chrono>
 #include <cmath>
+#include <concepts>
 #include <cstdint>
 #include <limits>
 #include <numbers>
@@ -73,18 +74,16 @@ class Random {
     return static_cast<float>(random_bits >> 40) * kFloatUnit;
   }
 
-  // Uniform in [min, max), defaults to [0, 1).
-  [[nodiscard]] double nextDouble(double min = 0.0, double max = 1.0) {
+  // Uniform in [min, max) for any floating-point type; defaults to [0, 1).
+  template <std::floating_point T = double>
+  [[nodiscard]] T nextReal(T min = T{0}, T max = T{1}) {
     assert(min <= max &&
            "The minimum value can't be larger than the maximum value.");
-    return min + nextUnitDouble() * (max - min);
-  }
-
-  // Uniform in [min, max), defaults to [0, 1).
-  [[nodiscard]] float nextFloat(float min = 0.0f, float max = 1.0f) {
-    assert(min <= max &&
-           "The minimum value can't be larger than the maximum value.");
-    return min + nextUnitFloat() * (max - min);
+    if constexpr (std::is_same_v<T, float>) {
+      return min + nextUnitFloat() * (max - min);
+    } else {
+      return min + nextUnitDouble() * (max - min);
+    }
   }
 
   // Uniform in [min, max].
@@ -114,29 +113,39 @@ class Random {
     assert(stddev >= 0.0 && "stddev must be non-negative");
     if (stddev == 0.0) return mean;
 
-    // Box-Muller transform to convert uniform random variables to standard
-    // normal, then scale and shift.
-
-    // AI helped me with the logic here
-    double u1 = nextUnitDouble();
-    while (u1 <= std::numeric_limits<double>::min()) {
-      u1 = nextUnitDouble();
+    // Return the cached second Box-Muller sample if available.
+    if (cached_normal_.has_value()) {
+      const double z = *cached_normal_;
+      cached_normal_.reset();
+      return mean + stddev * z;
     }
+
+    // Box-Muller transform: produces two independent normal samples.
+    // AI helped me with the logic here
+    auto freshU1 = [&] {
+      double u = nextUnitDouble();
+      while (u <= std::numeric_limits<double>::min()) u = nextUnitDouble();
+      return u;
+    };
+
+    const double u1 = freshU1();
     const double u2 = nextUnitDouble();
-    const double z =
-        std::sqrt(-2.0 * std::log(u1)) * std::cos(2.0 * std::numbers::pi * u2);
-    return mean + stddev * z;
+    const double r = std::sqrt(-2.0 * std::log(u1));
+    const double theta = 2.0 * std::numbers::pi * u2;
+    cached_normal_ = r * std::sin(theta);  // cache second sample for next call
+    return mean + stddev * (r * std::cos(theta));
   }
 
  private:
   static constexpr unsigned int kWordBits = 64;
   uint64_t state[4]{};
+  std::optional<double> cached_normal_{};
 
   // SplitMix64 for initializing the state.
   // Recommended for initializing the state of xoshiro256++.
   // First constant is the golden ratio.
   // The rest are tried and tested for best performance
-  static uint64_t splitMix64(uint64_t& x) {
+  static constexpr uint64_t splitMix64(uint64_t& x) {
     constexpr uint64_t kConst1 = 0x9e3779b97f4a7c15ULL;
     constexpr uint64_t kConst2 = 0xbf58476d1ce4e5b9ULL;
     constexpr uint64_t kConst3 = 0x94d049bb133111ebULL;
@@ -147,14 +156,14 @@ class Random {
     return z ^ (z >> 31);
   }
 
-  static inline uint64_t rotL(uint64_t x, unsigned int k) {
+  static constexpr uint64_t rotL(uint64_t x, unsigned int k) {
     assert(k < kWordBits && "rotation amount must be in [0, 63]");
     return (x << k) | (x >> (kWordBits - k));
   }
 
   // xoshiro256++ algorithm.
   // Found implementation online and adapted for this class.
-  uint64_t nextUint64() {
+  [[nodiscard]] uint64_t nextUint64() {
     const uint64_t result = rotL(state[0] + state[3], 23) + state[0];
     const uint64_t t = state[1] << 17;
 
