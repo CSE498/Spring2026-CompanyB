@@ -17,10 +17,14 @@
 
 namespace cse498 {
 
+/// @brief  State struct for the SwarmingAgent, needed for new AgentBase API but not currently used.
+struct SwarmingState{
+};
+
 /**
- * @brief A simple agent that tries to swarm around to a target area 
+ * @brief A simple agent that tries to swarm around to a target area
  * by talking to other agents
- * 
+ *
  * This agent maintains a map of known locations items or other points of interest and their positions.
  * It shares this knowledge with nearby agents and uses it to navigate towards a specified target.
  */
@@ -39,8 +43,17 @@ protected:
     /// @brief random number generator for any random decisions this agents makes
     std::mt19937 rng;
 
+    struct MoveIntent {
+        double dx = 0.0;
+        double dy = 0.0;
+    };
 
-public:
+    void MergeKnowledgeFromNeighbor();
+    MoveIntent ChooseTargetIntent();
+    MoveIntent ChooseRandomIntent();
+    size_t IntentToAction(const MoveIntent & intent);
+
+  public:
     SwarmingAgent(size_t id, const std::string & name, const WorldBase & world)
         : AgentBase(id, name, world), rng(static_cast<unsigned>(id)) { }
 

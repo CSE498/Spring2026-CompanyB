@@ -3,7 +3,9 @@
  * @brief test suite for SwarmingAgent
  */
 
-#include "../../../third-party/Catch/single_include/catch2/catch.hpp"
+//#include "../../../third-party/Catch/single_include/catch2/catch.hpp"
+#include <catch2/catch_test_macros.hpp>
+#include <catch2/matchers/catch_matchers_floating_point.hpp>
 
 #include "../../source/Agents/SwarmingAgent.hpp"
 #include "../../source/Agents/PacingAgent.hpp"
@@ -66,13 +68,13 @@ TEST_CASE("AddKnownLocation stores and retrieves locations", "[SwarmingAgent]") 
 
     auto r1 = locs.at(10);
     REQUIRE(r1.has_value());
-    REQUIRE(r1.value().X() == Approx(5.0));
-    REQUIRE(r1.value().Y() == Approx(5.0));
+    REQUIRE_THAT(r1.value().X(), Catch::Matchers::WithinRel(5.0));
+    REQUIRE_THAT(r1.value().Y(), Catch::Matchers::WithinRel(5.0));
 
     auto r2 = locs.at(20);
     REQUIRE(r2.has_value());
-    REQUIRE(r2.value().X() == Approx(8.0));
-    REQUIRE(r2.value().Y() == Approx(3.0));
+    REQUIRE_THAT(r2.value().X(), Catch::Matchers::WithinRel(8.0));
+    REQUIRE_THAT(r2.value().Y(), Catch::Matchers::WithinRel(3.0));
 }
 
 TEST_CASE("AddKnownLocation is chainable", "[SwarmingAgent]") {
@@ -222,8 +224,8 @@ TEST_CASE("Agent learns target location from another SwarmingAgent", "[SwarmingA
     REQUIRE(seeker.GetKnownLocations().contains(99));
     auto result = seeker.GetKnownLocations().at(99);
     REQUIRE(result.has_value());
-    REQUIRE(result.value().X() == Approx(9.0));
-    REQUIRE(result.value().Y() == Approx(1.0));
+    REQUIRE_THAT(result.value().X(), Catch::Matchers::WithinRel(9.0));
+    REQUIRE_THAT(result.value().Y(), Catch::Matchers::WithinRel(1.0));
 }
 
 TEST_CASE("Agent with knowledge moves toward target after learning", "[SwarmingAgent]") {
@@ -289,8 +291,8 @@ TEST_CASE("Agent does not overwrite existing knowledge", "[SwarmingAgent]") {
     // B should still have its original knowledge
     auto result = b.GetKnownLocations().at(1);
     REQUIRE(result.has_value());
-    REQUIRE(result.value().X() == Approx(5.0));
-    REQUIRE(result.value().Y() == Approx(5.0));
+    REQUIRE_THAT(result.value().X(), Catch::Matchers::WithinRel(5.0));
+    REQUIRE_THAT(result.value().Y(), Catch::Matchers::WithinRel(5.0));
 }
 
 TEST_CASE("Agent skips itself when gathering knowledge", "[SwarmingAgent]") {
@@ -391,8 +393,8 @@ TEST_CASE("AddKnownLocation with duplicate key overwrites the previous value", "
     auto result = agent.GetKnownLocations().at(10);
     REQUIRE(result.has_value());
     // RobinHoodMap::insert overwrites on duplicate key
-    REQUIRE(result.value().X() == Approx(9.0));
-    REQUIRE(result.value().Y() == Approx(9.0));
+    REQUIRE_THAT(result.value().X(), Catch::Matchers::WithinRel(9.0));
+    REQUIRE_THAT(result.value().Y(), Catch::Matchers::WithinRel(9.0));
 }
 
 // 5. Deterministic wandering — same ID produces same sequence
@@ -456,8 +458,9 @@ TEST_CASE("Knowledge spreads correctly among many agents", "[SwarmingAgent]") {
         REQUIRE(ref.get().GetKnownLocations().contains(42));
         auto result = ref.get().GetKnownLocations().at(42);
         REQUIRE(result.has_value());
-        REQUIRE(result.value().X() == Approx(9.0));
-        REQUIRE(result.value().Y() == Approx(9.0));
+
+        REQUIRE_THAT(result.value().X(), Catch::Matchers::WithinRel(9.0));
+        REQUIRE_THAT(result.value().Y(), Catch::Matchers::WithinRel(9.0));
     }
 }
 
@@ -481,6 +484,6 @@ TEST_CASE("Full RunAgents cycle moves agent toward target", "[SwarmingAgent]") {
 
     // Seeker should have learned target and moved down (toward y=5)
     WorldPosition seeker_pos = seeker.GetLocation().AsWorldPosition();
-    REQUIRE(seeker_pos.Y() == Approx(4.0));
-    REQUIRE(seeker_pos.X() == Approx(1.0));
+    REQUIRE_THAT(seeker_pos.Y(), Catch::Matchers::WithinRel(4.0));
+    REQUIRE_THAT(seeker_pos.X(), Catch::Matchers::WithinRel(1.0));
 }

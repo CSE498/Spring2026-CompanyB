@@ -8,8 +8,8 @@
 
 namespace cse498 {
 
-size_t SwarmingAgent::SelectAction(const WorldGrid & /*grid*/) {
-    // get knowledge from nearby agents
+void SwarmingAgent::MergeKnowledgeFromNeighbor() {
+  // get knowledge from nearby agents
     // TODO: right now we are just getting all agents, this later
     // should be changed for the Queue system we have planned
     std::vector<size_t> nearby = world.GetKnownAgents(*this);
@@ -38,13 +38,65 @@ size_t SwarmingAgent::SelectAction(const WorldGrid & /*grid*/) {
             }
         }
     }
+}
 
+SwarmingAgent::MoveIntent SwarmingAgent::ChooseTargetIntent() {
     // CASE 2
     // We are aware we have a target AND we know the target location
     // We can then advance towards it
-    if (target_id != SIZE_MAX &&
-         known_locations.contains(target_id))
-    {
+  MoveIntent intent{0, 0};
+  if (target_id == SIZE_MAX || !known_locations.contains(target_id))
+    return intent;
+
+  auto result = known_locations.at(target_id);
+  if (!result.has_value()) return intent;
+
+  WorldPosition target_pos = result.value();
+  WorldPosition my_pos = GetLocation().AsWorldPosition();
+
+  double dx = target_pos.X() - my_pos.X();
+  double dy = target_pos.Y() - my_pos.Y();
+
+   if (std::abs(dx) >= std::abs(dy)) {
+        if (dx > 0) intent.dx = 1;
+        else if (dx < 0) intent.dx = -1;
+    } else {
+        if (dy > 0) intent.dy = 1;
+        else if (dy < 0) intent.dy = -1;
+    }
+
+  return intent;
+}
+
+SwarmingAgent::MoveIntent SwarmingAgent::ChooseRandomIntent() {
+    // CASE 3
+    // We do not know where our target is yet
+    // Wander randomly to find it
+    MoveIntent intent{0, 0};
+    std::uniform_int_distribution<int> dist(1, 4);
+    switch (dist(rng)) {
+        case 1: intent.dy = -1; break; // up
+        case 2: intent.dy = 1; break;  // down
+        case 3: intent.dx = -1; break; // left
+        case 4: intent.dx = 1; break;  // right
+    }
+    return intent;
+}
+
+size_t SwarmingAgent::IntentToAction(const MoveIntent & intent) {
+    if (intent.dx > 0) return GetActionID("right");
+    if (intent.dx < 0) return GetActionID("left");
+    if (intent.dy > 0) return GetActionID("down");
+    if (intent.dy < 0) return GetActionID("up");
+
+    return 0; // Already at target or no intent, do nothing
+}
+
+size_t SwarmingAgent::SelectAction(const WorldGrid & /*grid*/) {
+    MergeKnowledgeFromNeighbor();
+
+    // Check if we have a target and know where it is, and if we are already at the target, do nothing
+    if (target_id != SIZE_MAX && known_locations.contains(target_id)) {
         auto result = known_locations.at(target_id);
         if (result.has_value()) {
             WorldPosition target_pos = result.value();
@@ -53,33 +105,18 @@ size_t SwarmingAgent::SelectAction(const WorldGrid & /*grid*/) {
             double dx = target_pos.X() - my_pos.X();
             double dy = target_pos.Y() - my_pos.Y();
 
-            // move along the axis with greater distance first
-            // later we should account for queue size as well
-            if (std::abs(dx) >= std::abs(dy)) {
-                if (dx > 0) return GetActionID("right");
-                if (dx < 0) return GetActionID("left");
-            } else {
-                if (dy > 0) return GetActionID("down");
-                if (dy < 0) return GetActionID("up");
+            if (std::abs(dx) < 1e-9 && std::abs(dy) < 1e-9) {
+                return 0;
             }
-
-            // Already at the target — stay put
-            return 0;
         }
     }
 
-    // CASE 3
-    // We do not know where our target is yet
-    // Wander randomly to find it
-    std::uniform_int_distribution<int> dist(1, 4);
-    switch (dist(rng)) {
-        case 1: return GetActionID("up");
-        case 2: return GetActionID("down");
-        case 3: return GetActionID("left");
-        case 4: return GetActionID("right");
+    MoveIntent intent = ChooseTargetIntent();
+    if (intent.dx == 0 && intent.dy == 0) {
+        intent = ChooseRandomIntent();
     }
 
-    return 0;
+    return IntentToAction(intent);
 }
 
 } // namespace cse498
