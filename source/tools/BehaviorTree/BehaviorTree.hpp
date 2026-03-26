@@ -8,6 +8,7 @@
 #include "RepeatNode.hpp"
 #include "SelectNode.hpp"
 #include "SequenceNode.hpp"
+#include "Blackboard.hpp"
 
 // ATTRIBUTIONS: Used ChatGPT to create Docstrings. Further modifications come
 // from my input
@@ -48,9 +49,9 @@ class BehaviorTree {
    * @return The status code returned by the root node
    *         (e.g., Success (1), Failure (0), or Running (-1)).
    */
-  Status tick() {
+  Status tick(Blackboard& blackboard) {
     ++m_tickCount;
-    return m_root->tick();
+    return m_root->tick(blackboard);
   };
 
   /**
@@ -69,7 +70,9 @@ class BehaviorTree {
    *
    * @return A formatted string representing the active node path.
    */
-  std::string getActivePath() { return m_root->getActivePath(); };
+  std::string getActivePath() { return m_root->getActivePath(); }
+
+  Blackboard& getBlackboard() { return m_blackboard; }
 
   /**
    * @brief Outputs a debug visualization of the behavior tree.
@@ -90,5 +93,7 @@ class BehaviorTree {
 
   /// Owning pointer to the root node of the behavior tree.
   std::unique_ptr<Node> m_root;
+
+  Blackboard m_blackboard;
 };
 }  // namespace cse498

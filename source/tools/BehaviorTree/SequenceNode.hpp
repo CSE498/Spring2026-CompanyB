@@ -25,7 +25,7 @@ class SequenceNode : public CompositeNode {
  public:
   using CompositeNode::CompositeNode;
 
-  Status tick() override {
+  Status tick(Blackboard& blackboard) override {
     ++m_tickCount;
 
     bool isRunning = false;
@@ -39,7 +39,7 @@ class SequenceNode : public CompositeNode {
     auto& child = (*(children.begin() + m_index))
                       ? *(children.begin() + m_index)
                       : *(children.end() - 1);
-    Status status = child->tick();
+    Status status = child->tick(blackboard);
 
     // Short Circuit if m_status is Status::Success or Status::Failure
     if (m_status == Status::Success || m_status == Status::Failure)

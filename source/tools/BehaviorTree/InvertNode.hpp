@@ -23,14 +23,14 @@ class InvertNode : public DecoratorNode {
  public:
   using DecoratorNode::DecoratorNode;
 
-  Status tick() override {
+  Status tick(Blackboard& blackboard) override {
     ++m_tickCount;
 
     auto& child = this->getChild();
     if (!child) return Status::Running;
 
     // Check status of active child
-    Status status = child->tick();
+    Status status = child->tick(blackboard);
 
     if (status == Status::Running) {
       m_status = Status::Running;

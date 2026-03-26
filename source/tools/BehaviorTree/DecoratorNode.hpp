@@ -51,7 +51,7 @@ class DecoratorNode : public Node {
     m_child->print(depth + 1);
   };
 
-  virtual Status tick() = 0;
+  virtual Status tick(Blackboard& blackboard) = 0;
   virtual std::string getActivePath() = 0;
 
  protected:

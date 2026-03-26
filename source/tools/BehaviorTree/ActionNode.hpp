@@ -1,6 +1,10 @@
 #pragma once
 
-#include "LeafNode.hpp"
+#include <functional>
+
+#include "Node.hpp"
+
+using Action = std::function<Status(Blackboard&)>;
 
 // ATTRIBUTIONS: Used ChatGPT to create Docstrings. Further modifications come
 // from my input
@@ -13,14 +17,27 @@
  * it does not have children and encapsulates a specific action
  * or task.
  */
-class ActionNode : public LeafNode {
+class ActionNode : public Node {
  public:
-  using LeafNode::LeafNode;
+  using Node::Node;
 
-  Status tick() override {
+  ActionNode(std::string name, Action action, int tickDuration)
+      : Node(name), m_action(action), m_tickDuration(tickDuration) {}
+
+  virtual void print(int depth) const {
+    std::cout << std::string(depth * 2, ' ') << m_name << " (" << m_status
+              << "): " << m_tickDuration << '\n';
+  };
+
+  Status tick(Blackboard& blackboard) override {
     ++m_tickCount;
 
-    // std::cout << m_name << '\n';
+    if (m_action) {
+      m_action(blackboard);
+    }
+    else {
+      return Status::Failure;
+    }
 
     m_status = (m_tickDuration > 1) ? Status::Running : Status::Success;
 
@@ -34,5 +51,7 @@ class ActionNode : public LeafNode {
   std::string getActivePath() override { return m_name; }
 
  private:
+  Action m_action;
+  int m_tickDuration{};
   int m_tickCount{};
 };

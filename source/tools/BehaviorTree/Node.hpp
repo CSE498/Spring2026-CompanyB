@@ -5,6 +5,8 @@
 #include <memory>
 #include <vector>
 
+#include "Blackboard.hpp"
+
 // ATTRIBUTIONS: Used ChatGPT to create Docstrings. Further modifications come
 // from my input
 
@@ -89,7 +91,7 @@ class Node {
    * @return An integer status code (e.g., Success (1), Failure (0), or Running
    * (-1)).
    */
-  virtual Status tick() = 0;
+  virtual Status tick(Blackboard& blackboard) = 0;
 
  protected:
   /// Stores the current execution status of the node.

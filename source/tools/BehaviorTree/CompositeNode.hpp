@@ -62,7 +62,7 @@ class CompositeNode : public Node {
     for (const auto& child : m_children) child->print(depth + 1);
   };
 
-  virtual Status tick() = 0;
+  virtual Status tick(Blackboard& blackboard) = 0;
   virtual std::string getActivePath() = 0;
 
  protected:
