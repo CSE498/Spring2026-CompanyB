@@ -342,7 +342,7 @@ TEST_CASE("WeightedSet clear", "[weighted_set]") {
   ws.Clear();
 
   CHECK(ws.total_weight() == 0);
-  
+
   CHECK_FALSE(ws.Contains(1));
   CHECK_FALSE(ws.Contains(2));
   CHECK_FALSE(ws.Contains(3));
