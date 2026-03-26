@@ -47,6 +47,9 @@ class TrafficWorld : public WorldBase {
   int spawn_clock = 9;
   const int spawn_period = 20;
 
+  int num_spawned_agents = 0;
+  const int max_spawned_agents = 15;
+
   /// Provide the agent with movement actions.
   void ConfigAgent(AgentBase &agent) override {
     agent.AddAction("stay", REMAIN_STILL);
@@ -271,14 +274,16 @@ class TrafficWorld : public WorldBase {
         for (size_t x = 0; x < main_grid.GetWidth(); ++x) {
           WorldPosition pos(x, y);
           // Don't spawn on top of an existing agent
-          if (main_grid[pos] == spawn_id && !AgentExistsAt(pos)) {
+          if (main_grid[pos] == spawn_id && !AgentExistsAt(pos) && num_spawned_agents < max_spawned_agents) {
             auto dest = destination_positions.GetRandomElement();
             if (dest.has_value()) {
               WorldPosition dest_pos = dest.value();
-              auto &agent = AddAgent<DrivingAgent>("Car 1");
+              auto &agent = AddAgent<DrivingAgent>("Car");
               agent.SetLocation(pos);
               agent.SetGridDestination(dest_pos.CellX(), dest_pos.CellY());
               agent.SetColour(GetDestinationColour(dest_pos));
+
+              ++num_spawned_agents;
             }
           }
         }
@@ -296,6 +301,7 @@ class TrafficWorld : public WorldBase {
       if (pos.CellX() == dest.CellX() && pos.CellY() == dest.CellY()) {
         driver->set_reached_destination(true);
         driver->SetSymbol('D');
+        --num_spawned_agents;
       }
     }
   }
