@@ -2,12 +2,11 @@
  * infectious_demo.cpp
  * @brief Demo of InfectiousWorld 
  * @note Status: PROPOSAL
- * @code
- *   c++ -std=c++23 -DCSE498_INFECTIOUS_DEMO_STANDALONE -I. \
- *   infectious_demo.cpp -o infectious_demo tools/Point.cpp tools/Box.cpp
- * @endcode
- *
-  * To run this demo from the normal app entry point with RunInfectiousDemo()
+ * compile with:
+ * g++ -std=c++23 -DCSE498_INFECTIOUS_DEMO_STANDALONE -I. \
+ * Group13_main.cpp -o infectious_demo tools/Point.cpp tools/Box.cpp
+ * run with:
+ * ./infectious_demo
  **/
 
 #include <iostream>
