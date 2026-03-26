@@ -136,7 +136,7 @@ class Random {
   // Recommended for initializing the state of xoshiro256++.
   // First constant is the golden ratio.
   // The rest are tried and tested for best performance
-  static uint64_t splitMix64(uint64_t& x) {
+  static constexpr uint64_t splitMix64(uint64_t& x) {
     constexpr uint64_t kConst1 = 0x9e3779b97f4a7c15ULL;
     constexpr uint64_t kConst2 = 0xbf58476d1ce4e5b9ULL;
     constexpr uint64_t kConst3 = 0x94d049bb133111ebULL;
