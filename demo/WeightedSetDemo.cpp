@@ -1,6 +1,6 @@
 #include <print>
 
-#include "../../source/tools/WeightedSet.hpp"
+#include "../source/tools/WeightedSet.hpp"
 int main() {
   cse498::WeightedSet<int> ws;
   /* We insert 1, 2, and 3 into the set, with weights 1, 2, and 3.
