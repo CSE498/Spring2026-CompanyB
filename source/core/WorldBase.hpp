@@ -10,6 +10,8 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <chrono>
+#include <thread>
 
 #include "AgentBase.hpp"
 #include "ItemBase.hpp"
@@ -135,8 +137,50 @@ class WorldBase {
     while (!run_over) {
       RunAgents();
       UpdateWorld();
+
+      /**
+       * Since we only do simulation, and no user input, i moved the interface display stuff here
+       * This more closely mimicks the compy design
+       */
+      DrawGrid(main_grid);
+      std::this_thread::sleep_for(std::chrono::milliseconds(250)); // Simulate a tick
     }
   }
+
+  void DrawGrid(const WorldGrid & grid)
+    {
+      std::vector<std::string> symbol_grid(grid.GetHeight());
+
+      // Load the world into the symbol_grid;
+      for (size_t y=0; y < grid.GetHeight(); ++y) {
+        symbol_grid[y].resize(grid.GetWidth());
+        for (size_t x=0; x < grid.GetWidth(); ++x) {
+          symbol_grid[y][x] = grid.GetSymbol(WorldPosition{x,y});
+        }
+      }
+
+      // Substitute in items.
+      for (auto& item : item_set) {
+        WorldPosition pos = item->GetLocation().AsWorldPosition();
+        symbol_grid[pos.CellY()][pos.CellX()] = '+';
+      }
+
+      // Substitute in agents.
+      for (auto & agent : agent_set) {
+        WorldPosition pos = agent->GetLocation().AsWorldPosition();
+        symbol_grid[pos.CellY()][pos.CellX()] = agent->GetSymbol();
+      }
+
+      // Print out the symbol_grid with a box around it.
+      std::cout << '+' << std::string(grid.GetWidth(),'-') << "+\n";
+      for (const auto & row : symbol_grid) {
+        std::cout << "|";
+        for (char cell : row) std::cout << cell;
+        std::cout << "|\n";
+      }
+      std::cout << '+' << std::string(grid.GetWidth(),'-') << "+\n";
+      std::cout.flush();
+    }
 
   //////////////////////////////////////////////////////////////////////////
   //

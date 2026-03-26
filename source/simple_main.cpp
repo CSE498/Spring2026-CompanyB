@@ -21,9 +21,16 @@ int main() {
       .SetHorizontal()
       .ToggleDirection()
       .SetLocation(WorldPosition{8, 8});
-  world.AddAgent<TrashInterface>("Interface")
-      .SetSymbol('@')
-      .SetLocation(WorldPosition{1, 1});
+
+
+      /**
+       * Our company has two worlds, neither interact with the user
+       * Therefore, i dont use this interface (since it derives from agent and isnt suited to what we need)
+       * So i just modified the world.run method to instead handle the display of the board and stuff
+       */
+//   world.AddAgent<TrashInterface>("Interface")
+//       .SetSymbol('@')
+//       .SetLocation(WorldPosition{1, 1});
 
   world.Run();
 }
