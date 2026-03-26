@@ -1,7 +1,6 @@
 #pragma once
 
 #include <any>
-#include <catch2/catch.hpp>
 #include <concepts>
 #include <expected>
 #include <optional>
@@ -10,7 +9,7 @@
 #include <variant>
 #include <vector>
 
-#include "core/core.hpp"
+#include "core.hpp"
 #include "tools/FuncInfo.hpp"
 
 /* Gonna redefine things that I know are already
