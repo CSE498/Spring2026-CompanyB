@@ -26,11 +26,28 @@ body {
 #start-btn,
 #pause-btn,
 #stop-btn,
-#exit-btn,
 #upload-btn,
 #save-btn,
 #exit-btn {
-    size: 20px;
+    width: 48px;
+    height: 48px;
     margin-left: 1em;
-    border-radius: 20px;
+    border-radius: 10px;
+    border: none;
+    background-color: transparent;
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    cursor: pointer;
+}
+
+#start-btn  { background-image: url('assets/images/start.svg');  }
+#pause-btn  { background-image: url('assets/images/pause.svg');  }
+#stop-btn   { background-image: url('assets/images/stop.svg');   }
+#upload-btn { background-image: url('assets/images/upload.svg'); }
+#save-btn   { background-image: url('assets/images/save.svg');   }
+#exit-btn   {
+    background-image: url('assets/images/exit.svg');
+    margin-left: auto;
+    margin-right: 1em;
 }

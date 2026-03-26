@@ -23,45 +23,45 @@ int main() {
   layout->SetDirection("column").SetAlignItems("center").SetGap("10px").SetHeight("100vh").SetJustifyContent("flex-start");
 
   auto menu_bar = std::make_shared<WebLayout>("menu-bar");
-  menu_bar->SetHeight("80px");
+  menu_bar->SetHeight("80px").SetDirection("row").SetAlignItems("center").SetGap("10px");
 
-  auto start_btn = std::make_shared<WebButton>("Start", "start-btn");
+  auto start_btn = std::make_shared<WebButton>("", "start-btn");
   start_btn->SetOnClick([]() {
     canvas->Clear();
     canvas->SetFillColor({0, 200, 100});
     canvas->DrawText("Running...", 10, 30);
   });
 
-  auto pause_btn = std::make_shared<WebButton>("Pause", "pause-btn");
-  start_btn->SetOnClick([]() {
+  auto pause_btn = std::make_shared<WebButton>("", "pause-btn");
+  pause_btn->SetOnClick([]() {
     canvas->Clear();
     canvas->SetFillColor({0, 200, 100});
     canvas->DrawText("Running...", 10, 30);
   });
 
-  auto stop_btn = std::make_shared<WebButton>("Stop", "stop-btn");
-  start_btn->SetOnClick([]() {
+  auto stop_btn = std::make_shared<WebButton>("", "stop-btn");
+  stop_btn->SetOnClick([]() {
+    canvas->Clear();
+    canvas->SetFillColor({0, 200, 100});
+    canvas->DrawText("Running...", 10, 30); 
+  });
+
+  auto upload_btn = std::make_shared<WebButton>("", "upload-btn");
+  upload_btn->SetOnClick([]() {
     canvas->Clear();
     canvas->SetFillColor({0, 200, 100});
     canvas->DrawText("Running...", 10, 30);
   });
 
-  auto upload_btn = std::make_shared<WebButton>("Upload", "upload-btn");
-  start_btn->SetOnClick([]() {
+  auto save_btn = std::make_shared<WebButton>("", "save-btn");
+  save_btn->SetOnClick([]() {
     canvas->Clear();
     canvas->SetFillColor({0, 200, 100});
     canvas->DrawText("Running...", 10, 30);
   });
 
-  auto save_btn = std::make_shared<WebButton>("Save", "save-btn");
-  start_btn->SetOnClick([]() {
-    canvas->Clear();
-    canvas->SetFillColor({0, 200, 100});
-    canvas->DrawText("Running...", 10, 30);
-  });
-
-  auto exit_btn = std::make_shared<WebButton>("Exit", "exit-btn");
-  start_btn->SetOnClick([]() {
+  auto exit_btn = std::make_shared<WebButton>("", "exit-btn");
+  exit_btn->SetOnClick([]() {
     canvas->Clear();
     canvas->SetFillColor({0, 200, 100});
     canvas->DrawText("Running...", 10, 30);
