@@ -20,8 +20,13 @@
 #include "../core/AgentBase.hpp"
 #include "../core/WorldBase.hpp"
 #include "../tools/StateGridPosition.hpp"
+#include "../tools/WeightedSet.hpp"
 
 namespace cse498 {
+
+constexpr int GO_FORWARD = 0;
+constexpr int GO_LEFT = 1;
+constexpr int GO_RIGHT = 2;
 
 class DrivingAgent : public AgentBase {
  protected:
@@ -45,6 +50,8 @@ class DrivingAgent : public AgentBase {
   bool reached_destination = false;
 
   std::string colour{};  ///< ANSI escape code for this agent's display colour.
+
+  WeightedSet<int> move_options{};
 
  public:
   DrivingAgent(size_t id, const std::string &name, const WorldBase &world)
@@ -114,24 +121,29 @@ class DrivingAgent : public AgentBase {
     }
 
     StateGridPosition forward_pos = grid_pos.GetForwardPosition();
-
+    StateGridPosition left_pos = grid_pos.GetLeftwardPosition();
+    StateGridPosition right_pos = grid_pos.GetRightwardPosition();
     bool can_move_forward =
         IsTraversableTerrain(grid[forward_pos.AsWorldPosition()]);
-    if (!can_move_forward) {
-      StateGridPosition left_pos = grid_pos.GetLeftwardPosition();
-      StateGridPosition right_pos = grid_pos.GetRightwardPosition();
-      bool can_move_left =
-          IsTraversableTerrain(grid[left_pos.AsWorldPosition()]);
-      bool can_move_right =
-          IsTraversableTerrain(grid[right_pos.AsWorldPosition()]);
+    bool can_move_left =
+        IsTraversableTerrain(grid[left_pos.AsWorldPosition()]);
+    bool can_move_right =
+        IsTraversableTerrain(grid[right_pos.AsWorldPosition()]);
+    if (!can_move_forward && !can_move_left && !can_move_right) {
+      TurnLeft();
+      TurnLeft();
+    } else {
+      move_options.Clear();
 
-      if (can_move_left) {
+      if (can_move_forward) move_options.Insert(GO_FORWARD, 1.0);
+      if (can_move_left) move_options.Insert(GO_LEFT, 1.0);
+      if (can_move_right) move_options.Insert(GO_RIGHT, 1.0);
+
+      int move = move_options.GetRandomElement().value();
+      if (move == GO_LEFT) {
         TurnLeft();
-      } else if (can_move_right) {
+      } else if (move == GO_RIGHT) {
         TurnRight();
-      } else {
-        TurnLeft();
-        TurnLeft();
       }
     }
 
