@@ -5,6 +5,8 @@
 #include <expected>
 #include <variant>
 #include <vector>
+#include <optional>
+#include <string>
 
 namespace cse498 {
 
