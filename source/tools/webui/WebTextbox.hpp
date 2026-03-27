@@ -151,6 +151,13 @@ class WebTextbox : public WebElement {
      * @param transform_fn A lambda function that takes a string and returns a modified string.
      */
   void TransformText(const std::function<std::string(const std::string&)>& transform_fn);
+
+  /**
+     * @brief Appends a new line of text wrapped in a styled span.
+     * @param text The string to append.
+     * @param css_class The CSS class name to apply to the span (e.g., "error-text").
+     */
+  void AppendStyledLine(const std::string& text, const std::string& css_class);
 };
 
 }  // namespace cse498

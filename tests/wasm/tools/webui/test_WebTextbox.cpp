@@ -126,13 +126,11 @@ TEST_CASE("WebTextbox: The Memory Stress Test", "[memory]") {
 
   std::string massive(massive_size, 'X');
   REQUIRE_NOTHROW(heavyBox.SetText(massive));
-  REQUIRE(heavyBox.GetText().value().size() ==
-          massive.size());  // Addition of .value()
+  REQUIRE(heavyBox.GetText().value().size() == massive.size());
 
   std::string more(1024 * 1024, 'Y');  // 1MB more
   REQUIRE_NOTHROW(heavyBox.AppendText(more));
-  REQUIRE(heavyBox.GetText().value().size() ==
-          massive_size + (1024 * 1024));  // .value() added here too
+  REQUIRE(heavyBox.GetText().value().size() == massive_size + (1024 * 1024));
 }
 
 TEST_CASE("WebTextbox: Templates and Lambdas", "[webui]") {
@@ -149,4 +147,15 @@ TEST_CASE("WebTextbox: Templates and Lambdas", "[webui]") {
 
   box.TransformText(add_error_label);
   REQUIRE(box.GetText().value() == "404 Error");
+}
+
+TEST_CASE("WebTextbox: Styled Span Lines", "[webui]") {
+  cse498::WebTextbox box("styled_box");
+
+  // Append a styled error message
+  REQUIRE_NOTHROW(box.AppendStyledLine("Fatal Exception: Null Pointer", "text-red-500"));
+
+  // Verify that GetText() still returns the raw text without the html tags
+  // Expect to get a newline at the end because AppendStyledLine adds one to the raw buffer
+  REQUIRE(box.GetText().value() == "Fatal Exception: Null Pointer\n");
 }

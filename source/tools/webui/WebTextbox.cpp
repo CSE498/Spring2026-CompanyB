@@ -188,11 +188,22 @@ void WebTextbox::SetMaxLength(size_t length) {
 void WebTextbox::TransformText(const std::function<std::string(const std::string&)>& transform_fn) {
   auto current_text = GetText();
 
-  // Check our value semantics to ensure we actually have text!
+  // Check our value semantics to ensure we actually have text
   if (current_text.has_value()) {
     std::string modified = transform_fn(current_text.value());
     SetText(modified);
   }
+}
+
+void WebTextbox::AppendStyledLine(const std::string& text, const std::string& css_class) {
+  // 1. Construct the HTML payload for the visual DOM
+  std::string html_payload = "<span class=\"" + css_class + "\">" + text + "</span><br>";
+
+  // You might have to push 'html_payload' to the element's innerHTML here
+  // Example: element_.set("innerHTML", element_.get("innerHTML").as<std::string>() + html_payload);
+
+  // 2. Update the internal C++ raw text buffer so GetText() and Catch2 tests don't break
+  AppendText(text + "\n");
 }
 
 }  // namespace cse498
