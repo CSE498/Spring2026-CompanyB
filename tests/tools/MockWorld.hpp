@@ -7,7 +7,7 @@
 namespace cse498 {
 class MockAgent {
  public:
-  int id = 5;
+  std::string id = "5";
   std::vector<int> position = {1, 2};
   std::string etc = "test value";
 
@@ -16,7 +16,7 @@ class MockAgent {
 
   void getLoggable() {
     nlohmann::json eventData;
-    eventData["id"] = id;
+    eventData["agentId"] = id;
     eventData["position"] = position;
     eventData["etc"] = etc;
     std::ofstream outFile("test_events.json");
@@ -27,11 +27,11 @@ class MockAgent {
     etc = "";
   }
   void loadFromJson(const nlohmann::json& eventData) {
-    id = eventData.at("id");
+    id = eventData.at("agentId").get<std::string>();
     position = eventData.at("position").get<std::vector<int>>();
     etc = eventData.at("etc").get<std::string>();
   }
-  int getId() const { return id; }
+  std::string getId() const { return id; }
 };
 
 class MockWorld {
@@ -41,7 +41,7 @@ class MockWorld {
   MockWorld() = default;
   ~MockWorld() = default;
 
-  MockAgent* getAgent(int id) {
+  MockAgent* getAgent(const std::string& id) {
     for (auto& agent : agents) {
       if (agent->id == id) {
         return agent;

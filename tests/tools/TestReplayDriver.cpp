@@ -21,10 +21,10 @@ TEST_CASE("ReplayDriver can read and replay events from a JSON file",
   auto& agents = mockWorld.getReplayAgents();
   auto result = replayDriver.ReplayFromFile("test_events.json", agents);
 
-  REQUIRE(result.value());
+  REQUIRE(result);
 
   // Verify that the agent's state has been updated based on the JSON data
-  REQUIRE(mockAgent->getId() == 5);
+  REQUIRE(mockAgent->getId() == "5");
   REQUIRE(mockAgent->position == std::vector<int>{1, 2});
   REQUIRE(mockAgent->etc == "test value");
 
@@ -40,7 +40,7 @@ TEST_CASE("ReplayDriver handles invalid file paths gracefully",
   auto& agents = mockWorld.getReplayAgents();
   auto result = replayDriver.ReplayFromFile("non_existent_file.json", agents);
 
-  REQUIRE(!result);
+  REQUIRE_FALSE(result);
 }
 
 TEST_CASE("ReplayDriver handles malformed JSON gracefully", "[ReplayDriver]") {
@@ -55,7 +55,7 @@ TEST_CASE("ReplayDriver handles malformed JSON gracefully", "[ReplayDriver]") {
   auto& agents = mockWorld.getReplayAgents();
   auto result = replayDriver.ReplayFromFile("malformed.json", agents);
 
-  REQUIRE(!result);
+  REQUIRE_FALSE(result);
 
   // Clean up the test file
   std::remove("malformed.json");

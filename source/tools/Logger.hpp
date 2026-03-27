@@ -7,12 +7,17 @@
 
 #include <memory>
 #include <string>
+#include <type_traits>
 #include <vector>
 
 #include "../Interfaces/IActionLog.hpp"
 #include "../Interfaces/ILogger.hpp"
 #include "../Interfaces/IOutputManager.hpp"
 #include "../Interfaces/IReplayDriver.hpp"
+#include "ActionLog.hpp"
+#include "OutputManager.hpp"
+#include "ReplayDriver.hpp"
+#include "nlohmann/json.hpp"
 
 namespace cse498 {
 
@@ -40,11 +45,22 @@ class Logger : public ILogger<AgentType> {
 
  public:
   /// @brief Constructs a logger with explicit dependencies.
-  Logger() {
-    mActionLog = std::make_unique<IActionLog<AgentType>>();
-    mOutputManager = std::make_unique<IOutputManager>();
-    mReplayDriver = std::make_unique<IReplayDriver<AgentType>>();
-  }
+  Logger()
+      : mActionLog(std::make_unique<ActionLog<AgentType>>()),
+        mOutputManager(std::make_unique<OutputManager>()),
+        mReplayDriver(std::make_unique<ReplayDriver<AgentType>>()) {}
+
+  /// @brief Constructs a logger with provided dependencies (for testing or
+  /// custom implementations).
+  /// @param actionLog Unique pointer to an IActionLog implementation.
+  /// @param outputManager Unique pointer to an IOutputManager implementation.
+  /// @param replayDriver Unique pointer to an IReplayDriver implementation.
+  Logger(std::unique_ptr<IActionLog<AgentType>> actionLog,
+         std::unique_ptr<IOutputManager> outputManager,
+         std::unique_ptr<IReplayDriver<AgentType>> replayDriver)
+      : mActionLog(std::move(actionLog)),
+        mOutputManager(std::move(outputManager)),
+        mReplayDriver(std::move(replayDriver)) {}
 
   ~Logger() override = default;
 
@@ -52,25 +68,29 @@ class Logger : public ILogger<AgentType> {
   /// @brief Replay recorded events from a file.
   /// @param filePath Path to the JSON file containing logged events.
   /// @param agents Reference vector of agents updated during replay.
-  /// @return true if replay was successful, false if no ReplayDriver is set.
+  /// @return true if replay loading was successful
   bool BeginReplay(const std::string& filePath,
                    std::vector<AgentType*>& agents) override {
-    if (!mReplayDriver) {
-      return false;
-    }
-
     return mReplayDriver->ReplayFromFile(filePath, agents);
   }
 
   // SAVING DURING LIVE SIMULATION:
   /// @brief Extract and validate action events from all agents.
   /// @param agents Vector of agents to extract actions from.
-  void ExtractAgentActions(const std::vector<AgentType>& agents) override {
-    if (!mActionLog || !mOutputManager) {
-      return;
+  /// @param filePath Optional file path to save the logged events; if empty, a
+  /// default path will be generated.
+  void SaveAgentActions(const std::vector<AgentType>& agents,
+                        const std::string& filePath = "") override {
+    if (filePath.empty()) {
+      std::string defaultPath =
+          "replay_" + std::to_string(std::time(nullptr)) + ".json";
+      mOutputManager->SetOutputFile(defaultPath);
+    } else {
+      mOutputManager->SetOutputFile(filePath);
     }
-    std::vector<ActionEventBase> events = mActionLog->LogAgentActions(agents);
+    auto events = mActionLog->LogAgentActions(agents);
     mOutputManager->WriteActionEvents(events);
+    mOutputManager->Flush();
   }
 };
 

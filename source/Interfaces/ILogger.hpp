@@ -35,7 +35,10 @@ class ILogger {
 
   /// @brief Extract and validate action events from agents.
   /// @param agents Vector of agents to extract actions from.
-  virtual void ExtractAgentActions(const std::vector<AgentType>& agents) = 0;
+  /// @param filePath Optional file path to save the logged events; if empty, a
+  /// default path will be generated.
+  virtual void SaveAgentActions(const std::vector<AgentType>& agents,
+                                const std::string& filePath = "") = 0;
 };
 
 }  // namespace cse498

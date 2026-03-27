@@ -6,12 +6,11 @@
  **/
 
 // Compile with:
-// g++ -std=c++23 -Wall -Wextra -Wpedantic ./demo/Group20-DRIVER.cpp -I third-party/include -I ./source/ -o build/native/group20_demo
+// g++ -std=c++23 -Wall -Wextra -Wpedantic ./demo/Group20-DRIVER.cpp ./source/tools/OutputManager.cpp ./source/tools/DataLog.cpp ./source/tools/ReplayDriver.cpp -I third-party/include -I ./source/ -o build/native/group20_demo
 // Run with:
 // ./build/native/group20_demo
 
-#include "../source/tools/ActionLog.hpp"
-#include "../source/tools/ReplayDriver.hpp"
+#include "../source/tools/Logger.hpp"
 
 #include <filesystem>
 #include <fstream>
@@ -43,21 +42,22 @@ using MovementEvent = ActionEvent<MovementDetails>;
   */
 class DemoAgent {
  private:
-  int mId;
-  std::string_view mAgentLabel;
+  int mNumericId;
+  std::string mAgentId;
   std::vector<MovementEvent> mActions;
 
  public:
-  DemoAgent(int id, std::string_view label) : mId(id), mAgentLabel(label) {}
+  DemoAgent(int id, std::string_view label)
+      : mNumericId(id), mAgentId(label) {}
 
   void AddMovementAction(std::string_view direction, int dx, int dy,
                          uint64_t tick, LogLevel level = LogLevel::Normal) {
-    mActions.push_back({mAgentLabel, "movement", level, tick,
+    mActions.push_back({mAgentId, "movement", level, tick,
                         MovementDetails{std::string(direction), dx, dy}});
   }
 
   void PrintActions() const {
-    std::cout << "   Agent " << mId << " recorded " << mActions.size()
+    std::cout << "   Agent " << mNumericId << " recorded " << mActions.size()
               << " actions\n";
     for (const auto& action : mActions) {
       std::cout << "      tick=" << action.timestamp
@@ -71,11 +71,12 @@ class DemoAgent {
   // --------------------------------------------------------------------
   // The following functions are required for compatibility with Logger.
   // --------------------------------------------------------------------
-  int getId() const { return mId; }
+  const std::string& getId() const { return mAgentId; }
 
   const std::vector<MovementEvent>& GetActions() const { return mActions; }
 
-  // ReplayDriver passes one event object at a time.
+  // ReplayDriver passes one event object at a time. Logger output only stores
+  // base fields, so details are optional during replay.
   void loadFromJson(const nlohmann::json& eventData) {
     if (!eventData.contains("actionType") ||
         !eventData.at("actionType").is_string()) {
@@ -92,16 +93,6 @@ class DemoAgent {
         !eventData.at("logLevel").is_number_integer()) {
       return;
     }
-    if (!eventData.contains("details") || !eventData.at("details").is_object()) {
-      return;
-    }
-
-    const auto& details = eventData.at("details");
-    if (!details.contains("direction") || !details.at("direction").is_string() ||
-        !details.contains("dx") || !details.at("dx").is_number_integer() ||
-        !details.contains("dy") || !details.at("dy").is_number_integer()) {
-      return;
-    }
 
     const int levelRaw = eventData.at("logLevel").get<int>();
     if (levelRaw < static_cast<int>(LogLevel::Normal) ||
@@ -109,41 +100,27 @@ class DemoAgent {
       return;
     }
 
-    AddMovementAction(details.at("direction").get<std::string>(),
-                      details.at("dx").get<int>(),
-                      details.at("dy").get<int>(),
+    std::string direction = "replayed";
+    int dx = 0;
+    int dy = 0;
+    if (eventData.contains("details") && eventData.at("details").is_object()) {
+      const auto& details = eventData.at("details");
+      if (details.contains("direction") && details.at("direction").is_string()) {
+        direction = details.at("direction").get<std::string>();
+      }
+      if (details.contains("dx") && details.at("dx").is_number_integer()) {
+        dx = details.at("dx").get<int>();
+      }
+      if (details.contains("dy") && details.at("dy").is_number_integer()) {
+        dy = details.at("dy").get<int>();
+      }
+    }
+
+    AddMovementAction(direction, dx, dy,
                       eventData.at("timestamp").get<uint64_t>(),
                       static_cast<LogLevel>(levelRaw));
   }
 };
-
-bool SaveAgentsToFile(const std::filesystem::path& outputPath,
-                      const std::vector<DemoAgent>& agents) {
-  nlohmann::json events = nlohmann::json::array();
-  for (const auto& agent : agents) {
-    for (const auto& action : agent.GetActions()) {
-      events.push_back({
-          {"id", agent.getId()},
-          {"agentId", std::string(action.agentId)},
-          {"actionType", std::string(action.actionType)},
-          {"logLevel", static_cast<int>(action.logLevel)},
-          {"timestamp", action.timestamp},
-          {"details",
-           {{"direction", action.details.direction},
-            {"dx", action.details.dx},
-            {"dy", action.details.dy}}},
-      });
-    }
-  }
-
-  std::ofstream out(outputPath);
-  if (!out.is_open()) {
-    return false;
-  }
-
-  out << events.dump(2) << '\n';
-  return !out.fail();
-}
 
 bool RunSaveScenario(const std::filesystem::path& outputPath) {
   std::cout << "=== SCENARIO 1: SAVE AGENT ACTIONS ===\n";
@@ -157,14 +134,28 @@ bool RunSaveScenario(const std::filesystem::path& outputPath) {
   agents[1].AddMovementAction("west", -1, 0, 2001, LogLevel::Normal);
   agents[1].AddMovementAction("south", 0, -1, 2002, LogLevel::Debug);
 
-  // Validate and flatten via ActionLog, following the logger extraction flow.
-  ActionLog<DemoAgent> actionLog;
-  const std::vector<ActionEventBase> flattened = actionLog.LogAgentActions(agents);
+  Logger<DemoAgent> logger;
+  logger.SaveAgentActions(agents, outputPath.string());
 
-  const bool saveOk = SaveAgentsToFile(outputPath, agents);
+  bool saveOk = false;
+  std::size_t savedCount = 0;
+  std::ifstream in(outputPath);
+  if (in.is_open()) {
+    nlohmann::json saved;
+    try {
+      in >> saved;
+      if (saved.is_object() && saved.contains("action_events") &&
+          saved.at("action_events").is_array()) {
+        savedCount = saved.at("action_events").size();
+        saveOk = (savedCount == 4);
+      }
+    } catch (const nlohmann::json::parse_error&) {
+      saveOk = false;
+    }
+  }
   const auto bytes = saveOk ? std::filesystem::file_size(outputPath) : 0;
 
-  std::cout << "   Flattened events via ActionLog: " << flattened.size() << "\n";
+  std::cout << "   Saved action_events via Logger: " << savedCount << "\n";
   std::cout << "   Save status: " << (saveOk ? "success" : "failure") << "\n";
   std::cout << "   Output file: " << outputPath << " (" << bytes
             << " bytes)\n\n";
@@ -180,22 +171,16 @@ bool RunLoadScenario(const std::filesystem::path& replayPath) {
   agents.emplace_back(2, "agent-2");
   std::vector<DemoAgent*> agentPointers{&agents[0], &agents[1]};
 
-  ReplayDriver<DemoAgent> replayDriver;
-  const auto replayResult = replayDriver.ReplayFromFile(replayPath.string(), agentPointers);
+  Logger<DemoAgent> logger;
+  const bool replayOk = logger.BeginReplay(replayPath.string(), agentPointers);
 
-  if (!replayResult.has_value()) {
-    std::cout << "   Replay failed: " << replayResult.error() << "\n\n";
-    return false;
-  }
-
-  std::cout << "   Replay status: "
-            << (replayResult.value() ? "success" : "failure") << "\n";
+  std::cout << "   Replay status: " << (replayOk ? "success" : "failure")
+            << "\n";
   agents[0].PrintActions();
   agents[1].PrintActions();
   std::cout << "   Replay input file: " << replayPath << "\n\n";
 
-  const bool expectedLoaded =
-      replayResult.value() && agents[0].GetActions().size() == 2 &&
+  const bool expectedLoaded = replayOk && agents[0].GetActions().size() == 2 &&
       agents[1].GetActions().size() == 2;
   return expectedLoaded;
 }

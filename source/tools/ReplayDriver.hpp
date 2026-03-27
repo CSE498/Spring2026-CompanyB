@@ -7,11 +7,14 @@
 
 #include <algorithm>
 #include <concepts>
-#include <expected>
 #include <fstream>
+#include <optional>
 #include <string>
+#include <string_view>
+#include <type_traits>
 #include <vector>
 
+#include "../Interfaces/IReplayDriver.hpp"
 #include "nlohmann/json.hpp"
 
 namespace cse498 {
@@ -20,50 +23,62 @@ namespace cse498 {
 template <typename AgentT>
 concept ReplayAgent = requires(AgentT* agent, const nlohmann::json& eventData) {
   { agent->loadFromJson(eventData) };
-  { agent->getId() };
-};
+} && (requires(AgentT* agent) {
+                        { agent->getId() };
+                      });
 
-/* Class Description:
- *  ReplayDriver is responsible for replaying logged events from a JSON file.
- *  It reads the events and sends instructions to matching agents by id.
- */
-
-template <ReplayAgent AgentT>
-class ReplayDriver {
+/// @brief ReplayDriver is responsible for replaying logged events from a JSON
+/// file. It reads the events and sends instructions to matching agents by id.
+template <typename AgentT>
+class ReplayDriver : public IReplayDriver<AgentT> {
  public:
   ReplayDriver() = default;
-  ~ReplayDriver() = default;
+  ~ReplayDriver() override = default;
 
   /// @brief Method to replay logged events from a JSON file.
   /// @param filePath Path to the JSON file containing logged events.
   /// @param agents Reference vector of replayable agents.
-  /// @return Success status of the replay operation. True if successful and
-  /// SendInstructions is called, false otherwise.
-  std::expected<bool, std::string> ReplayFromFile(
-      const std::string& filePath, std::vector<AgentT*>& agents) {
+  /// @return Success status of the replay operation.
+  bool ReplayFromFile(const std::string& filePath,
+                      std::vector<AgentT*>& agents) override {
     std::ifstream inFile(filePath);
     if (!inFile.is_open()) {
-      return std::unexpected("Failed to open file" + filePath);
+      return false;
     }
 
     nlohmann::json eventData;
     try {
       inFile >> eventData;
     } catch (const nlohmann::json::parse_error& e) {
-      return std::unexpected("Failed to parse JSON: " + std::string(e.what()));
+      (void)e;  // Suppress unused variable warning
+      return false;
     }
 
-    if (eventData.is_array()) {
-      for (const auto& event : eventData) {
+    // Accept either a top-level array of events or the OutputManager shape:
+    // { "action_events": [ ... ] }.
+    const nlohmann::json* eventsToReplay = &eventData;
+    if (eventData.is_object() && eventData.contains("action_events")) {
+      eventsToReplay = &eventData.at("action_events");
+      if (!eventsToReplay->is_array()) {
+        return false;
+      }
+    }
+
+    if (eventsToReplay->is_array()) {
+      for (const auto& event : *eventsToReplay) {
         if (!SendInstructions(event, agents)) {
-          return std::unexpected("Failed to replay event: agent not found");
+          return false;
         }
       }
       return true;
     }
 
-    if (!SendInstructions(eventData, agents)) {
-      return std::unexpected("Failed to replay event: agent not found");
+    if (!eventsToReplay->is_object()) {
+      return false;
+    }
+
+    if (!SendInstructions(*eventsToReplay, agents)) {
+      return false;
     }
 
     return true;
@@ -74,13 +89,44 @@ class ReplayDriver {
   /// @return true when a matching agent is updated, false otherwise.
   bool SendInstructions(const nlohmann::json& eventData,
                         std::vector<AgentT*>& agents) {
-    if (!eventData.contains("id") || !eventData.at("id").is_number_integer()) {
+    const auto GetIdString =
+        [&eventData](const char* key) -> std::optional<std::string> {
+      if (!eventData.contains(key)) {
+        return std::nullopt;
+      }
+      const nlohmann::json& idField = eventData.at(key);
+      if (idField.is_string()) {
+        return idField.get<std::string>();
+      }
+      if (idField.is_number_integer()) {
+        return std::to_string(idField.get<long long>());
+      }
+      return std::nullopt;
+    };
+
+    const std::optional<std::string> parsedAgentId = GetIdString("agentId");
+    const std::optional<std::string> parsedId = GetIdString("id");
+    if (!parsedAgentId.has_value() && !parsedId.has_value()) {
       return false;
     }
+    const std::string targetId =
+        parsedAgentId.has_value() ? parsedAgentId.value() : parsedId.value();
 
-    const int targetId = eventData.at("id").get<int>();
-    const auto found = std::ranges::find_if(agents, [targetId](AgentT* agent) {
-      return agent != nullptr && agent->getId() == targetId;
+    const auto found = std::ranges::find_if(agents, [&targetId](AgentT* agent) {
+      if (agent == nullptr) {
+        return false;
+      }
+
+      const auto agentId = agent->getId();
+      using IdType = std::decay_t<decltype(agentId)>;
+
+      if constexpr (std::is_arithmetic_v<IdType>) {
+        return std::to_string(agentId) == targetId;
+      } else if constexpr (std::is_convertible_v<IdType, std::string_view>) {
+        return std::string_view(agentId) == targetId;
+      } else {
+        return false;
+      }
     });
 
     if (found == agents.end()) {
