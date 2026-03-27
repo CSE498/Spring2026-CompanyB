@@ -20,7 +20,7 @@ namespace cse498 {
 template <typename AgentT>
 concept ReplayAgent = requires(AgentT* agent, const nlohmann::json& eventData) {
   { agent->loadFromJson(eventData) };
-  { agent->id };
+  { agent->getId() };
 };
 
 /* Class Description:
@@ -80,7 +80,7 @@ class ReplayDriver {
 
     const int targetId = eventData.at("id").get<int>();
     const auto found = std::ranges::find_if(agents, [targetId](AgentT* agent) {
-      return agent != nullptr && agent->id == targetId;
+      return agent != nullptr && agent->getId() == targetId;
     });
 
     if (found == agents.end()) {

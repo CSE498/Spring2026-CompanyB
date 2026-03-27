@@ -31,6 +31,7 @@ class MockAgent {
     position = eventData.at("position").get<std::vector<int>>();
     etc = eventData.at("etc").get<std::string>();
   }
+  int getId() const { return id; }
 };
 
 class MockWorld {

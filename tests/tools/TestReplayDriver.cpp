@@ -24,7 +24,7 @@ TEST_CASE("ReplayDriver can read and replay events from a JSON file",
   REQUIRE(result.value());
 
   // Verify that the agent's state has been updated based on the JSON data
-  REQUIRE(mockAgent->id == 5);
+  REQUIRE(mockAgent->getId() == 5);
   REQUIRE(mockAgent->position == std::vector<int>{1, 2});
   REQUIRE(mockAgent->etc == "test value");
 
