@@ -40,6 +40,7 @@ body {
     overflow-y: auto;
     border: none !important;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+    white-space: pre-wrap;
 }
 
 #game-area {
@@ -89,6 +90,7 @@ body {
 }
 #pause-btn {
     background-image: url("assets/images/pause.svg");
+    margin-top: 0.5em;
 }
 #stop-btn {
     background-image: url("assets/images/stop.svg");
@@ -98,9 +100,20 @@ body {
 }
 #save-btn {
     background-image: url("assets/images/save.svg");
+    margin-top: 0.5em;
 }
 #exit-btn {
     background-image: url("assets/images/exit.svg");
     margin-left: auto;
     margin-right: 1em;
+}
+
+.log-info {
+    color: #569cd6;
+}
+.log-warn {
+    color: #ce9178;
+}
+.log-error {
+    color: #f44336;
 }
