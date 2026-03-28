@@ -614,7 +614,7 @@ class RobinHoodMap {
     // if no entries are filled, return end(), otherwise rerturn an iterator
     // to the first entry.
     if (it == mTable.end()) return end();
-    return Iterator(&*it, &mTable[mTable.size()]);
+    return Iterator(&*it, mTable.data() + mTable.size());
   }
 
   /**
@@ -622,7 +622,7 @@ class RobinHoodMap {
    * @return Iterator pointing to one past the last entry.
    */
   Iterator end() {
-    return Iterator(&mTable[mTable.size()], &mTable[mTable.size()]);
+    return Iterator(mTable.data() + mTable.size(), mTable.data() + mTable.size());
   }
 
   /**
@@ -633,7 +633,7 @@ class RobinHoodMap {
     auto it = std::find_if(mTable.cbegin(), mTable.cend(),
                            [](const auto& entry) { return entry.filled; });
     if (it == mTable.cend()) return end();
-    return ConstIterator(&*it, &mTable[mTable.size()]);
+    return ConstIterator(&*it, mTable.data() + mTable.size());
   }
 
   /**
@@ -641,7 +641,7 @@ class RobinHoodMap {
    * @return Const iterator pointing to one past the last entry.
    */
   ConstIterator end() const {
-    return ConstIterator(&mTable[mTable.size()], &mTable[mTable.size()]);
+    return ConstIterator(mTable.data() + mTable.size(), mTable.data() + mTable.size());
   }
 
   /**

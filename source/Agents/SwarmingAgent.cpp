@@ -4,7 +4,7 @@
  */
 
 #include "SwarmingAgent.hpp"
-#include "../core/WorldBase.hpp"
+#include "../core/WorldBase.hpp"    
 
 namespace cse498 {
 
@@ -84,10 +84,10 @@ SwarmingAgent::MoveIntent SwarmingAgent::ChooseRandomIntent() {
 }
 
 size_t SwarmingAgent::IntentToAction(const MoveIntent & intent) {
-    if (intent.dx > 0) return GetActionID("right");
-    if (intent.dx < 0) return GetActionID("left");
-    if (intent.dy > 0) return GetActionID("down");
-    if (intent.dy < 0) return GetActionID("up");
+    if (intent.dx > 0) return GetActionID(ActionNames::RIGHT);
+    if (intent.dx < 0) return GetActionID(ActionNames::LEFT);  
+    if (intent.dy > 0) return GetActionID(ActionNames::DOWN);
+    if (intent.dy < 0) return GetActionID(ActionNames::UP);
 
     return 0; // Already at target or no intent, do nothing
 }

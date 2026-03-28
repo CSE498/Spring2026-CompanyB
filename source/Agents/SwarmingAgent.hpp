@@ -9,6 +9,7 @@
 #include "../core/AgentBase.hpp"
 #include "../tools/RobinHoodMap.hpp"
 #include "../core/WorldPosition.hpp"
+#include "../core/ActionNames.hpp"
 
 #include <random>
 #include <string>
@@ -60,8 +61,8 @@ protected:
     ~SwarmingAgent() override = default;
 
     bool Initialize() override {
-      return HasAction("up") && HasAction("down") &&
-             HasAction("left") && HasAction("right");
+      return HasAction(ActionNames::UP) && HasAction(ActionNames::DOWN) &&
+             HasAction(ActionNames::LEFT) && HasAction(ActionNames::RIGHT);
     }
 
     /// Set the ID of the target location this agent is seeking.
