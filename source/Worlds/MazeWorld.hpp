@@ -47,6 +47,10 @@ namespace cse498 {
     }
     ~MazeWorld() = default;
 
+    [[nodiscard]] bool IsTraversable(WorldPosition pos) const override {
+      return WorldBase::IsTraversable(pos) && main_grid[pos] != wall_id;
+    }
+
     /// Allow the agents to move around the maze.
     int DoAction(AgentBase & agent, size_t action_id) override {
       // Determine where the agent is trying to move.
@@ -60,9 +64,7 @@ namespace cse498 {
       case MOVE_RIGHT:   new_position = cur_position.Right(); break;
       }
 
-      // Don't let the agent move off the world or into a wall.
-      if (!main_grid.IsValid(new_position)) { return false; }
-      if (main_grid[new_position] == wall_id) { return false; }
+      if (!IsTraversable(new_position)) return false;
 
       // Set the agent to its new postion.
       agent.SetLocation(new_position);
