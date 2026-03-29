@@ -7,6 +7,7 @@
 #pragma once
 
 #include <cassert>
+#include <map>
 #include <memory>
 #include <string>
 #include <vector>
@@ -20,7 +21,7 @@ namespace cse498 {
 using item_ptr_t = std::unique_ptr<ItemBase>;
 using item_set_t = std::vector<item_ptr_t>;
 using agent_ptr_t = std::unique_ptr<AgentBase>;
-using agent_set_t = std::vector<agent_ptr_t>;
+using agent_set_t = std::map<size_t, agent_ptr_t>;
 
 class WorldBase {
  protected:
@@ -28,7 +29,8 @@ class WorldBase {
   WorldGrid main_grid;  ///< Main grid for this world
 
   item_set_t item_set;  ///< Vector of pointers to non-agent entities (ItemBase)
-  agent_set_t agent_set;  ///< Vector of pointers to agent entities (AgentBase)
+  agent_set_t agent_set;  ///< Map of pointers to agent entities (AgentBase), indexed by id
+  size_t next_id; ///< Next available agent ID
 
   bool run_over = false;  ///< Are we finished executing and now shutting down?
 
@@ -63,14 +65,16 @@ class WorldBase {
 
   /// Return a reference to an Agent with a given ID.
   [[nodiscard]] AgentBase& GetAgent(size_t id) {
-    assert(id < agent_set.size());
+    assert(id < next_id);
+    assert(agent_set.contains(id));
     return *agent_set[id];
   }
 
   /// Return a CONST reference to an Agent with a given ID.
   [[nodiscard]] const AgentBase& GetAgent(size_t id) const {
-    assert(id < agent_set.size());
-    return *agent_set[id];
+    assert(id < next_id);
+    assert(agent_set.contains(id));
+    return *agent_set.at(id);
   }
 
   /// Return an editable version of the current grid for this world (main_grid
@@ -121,16 +125,17 @@ class WorldBase {
   /// @return A reference to the newly created agent
   template <typename AGENT_T>
   AGENT_T& AddAgent(std::string agent_name = "None") {
+    size_t id = next_id++;
     auto agent_ptr =
-        std::make_unique<AGENT_T>(agent_set.size(), agent_name, *this);
+        std::make_unique<AGENT_T>(id, agent_name, *this);
     AGENT_T& agent_ref = *agent_ptr;
     ConfigAgent(*agent_ptr);
     if (agent_ptr->Initialize() == false) {
       std::cerr << "Failed to initialize agent '" << agent_name << "'."
                 << std::endl;
     }
-    agent_set.emplace_back(
-        std::move(agent_ptr));  // Move unique ptr for agent into set.
+    agent_set.insert({id,
+        std::move(agent_ptr)});  // Move unique ptr for agent into set.
     return agent_ref;
   }
 
@@ -147,7 +152,7 @@ class WorldBase {
   /// @note Override function to control execution order of agents.
   /// @note Override function to control which grid each agent receives.
   virtual void RunAgents() {
-    for (const auto& agent_ptr : agent_set) {
+    for (const auto& [id, agent_ptr] : agent_set) {
       size_t action_id = agent_ptr->SelectAction(main_grid);
       int result = DoAction(*agent_ptr, action_id);
       agent_ptr->SetActionResult(result);
@@ -180,7 +185,7 @@ class WorldBase {
   virtual std::vector<size_t> GetKnownAgents(
       [[maybe_unused]] const AgentBase& agent) const {
     std::vector<size_t> out_ids;
-    for (const agent_ptr_t& ptr : agent_set) out_ids.push_back(ptr->GetID());
+    for (const auto& [id, ptr] : agent_set) out_ids.push_back(id);
     return out_ids;
   }
 
