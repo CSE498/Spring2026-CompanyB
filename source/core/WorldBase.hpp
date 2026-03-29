@@ -83,6 +83,36 @@ class WorldBase {
   /// Determine if the run has ended.
   virtual bool IsRunOver() const { return run_over; }
 
+  /// @brief Whether it's possible for an agent to be on the given position.
+  [[nodiscard]] virtual bool IsTraversable(WorldPosition pos) const {
+    // For the base version we just check whether the given position is valid.
+    // The point is to override it in derived classes with e.g. checks on
+    // different kinds of tiles
+    return GetGrid().IsValid(pos);
+  }
+
+  /// @brief Whether an agent can move directly from "start" to "end".
+  [[nodiscard]] virtual bool CanMakeMove(WorldPosition start,
+                                         WorldPosition end) const {
+    // For the base version we only check whether it's possible at all for an
+    // agent to be on "end", and whether "end" is adjacent to "start", i.e. 1
+    // square away vertically, horizontally, or diagonally.
+
+    // In derived versions you could imagine e.g. a "1-way street" tile where,
+    // if "start" is a 1-way street pointing up, then it's only possible to move
+    // from "start" to "end" if end is directly above start.
+    if (!IsTraversable(end)) {
+      return false;
+    }
+
+    size_t delta_x = start.CellX() >= end.CellX() ? start.CellX() - end.CellX()
+                                                  : end.CellX() - start.CellX();
+    size_t delta_y = start.CellY() >= end.CellY() ? start.CellY() - end.CellY()
+                                                  : end.CellY() - start.CellY();
+
+    return delta_x <= 1 && delta_y <= 1;
+  }
+
   // -- Agent Management --
 
   /// @brief Build a new agent of the specified type
