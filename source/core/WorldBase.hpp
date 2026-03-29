@@ -29,8 +29,9 @@ class WorldBase {
   WorldGrid main_grid;  ///< Main grid for this world
 
   item_set_t item_set;  ///< Vector of pointers to non-agent entities (ItemBase)
-  agent_set_t agent_set;  ///< Map of pointers to agent entities (AgentBase), indexed by id
-  size_t next_id = 0; ///< Next available agent ID
+  agent_set_t agent_set;  ///< Map of pointers to agent entities (AgentBase),
+                          ///< indexed by id
+  size_t next_id = 0;     ///< Next available agent ID
 
   bool run_over = false;  ///< Are we finished executing and now shutting down?
 
@@ -126,24 +127,21 @@ class WorldBase {
   template <typename AGENT_T>
   AGENT_T& AddAgent(std::string agent_name = "None") {
     size_t id = next_id++;
-    auto agent_ptr =
-        std::make_unique<AGENT_T>(id, agent_name, *this);
+    auto agent_ptr = std::make_unique<AGENT_T>(id, agent_name, *this);
     AGENT_T& agent_ref = *agent_ptr;
     ConfigAgent(*agent_ptr);
     if (agent_ptr->Initialize() == false) {
       std::cerr << "Failed to initialize agent '" << agent_name << "'."
                 << std::endl;
     }
-    agent_set.insert({id,
-        std::move(agent_ptr)});  // Move unique ptr for agent into set.
+    agent_set.insert(
+        {id, std::move(agent_ptr)});  // Move unique ptr for agent into set.
     return agent_ref;
   }
   /// @brief Removes the agent with the given ID (if it exists).
   /// @param id ID to be removed
-  /// @return 1 if the agent was deleted, 0 otherwise 
-  size_t DeleteAgent(size_t id) {
-    return agent_set.erase(id);
-  }
+  /// @return 1 if the agent was deleted, 0 otherwise
+  size_t DeleteAgent(size_t id) { return agent_set.erase(id); }
 
   // -- Action Management --
 
