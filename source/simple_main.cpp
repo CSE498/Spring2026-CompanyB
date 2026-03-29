@@ -13,7 +13,7 @@ using namespace cse498;
 
 int main() {
   MazeWorld world;
-  world.AddAgent<PacingAgent>("Pacer 1").SetLocation(WorldPosition{3, 1});
+  world.AddAgent<PacingAgent>("Pacer 1").SetLocation(WorldPosition{3, 1}); // id = 0
   world.AddAgent<PacingAgent>("Pacer 2").SetLocation(WorldPosition{6, 1});
   world.AddAgent<PacingAgent>("Guard 1").SetHorizontal().SetLocation(
       WorldPosition{7, 7});
@@ -25,5 +25,6 @@ int main() {
       .SetSymbol('@')
       .SetLocation(WorldPosition{1, 1});
 
+  world.DeleteAgent(0); // deletes "Pacer 1"
   world.Run();
 }

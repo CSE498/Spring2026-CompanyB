@@ -30,7 +30,7 @@ class WorldBase {
 
   item_set_t item_set;  ///< Vector of pointers to non-agent entities (ItemBase)
   agent_set_t agent_set;  ///< Map of pointers to agent entities (AgentBase), indexed by id
-  size_t next_id; ///< Next available agent ID
+  size_t next_id = 0; ///< Next available agent ID
 
   bool run_over = false;  ///< Are we finished executing and now shutting down?
 
@@ -137,6 +137,12 @@ class WorldBase {
     agent_set.insert({id,
         std::move(agent_ptr)});  // Move unique ptr for agent into set.
     return agent_ref;
+  }
+  /// @brief Removes the agent with the given ID (if it exists).
+  /// @param id ID to be removed
+  /// @return 1 if the agent was deleted, 0 otherwise 
+  size_t DeleteAgent(size_t id) {
+    return agent_set.erase(id);
   }
 
   // -- Action Management --
