@@ -26,6 +26,11 @@ int main() {
       .SetSymbol('@')
       .SetLocation(WorldPosition{1, 1});
 
+  auto id = world.GetAgentIdAt(WorldPosition{6, 1});
+  if (id.has_value()) {
+    world.GetAgent(id.value()).SetSymbol('T');
+  }
+
   world.DeleteAgent(0);  // deletes "Pacer 1"
   world.Run();
 }

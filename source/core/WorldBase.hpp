@@ -9,6 +9,7 @@
 #include <cassert>
 #include <map>
 #include <memory>
+#include <expected>
 #include <string>
 #include <vector>
 
@@ -116,6 +117,15 @@ class WorldBase {
                                                   : end.CellY() - start.CellY();
 
     return delta_x <= 1 && delta_y <= 1;
+  }
+
+  [[nodiscard]] const std::optional<size_t> GetAgentIdAt(WorldPosition pos) {
+    for (const auto& [id, ptr] : agent_set) {
+      if (ptr->GetLocation().AsWorldPosition() == pos) {
+        return ptr->GetID();
+      }
+    }
+    return std::nullopt;
   }
 
   // -- Agent Management --
