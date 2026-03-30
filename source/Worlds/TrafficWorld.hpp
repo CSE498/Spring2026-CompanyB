@@ -195,6 +195,8 @@ class TrafficWorld : public WorldBase {
       case MOVE_RIGHT:
         new_position = cur_position.Right();
         break;
+      default:
+        new_position = cur_position;
     }
     // The following code is for collision detection between agents, which works
     // in a somewhat bizarre-looking way to simulate 2-lane roads with agents
