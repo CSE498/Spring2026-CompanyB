@@ -43,20 +43,16 @@ test:
 # Build program(s) + run tests
 all: build test
 
-# Program build variants that forward to source/ for host builds.
-# When used alongside a docker-build-*/docker-serve/docker-dev target they
-# act as variant selectors instead Ex: "make docker-build-native debug"
-BUILDVARIANTS     := debug opt quick grumpy
 DOCKER_BUILD_GOALS := $(filter docker-build-% docker-serve docker-dev,$(MAKECMDGOALS))
 
 ifeq ($(words $(DOCKER_BUILD_GOALS)),0) # Check if there aren't any build goals for Docker
 debug opt quick grumpy:
 	$(MAKE) -C source $@
 else
-debug opt quick grumpy: ;
+debug opt quick grumpy:
+	@:
 endif
 
-VARIANT := $(firstword $(filter $(BUILDVARIANTS),$(MAKECMDGOALS)))
 
 # Clean everything
 clean:
@@ -78,12 +74,12 @@ test-%:
 # Build the project with Emscripten (ignores Qt)
 docker-build-emscripten:
 	mkdir -p build
-	bash scripts/docker-build.sh build-emscripten $(VARIANT)
+	bash scripts/docker-build.sh build-emscripten $(filter-out $@,$(MAKECMDGOALS))
 
 # Build the project natively with Qt (ignores emscripten)
 docker-build-native:
 	mkdir -p build
-	bash scripts/docker-build.sh build-native $(VARIANT)
+	bash scripts/docker-build.sh build-native $(filter-out $@,$(MAKECMDGOALS))
 
 # Build and run emscripten tests
 docker-test-emscripten:
@@ -98,12 +94,12 @@ docker-test-native:
 # Build and serve with web server
 docker-serve:
 	mkdir -p build
-	bash scripts/docker-build.sh serve $(VARIANT)
+	bash scripts/docker-build.sh serve $(filter-out $@,$(MAKECMDGOALS))
 
 # Interactive development shell
 docker-dev:
 	mkdir -p build
-	bash scripts/docker-build.sh dev $(VARIANT)
+	bash scripts/docker-build.sh dev $(filter-out $@,$(MAKECMDGOALS))
 
 docker-shell: docker-dev
 
@@ -139,7 +135,7 @@ help:
 	@echo
 	@echo "Docker Build System"
 	@echo "  Note: Both build targets, serve, and dev/shell accepts variants."
-	@echo "  Ex: make docker-build-emscripten [debug|opt|quick|grumpy]"
+	@echo "  Ex: make docker-build-emscripten [default|debug|opt|quick|grumpy]"
 	@echo
 	@echo "  make docker-build-emscripten Build with Emscripten (outputs to build/emscripten)"
 	@echo "  make docker-build-native     Build natively with Qt (outputs to build/docker-native)"

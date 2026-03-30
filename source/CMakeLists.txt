@@ -196,3 +196,8 @@ else()
     endif()
 
 endif()
+
+message(STATUS "Build type:  ${CMAKE_BUILD_TYPE}")
+message(STATUS "CXX flags:   ${CMAKE_CXX_FLAGS}")
+message(STATUS "NO_QT:       ${NO_QT}")
+message(STATUS "TARGET_MAIN: ${TARGET_MAIN}")

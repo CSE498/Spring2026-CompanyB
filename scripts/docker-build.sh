@@ -26,6 +26,13 @@ show_help() {
 SERVICE="$1"
 VARIANT="${2:-}"
 
+if [ -n "${NO_QT}" ] && [ "${NO_QT}" != "1" ] && [ "${NO_QT}" != "0" ]; then
+    echo "==========================================================="
+    echo "NO_QT must be either 1 or 0. (True and False respectively)!";
+    echo "==========================================================="
+    exit 1;
+fi
+
 case "$SERVICE" in
   help|--help|-h|"")
     show_help
@@ -48,10 +55,10 @@ case "$VARIANT" in
           export CMAKE_EXTRA_FLAGS="$FLAGS_WARN -O3 -DNDEBUG" ;;
   quick)  export CMAKE_EXTRA_FLAGS="$FLAGS_WARN -DNDEBUG" ;;
   grumpy) export CMAKE_EXTRA_FLAGS="$FLAGS_WARN -Wconversion -Weffc++" ;;
-  "")     export CMAKE_EXTRA_FLAGS="$FLAGS_WARN" ;;
+  "")     export CMAKE_EXTRA_FLAGS="$FLAGS_WARN";;
   *)
     echo "Unknown variant '$VARIANT'."
-    echo "Valid variants: debug | opt | quick | grumpy"
+    echo "Valid variants: default | debug | opt | quick | grumpy"
     exit 1
     ;;
 esac
