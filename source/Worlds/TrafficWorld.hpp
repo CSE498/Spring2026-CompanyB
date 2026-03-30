@@ -217,30 +217,30 @@ class TrafficWorld : public WorldBase {
       auto opposite_of_current = static_cast<Direction>(
           (static_cast<int>(cur_pos_dir.value()) + 2) % 4);
       if (new_pos_dir != opposite_of_current) {
-        return false;
+        return 0;
       }
     }
 
     if (!main_grid.IsValid(new_position)) {
-      return false;
+      return 0;
     }
     if (main_grid[new_position] == grass_id) {
-      return false;
+      return 0;
     }
     // Reworked by Claude — check against the phase-specific traffic light cell
     // types
     const size_t dest_type = main_grid[new_position];
     if (dest_type == traffic_light_vertical_id) {
       // Only vertical movement allowed through this light
-      if (action_id == MOVE_LEFT || action_id == MOVE_RIGHT) return false;
+      if (action_id == MOVE_LEFT || action_id == MOVE_RIGHT) return 0;
     } else if (dest_type == traffic_light_horizontal_id) {
       // Only horizontal movement allowed through this light
-      if (action_id == MOVE_UP || action_id == MOVE_DOWN) return false;
+      if (action_id == MOVE_UP || action_id == MOVE_DOWN) return 0;
     }
 
     // Set the agent to its new postion.
     agent.SetLocation(new_position);
-    return true;
+    return 1;
   }
   // This code and everything related to it is bad and I'm sorry for writing it.
   // In the future we'll definitely need better ways for agents to interact with
