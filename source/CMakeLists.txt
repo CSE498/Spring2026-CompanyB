@@ -176,7 +176,7 @@ elseif(DEFINED EMSCRIPTEN)
 else()
     # Native build
     list(FILTER SOURCES EXCLUDE REGEX ".*/tools/webui/.*")
-    # Exclude all entry points, then add back the selected one
+    # Exclude all entry points then add back the selected one
     list(FILTER SOURCES EXCLUDE REGEX ".*_main\\.cpp$")
     list(APPEND SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/${TARGET_MAIN}")
 
