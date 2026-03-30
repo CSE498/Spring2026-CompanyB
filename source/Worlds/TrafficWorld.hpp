@@ -47,14 +47,14 @@ class TrafficWorld : public WorldBase {
   TrafficLightPhase traffic_light_phase{};
   /// @brief The number of turns that pass before all traffic lights flip to the
   /// opposite of what they currently are.
-  const int traffic_light_period = 3;
+  static constexpr int traffic_light_period = 3;
   /// @brief Counts up each turn and gets reset when it reaches
   /// traffic_light_period.
   int traffic_light_clock = 0;
 
   /// @brief The number of turns that pass before a new agent is spawned from
   /// each spawner with a random destination.
-  const int spawn_period = 20;
+  static constexpr int spawn_period = 20;
 
   /// @brief Counts up each turn and gets reset when it reaches spawn_period.
   int spawn_clock = 0;
@@ -65,7 +65,7 @@ class TrafficWorld : public WorldBase {
   int num_spawned_agents = 0;
   /// @brief Cap on the number of active spawned agents that can exist at a
   /// time, to prevent the world from getting too chaotic.
-  const int max_spawned_agents = 15;
+  static constexpr int max_spawned_agents = 15;
 
   /// Provide the agent with movement actions.
   void ConfigAgent(AgentBase &agent) override {
