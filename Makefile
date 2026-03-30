@@ -20,7 +20,7 @@
 # Pass host UID/GID into Docker so build outputs are not owned by root
 HOST_UID := $(shell id -u)
 HOST_GID := $(shell id -g)
-export HOST_UID HOST_GID
+export HOST_UID HOST_GID NO_QT TARGET_MAIN
 
 .PHONY: default all build test clean debug opt quick grumpy \
         src-% test-% help docker-build-emscripten docker-build-native \
@@ -43,9 +43,20 @@ test:
 # Build program(s) + run tests
 all: build test
 
-# Program build variants (forwarded to source/)
+# Program build variants that forward to source/ for host builds.
+# When used alongside a docker-build-*/docker-serve/docker-dev target they
+# act as variant selectors instead Ex: "make docker-build-native debug"
+BUILDVARIANTS     := debug opt quick grumpy
+DOCKER_BUILD_GOALS := $(filter docker-build-% docker-serve docker-dev,$(MAKECMDGOALS))
+
+ifeq ($(words $(DOCKER_BUILD_GOALS)),0) # Check if there aren't any build goals for Docker
 debug opt quick grumpy:
 	$(MAKE) -C source $@
+else
+debug opt quick grumpy: ;
+endif
+
+VARIANT := $(firstword $(filter $(BUILDVARIANTS),$(MAKECMDGOALS)))
 
 # Clean everything
 clean:
@@ -67,12 +78,12 @@ test-%:
 # Build the project with Emscripten (ignores Qt)
 docker-build-emscripten:
 	mkdir -p build
-	docker compose run --rm build-emscripten
+	bash scripts/docker-build.sh build-emscripten $(VARIANT)
 
 # Build the project natively with Qt (ignores emscripten)
 docker-build-native:
 	mkdir -p build
-	docker compose run --rm build-native
+	bash scripts/docker-build.sh build-native $(VARIANT)
 
 # Build and run emscripten tests
 docker-test-emscripten:
@@ -87,12 +98,12 @@ docker-test-native:
 # Build and serve with web server
 docker-serve:
 	mkdir -p build
-	docker compose up serve
+	bash scripts/docker-build.sh serve $(VARIANT)
 
 # Interactive development shell
 docker-dev:
 	mkdir -p build
-	docker compose run --rm dev
+	bash scripts/docker-build.sh dev $(VARIANT)
 
 docker-shell: docker-dev
 
@@ -117,22 +128,26 @@ help:
 	@echo "  make clean             Remove /build"
 	@echo
 	@echo "Flags:"
-	@echo "  NO_QT=1                Skip Qt. Excludes Interfaces/gui sources."
+	@echo "  NO_QT=1                Skip Qt. Excludes Interfaces/gui sources. (native only)"
 	@echo "                         Works with: build, test, all, debug, opt, quick, grumpy"
 	@echo "                         Example: make test NO_QT=1"
+	@echo "  TARGET_MAIN=<file>     Entry point file, e.g. simple_main.cpp (native only)""
 	@echo
 	@echo "Forwarding targets:"
 	@echo "  make src-<tgt>         Run 'make <tgt>' in source/"
 	@echo "  make test-<tgt>        Run 'make <tgt>' in tests/"
 	@echo
 	@echo "Docker Build System"
-	@echo "  make docker-build-emscripten   Build with Emscripten (outputs to build/emscripten)"
-	@echo "  make docker-build-native       Build natively with Qt (outputs to build/docker-native)"
-	@echo "  make docker-test-emscripten    Build + run Emscripten Catch2 tests"
-	@echo "  make docker-test-native        Build + run native Catch2 tests with Qt"
-	@echo "  make docker-serve              Build with Emscripten and serve the output"
-	@echo "  make docker-dev                Interactive development shell"
-	@echo "  make docker-shell              Alias for docker-dev"
-	@echo "  make docker-image              Build the Docker image"
-	@echo "  make docker-rebuild            Rebuild the Docker image without cache"
-	@echo "  make run-native                Enables x11 forwarding for the GUI from WSL to a Windows host"
+	@echo "  Note: Both build targets, serve, and dev/shell accepts variants."
+	@echo "  Ex: make docker-build-emscripten [debug|opt|quick|grumpy]"
+	@echo
+	@echo "  make docker-build-emscripten Build with Emscripten (outputs to build/emscripten)"
+	@echo "  make docker-build-native     Build natively with Qt (outputs to build/docker-native)"
+	@echo "  make docker-test-emscripten  Build + run Emscripten Catch2 tests"
+	@echo "  make docker-test-native      Build + run native Catch2 tests with Qt"
+	@echo "  make docker-serve            Build with Emscripten and serve the output"
+	@echo "  make docker-dev              Interactive development shell"
+	@echo "  make docker-shell            Alias for docker-dev"
+	@echo "  make docker-image            Build the Docker image"
+	@echo "  make docker-rebuild          Rebuild the Docker image without cache"
+	@echo "  make run-native              Enables x11 forwarding for the GUI from WSL to a Windows host"
