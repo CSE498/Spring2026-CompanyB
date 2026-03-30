@@ -45,7 +45,7 @@ case "$VARIANT" in
   debug)  export CMAKE_BUILD_TYPE=Debug
           export CMAKE_EXTRA_FLAGS="$FLAGS_WARN" ;;
   opt)    export CMAKE_BUILD_TYPE=Release
-          export CMAKE_EXTRA_FLAGS="$FLAGS_WARN" ;;
+          export CMAKE_EXTRA_FLAGS="$FLAGS_WARN -O3 -DNDEBUG" ;;
   quick)  export CMAKE_EXTRA_FLAGS="$FLAGS_WARN -DNDEBUG" ;;
   grumpy) export CMAKE_EXTRA_FLAGS="$FLAGS_WARN -Wconversion -Weffc++" ;;
   "")     export CMAKE_EXTRA_FLAGS="$FLAGS_WARN" ;;
