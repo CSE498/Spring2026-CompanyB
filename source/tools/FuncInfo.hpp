@@ -8,7 +8,8 @@
 // https://github.com/devosoft/Empirical/blob/fab89b252a8da6d2c6fdf628654c2342e1eb014b/include/emp/meta/FunInfo.hpp#LL72
 // See a minimal example at https://godbolt.org/z/dvrMMvnar
 namespace FuncInfo {
-template <typename T> struct memfun_type {
+template <typename T>
+struct memfun_type {
   using type = void;
 };
 
@@ -19,5 +20,6 @@ struct memfun_type<Ret (Class::*)(Args...) const> {
   using ret = Ret;
 };
 
-template <typename F> using FuncInfo = memfun_type<decltype(&F::operator())>;
-} // namespace FuncInfo
+template <typename F>
+using FuncInfo = memfun_type<decltype(&F::operator())>;
+}  // namespace FuncInfo

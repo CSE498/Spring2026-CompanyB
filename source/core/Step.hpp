@@ -41,13 +41,16 @@ struct StepErr {
 template <IsInfoType I>
 using InfoFunc = std::function<std::expected<bool, StepErr>(I)>;
 
-template <IsInfoType... Is> using InfoFuncTuple = std::tuple<InfoFunc<Is>...>;
+template <IsInfoType... Is>
+using InfoFuncTuple = std::tuple<InfoFunc<Is>...>;
 
 // Parameterize the info handler so that we can extremely easily add more types
 // later
-template <typename... Ts> struct _InfoHandler {
+template <typename... Ts>
+struct _InfoHandler {
   // Generate the default handler function
-  template <IsInfoType T> static InfoFunc<T> defaulted_handler() {
+  template <IsInfoType T>
+  static InfoFunc<T> defaulted_handler() {
     return [](T) {
       return std::unexpected(
           StepErr{StepErr::Kind::WRONG_TYPE,
@@ -76,7 +79,8 @@ template <typename... Ts> struct _InfoHandler {
                                 0, typename FuncInfo::FuncInfo<F>::args>::type,
                             Ts>(f)...}){};
 
-  template <typename S> std::expected<bool, StepErr> operator()(S s) {
+  template <typename S>
+  std::expected<bool, StepErr> operator()(S s) {
     return std::invoke(std::get<InfoFunc<S>>(funcs), s);
   }
 };
@@ -101,9 +105,9 @@ struct MovementStep {
 
 struct InfoStep {
   enum class Aspect {
-    OCCUPANCY_RAW,  // How many in area?
-    OCCUPANCY_FRAC, // How much of area is occupied?
-    LOC_AVAIL,      // Is specific spot available?
+    OCCUPANCY_RAW,   // How many in area?
+    OCCUPANCY_FRAC,  // How much of area is occupied?
+    LOC_AVAIL,       // Is specific spot available?
   };
 
   Aspect aspect;
@@ -111,7 +115,8 @@ struct InfoStep {
   std::optional<InfoType> info = {};
 
   // Fill in the world info -- the world calls this
-  template <IsInfoType I> void inform(I const &world_info) {
+  template <IsInfoType I>
+  void inform(I const &world_info) {
     info = InfoType{std::in_place_type<I>, world_info};
   }
 };
@@ -153,8 +158,9 @@ struct StepContainer {
 
   std::stack<Node const *> next_stack;
 
-  template <StepKind S> void add_node(S &&s) {
-    assert(last != nullptr); // Should never be possible
+  template <StepKind S>
+  void add_node(S &&s) {
+    assert(last != nullptr);  // Should never be possible
     last->next = std::make_unique<Node>(std::move(s));
     last = last->next.get();
     assert(last != nullptr);
@@ -246,8 +252,7 @@ struct StepContainer {
           std::visit(handler, cond_input);
 
       // Forward the error if encountered
-      if (!cond_result.has_value())
-        return std::unexpected(cond_result.error());
+      if (!cond_result.has_value()) return std::unexpected(cond_result.error());
 
       // TODO - Now handle what to do if we got the bool successfully
       if (cond_result.value()) {
@@ -288,5 +293,5 @@ struct StepContainer {
   }
 };
 
-}; // namespace steps
-}; // namespace cse498
+};  // namespace steps
+};  // namespace cse498
