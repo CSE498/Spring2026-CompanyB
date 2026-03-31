@@ -73,8 +73,15 @@ class WorldPath {
   template <std::ranges::input_range R>
     requires(!std::same_as<std::remove_cvref_t<R>, WorldPath>) &&
             std::constructible_from<Point, std::ranges::range_reference_t<R>>
-  explicit WorldPath(R&& range)
-      : points_(std::from_range, std::forward<R>(range)) {
+  explicit WorldPath(R&& range) {
+    if constexpr (std::ranges::sized_range<R>) {
+      points_.reserve(std::ranges::size(range));
+    }
+
+    for (auto&& p : range) {
+      points_.emplace_back(std::forward<decltype(p)>(p));
+    }
+
     assert(isValid());
   }
 
