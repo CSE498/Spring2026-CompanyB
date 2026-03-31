@@ -1,0 +1,297 @@
+#pragma once
+
+#include <any>
+#include <cassert>
+#include <concepts>
+#include <expected>
+#include <memory>
+#include <optional>
+#include <stack>
+#include <string>
+#include <type_traits>
+#include <utility>
+#include <variant>
+#include <vector>
+
+#include "core/WorldPosition.hpp"
+#include "core/core.hpp"
+#include "tools/ActionMap.hpp"
+#include "tools/FuncInfo.hpp"
+
+namespace cse498 {
+namespace steps {
+
+using InfoType = std::variant<int, double, bool>;
+using _InfoTuple = std::variant<int, double, bool>;
+
+template <typename T>
+concept IsInfoType = Concepts::IsOneOf<T, int, double, bool>;
+
+struct StepErr {
+  enum class Kind {
+    EXAMPLE,
+    WRONG_TYPE,
+    HANDLER_NOT_SET,
+  };
+
+  Kind kind;
+  std::string msg;
+};
+
+template <IsInfoType I>
+using InfoFunc = std::function<std::expected<bool, StepErr>(I)>;
+
+template <IsInfoType... Is>
+using InfoFuncTuple = std::tuple<InfoFunc<Is>...>;
+
+// Parameterize the info handler so that we can extremely easily add more types
+// later
+template <typename... Ts>
+struct _InfoHandler {
+  // Generate the default handler function
+  template <IsInfoType T>
+  static InfoFunc<T> defaulted_handler() {
+    return [](T) {
+      return std::unexpected(
+          StepErr{StepErr::Kind::WRONG_TYPE,
+                  "InfoStep passed invalidly typed InfoType into InfoHandler"});
+    };
+  }
+
+  // Pick and return the passed in func if types match, otherwise generate the
+  // default
+  template <IsInfoType Target, IsInfoType Current>
+  static InfoFunc<Current> pick_handler(InfoFunc<Target> f) {
+    if constexpr (std::is_same_v<Target, Current>) {
+      return f;
+    } else {
+      return defaulted_handler<Current>();
+    }
+  }
+
+  // Holds the defaulted handlers which will get one function overwritten
+  InfoFuncTuple<Ts...> funcs;
+
+  // Allows passing in a lambda
+  template <typename F>
+  _InfoHandler(F f)
+      : funcs({pick_handler<typename std::tuple_element<
+                                0, typename FuncInfo::FuncInfo<F>::args>::type,
+                            Ts>(f)...}){};
+
+  template <typename S>
+  std::expected<bool, StepErr> operator()(S s) {
+    return std::invoke(std::get<InfoFunc<S>>(funcs), s);
+  }
+};
+
+// Now set our desired InfoHandler type and let the compiler handle the rest
+using InfoHandler = _InfoHandler<int, double, bool>;
+
+template <IsInfoType I>
+std::function<std::expected<bool, StepErr>(I)> default_call() {
+  return [](I) {
+    std::unexpected(StepErr{StepErr::Kind::WRONG_TYPE,
+                            "InfoStep invalid type InfoType into InfoHandler"});
+  };
+}
+
+// Forward decl.
+struct StepContainer;
+
+struct MovementStep {
+  WorldPosition loc;
+};
+
+struct InfoStep {
+  enum class Aspect {
+    OCCUPANCY_RAW,   // How many in area?
+    OCCUPANCY_FRAC,  // How much of area is occupied?
+    LOC_AVAIL,       // Is specific spot available?
+  };
+
+  Aspect aspect;
+  WorldPosition target;
+  std::optional<InfoType> info = {};
+
+  // Fill in the world info -- the world calls this
+  template <IsInfoType I>
+  void inform(I const &world_info) {
+    info = InfoType{std::in_place_type<I>, world_info};
+  }
+};
+
+struct ConditionalStep {
+  InfoHandler condition;
+};
+
+struct ReconStep {
+  // TODO (probably gonna scrap)
+};
+
+template <typename T>
+concept StepKind =
+    Concepts::IsOneOf<T, MovementStep, InfoStep, ConditionalStep, ReconStep>;
+
+using Step = std::variant<MovementStep, InfoStep, ConditionalStep, ReconStep>;
+
+// Future optimization -- can shove this tree structure into a vec and save on
+// cache misses
+
+struct StepContainer {
+  struct Node {
+    std::optional<Step> step;
+    std::unique_ptr<Node> next;
+    std::unique_ptr<Node> left;
+    std::unique_ptr<Node> right;
+  };
+
+  // Root is an "empty" node so that "last" can always be bound
+  std::unique_ptr<Node> root = std::make_unique<Node>();
+  // This is *non owning* and a shared_ptr doesn't make sense
+  Node *last = root.get();
+
+  // When iterating, the "indexing" ptr needs no mutation
+  Node const *cur_node = root.get();
+  // Need one node prior to handle infostep stuff
+  Node const *prev_node = nullptr;
+
+  std::stack<Node const *> next_stack;
+
+  template <StepKind S>
+  void add_node(S &&s) {
+    assert(last != nullptr);  // Should never be possible
+    last->next = std::make_unique<Node>(std::move(s));
+    last = last->next.get();
+    assert(last != nullptr);
+  }
+
+  void add_node(InfoStep &&i, ConditionalStep &&s, StepContainer &&t_body) {
+    assert(last != nullptr);
+
+    // Insert infostep node first
+    add_node(std::move(i));
+
+    // Insert ConditionalStep node
+    add_node(std::move(s));
+
+    // Move t_body's root to last's left child, then unset its last (don't
+    // change our last)
+    last->left = std::move(t_body.root);
+    t_body.last = nullptr;
+
+    assert(last != nullptr);
+  }
+
+  void add_node(InfoStep &&i, ConditionalStep &&s, StepContainer &&t_body,
+                StepContainer &&f_body) {
+    assert(last != nullptr);
+
+    // Do everything the single-branch add_node does, then just additionally add
+    // in f_body
+    add_node(std::move(i), std::move(s), std::move(t_body));
+
+    // Move f_body's root to last's right child, then unset its last (again,
+    // don't change our last)
+    last->right = std::move(f_body.root);
+    f_body.last = nullptr;
+
+    assert(last != nullptr);
+  }
+
+  std::expected<Step, StepErr> get_next() {
+    // TODO - This method is way over inclusive, should refactor down & out
+    // later
+    if (cur_node == nullptr) {
+      // If next_stack isnt empty we have at min one return point to go back to
+      if (!next_stack.empty()) {
+        // We don't track the node prior to the return point because a
+        // conditional following a conditional directly is a failure mode
+        // properly checked for, so we'll just set prev_node null and let
+        // conditional handling take care of it
+        prev_node = nullptr;
+        cur_node = next_stack.top();
+        next_stack.pop();
+        return get_next();
+      } else
+        return std::unexpected(
+            StepErr{StepErr::Kind::EXAMPLE, "No remaining steps"});
+    }
+
+    // Skip empty step(s)
+    if (!cur_node->step.has_value()) {
+      prev_node = cur_node;
+      cur_node = cur_node->next.get();
+      return get_next();
+    }
+
+    // Future optimization -- can save on all this checking+casting by moving
+    // step-dependent work out to a visitor and just passing the current step
+    // into std::visit
+
+    // Handle current node being conditional
+    if (std::holds_alternative<ConditionalStep>(cur_node->step.value())) {
+      // Prior node must be an infostep and have info
+      // (this is probably a future perf refactor target...
+      if ((prev_node == nullptr) || (!prev_node->step.has_value()) ||
+          (!std::holds_alternative<InfoStep>(prev_node->step.value())) ||
+          (!std::get<InfoStep>(prev_node->step.value()).info.has_value()))
+        return std::unexpected(StepErr{
+            StepErr::Kind::EXAMPLE,
+            "Previous step does not have information for the ConditionalStep"});
+
+      // Guaranteed fine to do given the prior checks
+      // Need to copy these, otherwise we have an unnecessary constness headache
+      InfoType cond_input =
+          std::get<InfoStep>(prev_node->step.value()).info.value();
+      InfoHandler handler =
+          std::get<ConditionalStep>(cur_node->step.value()).condition;
+
+      // Pipe previous condition
+      std::expected<bool, StepErr> cond_result =
+          std::visit(handler, cond_input);
+
+      // Forward the error if encountered
+      if (!cond_result.has_value()) return std::unexpected(cond_result.error());
+
+      // TODO - Now handle what to do if we got the bool successfully
+      if (cond_result.value()) {
+        // Likely don't need this check, it *should* be impossible to have a
+        // conditional step w/o a true branch
+        if (cur_node->left == nullptr)
+          return std::unexpected(StepErr{StepErr::Kind::EXAMPLE,
+                                         "ConditionalStep which evaluated true "
+                                         "does not have a true branch"});
+
+        // Push the return point onto the stack, then return the first step in
+        // the true branch
+        next_stack.push(cur_node->next.get());
+        prev_node = cur_node;
+        cur_node = cur_node->left.get();
+        return get_next();
+      } else {
+        // If no false branch, we just continue to the next node
+        if (cur_node->right == nullptr) {
+          prev_node = cur_node;
+          cur_node = cur_node->next.get();
+          return get_next();
+        }
+
+        // Push return point onto stack, then ret first step on false branch
+        next_stack.push(cur_node->next.get());
+        prev_node = cur_node;
+        cur_node = cur_node->right.get();
+        return get_next();
+      }
+    }
+
+    // The rest of the nodes don't require extra work
+    Step ret_step = cur_node->step.value();
+    prev_node = cur_node;
+    cur_node = cur_node->next.get();
+    return ret_step;
+  }
+};
+
+};  // namespace steps
+};  // namespace cse498

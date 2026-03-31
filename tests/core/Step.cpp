@@ -1,0 +1,10 @@
+#include "core/Step.hpp"
+
+#include <catch2/catch_test_macros.hpp>
+
+TEST_CASE("InfoStep basic functionality", "[InfoStep]") {
+  using namespace cse498::steps;
+  InfoHandler test_handler(
+      [](int i) -> std::expected<bool, StepErr> { return i == 0; });
+  SECTION("default unexpected correctly returned for the invalid types") {}
+}
