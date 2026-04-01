@@ -6,8 +6,9 @@
 
 #include <cassert>
 
-#include "../core/WorldBase.hpp"
 #include "../core/AgentBase.hpp"
+#include "../core/WorldBase.hpp"
+#include "WorldPosition.hpp"
 
 // clang-format off
 namespace cse498 {
@@ -27,21 +28,20 @@ namespace cse498 {
     StepContainer GetTurn() override
     {
       WorldPosition pos = GetState().pos;
-      StepContainer container;
+      StepContainer container{};
 
         switch (step_index % 4) {
             case 0:
-        
-                container.add_step<MovementStep>(pos.Down()); // Down
+	      container.add_step(MovementStep{pos.Down()});
                 break;
             case 1:
-                container.add_step<MovementStep>(pos.Right()); // Right
+	      container.add_step(MovementStep{pos.Right()});
                 break;
             case 2:
-                container.add_step<MovementStep>(pos.Up()); // Up
+	      container.add_step(MovementStep{pos.Up()});
                 break;
             case 3:
-                container.add_step<MovementStep>(pos.Left()); // Left
+	      container.add_step(MovementStep{pos.Left()});
                 break;
         }
 
@@ -51,4 +51,4 @@ namespace cse498 {
 
   };
 // clang-format on
-}  // End of namespace cse498
+} // End of namespace cse498
