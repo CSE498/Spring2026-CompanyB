@@ -29,47 +29,29 @@ int main() {
   auto menu_bar = std::make_shared<WebLayout>("menu-bar");
   menu_bar->SetHeight("80px").SetDirection("row").SetAlignItems("center").SetGap("10px");
 
-  auto start_btn = std::make_shared<WebButton>("", "start-btn");
-  start_btn->SetOnClick([]() {
+  auto btn_lambda = []() {
     canvas->Clear();
     canvas->SetFillColor({0, 200, 100});
     canvas->DrawText("Running...", 10, 30);
-  });
+  };
+
+  auto start_btn = std::make_shared<WebButton>("", "start-btn");
+  start_btn->SetOnClick(btn_lambda);
 
   auto pause_btn = std::make_shared<WebButton>("", "pause-btn");
-  pause_btn->SetOnClick([]() {
-    canvas->Clear();
-    canvas->SetFillColor({0, 200, 100});
-    canvas->DrawText("Running...", 10, 30);
-  });
+  pause_btn->SetOnClick(btn_lambda);
 
   auto stop_btn = std::make_shared<WebButton>("", "stop-btn");
-  stop_btn->SetOnClick([]() {
-    canvas->Clear();
-    canvas->SetFillColor({0, 200, 100});
-    canvas->DrawText("Running...", 10, 30); 
-  });
+  stop_btn->SetOnClick(btn_lambda);
 
   auto upload_btn = std::make_shared<WebButton>("", "upload-btn");
-  upload_btn->SetOnClick([]() {
-    canvas->Clear();
-    canvas->SetFillColor({0, 200, 100});
-    canvas->DrawText("Running...", 10, 30);
-  });
+  upload_btn->SetOnClick(btn_lambda);
 
   auto save_btn = std::make_shared<WebButton>("", "save-btn");
-  save_btn->SetOnClick([]() {
-    canvas->Clear();
-    canvas->SetFillColor({0, 200, 100});
-    canvas->DrawText("Running...", 10, 30);
-  });
+  save_btn->SetOnClick(btn_lambda);
 
   auto exit_btn = std::make_shared<WebButton>("", "exit-btn");
-  exit_btn->SetOnClick([]() {
-    canvas->Clear();
-    canvas->SetFillColor({0, 200, 100});
-    canvas->DrawText("Running...", 10, 30);
-  });
+  exit_btn->SetOnClick(btn_lambda);
 
   menu_bar->AddChild(start_btn);
   menu_bar->AddChild(pause_btn);
