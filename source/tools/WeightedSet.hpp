@@ -2,6 +2,7 @@
 #pragma once
 #include <cassert>
 #include <cstddef>
+#include <functional>
 #include <iostream>
 #include <memory>
 #include <optional>
@@ -13,6 +14,12 @@
 #include "Random.hpp"
 
 namespace cse498 {
+// this code taken from an example on cppreference https://en.cppreference.com/w/cpp/language/constraints.html
+template<typename T>
+concept Hashable = requires(T a)
+{
+    { std::hash<T>{}(a) } -> std::convertible_to<std::size_t>;
+};
 /*
   The initial boilerplate setup (constructors, CopyTree(), assign and
   move operators, basic getters (namely size(), empty(), total_weight()), and
@@ -41,7 +48,7 @@ namespace cse498 {
  * contains one element of weight 1 and one of weight 2, the first will be
  * selected with 1/3 probability and the second with 2/3 probability.
  */
-template <typename T>
+template <Hashable T>
 class WeightedSet {
  private:
   /** @brief A node in the binary-tree structure used in WeightedSet. */
