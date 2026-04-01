@@ -178,6 +178,8 @@ class TrafficWorld : public WorldBase {
   int DoAction(AgentBase &agent, size_t action_id) override {
     // Determine where the agent is trying to move.
     WorldPosition cur_position = agent.GetLocation().AsWorldPosition();
+    assert(main_grid.IsValid(cur_position));
+      
     WorldPosition new_position;
     switch (action_id) {
       case REMAIN_STILL:
@@ -197,6 +199,14 @@ class TrafficWorld : public WorldBase {
         break;
       default:
         new_position = cur_position;
+    }
+
+    if (!main_grid.IsValid(new_position)) {
+      return 0;
+    }
+    
+    if (main_grid[new_position] == grass_id) {
+      return 0;
     }
     // The following code is for collision detection between agents, which works
     // in a somewhat bizarre-looking way to simulate 2-lane roads with agents
@@ -224,13 +234,6 @@ class TrafficWorld : public WorldBase {
       if (new_pos_dir != opposite_of_current) {
         return 0;
       }
-    }
-
-    if (!main_grid.IsValid(new_position)) {
-      return 0;
-    }
-    if (main_grid[new_position] == grass_id) {
-      return 0;
     }
     // Reworked by Claude — check against the phase-specific traffic light cell
     // types
