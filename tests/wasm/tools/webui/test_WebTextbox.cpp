@@ -1,152 +1,183 @@
-// #include <catch2/catch_test_macros.hpp>
-// #include <iostream>
-// #include <limits>
-// #include <random>
-// #include <vector>
+#include <emscripten.h>
 
-// #include "tools/webui/WebTextbox.hpp"
+#include <catch2/catch_test_macros.hpp>
+#include <iostream>
+#include <limits>
+#include <random>
+#include <vector>
 
-// using namespace cse498;
+#include "tools/webui/WebTextbox.hpp"
 
-// // --- CHAOS HELPERS ---
-// std::string GenerateGarbage(size_t length) {
-//   std::string s;
-//   s.reserve(length);
-//   for (size_t i = 0; i < length; ++i) {
-//     // Keep garbage text as valid UTF-8 in ASCII printable range, otherwise the
-//     // text gets mangled. This issue occurs when the DOM exists.
-//     s.push_back(static_cast<char>(32 + rand() % 95));
-//   }
-//   return s;
-// }
+using namespace cse498;
 
-// // --- NEW FEATURE TESTS ---
+struct SetupMockDOMWebTextbox {
+  SetupMockDOMWebTextbox() {
+    // clang-format off
+    EM_ASM({
+      /// Creates a document if it doesn't exist
+      if (typeof document === 'undefined') {
+        const { JSDOM } = jsdom;
+        const dom = new JSDOM("<!DOCTYPE html> <html><head></head><body></body></html>");
+        globalThis.window = dom.window;
+        globalThis.document = dom.window.document;
+      }
+    });
+    // clang-format on
+  }
 
-// TEST_CASE("WebTextbox: New UI & Memory Features", "[features]") {
-//   WebTextbox box("feature_box");
+  ~SetupMockDOMWebTextbox() {
+    // clang-format off
+      EM_ASM({
+        delete globalThis.document;
+        delete globalThis.window;
+      });
+    // clang-format on
+  }
+};
 
-//   // "SECTION" is mocked by our MiniTest macro, so this just runs sequentially
+// --- CHAOS HELPERS ---
+std::string GenerateGarbage(size_t length) {
+  std::string s;
+  s.reserve(length);
+  for (size_t i = 0; i < length; ++i) {
+    // Keep garbage text as valid UTF-8 in ASCII printable range, otherwise the
+    // text gets mangled. This issue occurs when the DOM exists.
+    s.push_back(static_cast<char>(32 + rand() % 95));
+  }
+  return s;
+}
 
-//   // 1. Test Clear()
-//   box.SetText("Initialize Data");
-//   REQUIRE(box.GetText().value() == "Initialize Data");
-//   box.Clear();
-//   REQUIRE(box.GetText().value() == "");
+// --- NEW FEATURE TESTS ---
 
-//   // 2. Test MaxLength Trimming on SetText
-//   box.SetMaxLength(10);
-//   box.SetText("This is way too long for a 10 char limit");
-//   // Should only keep the last 10 characters
-//   REQUIRE(box.GetText().value() == "char limit");
+TEST_CASE("WebTextbox: New UI & Memory Features", "[features]") {
+  SetupMockDOMWebTextbox mock;
+  WebTextbox box(TextStyle(), "feature_box");
 
-//   // 3. Test MaxLength Trimming on AppendText
-//   box.Clear();
-//   box.SetText("1234567890");
-//   box.AppendText("ABC");
-//   // Should drop '123' to keep the total length at 10
-//   REQUIRE(box.GetText().value() == "4567890ABC");
+  // 1. Test Clear()
+  box.SetText("Initialize Data");
+  REQUIRE(box.GetText().value() == "Initialize Data");
+  box.Clear();
+  REQUIRE(box.GetText().value() == "");
 
-//   // 4. Test UI Methods (Ensure they don't crash in Headless Node.js)
-//   REQUIRE_NOTHROW(box.SetVisible(false));
-//   REQUIRE_NOTHROW(box.SetVisible(true));
-//   REQUIRE_NOTHROW(box.SetClass("logger-window"));
-// }
+  // 2. Test MaxLength Trimming on SetText
+  box.SetMaxLength(10);
+  box.SetText("This is way too long for a 10 char limit");
+  // Should only keep the last 10 characters
+  REQUIRE(box.GetText().value() == "char limit");
 
-// // --- CORE ROBUSTNESS TESTS ---
+  // 3. Test MaxLength Trimming on AppendText
+  box.Clear();
+  box.SetText("1234567890");
+  box.AppendText("ABC");
+  // Should drop '123' to keep the total length at 10
+  REQUIRE(box.GetText().value() == "4567890ABC");
 
-// TEST_CASE("WebTextbox: The Naughty String List", "[edge_case]") {
-//   WebTextbox box("naughty_box");
+  // 4. Test UI Methods (Ensure they don't crash in Headless Node.js)
+  REQUIRE_NOTHROW(box.SetVisible(false));
+  REQUIRE_NOTHROW(box.SetVisible(true));
+  REQUIRE_NOTHROW(box.SetClass("logger-window"));
+}
 
-//   std::vector<std::string> naughty_strings = {"",
-//                                               "undefined",
-//                                               "null",
-//                                               "NaN",
-//                                               "<script>alert(1)</script>",
-//                                               "drop table users;",
-//                                               "\\",
-//                                               "\\\\",
-//                                               "/",
-//                                               "\r\n",
-//                                               "\n",
-//                                               "\r",
-//                                               "Powerلُلُصّبُلُلصّبُررً ॣ ॣh ॣ ॣ冗",
-//                                               "﷽",
-//                                               "🇺🇸🇷🇺🇸🇦",
-//                                               "Z̮̞̠͙͔ͅaIgO tExT iS cOmInG",
-//                                               std::string(1000, 'A'),
-//                                               std::string("\0", 1),
-//                                               "USER\0NAME"};
+// --- CORE ROBUSTNESS TESTS ---
 
-//   for (const auto& nasty : naughty_strings) {
-//     REQUIRE_NOTHROW(box.SetText(nasty));
-//     REQUIRE(box.GetText().value() == nasty);
+TEST_CASE("WebTextbox: The Naughty String List", "[edge_case]") {
+  SetupMockDOMWebTextbox mock;
+  WebTextbox box(TextStyle(), "naughty_box");
 
-//     REQUIRE_NOTHROW(box.AppendText(nasty));
-//     // Note: we might hit the default 50KB limit here, but these strings are
-//     // small enough
-//     REQUIRE(box.GetText().value() == nasty + nasty);
-//   }
-// }
+  std::vector<std::string> naughty_strings = {"",
+                                              "undefined",
+                                              "null",
+                                              "NaN",
+                                              "<script>alert(1)</script>",
+                                              "drop table users;",
+                                              "\\",
+                                              "\\\\",
+                                              "/",
+                                              "\r\n",
+                                              "\n",
+                                              "\r",
+                                              "Powerلُلُصّبُلُلصّبُررً ॣ ॣh ॣ ॣ冗",
+                                              "﷽",
+                                              "🇺🇸🇷🇺🇸🇦",
+                                              "Z̮̞̠͙͔ͅaIgO tExT iS cOmInG",
+                                              std::string(1000, 'A'),
+                                              std::string("\0", 1),
+                                              "USER\0NAME"};
 
-// TEST_CASE("WebTextbox: Numeric Extremes", "[limits]") {
-//   WebTextbox box("limit_box");
-//   TextStyle style;
+  for (const auto& nasty : naughty_strings) {
+    REQUIRE_NOTHROW(box.SetText(nasty));
+    REQUIRE(box.GetText().value() == nasty);
 
-//   // Swapped from integer limits to their literal string px equivalents to avoid -Wconstant-conversion
-//   style.font_size = "2147483647px";
-//   REQUIRE_NOTHROW(box.SetStyle(style));
+    REQUIRE_NOTHROW(box.AppendText(nasty));
+    // Note: we might hit the default 50KB limit here, but these strings are
+    // small enough
+    REQUIRE(box.GetText().value() == nasty + nasty);
+  }
+}
 
-//   style.font_size = "-2147483648px";
-//   REQUIRE_NOTHROW(box.SetStyle(style));
+TEST_CASE("WebTextbox: Numeric Extremes", "[limits]") {
+  SetupMockDOMWebTextbox mock;
+  WebTextbox box(TextStyle(), "limit_box");
+  TextStyle style;
 
-//   REQUIRE_NOTHROW(box.SetPosition(-1000, -1000));
-//   REQUIRE_NOTHROW(box.SetSize(0, 0));
-//   REQUIRE_NOTHROW(box.SetSize(100000, 100000));
-// }
+  // Swapped from integer limits to their literal string px equivalents to avoid -Wconstant-conversion
+  style.font_size = "2147483647px";
+  REQUIRE_NOTHROW(box.SetStyle(style));
 
-// TEST_CASE("WebTextbox: High-Volume Fuzzing (10,000 Iterations)", "[fuzz]") {
-//   WebTextbox fuzzer("fuzz_target");
-//   srand(12345);
+  style.font_size = "-2147483648px";
+  REQUIRE_NOTHROW(box.SetStyle(style));
 
-//   for (int i = 0; i < 10000; ++i) {
-//     size_t len = rand() % 1001;
-//     std::string junk = GenerateGarbage(len);
+  REQUIRE_NOTHROW(box.SetPosition(-1000, -1000));
+  REQUIRE_NOTHROW(box.SetSize(0, 0));
+  REQUIRE_NOTHROW(box.SetSize(100000, 100000));
+}
 
-//     REQUIRE_NOTHROW(fuzzer.SetText(junk));
-//     REQUIRE(fuzzer.GetText().value() == junk);
-//   }
-// }
+TEST_CASE("WebTextbox: High-Volume Fuzzing (10,000 Iterations)", "[fuzz]") {
+  SetupMockDOMWebTextbox mock;
+  WebTextbox fuzzer(TextStyle(), "fuzz_target");
+  srand(12345);
 
-// TEST_CASE("WebTextbox: The Memory Stress Test", "[memory]") {
-//   WebTextbox heavyBox("heavy_box");
+  for (int i = 0; i < 10000; ++i) {
+    size_t len = rand() % 1001;
+    std::string junk = GenerateGarbage(len);
 
-//   // Temporarily increase limit for the stress test
-//   size_t massive_size = 10 * 1024 * 1024;   // 10MB
-//   heavyBox.SetMaxLength(massive_size * 2);  // Allow up to 20MB
+    REQUIRE_NOTHROW(fuzzer.SetText(junk));
+    REQUIRE(fuzzer.GetText().value() == junk);
+  }
+}
 
-//   std::string massive(massive_size, 'X');
-//   REQUIRE_NOTHROW(heavyBox.SetText(massive));
-//   REQUIRE(heavyBox.GetText().value().size() ==
-//           massive.size());  // Addition of .value()
+TEST_CASE("WebTextbox: The Memory Stress Test", "[memory]") {
+  SetupMockDOMWebTextbox mock;
+  WebTextbox heavyBox(TextStyle(), "heavy_box");
 
-//   std::string more(1024 * 1024, 'Y');  // 1MB more
-//   REQUIRE_NOTHROW(heavyBox.AppendText(more));
-//   REQUIRE(heavyBox.GetText().value().size() ==
-//           massive_size + (1024 * 1024));  // .value() added here too
-// }
+  // Temporarily increase limit for the stress test
+  size_t massive_size = 10 * 1024 * 1024;   // 10MB
+  heavyBox.SetMaxLength(massive_size * 2);  // Allow up to 20MB
 
-// TEST_CASE("WebTextbox: Templates and Lambdas", "[webui]") {
-//   cse498::WebTextbox box("test_box");
+  std::string massive(massive_size, 'X');
+  REQUIRE_NOTHROW(heavyBox.SetText(massive));
+  REQUIRE(heavyBox.GetText().value().size() ==
+          massive.size());  // Addition of .value()
 
-//   // Testing the Template
-//   REQUIRE_NOTHROW(box.AppendValue<int>(404));
-//   REQUIRE(box.GetText().value() == "404");
+  std::string more(1024 * 1024, 'Y');  // 1MB more
+  REQUIRE_NOTHROW(heavyBox.AppendText(more));
+  REQUIRE(heavyBox.GetText().value().size() ==
+          massive_size + (1024 * 1024));  // .value() added here too
+}
 
-//   // Testing the Lambda (Appending "Error" using a lambda transformation)
-//   auto add_error_label = [](const std::string& str) {
-//     return str + " Error";
-//   };
+TEST_CASE("WebTextbox: Templates and Lambdas", "[webui]") {
+  SetupMockDOMWebTextbox mock;
+  cse498::WebTextbox box(TextStyle(), "test_box");
 
-//   box.TransformText(add_error_label);
-//   REQUIRE(box.GetText().value() == "404 Error");
-// }
+  // Testing the Template
+  REQUIRE_NOTHROW(box.AppendValue<int>(404));
+  REQUIRE(box.GetText().value() == "404");
+
+  // Testing the Lambda (Appending "Error" using a lambda transformation)
+  auto add_error_label = [](const std::string& str) {
+    return str + " Error";
+  };
+
+  box.TransformText(add_error_label);
+  REQUIRE(box.GetText().value() == "404 Error");
+}

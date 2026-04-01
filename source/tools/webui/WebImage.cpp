@@ -17,7 +17,7 @@ namespace cse498 {
 
 WebImage::WebImage(const std::string& src,
                    const std::string& alt_text,
-                  const std::string& img_id)
+                   const std::string& img_id)
     : WebElement("img", img_id), src(src), alt(alt_text) {
   dom_element.set("src", src);
   dom_element.set("alt", alt);

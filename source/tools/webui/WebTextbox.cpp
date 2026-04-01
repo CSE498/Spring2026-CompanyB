@@ -79,7 +79,8 @@ void WebTextbox::AppendText(const std::string& text) {
     return;
   }
 
-  std::string current = dom_element["innerText"].as<std::string>();
+  val innerText = dom_element["innerText"];
+  std::string current = innerText.isString() ? innerText.as<std::string>() : "";
   current += text;
 
   if (current.length() > max_length_) {

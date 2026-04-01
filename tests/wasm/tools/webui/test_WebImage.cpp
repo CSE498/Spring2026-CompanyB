@@ -3,6 +3,7 @@
 #include <catch2/catch_test_macros.hpp>
 
 #include "tools/webui/WebImage.hpp"
+#include <emscripten/val.h>
 
 struct SetupMockDOMWebImage {
   SetupMockDOMWebImage() {
@@ -28,6 +29,20 @@ struct SetupMockDOMWebImage {
     // clang-format on
   }
 };
+
+/// @brief Utility for testing images. 
+/// `complete` and `naturalWidth` are read-only in image elements in DOM, this makes them writeable for an image element
+void patch_image_writable(emscripten::val elem) {
+  emscripten::val descriptor_complete = emscripten::val::object();
+  descriptor_complete.set("value", true);
+  descriptor_complete.set("writable", true); // Make it writable for your test
+  emscripten::val::global("Object").call<void>("defineProperty", elem, emscripten::val("complete"), descriptor_complete);
+
+  emscripten::val descriptor_naturalWidth = emscripten::val::object();
+  descriptor_naturalWidth.set("value", 0);
+  descriptor_naturalWidth.set("writable", true); // Make it writable for your test
+  emscripten::val::global("Object").call<void>("defineProperty", elem, emscripten::val("naturalWidth"), descriptor_naturalWidth);
+}
 
 TEST_CASE("WebImage constructor creates image with correct properties",
           "[WebImage]") {
@@ -180,88 +195,94 @@ TEST_CASE(
   emscripten::val document = emscripten::val::global("document");
   emscripten::val elem = document.call<emscripten::val>(
       "getElementById", std::string("test-img-has-error"));
+
+  patch_image_writable(elem);
   elem.set("complete", true);
   elem.set("naturalWidth", 0);
 
   auto result = img.HasError();
-  REQUIRE(elem["complete"].as<bool> == true);
-  REQUIRE(elem["naturalWidth"].as<int> == 0);
+  
   REQUIRE_FALSE(result.has_value());
   REQUIRE(result.error().find("bad-path.png") != std::string::npos);
 }
 
-// TEST_CASE(
-//     "WebImage HasError returns empty expected for a successfully loaded "
-//     "image",
-//     "[WebImage]") {
-//   SetupMockDOMWebImage mock;
-//   cse498::WebImage img("test-img-loaded-ok", "good-image.png",
-//                        "Loaded ok test image");
+TEST_CASE(
+    "WebImage HasError returns empty expected for a successfully loaded "
+    "image",
+    "[WebImage]") {
+  SetupMockDOMWebImage mock;
+  cse498::WebImage img("good-image.png",
+                       "Loaded ok test image", "test-img-loaded-ok");
 
-//   // Since there are no setters for these properties, manually edit the mock
-//   // element and simulate a successful load
-//   emscripten::val document = emscripten::val::global("document");
-//   emscripten::val elem = document.call<emscripten::val>(
-//       "getElementById", std::string("test-img-loaded-ok"));
-//   elem.set("complete", true);
-//   elem.set("naturalWidth", 200);
+  // Since there are no setters for these properties, manually edit the mock
+  // element and simulate a successful load
+  emscripten::val document = emscripten::val::global("document");
+  emscripten::val elem = document.call<emscripten::val>(
+      "getElementById", std::string("test-img-loaded-ok"));
 
-//   REQUIRE(img.HasError().has_value());
-// }
+  patch_image_writable(elem);
+  elem.set("complete", true);
+  elem.set("naturalWidth", 200);
 
-// TEST_CASE("WebImage SetSize respects SizeUnit enum", "[WebImage]") {
-//   SetupMockDOMWebImage mock;
-//   cse498::WebImage img("test.png", "Unit test image", "test-img-units");
+  REQUIRE(elem["complete"].as<bool>() == true);
+  REQUIRE(elem["naturalWidth"].as<int>() == 200);
 
-//   img.SetSize(50, 25, cse498::SizeUnit::percent);
-//   REQUIRE(img.GetWidth() == 50);
-//   REQUIRE(img.GetHeight() == 25);
+  REQUIRE(img.HasError().has_value());
+}
 
-//   img.SetSize(10, 5, cse498::SizeUnit::em);
-//   REQUIRE(img.GetWidth() == 10);
-//   REQUIRE(img.GetHeight() == 5);
+TEST_CASE("WebImage SetSize respects SizeUnit enum", "[WebImage]") {
+  SetupMockDOMWebImage mock;
+  cse498::WebImage img("test.png", "Unit test image", "test-img-units");
 
-//   img.SetSize(20, 15, cse498::SizeUnit::vw);
-//   REQUIRE(img.GetWidth() == 20);
-//   REQUIRE(img.GetHeight() == 15);
-// }
+  img.SetSize(50, 25, cse498::SizeUnit::percent);
+  REQUIRE(img.GetWidth() == 50);
+  REQUIRE(img.GetHeight() == 25);
 
-// TEST_CASE("WebImage SetSize supports fractional dimensions", "[WebImage]") {
-//   SetupMockDOMWebImage mock;
-//   cse498::WebImage img("test-img-fractional", "test.png",
-//                        "Fractional size test image");
+  img.SetSize(10, 5, cse498::SizeUnit::em);
+  REQUIRE(img.GetWidth() == 10);
+  REQUIRE(img.GetHeight() == 5);
 
-//   img.SetSize(150.5, 75.25);
-//   REQUIRE(img.GetWidth() == 150.5);
-//   REQUIRE(img.GetHeight() == 75.25);
-// }
+  img.SetSize(20, 15, cse498::SizeUnit::vw);
+  REQUIRE(img.GetWidth() == 20);
+  REQUIRE(img.GetHeight() == 15);
+}
 
-// TEST_CASE("WebImage SetSize supports all SizeUnit values", "[WebImage]") {
-//   SetupMockDOMWebImage mock;
-//   cse498::WebImage img("test-img-all-units", "test.png",
-//                        "All units test image");
+TEST_CASE("WebImage SetSize supports fractional dimensions", "[WebImage]") {
+  SetupMockDOMWebImage mock;
+  cse498::WebImage img("test.png",
+                       "Fractional size test image", "test-img-fractional");
 
-//   img.SetSize(100, 50, cse498::SizeUnit::px);
-//   REQUIRE(img.GetWidth() == 100);
-//   REQUIRE(img.GetHeight() == 50);
+  img.SetSize(150.5, 75.25);
+  REQUIRE(img.GetWidth() == 150.5);
+  REQUIRE(img.GetHeight() == 75.25);
+}
 
-//   img.SetSize(10, 5, cse498::SizeUnit::em);
-//   REQUIRE(img.GetWidth() == 10);
-//   REQUIRE(img.GetHeight() == 5);
+TEST_CASE("WebImage SetSize supports all SizeUnit values", "[WebImage]") {
+  SetupMockDOMWebImage mock;
+  cse498::WebImage img("test.png",
+                       "All units test image", "test-img-all-units");
 
-//   img.SetSize(20, 15, cse498::SizeUnit::rem);
-//   REQUIRE(img.GetWidth() == 20);
-//   REQUIRE(img.GetHeight() == 15);
+  img.SetSize(100, 50, cse498::SizeUnit::px);
+  REQUIRE(img.GetWidth() == 100);
+  REQUIRE(img.GetHeight() == 50);
 
-//   img.SetSize(50, 25, cse498::SizeUnit::percent);
-//   REQUIRE(img.GetWidth() == 50);
-//   REQUIRE(img.GetHeight() == 25);
+  img.SetSize(10, 5, cse498::SizeUnit::em);
+  REQUIRE(img.GetWidth() == 10);
+  REQUIRE(img.GetHeight() == 5);
 
-//   img.SetSize(30, 20, cse498::SizeUnit::vw);
-//   REQUIRE(img.GetWidth() == 30);
-//   REQUIRE(img.GetHeight() == 20);
+  img.SetSize(20, 15, cse498::SizeUnit::rem);
+  REQUIRE(img.GetWidth() == 20);
+  REQUIRE(img.GetHeight() == 15);
 
-//   img.SetSize(40, 30, cse498::SizeUnit::vh);
-//   REQUIRE(img.GetWidth() == 40);
-//   REQUIRE(img.GetHeight() == 30);
-// }
+  img.SetSize(50, 25, cse498::SizeUnit::percent);
+  REQUIRE(img.GetWidth() == 50);
+  REQUIRE(img.GetHeight() == 25);
+
+  img.SetSize(30, 20, cse498::SizeUnit::vw);
+  REQUIRE(img.GetWidth() == 30);
+  REQUIRE(img.GetHeight() == 20);
+
+  img.SetSize(40, 30, cse498::SizeUnit::vh);
+  REQUIRE(img.GetWidth() == 40);
+  REQUIRE(img.GetHeight() == 30);
+}
