@@ -361,6 +361,7 @@ class TrafficWorld : public WorldBase {
         driver->set_reached_destination(true);
         driver->SetSymbol('D');
         --num_spawned_agents;
+        assert(num_spawned_agents >= 0);
       }
     }
   }
