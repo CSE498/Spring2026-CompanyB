@@ -59,13 +59,17 @@ namespace cse498 {
       std::string why; // Extra text to further explain the error (if req)
     };
 
-    int bar;
-
     // This will act as the functor input into std::visit
     struct StepVisitor {
       // We do want to represent failure, but don't need to represent
       // any output, so we'll define & alias our return as such:
       using VisitRet = std::expected<void, WorldErr>;
+
+      // We'll want to modify the agent and the container, so we'll hold on to
+      // some references for them. You'll have to do the same for any other
+      // non-variant external context desired.
+      AgentBase<DummyAgentData> &agent;
+      StepContainer &container;
 
       // Now we'll need to have an operator() overload for each Step type.
       VisitRet operator()(steps::MovementStep step) {
@@ -105,18 +109,18 @@ namespace cse498 {
 	return {};
       }
 
-      VisitRet operator()(steps::ConditionalStep step, StepContainer &container, AgentBase<DummyAgentData>& agent) {
+      VisitRet operator()(steps::ConditionalStep step) {
 	// The compiler needs this, but this should never be reached. A
 	// better solution is forthcoming, for now just leave empty.
 	return {};
       }
 
-      VisitRet operator()(steps::ReconStep step, StepContainer &container, AgentBase<DummyAgentData>& agent) {
+      VisitRet operator()(steps::ReconStep step) {
 	// The compiler needs this, but this should (for now) never be
 	// reached. A better solution is forthcoming, for now just leave empty.
 	return {};
       }
-    } step_visitor;
+    };
 
     /// Allow the agents to move around the maze.
     DummyAgentData DoAction(AgentBase<DummyAgentData>& agent, [[maybe_unused]] const StepContainer& steps) override {
@@ -129,6 +133,14 @@ namespace cse498 {
       // Get the turn from the agent
       StepContainer agent_turn = agent.GetTurn();
 
+      // The functor we'll dispatch our step calls out to doesn't change with
+      // each step, so we can instantiate it here outside the loop. To be as
+      // clear as possible, this object is to act SOLELY as a collection of
+      // function calls, at times with additional context (here the agent and
+      // step container, so that the function calls can update agent state and
+      // update the stepcontainer for .inform() ).
+      StepVisitor step_visitor(agent, agent_turn);
+
       while (!agent_turn.empty()) {
 	std::expected<Step, StepErr> cur_step = agent_turn.get_next();
 	if (!cur_step.has_value()) {
@@ -139,13 +151,14 @@ namespace cse498 {
 	}
 
 	// This call will dispatch a call out to our prior functor, calling the
-	// correct overload (   all w/o a vtable (;   )
+	// correct overload (   all w/o a vtable (;   ).
 	StepVisitor::VisitRet step_res = std::visit(step_visitor, cur_step.value());
 	if (!step_res.has_value()) {
 	  // Here we'll want to handle an error within the world. I don't know
 	  // what that would look like for this demo so again we'll just halt.
 	  break;
 	}
+
       }
 
 
