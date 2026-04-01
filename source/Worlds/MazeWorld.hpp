@@ -9,6 +9,7 @@
 #include <cassert>
 
 #include "../core/WorldBase.hpp"
+#include "Step.hpp"
 
 // clang-format off
 namespace cse498 {
@@ -47,32 +48,117 @@ namespace cse498 {
     }
     ~MazeWorld() = default;
 
+    // We'll want to be able to represent success/failure when executing the
+    // steps, so we define an error object for std::expected
+    struct WorldErr {
+      enum class Kind {
+	LOC_INVALID, // Location invalid
+      };
+
+      Kind kind; // Enum representing type of error
+      std::string why; // Extra text to further explain the error (if req)
+    };
+
+    int bar;
+
+    // This will act as the functor input into std::visit
+    struct StepVisitor {
+      // We do want to represent failure, but don't need to represent
+      // any output, so we'll define & alias our return as such:
+      using VisitRet = std::expected<void, WorldErr>;
+
+      // Now we'll need to have an operator() overload for each Step type.
+      VisitRet operator()(steps::MovementStep step) {
+	// The simplest step -- the agent just wants to move to a space.
+	// FILL IN: Implement logic actually changing agent's position.
+	return {};
+      }
+
+      VisitRet operator()(steps::InfoStep step) {
+	// When we get an info step, the agent would like to do something
+	// conditionally (the container handles the branching internally).
+	// It will provide us with the "aspect" about the world, and the
+	// location it wants the info about. In return, we'll "inform" the
+	// container with what has been requested.
+	switch (step.aspect) {
+	using Aspect = cse498::steps::InfoStep::Aspect;
+	case Aspect::LOC_AVAIL: {
+	  // Is the location available? We'll inform the world with a bool
+	  // FILL IN: Implement logic actually generating this value
+	  container.inform(false);
+	  break;
+	}
+	case Aspect::OCCUPANCY_FRAC: {
+	  // What fraction of the location referred to is occupied? We'll
+	  // inform the world with a double in [0, 1]
+	  // FILL IN: Implement logic actually generating this value
+	  container.inform(0.5);
+	  break;
+	}
+	case Aspect::OCCUPANCY_RAW: {
+	  // How many agents are in/at the location referred to? We'll inform
+	  // the world with a integer
+	  container.inform(5);
+	  break;
+	}
+	};
+	return {};
+      }
+
+      VisitRet operator()(steps::ConditionalStep step, StepContainer &container, AgentBase<DummyAgentData>& agent) {
+	// The compiler needs this, but this should never be reached. A
+	// better solution is forthcoming, for now just leave empty.
+	return {};
+      }
+
+      VisitRet operator()(steps::ReconStep step, StepContainer &container, AgentBase<DummyAgentData>& agent) {
+	// The compiler needs this, but this should (for now) never be
+	// reached. A better solution is forthcoming, for now just leave empty.
+	return {};
+      }
+    } step_visitor;
+
     /// Allow the agents to move around the maze.
     DummyAgentData DoAction(AgentBase<DummyAgentData>& agent, [[maybe_unused]] const StepContainer& steps) override {
       // Determine where the agent is trying to move.
       WorldPosition cur_position = agent.GetState().pos;
       WorldPosition new_position;
+      
+      using namespace cse498::steps;
 
-      // TODO PARSE THE STEPS HERE AND DO ACCORDING ACTIONS
-      // switch (action_id) {
-      // case REMAIN_STILL: new_position = cur_position; break;
-      // case MOVE_UP:      new_position = cur_position.Up(); break;
-      // case MOVE_DOWN:    new_position = cur_position.Down(); break;
-      // case MOVE_LEFT:    new_position = cur_position.Left(); break;
-      // case MOVE_RIGHT:   new_position = cur_position.Right(); break;
-      // }
+      // Get the turn from the agent
+      StepContainer agent_turn = agent.GetTurn();
 
-      // do this as a placeholder
-      new_position = std::get<MovementStep>(steps.steps[0]).loc;
+      while (!agent_turn.empty()) {
+	std::expected<Step, StepErr> cur_step = agent_turn.get_next();
+	if (!cur_step.has_value()) {
+	  // Here we'll want to have a way to track and later inform the agent
+	  // that an error occured. For the sake of this demo, we'll just
+	  // assume that an unexpected halts an agent's turn.
+	  break;
+	}
+
+	// This call will dispatch a call out to our prior functor, calling the
+	// correct overload (   all w/o a vtable (;   )
+	StepVisitor::VisitRet step_res = std::visit(step_visitor, cur_step.value());
+	if (!step_res.has_value()) {
+	  // Here we'll want to handle an error within the world. I don't know
+	  // what that would look like for this demo so again we'll just halt.
+	  break;
+	}
+      }
+
+
+      
 
       // Don't let the agent move off the world or into a wall.
-      if (!main_grid.IsValid(new_position)) { return DummyAgentData(cur_position); }
-      if (main_grid[new_position] == wall_id) { return DummyAgentData(cur_position); }
+      // if (!main_grid.IsValid(new_position)) { return DummyAgentData(cur_position); }
+      // if (main_grid[new_position] == wall_id) { return DummyAgentData(cur_position); }
 
-      // Set the agent to its new postion.
+      // // Set the agent to its new postion.
       return DummyAgentData(new_position);
     }
 
   };
 // clang-format on
-}  // End of namespace cse498
+} // End of namespace cse498
