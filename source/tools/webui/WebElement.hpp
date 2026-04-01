@@ -10,6 +10,7 @@
 #include <string>
 
 #include <emscripten/val.h>
+#include "WebStyle.hpp"
 
 namespace cse498 {
 class WebElement {
@@ -24,8 +25,13 @@ class WebElement {
   /// @brief Delete the default constructor
   WebElement() = delete;
 
-  /// @brief Create an element with the given ID in the DOM
-  WebElement(const std::string& tag = "div", const std::string& elem_id = "") {
+  /**
+   * @brief Create an element with the given tag, ID, and styles in the DOM
+   * @param tag The HTML tag name (e.g. "div", "span")
+   * @param elem_id The ID of the element (optional)
+   * @param style The WebStyle object containing CSS properties (optional)
+   */
+  WebElement(const std::string& tag = "div", const std::string& elem_id = "", const WebStyle& style = {}) {
     // Set id 
     if (!elem_id.empty()) {
       id = elem_id;
@@ -46,6 +52,11 @@ class WebElement {
     dom_element = document.call<emscripten::val>("createElement", std::string(tag));
 
     if (id) dom_element.set("id", id.value());
+
+    // Apply styles from WebStyle
+    for (const auto& [property, value] : style.GetStyles()) {
+      dom_element["style"].set(property, value);
+    }
 
     document["body"].call<void>("appendChild", dom_element);
   }

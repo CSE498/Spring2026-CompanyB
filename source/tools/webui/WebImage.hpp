@@ -53,9 +53,10 @@ class WebImage : public WebElement {
    * @param src The image source URL or file path.
    * @param alt_text Alternative text for accessibility
    * @param img_id The DOM element ID for the image. Must be unique.
+   * @param style Optional WebStyle to apply to the image.
    **/
   WebImage(const std::string& src,
-           const std::string& alt_text, const std::string& img_id = "");
+           const std::string& alt_text, const std::string& img_id = "", const WebStyle& style = {});
 
   /// Destructor that removes the image element from the DOM
   ~WebImage();

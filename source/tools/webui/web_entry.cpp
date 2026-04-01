@@ -26,7 +26,11 @@ int main() {
   layout = std::make_unique<WebLayout>("app-layout");
   layout->SetDirection("column").SetAlignItems("center").SetGap("10px").SetHeight("100vh").SetJustifyContent("flex-start");
 
-  auto menu_bar = std::make_shared<WebLayout>("menu-bar");
+  auto menu_bar = std::make_shared<WebLayout>("menu-bar", WebStyle{{
+    {"width", "100%"},
+    {"background", "#363636"},
+    {"border-radius", "20px"},
+  }});
   menu_bar->SetHeight("80px").SetDirection("row").SetAlignItems("center").SetGap("10px");
 
   auto btn_lambda = []() {
@@ -66,7 +70,9 @@ int main() {
   main_layout->SetHeight("80vh").SetDirection("row").SetGap("20px").SetAlignItems("stretch").SetJustifyContent("flex-start");
   layout->AddChild(main_layout);
 
-  auto left_column = std::make_shared<WebLayout>("left-column");
+  auto left_column = std::make_shared<WebLayout>("left-column", WebStyle{{
+    {"flex", "3"}, 
+  }});
   left_column->SetHeight("100%").SetDirection("column").SetGap("10px").SetAlignItems("stretch");
   main_layout->AddChild(left_column);
 

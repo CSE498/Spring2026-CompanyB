@@ -19,7 +19,7 @@ namespace cse498 {
 
 class WebButton : public WebElement {
  public:
-  explicit WebButton(const std::string& label, const std::string& id="");
+  explicit WebButton(const std::string& label, const std::string& id="", const WebStyle& style = {});
   ~WebButton();
 
   const std::string& GetLabel() const;

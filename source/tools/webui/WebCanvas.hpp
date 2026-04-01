@@ -97,8 +97,9 @@ class WebCanvas : public WebElement {
    * @param width The width of the canvas in pixels.
    * @param height The height of the canvas in pixels.
    * @param id The DOM element ID for the canvas.
+   * @param style Optional WebStyle to apply to the canvas.
    **/
-  WebCanvas(int width, int height, const std::string& id = "");
+  WebCanvas(int width, int height, const std::string& id = "", const WebStyle& style = {});
 
   /// Disable copy constructor since each instance is tied to a specific DOM
   /// element

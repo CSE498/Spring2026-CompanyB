@@ -24,8 +24,8 @@ using emscripten::val;
 
 namespace cse498 {
 
-WebCanvas::WebCanvas(int width, int height, const std::string& id)
-    : WebElement("canvas", id), width(width), height(height) {
+WebCanvas::WebCanvas(int width, int height, const std::string& id, const WebStyle& style)
+    : WebElement("canvas", id, style), width(width), height(height) {
   ctx = dom_element.call<val>("getContext",
                                  std::string("2d"));  // Save the context
   transform_matrix =

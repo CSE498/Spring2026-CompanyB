@@ -56,10 +56,11 @@ class WebTextbox : public WebElement {
  public:
   /**
    * @brief Constructs a new WebTextbox and attaches it to the DOM.
-   * @param id The unique HTML ID for the generated div.
    * @param style Optional TextStyle to apply upon creation.
+   * @param id The unique HTML ID for the generated div.
+   * @param web_style Optional WebStyle for generic CSS properties.
    */
-  WebTextbox(const TextStyle& style = TextStyle(), const std::string& id = "");
+  WebTextbox(const TextStyle& style = TextStyle(), const std::string& id = "", const WebStyle& web_style = {});
 
   // Prevent copying to avoid DOM element duplication and memory leaks.
   WebTextbox(const WebTextbox&) = delete;
