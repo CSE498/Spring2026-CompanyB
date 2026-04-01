@@ -17,6 +17,9 @@ namespace cse498 {
  * @brief Stores a collection of CSS property-value pairs.
  */
 class WebStyle {
+ private:
+  std::vector<std::pair<std::string, std::string>> styles_;
+
  public:
   /**
    * @brief Default constructor.
@@ -44,9 +47,6 @@ class WebStyle {
   const std::vector<std::pair<std::string, std::string>>& GetStyles() const {
     return styles_;
   }
-
- private:
-  std::vector<std::pair<std::string, std::string>> styles_;
 };
 
 }  // namespace cse498
