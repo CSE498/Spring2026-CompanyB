@@ -254,7 +254,7 @@ class TrafficWorld : public WorldBase {
   /// @brief Returns the direction of the DrivingAgent at the given position,
   /// if there is a DrivingAgent with that position and it hasn't been
   /// despawned. Otherwise, returns nullopt.
-  std::optional<Direction> DirectionOfDrivingAgentAt(WorldPosition pos) {
+  std::optional<Direction> DirectionOfDrivingAgentAt(WorldPosition pos) const {
     auto it = std::find_if(
         agent_set.begin(), agent_set.end(), [&pos](agent_ptr_t &agent) {
           return agent->GetLocation().AsWorldPosition() == pos;
@@ -273,7 +273,7 @@ class TrafficWorld : public WorldBase {
     return std::nullopt;
   }
 
-  bool AgentExistsAt(WorldPosition pos) {
+  bool AgentExistsAt(WorldPosition pos) const {
     auto it = std::find_if(
         agent_set.begin(), agent_set.end(), [&pos](agent_ptr_t &agent) {
           return agent->GetLocation().AsWorldPosition() == pos;
