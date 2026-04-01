@@ -216,8 +216,11 @@ class TrafficWorld : public WorldBase {
       // Directions correspond to ints as follows: N = 0, E = 1, S = 2, W = 3
       // So taking a direction and adding 1 mod 4 corresponds to turning right,
       // and adding 2 mod 4 corresponds to turning around.
+
+      // (number) & 3 means bitwise and of the number with 00...011
+      // which grabs the last 2 bits, which is the same as reducing mod 4.
       auto opposite_of_current = static_cast<Direction>(
-          (static_cast<int>(cur_pos_dir.value()) + 2) % 4);
+          (static_cast<int>(cur_pos_dir.value()) + 2) & 3);
       if (new_pos_dir != opposite_of_current) {
         return 0;
       }
