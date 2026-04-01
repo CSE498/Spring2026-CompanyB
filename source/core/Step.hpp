@@ -25,9 +25,11 @@ concept IsInfoType = Concepts::IsOneOf<T, int, double, bool>;
 
 struct StepErr {
   enum class Kind {
-    EXAMPLE,
     WRONG_TYPE,
     HANDLER_NOT_SET,
+    STEPS_EXHAUSTED,
+    NOT_INFORMED,
+    MISSING_BRANCH,
   };
 
   Kind kind;
@@ -135,6 +137,9 @@ using Step = std::variant<MovementStep, InfoStep, ConditionalStep, ReconStep>;
 // Future optimization -- can shove this tree structure into a vec and save on
 // cache misses
 
+template <typename T>
+concept BranchLike = (std::is_same_v<T, StepContainer> || StepKind<T>);
+
 struct StepContainer {
   struct Node {
     std::optional<Step> step;
@@ -162,8 +167,12 @@ struct StepContainer {
     return (root == nullptr || root->next == nullptr);
   }
 
-  template <IsInfoType I> void inform(I const &world_info) {
-    world_info = InfoType{std::in_place_type<I>, world_info};
+  [[nodiscard]] bool exhausted() const {
+    return (next_stack.empty() && (last == nullptr || last->next == nullptr));
+  }
+
+  template <IsInfoType I> void inform(I const &info) {
+    world_info = InfoType{std::in_place_type<I>, info};
   }
 
   template <StepKind S> void add_step(S &&s) {
@@ -176,7 +185,8 @@ struct StepContainer {
   // TODO -- Template these add_step overloads so that we can also add a single
   // step as a branch w/o needing a full stepcontainer
 
-  void add_step(InfoStep &&i, ConditionalStep &&s, StepContainer &&t_body) {
+  template <BranchLike T>
+  void add_step(InfoStep &&i, ConditionalStep &&s, T &&t_body) {
     assert(last != nullptr);
 
     // Insert infostep node first
@@ -185,31 +195,43 @@ struct StepContainer {
     // Insert ConditionalStep node
     add_step(std::move(s));
 
-    // Move t_body's root to last's left child, then unset its last (don't
-    // change our last)
-    last->left = std::move(t_body.root);
-    t_body.last = nullptr;
+    if constexpr (std::is_same_v<T, StepContainer>) {
+      // Move t_body's root to last's left child, then unset its last (don't
+      // change our last)
+      last->left = std::move(t_body.root);
+      t_body.last = nullptr;
+    } else {
+      // T is just a step, so put it on last's left
+      last->left = std::make_unique<Node>();
+      last->left->next = std::make_unique<Node>(std::move(t_body));
+    }
 
     assert(last != nullptr);
   }
 
-  void add_step(InfoStep &&i, ConditionalStep &&s, StepContainer &&t_body,
-                StepContainer &&f_body) {
+  template <BranchLike T, BranchLike F>
+  void add_step(InfoStep &&i, ConditionalStep &&s, T &&t_body, F &&f_body) {
     assert(last != nullptr);
 
     // Do everything the single-branch add_step does, then just additionally add
     // in f_body
     add_step(std::move(i), std::move(s), std::move(t_body));
 
-    // Move f_body's root to last's right child, then unset its last (again,
-    // don't change our last)
-    last->right = std::move(f_body.root);
-    f_body.last = nullptr;
+    if constexpr (std::is_same_v<F, StepContainer>) {
+      // Move f_body's root to last's right child, then unset its last (don't
+      // change our last)
+      last->right = std::move(f_body.root);
+      f_body.last = nullptr;
+    } else {
+      // T is just a step, so put it on last's left
+      last->right = std::make_unique<Node>();
+      last->right->next = std::make_unique<Node>(std::move(f_body));
+    }
 
     assert(last != nullptr);
   }
 
-  std::expected<Step, StepErr> get_next() {
+  [[nodiscard]] std::expected<Step, StepErr> get_next() {
     // TODO - This method is way over inclusive, should refactor down & out
     // later
     if (cur_node == nullptr) {
@@ -225,7 +247,7 @@ struct StepContainer {
         return get_next();
       } else
         return std::unexpected(
-            StepErr{StepErr::Kind::EXAMPLE, "No remaining steps"});
+            StepErr{StepErr::Kind::STEPS_EXHAUSTED, "No remaining steps"});
     }
 
     // Skip empty step(s)
@@ -244,7 +266,7 @@ struct StepContainer {
       // Our world_info object must have information
       if (!world_info.has_value())
         return std::unexpected(
-            StepErr{StepErr::Kind::EXAMPLE,
+            StepErr{StepErr::Kind::NOT_INFORMED,
                     "StepContainer was not informed for ConditionalStep"});
 
       ConditionalStep cur_step =
@@ -263,7 +285,7 @@ struct StepContainer {
         // Likely don't need this check, it *should* be impossible to have a
         // conditional step w/o a true branch
         if (cur_node->left == nullptr)
-          return std::unexpected(StepErr{StepErr::Kind::EXAMPLE,
+          return std::unexpected(StepErr{StepErr::Kind::MISSING_BRANCH,
                                          "ConditionalStep which evaluated true "
                                          "does not have a true branch"});
 
