@@ -1,6 +1,5 @@
 #pragma once
 
-#include <boost/core/demangle.hpp>
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/matchers/catch_matchers_templated.hpp>
 #include <expected>
@@ -49,8 +48,7 @@ struct VariantState : Catch::Matchers::MatcherGenericBase {
   }
 
   std::string describe() const override {
-    return std::format("Variant holds type '{}'",
-                       boost::core::demangle(typeid(State).name()));
+    return std::format("Variant holds type '{}'", typeid(State).name());
   }
 };
 
