@@ -1,7 +1,4 @@
 #include "core/Step.hpp"
-#include "WorldPosition.hpp"
-#include "Worlds/MazeWorld.hpp"
-#include "test-tools/matchers.hpp"
 
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/matchers/catch_matchers_templated.hpp>
@@ -9,12 +6,15 @@
 #include <string>
 #include <variant>
 
+#include "WorldPosition.hpp"
+#include "Worlds/MazeWorld.hpp"
+#include "test-tools/matchers.hpp"
+
 using namespace cse498::steps;
 using cse498::WorldPosition;
 using namespace cse498::matchers;
 
 TEST_CASE("StepContainer basic functionality", "[StepContainer]") {
-
   StepContainer steps{};
 
   REQUIRE(steps.empty());
