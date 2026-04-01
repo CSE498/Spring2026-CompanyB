@@ -19,7 +19,7 @@ namespace cse498 {
 
 class WebButton : public WebElement {
  public:
-  explicit WebButton(const std::string& label, const std::string& id);
+  explicit WebButton(const std::string& label, const std::string& id="");
   ~WebButton();
 
   const std::string& GetLabel() const;
@@ -41,7 +41,6 @@ class WebButton : public WebElement {
   bool visible_{true};
   bool enabled_{true};
   std::function<void()> on_click_{};
-  emscripten::val button_element_{emscripten::val::undefined()};
 };
 
 }

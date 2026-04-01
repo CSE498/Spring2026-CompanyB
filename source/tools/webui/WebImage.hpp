@@ -47,18 +47,15 @@ class WebImage : public WebElement {
   /// Image's Y position
   int y_pos = 0;
 
-  /// DOM image element
-  emscripten::val img_element = emscripten::val::null();
-
  public:
   /**
    * @brief Construct a WebImage, creating the <img> element in the DOM.
-   * @param img_id The DOM element ID for the image. Must be unique.
    * @param src The image source URL or file path.
    * @param alt_text Alternative text for accessibility
+   * @param img_id The DOM element ID for the image. Must be unique.
    **/
-  WebImage(const std::string& img_id, const std::string& src,
-           const std::string& alt_text);
+  WebImage(const std::string& src,
+           const std::string& alt_text, const std::string& img_id = "");
 
   /// Destructor that removes the image element from the DOM
   ~WebImage();
@@ -138,8 +135,8 @@ class WebImage : public WebElement {
         break;
     }
 
-    img_element["style"].set("width", std::to_string(w) + unit_str);
-    img_element["style"].set("height", std::to_string(h) + unit_str);
+    dom_element["style"].set("width", std::to_string(w) + unit_str);
+    dom_element["style"].set("height", std::to_string(h) + unit_str);
   }
 
   /**

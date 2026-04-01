@@ -36,9 +36,6 @@ struct TextStyle {
  */
 class WebTextbox : public WebElement {
  private:
-  // Google Style: Member variables end with a trailing underscore.
-  emscripten::val div_element_ = emscripten::val::null();
-
   std::string mock_text_content_;
   size_t max_length_ = 50000;
 
@@ -62,7 +59,7 @@ class WebTextbox : public WebElement {
    * @param id The unique HTML ID for the generated div.
    * @param style Optional TextStyle to apply upon creation.
    */
-  WebTextbox(const std::string& id, const TextStyle& style = TextStyle());
+  WebTextbox(const TextStyle& style = TextStyle(), const std::string& id = "");
 
   // Prevent copying to avoid DOM element duplication and memory leaks.
   WebTextbox(const WebTextbox&) = delete;

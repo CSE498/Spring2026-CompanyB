@@ -25,25 +25,8 @@ using emscripten::val;
 namespace cse498 {
 
 WebCanvas::WebCanvas(int width, int height, const std::string& id)
-    : WebElement(id, true), width(width), height(height) {
-  // Get the global document
-  val document = val::global("document");
-
-  // Look for an element with the same ID
-  val existing = document.call<val>("getElementById", id);
-
-  // If the element with the same ID exists, then assert
-  assert((existing.isNull() || existing.isUndefined()) &&
-         "Canvas with this ID already exists in the DOM");
-
-  // Create a canvas element
-  canvas_element = document.call<val>("createElement", std::string("canvas"));
-  canvas_element.set("id", id);
-  document["body"].call<void>(
-      "appendChild",
-      canvas_element);  // Add the canvas element to the body section
-
-  ctx = canvas_element.call<val>("getContext",
+    : WebElement("canvas", id), width(width), height(height) {
+  ctx = dom_element.call<val>("getContext",
                                  std::string("2d"));  // Save the context
   transform_matrix =
       ctx.call<val>("getTransform");  // Save the transform matrix
@@ -51,8 +34,8 @@ WebCanvas::WebCanvas(int width, int height, const std::string& id)
 }
 
 WebCanvas::~WebCanvas() {
-  if (!canvas_element.isNull() && !canvas_element.isUndefined()) {
-    canvas_element.call<void>("remove");
+  if (!dom_element.isNull() && !dom_element.isUndefined()) {
+    dom_element.call<void>("remove");
   }
 }
 
@@ -61,8 +44,8 @@ void WebCanvas::Resize(int new_width, int new_height) {
   assert(new_height > 0 && "Canvas height must be positive");
   width = new_width;
   height = new_height;
-  canvas_element.set("width", width);
-  canvas_element.set("height", height);
+  dom_element.set("width", width);
+  dom_element.set("height", height);
   ApplyState();
 }
 
@@ -96,7 +79,7 @@ void WebCanvas::SetBackgroundColor(RGB rgb) {
   assert(g >= 0 && g <= 255 && "Green value must be 0-255");
   assert(b >= 0 && b <= 255 && "Blue value must be 0-255");
   background_color = rgb;
-  canvas_element["style"].set("backgroundColor", RgbString(rgb));
+  dom_element["style"].set("backgroundColor", RgbString(rgb));
 }
 
 void WebCanvas::DrawLine(std::pair<double, double> start,
@@ -203,7 +186,7 @@ void WebCanvas::DrawImage(const std::string& path, double x, double y, double w,
           };
         }
       },
-      id.c_str(), path.c_str(), x, y, w, h);
+      id.value_or("").c_str(), path.c_str(), x, y, w, h);
 }
 
 void WebCanvas::SetPenColor(RGB rgb) {

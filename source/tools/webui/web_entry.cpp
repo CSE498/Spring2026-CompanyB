@@ -88,18 +88,18 @@ int main() {
   left_column->SetHeight("100%").SetDirection("column").SetGap("10px").SetAlignItems("stretch");
   main_layout->AddChild(left_column);
 
-  top_textbox = std::make_shared<WebTextbox>("top-textbox");
+  top_textbox = std::make_shared<WebTextbox>(TextStyle(), "top-textbox");
   top_textbox->SetText("Info");
   left_column->AddChild(top_textbox);
 
-  bottom_textbox = std::make_shared<WebTextbox>("bottom-textbox");
+  bottom_textbox = std::make_shared<WebTextbox>(TextStyle(), "bottom-textbox");
   bottom_textbox->SetText("Log");
   left_column->AddChild(bottom_textbox);
 
   auto game_area = std::make_shared<WebLayout>("game-area");
   main_layout->AddChild(game_area);
 
-  map_image = std::make_shared<WebImage>("map-image", "assets/images/map2.svg", "Game map");
+  map_image = std::make_shared<WebImage>("assets/images/map2.svg", "Game map", "map-image");
   map_image->SetPosition(0, 0);
   game_area->AddChild(map_image);
 

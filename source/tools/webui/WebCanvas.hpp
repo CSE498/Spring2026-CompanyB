@@ -74,9 +74,6 @@ class WebCanvas : public WebElement {
   /// Vector of saved states
   std::vector<CanvasState> saved_states;
 
-  /// The DOM canvas element
-  emscripten::val canvas_element = emscripten::val::null();
-
   /// The cached 2D rendering context
   emscripten::val ctx = emscripten::val::null();
 
@@ -101,7 +98,7 @@ class WebCanvas : public WebElement {
    * @param height The height of the canvas in pixels.
    * @param id The DOM element ID for the canvas.
    **/
-  WebCanvas(int width, int height, const std::string& id);
+  WebCanvas(int width, int height, const std::string& id = "");
 
   /// Disable copy constructor since each instance is tied to a specific DOM
   /// element
