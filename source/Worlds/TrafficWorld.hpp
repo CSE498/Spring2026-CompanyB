@@ -41,7 +41,7 @@ class TrafficWorld : public WorldBase {
 
   /// @brief Indicates whether traffic lights in the world allow agents to pass
   /// through intersections vertically or horizontally.
-  enum TrafficLightPhase : int { ALLOW_VERTICAL = 0, ALLOW_HORIZONTAL = 1 };
+  enum class TrafficLightPhase : int { ALLOW_VERTICAL = 0, ALLOW_HORIZONTAL = 1 };
   /// @brief The TrafficLightPhase (allow vertical or horizontal movement) held
   /// by all traffic lights in the world.
   TrafficLightPhase traffic_light_phase{};
@@ -306,7 +306,7 @@ class TrafficWorld : public WorldBase {
               : TrafficLightPhase::ALLOW_HORIZONTAL;
       // Swap the cell type at every traffic light position to match the new
       // phase
-      const size_t new_type = (traffic_light_phase == ALLOW_VERTICAL)
+      const size_t new_type = (traffic_light_phase == TrafficLightPhase::ALLOW_VERTICAL)
                                   ? traffic_light_vertical_id
                                   : traffic_light_horizontal_id;
       for (const auto &pos : traffic_light_positions) {
