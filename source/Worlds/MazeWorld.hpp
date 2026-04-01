@@ -141,7 +141,7 @@ namespace cse498 {
       // update the stepcontainer for .inform() ).
       StepVisitor step_visitor(agent, agent_turn);
 
-      while (!agent_turn.empty()) {
+      while (!agent_turn.exhausted()) {
 	std::expected<Step, StepErr> cur_step = agent_turn.get_next();
 	if (!cur_step.has_value()) {
 	  // Here we'll want to have a way to track and later inform the agent
