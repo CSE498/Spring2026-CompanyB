@@ -1,8 +1,6 @@
 #pragma once
 
-#include <any>
 #include <cassert>
-#include <concepts>
 #include <expected>
 #include <memory>
 #include <optional>
@@ -11,11 +9,9 @@
 #include <type_traits>
 #include <utility>
 #include <variant>
-#include <vector>
 
 #include "core/WorldPosition.hpp"
 #include "core/core.hpp"
-#include "tools/ActionMap.hpp"
 #include "tools/FuncInfo.hpp"
 
 namespace cse498 {
@@ -41,16 +37,13 @@ struct StepErr {
 template <IsInfoType I>
 using InfoFunc = std::function<std::expected<bool, StepErr>(I)>;
 
-template <IsInfoType... Is>
-using InfoFuncTuple = std::tuple<InfoFunc<Is>...>;
+template <IsInfoType... Is> using InfoFuncTuple = std::tuple<InfoFunc<Is>...>;
 
 // Parameterize the info handler so that we can extremely easily add more types
 // later
-template <typename... Ts>
-struct _InfoHandler {
+template <typename... Ts> struct _InfoHandler {
   // Generate the default handler function
-  template <IsInfoType T>
-  static InfoFunc<T> defaulted_handler() {
+  template <IsInfoType T> static InfoFunc<T> defaulted_handler() {
     return [](T) {
       return std::unexpected(
           StepErr{StepErr::Kind::WRONG_TYPE,
@@ -79,8 +72,7 @@ struct _InfoHandler {
                                 0, typename FuncInfo::FuncInfo<F>::args>::type,
                             Ts>(f)...}){};
 
-  template <typename S>
-  std::expected<bool, StepErr> operator()(S s) {
+  template <typename S> std::expected<bool, StepErr> operator()(S s) {
     return std::invoke(std::get<InfoFunc<S>>(funcs), s);
   }
 };
@@ -101,32 +93,37 @@ struct StepContainer;
 
 struct MovementStep {
   WorldPosition loc;
+
+  bool operator==(MovementStep const &other) { return other.loc == loc; }
 };
 
 struct InfoStep {
   enum class Aspect {
-    OCCUPANCY_RAW,   // How many in area?
-    OCCUPANCY_FRAC,  // How much of area is occupied?
-    LOC_AVAIL,       // Is specific spot available?
+    OCCUPANCY_RAW,  // How many in area?
+    OCCUPANCY_FRAC, // How much of area is occupied?
+    LOC_AVAIL,      // Is specific spot available?
   };
 
   Aspect aspect;
   WorldPosition target;
-  std::optional<InfoType> info = {};
 
-  // Fill in the world info -- the world calls this
-  template <IsInfoType I>
-  void inform(I const &world_info) {
-    info = InfoType{std::in_place_type<I>, world_info};
+  bool operator==(InfoStep const &other) const {
+    return (other.aspect == aspect) && (other.target == target);
   }
 };
 
 struct ConditionalStep {
   InfoHandler condition;
+
+  bool operator==(ConditionalStep const &other) const {
+    // Figure out how to compare functors...
+    return true;
+  }
 };
 
 struct ReconStep {
   // TODO (probably gonna scrap)
+  bool operator==(ReconStep const &other) const { return false; }
 };
 
 template <typename T>
@@ -158,22 +155,35 @@ struct StepContainer {
 
   std::stack<Node const *> next_stack;
 
-  template <StepKind S>
-  void add_node(S &&s) {
-    assert(last != nullptr);  // Should never be possible
+  // Filled in by .inform()
+  std::optional<InfoType> world_info = {};
+
+  [[nodiscard]] bool empty() const {
+    return (root == nullptr || root->next == nullptr);
+  }
+
+  template <IsInfoType I> void inform(I const &world_info) {
+    world_info = InfoType{std::in_place_type<I>, world_info};
+  }
+
+  template <StepKind S> void add_step(S &&s) {
+    assert(last != nullptr); // Should never be possible
     last->next = std::make_unique<Node>(std::move(s));
     last = last->next.get();
     assert(last != nullptr);
   }
 
-  void add_node(InfoStep &&i, ConditionalStep &&s, StepContainer &&t_body) {
+  // TODO -- Template these add_step overloads so that we can also add a single
+  // step as a branch w/o needing a full stepcontainer
+
+  void add_step(InfoStep &&i, ConditionalStep &&s, StepContainer &&t_body) {
     assert(last != nullptr);
 
     // Insert infostep node first
-    add_node(std::move(i));
+    add_step(std::move(i));
 
     // Insert ConditionalStep node
-    add_node(std::move(s));
+    add_step(std::move(s));
 
     // Move t_body's root to last's left child, then unset its last (don't
     // change our last)
@@ -183,13 +193,13 @@ struct StepContainer {
     assert(last != nullptr);
   }
 
-  void add_node(InfoStep &&i, ConditionalStep &&s, StepContainer &&t_body,
+  void add_step(InfoStep &&i, ConditionalStep &&s, StepContainer &&t_body,
                 StepContainer &&f_body) {
     assert(last != nullptr);
 
-    // Do everything the single-branch add_node does, then just additionally add
+    // Do everything the single-branch add_step does, then just additionally add
     // in f_body
-    add_node(std::move(i), std::move(s), std::move(t_body));
+    add_step(std::move(i), std::move(s), std::move(t_body));
 
     // Move f_body's root to last's right child, then unset its last (again,
     // don't change our last)
@@ -231,30 +241,24 @@ struct StepContainer {
 
     // Handle current node being conditional
     if (std::holds_alternative<ConditionalStep>(cur_node->step.value())) {
-      // Prior node must be an infostep and have info
-      // (this is probably a future perf refactor target...
-      if ((prev_node == nullptr) || (!prev_node->step.has_value()) ||
-          (!std::holds_alternative<InfoStep>(prev_node->step.value())) ||
-          (!std::get<InfoStep>(prev_node->step.value()).info.has_value()))
-        return std::unexpected(StepErr{
-            StepErr::Kind::EXAMPLE,
-            "Previous step does not have information for the ConditionalStep"});
+      // Our world_info object must have information
+      if (!world_info.has_value())
+        return std::unexpected(
+            StepErr{StepErr::Kind::EXAMPLE,
+                    "StepContainer was not informed for ConditionalStep"});
+
+      ConditionalStep cur_step =
+          std::get<ConditionalStep>(cur_node->step.value());
 
       // Guaranteed fine to do given the prior checks
-      // Need to copy these, otherwise we have an unnecessary constness headache
-      InfoType cond_input =
-          std::get<InfoStep>(prev_node->step.value()).info.value();
-      InfoHandler handler =
-          std::get<ConditionalStep>(cur_node->step.value()).condition;
-
-      // Pipe previous condition
+      // Visit the given infohandler with the given world information
       std::expected<bool, StepErr> cond_result =
-          std::visit(handler, cond_input);
+          std::visit(cur_step.condition, world_info.value());
 
       // Forward the error if encountered
-      if (!cond_result.has_value()) return std::unexpected(cond_result.error());
+      if (!cond_result.has_value())
+        return std::unexpected(cond_result.error());
 
-      // TODO - Now handle what to do if we got the bool successfully
       if (cond_result.value()) {
         // Likely don't need this check, it *should* be impossible to have a
         // conditional step w/o a true branch
@@ -293,5 +297,5 @@ struct StepContainer {
   }
 };
 
-};  // namespace steps
-};  // namespace cse498
+}; // namespace steps
+}; // namespace cse498
