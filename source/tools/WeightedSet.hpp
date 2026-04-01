@@ -14,11 +14,11 @@
 #include "Random.hpp"
 
 namespace cse498 {
-// this code taken from an example on cppreference https://en.cppreference.com/w/cpp/language/constraints.html
-template<typename T>
-concept Hashable = requires(T a)
-{
-    { std::hash<T>{}(a) } -> std::convertible_to<std::size_t>;
+// this code taken from an example on cppreference
+// https://en.cppreference.com/w/cpp/language/constraints.html
+template <typename T>
+concept Hashable = requires(T a) {
+  { std::hash<T>{}(a) } -> std::convertible_to<std::size_t>;
 };
 /*
   The initial boilerplate setup (constructors, CopyTree(), assign and
