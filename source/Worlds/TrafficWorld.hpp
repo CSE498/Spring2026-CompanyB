@@ -271,7 +271,7 @@ class TrafficWorld : public WorldBase {
     if (auto agentAt = dynamic_cast<DrivingAgent *>(it->get())) {
       // effectively this turns off collision detection for agents that have
       // reached their destination
-      if (agentAt->get_reached_destination()) {
+      if (agentAt->GetReachedDestination()) {
         return std::nullopt;
       }
       return std::make_optional(agentAt->GetDirection());
@@ -296,7 +296,7 @@ class TrafficWorld : public WorldBase {
   void RunAgents() override {
     for (const auto &agent_ptr : agent_set) {
       auto *driver = dynamic_cast<DrivingAgent *>(agent_ptr.get());
-      if (driver && driver->get_reached_destination()) continue;
+      if (driver && driver->GetReachedDestination()) continue;
       size_t action_id = agent_ptr->SelectAction(main_grid);
       int result = DoAction(*agent_ptr, action_id);
       agent_ptr->SetActionResult(result);
@@ -352,13 +352,13 @@ class TrafficWorld : public WorldBase {
   void HandleDestinations() {
     for (auto &agent_ptr : agent_set) {
       auto *driver = dynamic_cast<DrivingAgent *>(agent_ptr.get());
-      if (!driver || driver->get_reached_destination()) continue;
+      if (!driver || driver->GetReachedDestination()) continue;
 
       WorldPosition pos = agent_ptr->GetLocation().AsWorldPosition();
       WorldPosition dest = driver->GetDestination().AsWorldPosition();
 
       if (pos.CellX() == dest.CellX() && pos.CellY() == dest.CellY()) {
-        driver->set_reached_destination(true);
+        driver->SetReachedDestination(true);
         driver->SetSymbol('D');
         --num_spawned_agents;
         assert(num_spawned_agents >= 0);
