@@ -34,12 +34,10 @@ class WebLayout : public WebElement {
   };
 
   /**
-   * @brief Constructs a WebLayout, creating a flex div in the DOM with the
-   * given ID.
-   * @param id The HTML element ID to assign to the layout container.
+   * @brief Constructs a WebLayout, creating a flex div in the DOM.
    * @param options Optional WebOptions to apply to the layout.
    */
-  WebLayout(const std::string& id = "", const WebOptions& options = {});
+  WebLayout(const WebOptions& options = {});
 
   /// Disable copy assignment operator
   WebLayout& operator=(const WebLayout&) = delete;

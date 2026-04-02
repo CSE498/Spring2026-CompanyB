@@ -24,8 +24,8 @@ using emscripten::val;
 
 namespace cse498 {
 
-WebCanvas::WebCanvas(int width, int height, const std::string& id, const WebOptions& options)
-    : WebElement("canvas", id, options), width(width), height(height) {
+WebCanvas::WebCanvas(int width, int height, const WebOptions& options)
+    : WebElement("canvas", options), width(width), height(height) {
   ctx = dom_element.call<val>("getContext",
                                  std::string("2d"));  // Save the context
   transform_matrix =
@@ -186,7 +186,7 @@ void WebCanvas::DrawImage(const std::string& path, double x, double y, double w,
           };
         }
       },
-      id.value_or("").c_str(), path.c_str(), x, y, w, h);
+      id.c_str(), path.c_str(), x, y, w, h);
 }
 
 void WebCanvas::SetPenColor(RGB rgb) {

@@ -51,7 +51,7 @@ std::string GenerateGarbage(size_t length) {
 
 TEST_CASE("WebTextbox: New UI & Memory Features", "[features]") {
   SetupMockDOMWebTextbox mock;
-  WebTextbox box(TextStyle(), "feature_box");
+  WebTextbox box(TextStyle(), { .id = "feature_box" });
 
   // 1. Test Clear()
   box.SetText("Initialize Data");
@@ -82,7 +82,7 @@ TEST_CASE("WebTextbox: New UI & Memory Features", "[features]") {
 
 TEST_CASE("WebTextbox: The Naughty String List", "[edge_case]") {
   SetupMockDOMWebTextbox mock;
-  WebTextbox box(TextStyle(), "naughty_box");
+  WebTextbox box(TextStyle(), { .id = "naughty_box" });
 
   std::vector<std::string> naughty_strings = {"",
                                               "undefined",
@@ -117,7 +117,7 @@ TEST_CASE("WebTextbox: The Naughty String List", "[edge_case]") {
 
 TEST_CASE("WebTextbox: Numeric Extremes", "[limits]") {
   SetupMockDOMWebTextbox mock;
-  WebTextbox box(TextStyle(), "limit_box");
+  WebTextbox box(TextStyle(), { .id = "limit_box" });
   TextStyle style;
 
   // Swapped from integer limits to their literal string px equivalents to avoid -Wconstant-conversion
@@ -134,7 +134,7 @@ TEST_CASE("WebTextbox: Numeric Extremes", "[limits]") {
 
 TEST_CASE("WebTextbox: High-Volume Fuzzing (10,000 Iterations)", "[fuzz]") {
   SetupMockDOMWebTextbox mock;
-  WebTextbox fuzzer(TextStyle(), "fuzz_target");
+  WebTextbox fuzzer(TextStyle(), { .id = "fuzz_target" });
   srand(12345);
 
   for (int i = 0; i < 10000; ++i) {
@@ -148,7 +148,7 @@ TEST_CASE("WebTextbox: High-Volume Fuzzing (10,000 Iterations)", "[fuzz]") {
 
 TEST_CASE("WebTextbox: The Memory Stress Test", "[memory]") {
   SetupMockDOMWebTextbox mock;
-  WebTextbox heavyBox(TextStyle(), "heavy_box");
+  WebTextbox heavyBox(TextStyle(), { .id = "heavy_box" });
 
   // Temporarily increase limit for the stress test
   size_t massive_size = 10 * 1024 * 1024;   // 10MB
@@ -167,7 +167,7 @@ TEST_CASE("WebTextbox: The Memory Stress Test", "[memory]") {
 
 TEST_CASE("WebTextbox: Templates and Lambdas", "[webui]") {
   SetupMockDOMWebTextbox mock;
-  cse498::WebTextbox box(TextStyle(), "test_box");
+  cse498::WebTextbox box(TextStyle(), { .id = "test_box" });
 
   // Testing the Template
   REQUIRE_NOTHROW(box.AppendValue<int>(404));

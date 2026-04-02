@@ -45,7 +45,7 @@ struct SetupMockCanvas {
 
 TEST_CASE("Initialize Canvas", "[web_canvas]") {
   SetupMockCanvas mock;
-  cse498::WebCanvas canvas(500, 500, "1");
+  cse498::WebCanvas canvas(500, 500, { .id = "1" });
 
   REQUIRE(canvas.GetWidth() == 500);
   REQUIRE(canvas.GetHeight() == 500);
@@ -54,7 +54,7 @@ TEST_CASE("Initialize Canvas", "[web_canvas]") {
 
 TEST_CASE("DrawRect", "[web_canvas]") {
   SetupMockCanvas mock;
-  cse498::WebCanvas canvas(500, 500, "test");
+  cse498::WebCanvas canvas(500, 500, { .id = "test" });
 
   SECTION("filled rectangle") {
     REQUIRE_NOTHROW(canvas.DrawRect(10, 20, 100, 50, true));
@@ -71,7 +71,7 @@ TEST_CASE("DrawRect", "[web_canvas]") {
 
 TEST_CASE("Resize", "[web_canvas]") {
   SetupMockCanvas mock;
-  cse498::WebCanvas canvas(500, 500, "resize_test");
+  cse498::WebCanvas canvas(500, 500, { .id = "resize_test" });
 
   SECTION("resize updates width and height") {
     canvas.Resize(800, 600);
@@ -102,7 +102,7 @@ TEST_CASE("Resize", "[web_canvas]") {
 
 TEST_CASE("Clear", "[web_canvas]") {
   SetupMockCanvas mock;
-  cse498::WebCanvas canvas(500, 500, "clear_test");
+  cse498::WebCanvas canvas(500, 500, { .id = "clear_test" });
 
   SECTION("clear does not throw") { REQUIRE_NOTHROW(canvas.Clear()); }
 
@@ -114,7 +114,7 @@ TEST_CASE("Clear", "[web_canvas]") {
 
 TEST_CASE("SetBackgroundColor", "[web_canvas]") {
   SetupMockCanvas mock;
-  cse498::WebCanvas canvas(500, 500, "bgcolor_test");
+  cse498::WebCanvas canvas(500, 500, { .id = "bgcolor_test" });
 
   SECTION("set red background") {
     REQUIRE_NOTHROW(canvas.SetBackgroundColor({255, 0, 0}));
@@ -135,7 +135,7 @@ TEST_CASE("SetBackgroundColor", "[web_canvas]") {
 
 TEST_CASE("DrawLine", "[web_canvas]") {
   SetupMockCanvas mock;
-  cse498::WebCanvas canvas(500, 500, "line_test");
+  cse498::WebCanvas canvas(500, 500, { .id = "line_test" });
 
   SECTION("diagonal line") {
     REQUIRE_NOTHROW(canvas.DrawLine({0.0, 0.0}, {100.0, 100.0}));
@@ -160,7 +160,7 @@ TEST_CASE("DrawLine", "[web_canvas]") {
 
 TEST_CASE("DrawCircle", "[web_canvas]") {
   SetupMockCanvas mock;
-  cse498::WebCanvas canvas(500, 500, "circle_test");
+  cse498::WebCanvas canvas(500, 500, { .id = "circle_test" });
 
   SECTION("filled circle") {
     REQUIRE_NOTHROW(canvas.DrawCircle(100.0, 100.0, 50.0, true));
@@ -181,7 +181,7 @@ TEST_CASE("DrawCircle", "[web_canvas]") {
 
 TEST_CASE("DrawPolygon", "[web_canvas]") {
   SetupMockCanvas mock;
-  cse498::WebCanvas canvas(500, 500, "polygon_test");
+  cse498::WebCanvas canvas(500, 500, { .id = "polygon_test" });
 
   SECTION("filled triangle") {
     std::vector<std::pair<double, double>> triangle = {
@@ -211,7 +211,7 @@ TEST_CASE("DrawPolygon", "[web_canvas]") {
 
 TEST_CASE("DrawText", "[web_canvas]") {
   SetupMockCanvas mock;
-  cse498::WebCanvas canvas(500, 500, "text_test");
+  cse498::WebCanvas canvas(500, 500, { .id = "text_test" });
 
   SECTION("basic text") {
     REQUIRE_NOTHROW(canvas.DrawText("Hello, World!", 50.0, 50.0));
@@ -226,7 +226,7 @@ TEST_CASE("DrawText", "[web_canvas]") {
 
 TEST_CASE("LoadImage and DrawImage", "[web_canvas]") {
   SetupMockCanvas mock;
-  cse498::WebCanvas canvas(500, 500, "image_test");
+  cse498::WebCanvas canvas(500, 500, { .id = "image_test" });
 
   SECTION("load image does not throw") {
     REQUIRE_NOTHROW(canvas.LoadImage("test_image.png"));
@@ -248,7 +248,7 @@ TEST_CASE("LoadImage and DrawImage", "[web_canvas]") {
 
 TEST_CASE("SetPenColor", "[web_canvas]") {
   SetupMockCanvas mock;
-  cse498::WebCanvas canvas(500, 500, "pen_color_test");
+  cse498::WebCanvas canvas(500, 500, { .id = "pen_color_test" });
 
   SECTION("set red") { REQUIRE_NOTHROW(canvas.SetPenColor({255, 0, 0})); }
 
@@ -259,7 +259,7 @@ TEST_CASE("SetPenColor", "[web_canvas]") {
 
 TEST_CASE("SetFillColor", "[web_canvas]") {
   SetupMockCanvas mock;
-  cse498::WebCanvas canvas(500, 500, "fill_color_test");
+  cse498::WebCanvas canvas(500, 500, { .id = "fill_color_test" });
 
   SECTION("set red") { REQUIRE_NOTHROW(canvas.SetFillColor({255, 0, 0})); }
 
@@ -272,7 +272,7 @@ TEST_CASE("SetFillColor", "[web_canvas]") {
 
 TEST_CASE("SetLineWidth", "[web_canvas]") {
   SetupMockCanvas mock;
-  cse498::WebCanvas canvas(500, 500, "linewidth_test");
+  cse498::WebCanvas canvas(500, 500, { .id = "linewidth_test" });
 
   SECTION("set line width to 5") { REQUIRE_NOTHROW(canvas.SetLineWidth(5.0)); }
 
@@ -287,7 +287,7 @@ TEST_CASE("SetLineWidth", "[web_canvas]") {
 
 TEST_CASE("SetFont", "[web_canvas]") {
   SetupMockCanvas mock;
-  cse498::WebCanvas canvas(500, 500, "font_test");
+  cse498::WebCanvas canvas(500, 500, { .id = "font_test" });
 
   SECTION("set standard font") {
     REQUIRE_NOTHROW(canvas.SetFont("16px Arial"));
@@ -302,7 +302,7 @@ TEST_CASE("SetFont", "[web_canvas]") {
 
 TEST_CASE("SetAlpha", "[web_canvas]") {
   SetupMockCanvas mock;
-  cse498::WebCanvas canvas(500, 500, "alpha_test");
+  cse498::WebCanvas canvas(500, 500, { .id = "alpha_test" });
 
   SECTION("fully opaque") { REQUIRE_NOTHROW(canvas.SetAlpha(1.0)); }
 
@@ -313,7 +313,7 @@ TEST_CASE("SetAlpha", "[web_canvas]") {
 
 TEST_CASE("Translate", "[web_canvas]") {
   SetupMockCanvas mock;
-  cse498::WebCanvas canvas(500, 500, "translate_test");
+  cse498::WebCanvas canvas(500, 500, { .id = "translate_test" });
 
   SECTION("translate updates GetLocation") {
     canvas.Translate({100.0, 200.0});
@@ -347,7 +347,7 @@ TEST_CASE("Translate", "[web_canvas]") {
 
 TEST_CASE("GetLocation", "[web_canvas]") {
   SetupMockCanvas mock;
-  cse498::WebCanvas canvas(500, 500, "location_test");
+  cse498::WebCanvas canvas(500, 500, { .id = "location_test" });
 
   SECTION("default location is origin") {
     auto loc = canvas.GetLocation();
@@ -358,7 +358,7 @@ TEST_CASE("GetLocation", "[web_canvas]") {
 
 TEST_CASE("Rotate", "[web_canvas]") {
   SetupMockCanvas mock;
-  cse498::WebCanvas canvas(500, 500, "rotate_test");
+  cse498::WebCanvas canvas(500, 500, { .id = "rotate_test" });
 
   SECTION("rotate clockwise") { REQUIRE_NOTHROW(canvas.Rotate(1.6782, true)); }
 
@@ -371,7 +371,7 @@ TEST_CASE("Rotate", "[web_canvas]") {
 
 TEST_CASE("Scale", "[web_canvas]") {
   SetupMockCanvas mock;
-  cse498::WebCanvas canvas(500, 500, "scale_test");
+  cse498::WebCanvas canvas(500, 500, { .id = "scale_test" });
 
   SECTION("uniform scale up") { REQUIRE_NOTHROW(canvas.Scale(2.0, 2.0)); }
 
@@ -384,7 +384,7 @@ TEST_CASE("Scale", "[web_canvas]") {
 
 TEST_CASE("Save and Restore", "[web_canvas]") {
   SetupMockCanvas mock;
-  cse498::WebCanvas canvas(500, 500, "save_restore_test");
+  cse498::WebCanvas canvas(500, 500, { .id = "save_restore_test" });
 
   SECTION("save and restore does not throw") {
     REQUIRE_NOTHROW(canvas.Save());
@@ -418,7 +418,7 @@ TEST_CASE("Save and Restore", "[web_canvas]") {
 
 TEST_CASE("RequestAnimationFrame", "[web_canvas]") {
   SetupMockCanvas mock;
-  cse498::WebCanvas canvas(500, 500, "raf_test");
+  cse498::WebCanvas canvas(500, 500, { .id = "raf_test" });
 
   SECTION("request animation frame does not throw") {
     REQUIRE_NOTHROW(canvas.RequestAnimationFrame([]() {}));
@@ -430,6 +430,6 @@ TEST_CASE("Destructor", "[web_canvas]") {
 
   SECTION("destructor removes element from DOM") {
     REQUIRE_NOTHROW(
-        []() { cse498::WebCanvas canvas(500, 500, "destructor_test"); }());
+        []() { cse498::WebCanvas canvas(500, 500, { .id = "destructor_test" }); }());
   }
 }

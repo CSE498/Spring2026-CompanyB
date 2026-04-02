@@ -2,7 +2,7 @@
 #include <emscripten/val.h>
 #include <catch2/catch_test_macros.hpp>
 #include "tools/webui/WebElement.hpp"
-#include "tools/webui/WebStyle.hpp"
+#include "tools/webui/WebOptions.hpp"
 
 using namespace cse498;
 
@@ -34,6 +34,7 @@ TEST_CASE("WebStyle application to WebElement", "[WebStyle]") {
   SetupMockDOMWebStyle mock;
   
   WebOptions options = {
+    .id = "style-test-elem",
     .style = {
       {"backgroundColor", "red"},
       {"textAlign", "center"},
@@ -41,7 +42,7 @@ TEST_CASE("WebStyle application to WebElement", "[WebStyle]") {
     }
   };
 
-  WebElement elem("div", "style-test-elem", options);
+  WebElement elem("div", options);
 
   emscripten::val document = emscripten::val::global("document");
   emscripten::val dom_elem = document.call<emscripten::val>("getElementById", std::string("style-test-elem"));
@@ -55,7 +56,7 @@ TEST_CASE("WebStyle direct initialization in constructor", "[WebStyle]") {
   SetupMockDOMWebStyle mock;
   
   // Test direct initialization with initializer list in constructor
-  WebElement elem("div", "direct-style-test", { .style = {
+  WebElement elem("div", { .id = "direct-style-test", .style = {
     {"color", "blue"},
     {"margin", "10px"}
   } });
@@ -71,10 +72,11 @@ TEST_CASE("WebOptions classes application to WebElement", "[WebOptions]") {
   SetupMockDOMWebStyle mock;
 
   WebOptions options = {
+    .id = "class-test-elem",
     .classes = {"test-class-1", "test-class-2"}
   };
 
-  WebElement elem("div", "class-test-elem", options);
+  WebElement elem("div", options);
 
   emscripten::val document = emscripten::val::global("document");
   emscripten::val dom_elem = document.call<emscripten::val>("getElementById", std::string("class-test-elem"));
@@ -86,7 +88,7 @@ TEST_CASE("WebOptions classes application to WebElement", "[WebOptions]") {
 
 TEST_CASE("WebElement AddClass, RemoveClass, and SetStyle", "[WebElement]") {
   SetupMockDOMWebStyle mock;
-  WebElement elem("div", "dynamic-test-elem");
+  WebElement elem("div", { .id = "dynamic-test-elem" });
 
   SECTION("AddClass") {
     elem.AddClass("new-class");

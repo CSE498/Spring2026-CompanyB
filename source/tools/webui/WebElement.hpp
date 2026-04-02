@@ -6,7 +6,6 @@
 
 #pragma once
 
-#include <optional>
 #include <string>
 
 #include <emscripten/val.h>
@@ -19,31 +18,26 @@ class WebElement {
   emscripten::val dom_element = emscripten::val::null();
   
   /// @brief ID of the DOM element
-  std::optional<std::string> id = std::nullopt;
+  std::string id = "";
 
  public:
   /// @brief Delete the default constructor
   WebElement() = delete;
 
   /**
-   * @brief Create an element with the given tag, ID, and options in the DOM
+   * @brief Create an element with the given tag and options in the DOM
    * @param tag The HTML tag name (e.g. "div", "span")
-   * @param elem_id The ID of the element (optional)
-   * @param options The WebOptions object containing CSS properties and classes (optional)
+   * @param options The WebOptions object containing ID, CSS properties and classes (optional)
    */
-  WebElement(const std::string& tag = "div", const std::string& elem_id = "", const WebOptions& options = {}) {
+  WebElement(const std::string& tag = "div", const WebOptions& options = {}) {
     // Set id 
-    if (!elem_id.empty()) {
-      id = elem_id;
-    } else {
-      id = std::nullopt;
-    }
+    id = options.id;
 
     emscripten::val document = emscripten::val::global("document");
 
     // Create the element in the DOM
-    if (id.has_value()) {
-      emscripten::val existing = document.call<emscripten::val>("getElementById", id.value());
+    if (!id.empty()) {
+      emscripten::val existing = document.call<emscripten::val>("getElementById", id);
 
       assert((existing.isNull() || existing.isUndefined()) &&
             "Element with this ID already exists in the DOM");
@@ -51,7 +45,7 @@ class WebElement {
 
     dom_element = document.call<emscripten::val>("createElement", std::string(tag));
 
-    if (id) dom_element.set("id", id.value());
+    if (!id.empty()) dom_element.set("id", id);
 
     // Apply styles from WebOptions.style
     for (const auto& [property, value] : options.style.GetStyles()) {
@@ -101,9 +95,9 @@ class WebElement {
 
   /**
    * @brief Get the ID of the DOM element
-   * @return The ID as an optional
+   * @return The ID as a string
    */
-  [[nodiscard]] std::optional<std::string> GetId() const { return id; }
+  [[nodiscard]] std::string GetId() const { return id; }
 
   /**
    * @brief Returns the emscripten::val for the DOM Element

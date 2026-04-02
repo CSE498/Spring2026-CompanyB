@@ -16,6 +16,7 @@ namespace cse498 {
  * @brief Stores information to initialize properties of DOM Elements
  */
 struct WebOptions {
+  std::string id = "";
   std::vector<std::string> classes = {};
   WebStyle style = {};
 };

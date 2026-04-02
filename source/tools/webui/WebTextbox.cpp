@@ -26,8 +26,8 @@ bool WebTextbox::IsHeadless() const {
  * @brief Initializes the DOM element, sets its baseline styles, and appends it
  * to the body. If running headlessly, it bypasses DOM creation entirely.
  */
-WebTextbox::WebTextbox(const TextStyle& style, const std::string& id, const WebOptions& options)
-    : WebElement("div", id, options) {
+WebTextbox::WebTextbox(const TextStyle& style, const WebOptions& options)
+    : WebElement("div", options) {
   if (IsHeadless()) return;
 
   dom_element["style"].set("position", "absolute");

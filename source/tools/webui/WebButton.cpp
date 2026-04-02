@@ -8,8 +8,8 @@ namespace cse498 {
 
 using emscripten::val;
 
-WebButton::WebButton(const std::string& label, const std::string& id, const WebOptions& options)
-    : WebElement("button", id, options), label_(label) {
+WebButton::WebButton(const std::string& label, const WebOptions& options)
+    : WebElement("button", options), label_(label) {
   dom_element.set("innerText", label_);
 
   // Basic default state.
