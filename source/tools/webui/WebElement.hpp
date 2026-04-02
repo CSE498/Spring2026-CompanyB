@@ -66,6 +66,32 @@ class WebElement {
     document["body"].call<void>("appendChild", dom_element);
   }
 
+  /**
+   * @brief Add a CSS class to the element
+   * @param css_class The name of the class to add
+   */
+  void AddClass(const std::string& css_class) {
+    dom_element["classList"].call<void>("add", css_class);
+  }
+
+  /**
+   * @brief Remove a CSS class from the element
+   * @param css_class The name of the class to remove
+   */
+  void RemoveClass(const std::string& css_class) {
+    dom_element["classList"].call<void>("remove", css_class);
+  }
+
+  /**
+   * @brief Apply a set of CSS styles to the element
+   * @param style The WebStyle object containing CSS property-value pairs
+   */
+  void SetStyle(const WebStyle& style) {
+    for (const auto& [property, value] : style.GetStyles()) {
+      dom_element["style"].set(property, value);
+    }
+  }
+
   /// @brief Destructor for WebElement that removes the DOM node
   virtual ~WebElement() {
     if (!dom_element.isNull() && !dom_element.isUndefined()) {

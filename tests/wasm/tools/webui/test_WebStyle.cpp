@@ -83,3 +83,31 @@ TEST_CASE("WebOptions classes application to WebElement", "[WebOptions]") {
   REQUIRE(class_list.call<bool>("contains", std::string("test-class-1")));
   REQUIRE(class_list.call<bool>("contains", std::string("test-class-2")));
 }
+
+TEST_CASE("WebElement AddClass, RemoveClass, and SetStyle", "[WebElement]") {
+  SetupMockDOMWebStyle mock;
+  WebElement elem("div", "dynamic-test-elem");
+
+  SECTION("AddClass") {
+    elem.AddClass("new-class");
+    emscripten::val document = emscripten::val::global("document");
+    emscripten::val dom_elem = document.call<emscripten::val>("getElementById", std::string("dynamic-test-elem"));
+    REQUIRE(dom_elem["classList"].call<bool>("contains", std::string("new-class")));
+  }
+
+  SECTION("RemoveClass") {
+    elem.AddClass("to-remove");
+    elem.RemoveClass("to-remove");
+    emscripten::val document = emscripten::val::global("document");
+    emscripten::val dom_elem = document.call<emscripten::val>("getElementById", std::string("dynamic-test-elem"));
+    REQUIRE_FALSE(dom_elem["classList"].call<bool>("contains", std::string("to-remove")));
+  }
+
+  SECTION("SetStyle") {
+    elem.SetStyle({{"color", "green"}, {"border", "1px solid black"}});
+    emscripten::val document = emscripten::val::global("document");
+    emscripten::val dom_elem = document.call<emscripten::val>("getElementById", std::string("dynamic-test-elem"));
+    REQUIRE(dom_elem["style"]["color"].as<std::string>() == "green");
+    REQUIRE(dom_elem["style"]["border"].as<std::string>() == "1px solid black");
+  }
+}
