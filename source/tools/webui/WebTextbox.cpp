@@ -52,17 +52,19 @@ WebTextbox::~WebTextbox() {
  * scripting (XSS) by utilizing innerText, and bounded by max_length_ to prevent
  * memory issues.
  */
-void WebTextbox::SetText(const std::string& text) {
+WebTextbox& WebTextbox::SetText(const std::string& text) {
   std::string safe_text = text.length() > max_length_
                               ? text.substr(text.length() - max_length_)
                               : text;
 
   if (IsHeadless()) {
     mock_text_content_ = safe_text;
-    return;
+    return *this;
   }
 
   dom_element.set("innerText", safe_text);
+
+  return *this;
 }
 
 /**

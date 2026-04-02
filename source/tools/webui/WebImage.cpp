@@ -34,12 +34,14 @@ void WebImage::SetSource(const std::string& new_src) {
   dom_element.set("src", src);
 }
 
-void WebImage::SetPosition(int x, int y) {
+WebImage& WebImage::SetPosition(int x, int y) {
   x_pos = x;
   y_pos = y;
 
   dom_element["style"].set("left", std::to_string(x_pos) + "px");
   dom_element["style"].set("top", std::to_string(y_pos) + "px");
+
+  return *this;
 }
 
 void WebImage::SetAlt(const std::string& alt_text) {

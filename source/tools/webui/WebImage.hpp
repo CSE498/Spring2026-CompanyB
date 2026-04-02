@@ -10,6 +10,7 @@
 
 #include <expected>
 #include <string>
+#include <memory>
 
 #include "WebElement.hpp"
 
@@ -27,7 +28,7 @@ enum class SizeUnit { px, em, rem, percent, vw, vh };
  * allowing programmers to control image source, position, size, alt text,
  * and visibility using C++ functions.
  **/
-class WebImage : public WebElement {
+class WebImage : public WebElement, public std::enable_shared_from_this<WebImage> {
  private:
   /// Image's source
   std::string src{};
@@ -67,6 +68,10 @@ class WebImage : public WebElement {
   /// Disable copy assignment operator
   WebImage& operator=(const WebImage&) = delete;
 
+  std::shared_ptr<WebImage> GetSharedPtr() {
+    return shared_from_this();
+  }
+
   /**
    * @brief Check if the image is loaded.
    * @return Bool of loaded status.
@@ -97,7 +102,7 @@ class WebImage : public WebElement {
    * @param x The x-coordinate in pixels from the left edge.
    * @param y The y-coordinate in pixels from the top edge.
    **/
-  void SetPosition(int x, int y);
+  WebImage& SetPosition(int x, int y);
 
   /**
    * @brief Set the display size of the image.

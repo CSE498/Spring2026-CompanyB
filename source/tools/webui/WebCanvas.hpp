@@ -14,6 +14,7 @@
 #include <tuple>
 #include <utility>
 #include <vector>
+#include <memory>
 
 #include "WebElement.hpp"
 
@@ -29,7 +30,7 @@ namespace cse498 {
  * drawing shapes, text, and images, as well as controlling rendering state
  * (colors, transforms, etc.).
  **/
-class WebCanvas : public WebElement {
+class WebCanvas : public WebElement, public std::enable_shared_from_this<WebCanvas> {
  public:
   using RGB = std::tuple<int, int, int>;
 
@@ -110,6 +111,10 @@ class WebCanvas : public WebElement {
   /// Destructor that removes the canvas element from the DOM if this instance
   /// created it
   ~WebCanvas();
+
+  std::shared_ptr<WebCanvas> GetSharedPtr() {
+    return shared_from_this();
+  }
 
   /**
    * @brief Resize the canvas to the given dimensions.
@@ -204,7 +209,7 @@ class WebCanvas : public WebElement {
    * @brief Set the fill color used for filled shapes and text.
    * @param rgb An (r, g, b) tuple with values in the range [0, 255].
    */
-  void SetFillColor(RGB rgb);
+  WebCanvas& SetFillColor(RGB rgb);
 
   /**
    * @brief Set the line width for stroke operations.
@@ -216,7 +221,7 @@ class WebCanvas : public WebElement {
    * @brief Set the font used for text rendering.
    * @param font A CSS font string (e.g., "16px Arial").
    **/
-  void SetFont(const std::string& font);
+  WebCanvas& SetFont(const std::string& font);
 
   /**
    * @brief Set the global alpha (opacity) for all subsequent draw operations.

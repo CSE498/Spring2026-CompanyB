@@ -51,8 +51,10 @@ void WebButton::Disable() {
 
 bool WebButton::IsEnabled() const { return enabled_; }
 
-void WebButton::SetOnClick(std::function<void()> callback) {
+WebButton& WebButton::SetOnClick(std::function<void()> callback) {
   on_click_ = std::move(callback);
+
+  return *this;
 }
 
 void WebButton::Click() {

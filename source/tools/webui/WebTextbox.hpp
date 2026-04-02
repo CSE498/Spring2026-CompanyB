@@ -10,6 +10,7 @@
 #include <algorithm>  // For std::clamp
 #include <expected>   // For std::expected
 #include <functional>
+#include <memory>
 #include <string>
 
 #include "WebElement.hpp"
@@ -34,7 +35,7 @@ struct TextStyle {
  * Designed for high-throughput logging with memory constraints and headless CI
  * support.
  */
-class WebTextbox : public WebElement {
+class WebTextbox : public WebElement, public std::enable_shared_from_this<WebTextbox> {
  private:
   std::string mock_text_content_;
   size_t max_length_ = 50000;
@@ -70,11 +71,15 @@ class WebTextbox : public WebElement {
    */
   ~WebTextbox();
 
+  std::shared_ptr<WebTextbox> GetSharedPtr() {
+    return shared_from_this();
+  }
+
   /**
    * @brief Overwrites the current text, truncating if it exceeds max length.
    * @param text The new text to display.
    */
-  void SetText(const std::string& text);
+  WebTextbox& SetText(const std::string& text);
 
   /**
    * @brief Appends text to the end of the box and auto-scrolls to the bottom.

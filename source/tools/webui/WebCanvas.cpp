@@ -198,13 +198,15 @@ void WebCanvas::SetPenColor(RGB rgb) {
   ctx.set("strokeStyle", RgbString(rgb));
 }
 
-void WebCanvas::SetFillColor(RGB rgb) {
+WebCanvas& WebCanvas::SetFillColor(RGB rgb) {
   auto [r, g, b] = rgb;
   assert(r >= 0 && r <= 255 && "Red value must be 0-255");
   assert(g >= 0 && g <= 255 && "Green value must be 0-255");
   assert(b >= 0 && b <= 255 && "Blue value must be 0-255");
   fill_color = rgb;
   ctx.set("fillStyle", RgbString(rgb));
+
+  return *this;
 }
 
 void WebCanvas::SetLineWidth(double w) {
@@ -214,9 +216,11 @@ void WebCanvas::SetLineWidth(double w) {
   ctx.set("lineWidth", line_width);
 }
 
-void WebCanvas::SetFont(const std::string& new_font) {
+WebCanvas& WebCanvas::SetFont(const std::string& new_font) {
   font = new_font;
   ctx.set("font", font);
+
+  return *this;
 }
 
 void WebCanvas::SetAlpha(double new_alpha) {

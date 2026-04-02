@@ -3,6 +3,7 @@
 #include <emscripten/val.h>
 #include <functional>
 #include <string>
+#include <memory>
 #include "WebElement.hpp"
 
 #include "WebElement.hpp"
@@ -17,10 +18,14 @@
 
 namespace cse498 {
 
-class WebButton : public WebElement {
+class WebButton : public WebElement, public std::enable_shared_from_this<WebButton> {
  public:
   explicit WebButton(const std::string& label, const WebOptions& options = {});
   ~WebButton();
+
+  std::shared_ptr<WebButton> GetSharedPtr() {
+    return shared_from_this();
+  }
 
   const std::string& GetLabel() const;
   void SetLabel(const std::string& label);
@@ -33,7 +38,7 @@ class WebButton : public WebElement {
   void Disable();
   bool IsEnabled() const;
 
-  void SetOnClick(std::function<void()> callback);
+  WebButton& SetOnClick(std::function<void()> callback);
   void Click();
 
  private:

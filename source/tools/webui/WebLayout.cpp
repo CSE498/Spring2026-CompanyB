@@ -17,6 +17,11 @@ namespace cse498 {
 
 WebLayout::WebLayout(const WebOptions& options) : WebElement("div", options) {
   dom_element["style"].set("display", "flex");
+
+  // Add children from options if any
+  for (const auto& child : options.children) {
+    AddChild(child);
+  }
 }
 
 std::expected<void, WebLayout::Error> WebLayout::AddChild(
