@@ -1,16 +1,16 @@
 #pragma once
 
 #include "Step.hpp"
+#include "WorldPosition.hpp"
 
 namespace cse498 {
 using cse498::steps::StepContainer;
 
-template <typename DataClass>
-class StepAgentBase {
- protected:
+template <typename DataClass> class StepAgentBase {
+protected:
   DataClass mData;
 
- public:
+public:
   StepAgentBase(DataClass data) : mData{data} {}
   virtual ~StepAgentBase() = default;
 
@@ -29,6 +29,8 @@ class StepAgentBase {
     mData = data;
     // Here handle logic to log for replay?
   }
+
+  virtual void SetGoal(WorldPosition position) = 0;
 };
 
-};  // namespace cse498
+}; // namespace cse498
