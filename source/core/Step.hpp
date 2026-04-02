@@ -172,7 +172,7 @@ struct StepContainer {
   }
 
   [[nodiscard]] bool exhausted() const {
-    return (next_stack.empty() && (last == nullptr || last->next == nullptr));
+    return (next_stack.empty() && (cur_node == nullptr));
   }
 
   template <IsInfoType I>
@@ -182,9 +182,10 @@ struct StepContainer {
 
   template <StepKind S>
   void add_step(S &&s) {
-    assert(last != nullptr);  // Should never be possible
+    assert(last != nullptr);
     last->next = std::make_unique<Node>(std::move(s));
     last = last->next.get();
+    assert(last->next == nullptr);
     assert(last != nullptr);
   }
 
@@ -282,6 +283,9 @@ struct StepContainer {
       // Visit the given infohandler with the given world information
       std::expected<bool, StepErr> cond_result =
           std::visit(cur_step.condition, world_info.value());
+
+      // Unset world_info now so we don't accidentally reuse it
+      world_info = {};
 
       // Forward the error if encountered
       if (!cond_result.has_value()) return std::unexpected(cond_result.error());
