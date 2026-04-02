@@ -17,10 +17,7 @@ using namespace cse498;
 
 // Globals kept alive for the duration of the page
 static std::shared_ptr<WebCanvas> canvas;
-static std::shared_ptr<WebImage> map_image;
 static std::unique_ptr<WebLayout> layout;
-static std::shared_ptr<WebTextbox> top_textbox;
-static std::shared_ptr<WebTextbox> bottom_textbox;
 
 int main() {
   auto btn_lambda = []() {
