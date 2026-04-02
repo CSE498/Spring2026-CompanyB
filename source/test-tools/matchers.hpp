@@ -1,7 +1,5 @@
 #pragma once
 
-#include "core.hpp"
-#include <boost/core/demangle.hpp>
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/matchers/catch_matchers_templated.hpp>
 #include <expected>
@@ -11,9 +9,12 @@
 #include <type_traits>
 #include <variant>
 
+#include "core.hpp"
+
 namespace cse498 {
 namespace matchers {
-template <typename T> struct OptNotNull : Catch::Matchers::MatcherGenericBase {
+template <typename T>
+struct OptNotNull : Catch::Matchers::MatcherGenericBase {
   bool match(std::optional<T> const &other) const { return other.has_value(); }
 
   std::string describe() const override { return "Has value (is not empty)"; }
@@ -47,10 +48,9 @@ struct VariantState : Catch::Matchers::MatcherGenericBase {
   }
 
   std::string describe() const override {
-    return std::format("Variant holds type '{}'",
-                       boost::core::demangle(typeid(State).name()));
+    return std::format("Variant holds type '{}'", typeid(State).name());
   }
 };
 
-}; // namespace matchers
-}; // namespace cse498
+};  // namespace matchers
+};  // namespace cse498

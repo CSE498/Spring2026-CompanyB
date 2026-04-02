@@ -9,7 +9,8 @@ namespace Concepts {
 template <typename T, typename... Ts>
 concept IsOneOf = (std::is_same_v<T, Ts> || ...);
 
-template <typename Head, typename... Tail> constexpr bool all_unique() {
+template <typename Head, typename... Tail>
+constexpr bool all_unique() {
   // On final element, must be unique
   if constexpr (std::is_void_v<std::tuple<Tail...>>()) {
     return true;
@@ -26,7 +27,7 @@ template <typename Head, typename... Tail> constexpr bool all_unique() {
 template <typename... Ts>
 concept UniqueTypes = all_unique<Ts..., std::void_t>();
 
-} // namespace Concepts
+}  // namespace Concepts
 
 namespace StaticUtil {
 /**
@@ -54,4 +55,4 @@ constexpr size_t variant_index() {
     return variant_index<Variant, TargetType, idx + 1>();
   }
 }
-}; // namespace StaticUtil
+};  // namespace StaticUtil
