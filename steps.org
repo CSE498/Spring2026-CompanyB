@@ -1,0 +1,84 @@
+* ~Step~ - The what and how
+** The what
+*** What is a "step"?
+- The idea of a "step" represents a simple portion of an agent's "turn" -- thus, a sequence of one or more steps makes up an agent's turn.
+- A "step" should be internalized as a "step" in a recipe, or a "step" in a lego manual -- a simple action that is part of a larger sequence.
+*** What kinds of steps are there?
+Throughout development, we consistently see three needs for step types:
+- Movement :: Exactly what it sounds like -- an agent desires to move.
+- Conditional :: Often an agent wants simply to tell the world "if X is true, do this, otherwise do that", but don't need to have that information themself.
+- Recon :: Certain agent types want to gather information about the world and other agents.
+*** Overview of features
+**** ~Step~ Variant
+We represent the polymorphic type ~Step~ as a variant of the ~StepKind~ types (simply just classes which represent some kind of step). Reaching for a ~variant~ here rather than a typical inheritence structure gives us:
+- No overhead of the vtable for step creation and processing
+- No need to carry around pointers to steps (and thus largely giving us value semantics)
+- Simplified implementation of type-dependent dependent behavior (via ~std::visit~)
+The ~Step~ type is simply an alias to the variant of the ~StepKind~ types, hence it has all features present in the standard ~variant~. Each ~StepKind~ type serves _purely_ as a dataclass, and we lean on value semantics to interact with them. As such, beyond creating and adding steps to the ~StepContainer~, we never change/modify them.
+***** ~StepKind~ Types
+****** ~MovementStep~
+Expresses an agent's desire to move to a given location.
+******* Members
+- ~cse498::WorldPosition loc~ :: The position the agent would like to move to.
+******* Construction example
+#+begin_src cpp
+MovementStep my_move{WorldPosition{1, 1}};
+#+end_src
+****** ~InfoStep~
+Expresses the information which an agent would like to be provided to the succeeding ~ConditionalStep~. Serves no purpose other than to gather information for a later condition.
+******* Members
+- ~Aspect aspect~ :: Expresses what information about the world is desired
+- ~cse498::WorldPosition target~ :: The position which the information is to be relevant to
+******* Step-specific types
+- ~Aspect~ :: An enum expressing what /about/ the world the agent would like to be put into the following condition. Has the following states:
+  - ~OCCUPANCY_RAW~ :: How many agents are currently occupying the space at ~target~? This might be a lane, or a building.
+    - Information type :: Integer
+  - ~OCCUPANCY_FRAC~ :: What fraction of the space at ~target~ is currently occupied?
+    - Information type :: Double
+  - ~LOC_AVAIL~ :: Would this agent currently be able to move to ~target~?
+    - Information type :: Boolean
+******* Construction example
+#+begin_src cpp
+// Is the position (2, 2) available?
+WorldPosition target{2, 2};
+InfoStep my_info_request{InfoStep::Aspect::LOC_AVAIL, target};
+#+end_src
+****** ~ConditionalStep~
+Represents a decision that will be made when the ~StepContainer~ is evaluated -- mainly acting as a wrapper around a condition function. When a ~ConditionalStep~ is added to the ~StepContainer~, it needs:
+- An ~InfoStep~ directly prior (to provide information to the condition)
+- A condition (more on this in a sec)
+- A ~true~ branch, and optionally a ~false~ branch
+******* Members
+- ~InfoHandler condition~ :: For construction, just a functor which returns a ~bool~ for one of the world information types.
+******* Step-specific types
+- ~InfoHandler~ :: This acts to wrap a lambda provided for a specific type of world information -- one of ~double~, ~bool~, or ~int~. Since world information is represented as a variant of those types, when we call ~std::visit~ the visitor needs an overload for each valid variant type. Hence, this object is heavily templated to create a functor which inserts a default call (returning an unexpected) for all types except for the type which is input to the provided lambda.
+  - All of the complexity of the default overloads is contained within to make using this from the outside as easy as possible. If it helps understanding, this can be thought of as just a struct which has your provided lambda for one information type overload of the call operator, and all other overloads are defaulted.
+******* Construction example
+#+begin_src cpp
+// Want the true branch taken if the input integer is less than 10
+ConditionalStep my_conditional_step{[] (int i) { return i < 10; }};
+#+end_src
+****** ~ReconStep~
+A yet unimplemented (but planned) step which expresses an agent's intent to have information given to it at the end of its current turn. This will eventually serve the purpose of information gathering and sharing (vs the ~InfoStep~ which is just to represent information to go into a ~ConditionalStep~).
+**** ~StepContainer~
+This is the full sequence of zero or more steps through which an agent expresses their turn. Both agents and worlds interact with this: the agent to construct their turn, and the world to execute the agent's turn. The usage is intended to be as straightforward on both sides as possible, so please reach out if you find it confusing or difficult to interact with.
+
+The container handles accessing the agents sequentially, even handling evaluating conditional branches.
+***** Methods
+- ~bool empty()~ :: Return whether the container is empty (agnostic of exhaustion).
+- ~bool exhausted()~ :: Return whether the container has completed evaluation
+- ~void add_step(StepKind &&s)~ :: Add the step ~s~ into the container. ~StepKind~ accepts any ~step~.
+- ~void add_step(InfoStep&&, ConditionalStep&&, BranchLike &&t, BranchLike &&f)~ :: Add a conditional step into the container, with the given ~InfoStep~ expressing the info passed into the condition. ~BranchLike~ accepts either a ~StepContainer~ or a ~StepKind~.
+  - Overload ~void add_step(InfoStep&&, ConditionalStep&&, BranchLike&&)~ is provided to insert only a true branch. A ~ConditionalStep~ evaluating ~false~ with an empty ~false~ branch just skips to the next sequential step.
+- ~std::expected<Step, StepErr> get_next()~  :: Returns the next sequential step if available, otherwise returns an unexpected ~StepErr~.
+- ~void inform(InfoType const &info)~ :: Takes in and stores the world information that has been requested from an ~InfoStep~ (and /potentially/ later a ~ReconStep~)
+**** Misc.
+- ~InfoType~ :: A ~std::variant~ which holds world information. Currently can take the types ~int~, ~double~, ~bool~
+- ~StepErr~ :: Represents an unexpected value. Contains an enum value ~kind~ expressing the kind of failure/error, and a ~std::string~ further explaining the failure mode if necessary. The ~kind~ field can take the following states:
+  - ~WRONG_TYPE~ :: The ~StepContainer~ was given a value through ~.inform()~ which did not match the type expected by the ~ConditionalStep~'s condition
+  - ~HANDLER_NOT_SET~ :: A ~ConditionalStep~ was reached with an unset ~InfoHandler~
+  - ~STEPS_EXHAUSTED~ :: The method ~.get_next()~ was called on an exhausted ~StepContainer~
+  - ~MISSING_BRANCH~ :: A ~ConditionalStep~ evaluated ~true~ but does not have a ~true~ branch to follow
+** The how
+*** World
+*** Agent
