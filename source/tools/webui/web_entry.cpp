@@ -26,11 +26,11 @@ int main() {
   layout = std::make_unique<WebLayout>("app-layout");
   layout->SetDirection("column").SetAlignItems("center").SetGap("10px").SetHeight("100vh").SetJustifyContent("flex-start");
 
-  auto menu_bar = std::make_shared<WebLayout>("menu-bar", WebStyle{{
+  auto menu_bar = std::make_shared<WebLayout>("menu-bar", WebOptions{ .style = {{
     {"width", "100%"},
     {"background", "#363636"},
     {"border-radius", "20px"},
-  }});
+  }}});
   menu_bar->SetHeight("80px").SetDirection("row").SetAlignItems("center").SetGap("10px");
 
   auto btn_lambda = []() {
@@ -39,22 +39,22 @@ int main() {
     canvas->DrawText("Running...", 10, 30);
   };
 
-  auto start_btn = std::make_shared<WebButton>("", "start-btn");
+  auto start_btn = std::make_shared<WebButton>("", "start-btn", WebOptions{ .classes={"button"} });
   start_btn->SetOnClick(btn_lambda);
 
-  auto pause_btn = std::make_shared<WebButton>("", "pause-btn");
+  auto pause_btn = std::make_shared<WebButton>("", "pause-btn", WebOptions{ .classes={"button"} });
   pause_btn->SetOnClick(btn_lambda);
 
-  auto stop_btn = std::make_shared<WebButton>("", "stop-btn");
+  auto stop_btn = std::make_shared<WebButton>("", "stop-btn", WebOptions{ .classes={"button"} });
   stop_btn->SetOnClick(btn_lambda);
 
-  auto upload_btn = std::make_shared<WebButton>("", "upload-btn");
+  auto upload_btn = std::make_shared<WebButton>("", "upload-btn", WebOptions{ .classes={"button"} });
   upload_btn->SetOnClick(btn_lambda);
 
-  auto save_btn = std::make_shared<WebButton>("", "save-btn");
+  auto save_btn = std::make_shared<WebButton>("", "save-btn", WebOptions{ .classes={"button"} });
   save_btn->SetOnClick(btn_lambda);
 
-  auto exit_btn = std::make_shared<WebButton>("", "exit-btn");
+  auto exit_btn = std::make_shared<WebButton>("", "exit-btn", WebOptions{ .classes={"button"} });
   exit_btn->SetOnClick(btn_lambda);
 
   menu_bar->AddChild(start_btn);
@@ -70,17 +70,23 @@ int main() {
   main_layout->SetHeight("80vh").SetDirection("row").SetGap("20px").SetAlignItems("stretch").SetJustifyContent("flex-start");
   layout->AddChild(main_layout);
 
-  auto left_column = std::make_shared<WebLayout>("left-column", WebStyle{{
+  auto left_column = std::make_shared<WebLayout>("left-column", WebOptions{ .style = {{
     {"flex", "3"}, 
-  }});
+  }}});
   left_column->SetHeight("100%").SetDirection("column").SetGap("10px").SetAlignItems("stretch");
   main_layout->AddChild(left_column);
 
-  top_textbox = std::make_shared<WebTextbox>(TextStyle(), "top-textbox");
+  top_textbox = std::make_shared<WebTextbox>(TextStyle(), "top-textbox", WebOptions{
+    .classes = { "textbox" },
+    .style = {{ "flex", "7" }}
+  });
   top_textbox->SetText("Info");
   left_column->AddChild(top_textbox);
 
-  bottom_textbox = std::make_shared<WebTextbox>(TextStyle(), "bottom-textbox");
+  bottom_textbox = std::make_shared<WebTextbox>(TextStyle(), "bottom-textbox", WebOptions{
+    .classes = { "textbox" },
+    .style = {{ "flex", "3" }}
+  });
   bottom_textbox->SetText("Log");
   left_column->AddChild(bottom_textbox);
 

@@ -15,7 +15,7 @@ using emscripten::val;
 
 namespace cse498 {
 
-WebLayout::WebLayout(const std::string& id, const WebStyle& style) : WebElement("div", id, style) {
+WebLayout::WebLayout(const std::string& id, const WebOptions& options) : WebElement("div", id, options) {
   dom_element["style"].set("display", "flex");
 }
 

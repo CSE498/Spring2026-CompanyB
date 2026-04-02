@@ -7,36 +7,14 @@ body {
     width: 100%;
 }
 
-/* #left-column {
-    flex: 3;
-} */
-
-/* #menu-bar {
-    width: 100%;
-    background: #363636;
-    border-radius: 20px;
-} */
-
-#top-textbox {
-    position: relative !important;
-    flex: 7;
-    border-radius: 20px;
-    background: #555 !important;
-    font-size: 13px;
-    overflow-y: auto;
-    border: none !important;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
-}
-
-#bottom-textbox {
-    position: relative !important;
-    flex: 3;
-    border-radius: 20px;
-    background: #555 !important;
-    font-size: 13px;
-    overflow-y: auto;
-    border: none !important;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+.textbox {
+  position: relative !important;
+  border-radius: 20px;
+  background: #555 !important;
+  font-size: 13px;
+  overflow-y: auto;
+  border: none !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
 }
 
 #game-area {
@@ -63,22 +41,17 @@ body {
     height: 100%;
 }
 
-#start-btn,
-#pause-btn,
-#stop-btn,
-#upload-btn,
-#save-btn,
-#exit-btn {
-    width: 48px;
-    height: 48px;
-    margin-left: 1em;
-    border-radius: 10px;
-    border: none;
-    background-color: transparent;
-    background-size: contain;
-    background-repeat: no-repeat;
-    background-position: center;
-    cursor: pointer;
+.button {
+  width: 48px;
+  height: 48px;
+  margin-left: 1em;
+  border-radius: 10px;
+  border: none;
+  background-color: transparent;
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  cursor: pointer;
 }
 
 #start-btn {

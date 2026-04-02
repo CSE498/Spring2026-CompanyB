@@ -33,13 +33,15 @@ struct SetupMockDOMWebStyle {
 TEST_CASE("WebStyle application to WebElement", "[WebStyle]") {
   SetupMockDOMWebStyle mock;
   
-  WebStyle style({
-    {"backgroundColor", "red"},
-    {"textAlign", "center"},
-    {"fontSize", "20px"}
-  });
+  WebOptions options = {
+    .style = {
+      {"backgroundColor", "red"},
+      {"textAlign", "center"},
+      {"fontSize", "20px"}
+    }
+  };
 
-  WebElement elem("div", "style-test-elem", style);
+  WebElement elem("div", "style-test-elem", options);
 
   emscripten::val document = emscripten::val::global("document");
   emscripten::val dom_elem = document.call<emscripten::val>("getElementById", std::string("style-test-elem"));
@@ -53,14 +55,31 @@ TEST_CASE("WebStyle direct initialization in constructor", "[WebStyle]") {
   SetupMockDOMWebStyle mock;
   
   // Test direct initialization with initializer list in constructor
-  WebElement elem("div", "direct-style-test", {
+  WebElement elem("div", "direct-style-test", { .style = {
     {"color", "blue"},
     {"margin", "10px"}
-  });
+  } });
 
   emscripten::val document = emscripten::val::global("document");
   emscripten::val dom_elem = document.call<emscripten::val>("getElementById", std::string("direct-style-test"));
 
   REQUIRE(dom_elem["style"]["color"].as<std::string>() == "blue");
   REQUIRE(dom_elem["style"]["margin"].as<std::string>() == "10px");
+}
+
+TEST_CASE("WebOptions classes application to WebElement", "[WebOptions]") {
+  SetupMockDOMWebStyle mock;
+
+  WebOptions options = {
+    .classes = {"test-class-1", "test-class-2"}
+  };
+
+  WebElement elem("div", "class-test-elem", options);
+
+  emscripten::val document = emscripten::val::global("document");
+  emscripten::val dom_elem = document.call<emscripten::val>("getElementById", std::string("class-test-elem"));
+  emscripten::val class_list = dom_elem["classList"];
+
+  REQUIRE(class_list.call<bool>("contains", std::string("test-class-1")));
+  REQUIRE(class_list.call<bool>("contains", std::string("test-class-2")));
 }

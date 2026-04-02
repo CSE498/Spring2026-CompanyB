@@ -10,7 +10,7 @@
 #include <string>
 
 #include <emscripten/val.h>
-#include "WebStyle.hpp"
+#include "WebOptions.hpp"
 
 namespace cse498 {
 class WebElement {
@@ -26,12 +26,12 @@ class WebElement {
   WebElement() = delete;
 
   /**
-   * @brief Create an element with the given tag, ID, and styles in the DOM
+   * @brief Create an element with the given tag, ID, and options in the DOM
    * @param tag The HTML tag name (e.g. "div", "span")
    * @param elem_id The ID of the element (optional)
-   * @param style The WebStyle object containing CSS properties (optional)
+   * @param options The WebOptions object containing CSS properties and classes (optional)
    */
-  WebElement(const std::string& tag = "div", const std::string& elem_id = "", const WebStyle& style = {}) {
+  WebElement(const std::string& tag = "div", const std::string& elem_id = "", const WebOptions& options = {}) {
     // Set id 
     if (!elem_id.empty()) {
       id = elem_id;
@@ -53,9 +53,14 @@ class WebElement {
 
     if (id) dom_element.set("id", id.value());
 
-    // Apply styles from WebStyle
-    for (const auto& [property, value] : style.GetStyles()) {
+    // Apply styles from WebOptions.style
+    for (const auto& [property, value] : options.style.GetStyles()) {
       dom_element["style"].set(property, value);
+    }
+
+    // Apply classes from WebOptions.classes
+    for (const auto& css_class : options.classes) {
+      dom_element["classList"].call<void>("add", css_class);
     }
 
     document["body"].call<void>("appendChild", dom_element);
