@@ -14,7 +14,7 @@ using namespace cse498;
 
 int main() {
   MazeWorld world;
-  world.AddAgent<ScriptedAgent>(DummyAgentData(WorldPosition{3, 6}));
+  world.AddAgent<ScriptedAgent>(DummyAgentData(WorldPosition{3, 7}));
  
 
       /**
@@ -22,9 +22,9 @@ int main() {
        * Therefore, i dont use this interface (since it derives from agent and isnt suited to what we need)
        * So i just modified the world.run method to instead handle the display of the board and stuff
        */
-//   world.AddAgent<TrashInterface>("Interface")
-//       .SetSymbol('@')
-//       .SetLocation(WorldPosition{1, 1});
+  // world.AddAgent<TrashInterface>("Interface")
+  //     .SetSymbol('@')
+  //     .SetLocation(WorldPosition{1, 1});
 
   world.Run();
 }

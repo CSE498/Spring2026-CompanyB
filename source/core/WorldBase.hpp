@@ -120,16 +120,15 @@ class WorldBase {
   /// @param action The id of the action to take
   /// @return The result of this action (usually 0/1 to indicate success)
   /// @note Thus function must be overridden in any derived world.
-  virtual DummyAgentData DoAction(AgentBase<DummyAgentData>& agent, const StepContainer& steps) = 0;
+  virtual void DoAction(AgentBase<DummyAgentData>& agent) = 0;
 
   /// @brief Step through each agent giving them a chance to take an action.
   /// @note Override function to control execution order of agents.
   /// @note Override function to control which grid each agent receives.
   virtual void RunAgents() {
     for (const agent_ptr_t& agent_ptr : agent_set) {
-      StepContainer steps = agent_ptr->GetTurn();
-      DummyAgentData new_data = DoAction(*agent_ptr, steps);
-      agent_ptr->SetState(new_data);
+      DoAction(*agent_ptr);
+      // agent_ptr->SetState(new_data);
     }
   }
 

@@ -121,7 +121,7 @@ struct InfoStep {
 struct ConditionalStep {
   InfoHandler condition;
 
-  bool operator==(ConditionalStep const &other) const {
+  bool operator==([[maybe_unused]] ConditionalStep const &other) const {
     // Figure out how to compare functors...
     return true;
   }
@@ -129,7 +129,7 @@ struct ConditionalStep {
 
 struct ReconStep {
   // TODO (probably gonna scrap)
-  bool operator==(ReconStep const &other) const { return false; }
+  bool operator==([[maybe_unused]] ReconStep const &other) const { return false; }
 };
 
 template <typename T>
