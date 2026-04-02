@@ -31,6 +31,7 @@ TEST_CASE("StepContainer basic functionality", "[StepContainer]") {
     }
 
     SECTION("evaluation") {
+      REQUIRE_FALSE(steps.exhausted());
       // First and only step should be the movement step
       std::expected<Step, StepErr> cur_step = steps.get_next();
       REQUIRE_THAT(cur_step, ExpNotErr() && VariantState<MovementStep>());
@@ -130,6 +131,7 @@ TEST_CASE("StepContainer basic functionality", "[StepContainer]") {
       }
 
       SECTION("evaluation") {
+        REQUIRE_FALSE(steps.exhausted());
         std::expected<Step, StepErr> cur_step = steps.get_next();
         REQUIRE_THAT(cur_step, ExpNotErr() && VariantState<InfoStep>());
         REQUIRE(std::get<InfoStep>(cur_step.value()) ==
@@ -220,6 +222,7 @@ TEST_CASE("StepContainer basic functionality", "[StepContainer]") {
       }
 
       SECTION("evaluation") {
+        REQUIRE_FALSE(steps.exhausted());
         std::expected<Step, StepErr> cur_step = steps.get_next();
         REQUIRE_THAT(cur_step, ExpNotErr() && VariantState<InfoStep>());
         REQUIRE(std::get<InfoStep>(cur_step.value()) ==
