@@ -622,7 +622,8 @@ class RobinHoodMap {
    * @return Iterator pointing to one past the last entry.
    */
   Iterator end() {
-    return Iterator(mTable.data() + mTable.size(), mTable.data() + mTable.size());
+    return Iterator(mTable.data() + mTable.size(),
+                    mTable.data() + mTable.size());
   }
 
   /**
@@ -641,7 +642,8 @@ class RobinHoodMap {
    * @return Const iterator pointing to one past the last entry.
    */
   ConstIterator end() const {
-    return ConstIterator(mTable.data() + mTable.size(), mTable.data() + mTable.size());
+    return ConstIterator(mTable.data() + mTable.size(),
+                         mTable.data() + mTable.size());
   }
 
   /**
