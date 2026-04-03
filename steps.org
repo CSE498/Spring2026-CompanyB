@@ -61,7 +61,7 @@ A yet unimplemented (but planned) step which expresses an agent's intent to have
 *** ~StepContainer~
 This is the full sequence of zero or more steps through which an agent expresses their turn. Both agents and worlds interact with this: the agent to construct their turn, and the world to execute the agent's turn. The usage is intended to be as straightforward on both sides as possible, so please reach out if you find it confusing or difficult to interact with.
 
-The container handles accessing the agents sequentially, even handling evaluating conditional branches.
+The container handles accessing the steps sequentially, even handling evaluating conditional branches.
 **** Methods
 - ~bool empty()~ :: Return whether the container is empty (agnostic of exhaustion).
 - ~bool exhausted()~ :: Return whether the container has completed evaluation
