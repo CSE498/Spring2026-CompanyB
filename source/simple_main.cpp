@@ -14,7 +14,9 @@ using namespace cse498;
 
 int main() {
   MazeWorld world;
-  world.AddAgent<SwarmingAgent>("Swarmer 1").SetSymbol('S').SetLocation(WorldPosition{3, 2});
+  world.AddAgent<SwarmingAgent>("Swarmer 1")
+      .SetSymbol('S')
+      .SetLocation(WorldPosition{3, 2});
   world.AddAgent<PacingAgent>("Pacer 1").SetLocation(WorldPosition{3, 1});
   world.AddAgent<PacingAgent>("Pacer 2").SetLocation(WorldPosition{6, 1});
   world.AddAgent<PacingAgent>("Guard 1").SetHorizontal().SetLocation(
