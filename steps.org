@@ -303,7 +303,12 @@ void do_turns() {
 
     // Evaluate the steps
     while (!steps.exhausted()) {
-      StepVisitor::VisitRet step_result = std::visit(visitor, steps.get_next());
+      std::expected<Step, StepErr> step = steps.get_next();
+      if (!step.has_value()) {
+	// Handle error retrieving step
+      }
+
+      StepVisitor::VisitRet step_result = std::visit(visitor, step.value());
 
       if (!step_result.has_value()) {
 	// Handle error
