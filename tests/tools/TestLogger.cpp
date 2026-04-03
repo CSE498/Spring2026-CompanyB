@@ -41,9 +41,9 @@ class MockActionLog : public IActionLog<AgentBase> {
  public:
   std::vector<ActionEventBase> mEventsToReturn;
 
-  std::vector<ActionEventBase> LogAgentActions(
-      const std::vector<AgentBase>& /*agents*/) override {
-    return mEventsToReturn;
+  std::pair<std::vector<ActionEventBase>, std::vector<LogEventFailure>>
+  LogAgentActions(const std::vector<AgentBase>& /*agents*/) override {
+    return {mEventsToReturn, {}};
   }
 };
 

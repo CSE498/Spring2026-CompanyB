@@ -54,14 +54,17 @@ concept AgentConcept = requires(AgentType a) {
  * @class IActionLog
  * @brief Interface for action logging.
  */
-template <typename AgentType>
+template <AgentConcept AgentType>
 class IActionLog {
  public:
+  virtual ~IActionLog() = default;
+
   /// @brief Log actions performed by all agents of a world
   /// @param agents List of agents in the world
-  /// @return Status of the logging operation
-  virtual std::vector<ActionEventBase> LogAgentActions(
-      const std::vector<AgentType>& agents) = 0;
+  /// @return Pair of vectors: first contains events that passed validation
+  /// checks, second contains details of events that failed validation
+  virtual std::pair<std::vector<ActionEventBase>, std::vector<LogEventFailure>>
+  LogAgentActions(const std::vector<AgentType>& agents) = 0;
 };
 
 }  // namespace cse498

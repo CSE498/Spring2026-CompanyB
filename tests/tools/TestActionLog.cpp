@@ -26,9 +26,10 @@ TEST_CASE("LogEventByOneAgent", "[ActionLog]") {
   agent.AddAction("agent1", "move", LogLevel::Normal, 100);
 
   std::vector<MockAgent> agents = {agent};
-  auto events = actionLog.LogAgentActions(agents);
+  auto [events, failures] = actionLog.LogAgentActions(agents);
 
   REQUIRE(events.size() == 1);
+  REQUIRE(failures.empty());
   REQUIRE(events[0].agentId == "agent1");
 }
 
@@ -42,9 +43,10 @@ TEST_CASE("LogEventByMultipleAgent", "[ActionLog]") {
   agent2.AddAction("agent2", "stay", LogLevel::Verbose, 101);
 
   std::vector<MockAgent> agents = {agent1, agent2};
-  auto events = actionLog.LogAgentActions(agents);
+  auto [events, failures] = actionLog.LogAgentActions(agents);
 
   REQUIRE(events.size() == 2);
+  REQUIRE(failures.empty());
   REQUIRE(events[0].agentId == "agent1");
   REQUIRE(events[1].agentId == "agent2");
 }
@@ -60,9 +62,10 @@ TEST_CASE("LogEventByMultipleAgentMultipleActions", "[ActionLog]") {
   agent2.AddAction("agent2", "drop", LogLevel::Verbose, 110);
 
   std::vector<MockAgent> agents = {agent1, agent2};
-  auto events = actionLog.LogAgentActions(agents);
+  auto [events, failures] = actionLog.LogAgentActions(agents);
 
   REQUIRE(events.size() == 3);
+  REQUIRE(failures.empty());
 }
 
 TEST_CASE("LogEventFailed_AgentId", "[ActionLog]") {
@@ -72,9 +75,10 @@ TEST_CASE("LogEventFailed_AgentId", "[ActionLog]") {
   agent.AddAction("", "move", LogLevel::Normal, 100);  // Empty agentId
 
   std::vector<MockAgent> agents = {agent};
-  auto events = actionLog.LogAgentActions(agents);
+  auto [events, failures] = actionLog.LogAgentActions(agents);
 
   REQUIRE(events.empty());
+  REQUIRE(failures.size() == 1);
 }
 
 TEST_CASE("LogEventFailed_ActionType", "[ActionLog]") {
@@ -84,9 +88,10 @@ TEST_CASE("LogEventFailed_ActionType", "[ActionLog]") {
   agent.AddAction("agent1", "", LogLevel::Normal, 100);  // Empty actionType
 
   std::vector<MockAgent> agents = {agent};
-  auto events = actionLog.LogAgentActions(agents);
+  auto [events, failures] = actionLog.LogAgentActions(agents);
 
   REQUIRE(events.empty());
+  REQUIRE(failures.size() == 1);
 }
 
 TEST_CASE("LogEventFailed_LogLevel", "[ActionLog]") {
@@ -97,26 +102,10 @@ TEST_CASE("LogEventFailed_LogLevel", "[ActionLog]") {
   agent.AddAction("agent1", "move", static_cast<LogLevel>(99), 100);
 
   std::vector<MockAgent> agents = {agent};
-  auto events = actionLog.LogAgentActions(agents);
+  auto [events, failures] = actionLog.LogAgentActions(agents);
 
   REQUIRE(events.empty());
-}
-
-TEST_CASE("LogEventFailed_TimeStamp", "[ActionLog]") {
-  ActionLog<MockAgent> actionLog;
-
-  MockAgent agent1;
-  // Validation check is for timestamp < 0, but timestamp is uint64_t.
-  // This test will currently report 0 failures unless timestamp < 0 is
-  // triggered. We'll test with 0 for now to satisfy the test name existence.
-  agent1.AddAction("agent1", "move", LogLevel::Normal, 0);
-
-  std::vector<MockAgent> agents = {agent1};
-  auto events = actionLog.LogAgentActions(agents);
-
-  // Update expectations if current implementation doesn't fail on uint64_t >=
-  // 0. We'll leave it to show it doesn't fail when valid.
-  REQUIRE(events.size() == 1);
+  REQUIRE(failures.size() == 1);
 }
 
 TEST_CASE("MultipleLogFailure", "[ActionLog]") {
@@ -127,9 +116,10 @@ TEST_CASE("MultipleLogFailure", "[ActionLog]") {
   agent.AddAction("agent1", "", LogLevel::Normal, 101);  // Fail 2
 
   std::vector<MockAgent> agents = {agent};
-  auto events = actionLog.LogAgentActions(agents);
+  auto [events, failures] = actionLog.LogAgentActions(agents);
 
   REQUIRE(events.empty());
+  REQUIRE(failures.size() == 2);
 }
 
 TEST_CASE("PartialLogFailures", "[ActionLog]") {
@@ -140,10 +130,11 @@ TEST_CASE("PartialLogFailures", "[ActionLog]") {
   agent.AddAction("", "stay", LogLevel::Normal, 101);        // Failure
 
   std::vector<MockAgent> agents = {agent};
-  auto events = actionLog.LogAgentActions(agents);
+  auto [events, failures] = actionLog.LogAgentActions(agents);
 
   REQUIRE(events.size() == 1);
   REQUIRE(events[0].agentId == "agent1");
+  REQUIRE(failures.size() == 1);
 }
 
 }  // namespace cse498

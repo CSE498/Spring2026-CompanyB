@@ -38,12 +38,7 @@ class ActionLog : public IActionLog<AgentType> {
       return LogEventFailure{eventPayload,
                              "Validation failed: logLevel is out of range."};
     }
-    // timestamp validation
-    if (eventPayload.timestamp < 0) {
-      return LogEventFailure{eventPayload,
-                             "Validation failed: timestamp is negative."};
-    }
-    return std::nullopt;  // Placeholder for actual validation logic
+    return std::nullopt;
   }
 
  public:
@@ -54,22 +49,23 @@ class ActionLog : public IActionLog<AgentType> {
   /// @param agents List of agents in the world
   /// @return Flattened list of events from all agents that passed validation
   /// checks
-  [[nodiscard]] std::vector<ActionEventBase> LogAgentActions(
-      const std::vector<AgentType>& agents) override {
-    // auto failedEvents = std::make_unique<std::vector<LogEventFailure>>();
+  [[nodiscard]] std::pair<std::vector<ActionEventBase>,
+                          std::vector<LogEventFailure>>
+  LogAgentActions(const std::vector<AgentType>& agents) override {
     std::vector<ActionEventBase> events;
+    std::vector<LogEventFailure> eventFailures;
     for (const auto& agent : agents) {
       const auto& actions = agent.GetActions();
       for (const auto& action : actions) {
         auto validationResult = ValidateBase(action);
         if (validationResult.has_value()) {
-          // failedEvents->push_back(validationResult.value());
-          continue;  // Skip logging this event and silently ignore it
+          eventFailures.push_back(validationResult.value());
+          continue;
         }
         events.push_back(action);
       }
     }
-    return events;
+    return {events, eventFailures};
   }
 };
 

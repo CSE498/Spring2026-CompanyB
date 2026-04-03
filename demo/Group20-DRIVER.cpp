@@ -6,7 +6,8 @@
  **/
 
 // Compile with:
-// g++ -std=c++23 -Wall -Wextra -Wpedantic ./demo/Group20-DRIVER.cpp ./source/tools/OutputManager.cpp ./source/tools/DataLog.cpp ./source/tools/ReplayDriver.cpp -I third-party/include -I ./source/ -o build/native/group20_demo
+// mkdir -p build/native
+// g++ -std=c++2b -Wall -Wextra -Wpedantic ./demo/Group20-DRIVER.cpp ./source/tools/OutputManager.cpp ./source/tools/DataLog.cpp ./source/tools/ReplayDriver.cpp -I third-party/include -I ./source/ -o build/native/group20_demo
 // Run with:
 // ./build/native/group20_demo
 

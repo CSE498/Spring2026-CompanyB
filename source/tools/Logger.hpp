@@ -62,6 +62,16 @@ class Logger : public ILogger<AgentType> {
         mOutputManager(std::move(outputManager)),
         mReplayDriver(std::move(replayDriver)) {}
 
+  /// @brief Deleted copy constructor and assignment operator to prevent
+  /// copying.
+  Logger(const Logger&) = delete;
+  Logger& operator=(const Logger&) = delete;
+
+  /// @brief Defaulted move constructor
+  Logger(Logger&&) = default;
+  /// @brief Defaulted move assignment operator
+  Logger& operator=(Logger&&) = default;
+
   ~Logger() override = default;
 
   // REPLAY:
@@ -88,7 +98,18 @@ class Logger : public ILogger<AgentType> {
     } else {
       mOutputManager->SetOutputFile(filePath);
     }
-    auto events = mActionLog->LogAgentActions(agents);
+
+    auto [events, eventFailures] = mActionLog->LogAgentActions(agents);
+    for (const auto& failure : eventFailures) {
+      mOutputManager->LogMessage(
+          LogLevel::Verbose,
+          "Validation failed for event: agentId=" +
+              std::string(failure.event.agentId) + ", actionType=" +
+              std::string(failure.event.actionType) + ", logLevel=" +
+              std::to_string(static_cast<int>(failure.event.logLevel)) +
+              ", timestamp=" + std::to_string(failure.event.timestamp) +
+              ". Reason: " + failure.message);
+    }
     mOutputManager->WriteActionEvents(events);
     mOutputManager->Flush();
   }
