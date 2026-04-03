@@ -165,9 +165,174 @@ While this example is not how you might do something like this in reality, all w
 I won't be able to do this section justice myself, so here are some resources that have helped me in the past:
 - What is the visitor pattern? :: https://refactoring.guru/design-patterns/visitor#:~:text=The%20Visitor%20pattern%20lets%20you,business%20logic%20of%20auxiliary%20behaviors.
 - What does multiple dispatch look like in C++? :: https://dzone.com/articles/double-dispatch-in-c
-  - This also has some material on ~std::variant~, so it is definitely worth a deeper read if you want to solidify it.
+  - This also has some material on ~std::variant~, so it is definitely worth a deeper read if you want to solidify that.
 ** Visitors & ~std::visit~
 
 * World Usage Example
-Usage within the context of one of the simulation worlds is designed to be as straightforward as is reasonable. Let's take a look at an example:
+Usage within the context of one of the simulation worlds is designed to be as straightforward as is reasonable. We'll need (X) main things:
+- A way of getting a ~StepContainer~ to evaluate (this is the ~.GetTurn()~ method on the ~StepAgentBase~
+- A loop in which we sequentially evaluate the steps
+- A visitor which takes a ~Step~ variant and does what's needed with the actual underlying step
+So we'll start by throwing together our visitor (applying the =functors= section earlier), and then we'll see how the actual processing step within the world might look.
+** Basic setup
+We'll define an extremely simple world on a small grid
+#+begin_src cpp
+#include <array>
+#include <optional>
+#include <vector>
+
+struct StepAgentBase;
+
+class SimpleWorld {
+  constexpr size_t HEIGHT = 5;
+  constexpr size_t WIDTH = 5;
+
+  using World = std::array<std::array<std::optional<size_t>, WIDTH>, HEIGHT>;
+
+  std::vector<StepAgentBase> agents;
+
+  World world;
+  
+  // Not going to fill this in
+  struct WorldErr {
+    // ...
+  };
+  
+  // This is the visitor section
+  struct StepVisitor {
+    // ...
+  };
+
+  // ...
+
+  // This is the evaluation section
+  void do_turns();
+};
+#+end_src
+Note that is supposed to be an illustrative but not totally complete example -- see =Group-11-PolishedClasses= for a compilable example.
+** Visitor
+The valid step types and what we need to do with them are:
+- ~MovementStep~ :: Move the agent to that position if possible
+- ~InfoStep~ :: Call ~.inform()~ on the ~StepContainer~ and pass in the requested world information
+So putting these together, we can fill in the ~StepVisitor~ above
+#+begin_src cpp
+// This is "zoomed in" to the definition in the introduction -- this is still defined within SimpleWorld
+struct StepVisitor {
+  // We do want to represent failure, but don't need to represent
+  // any output, so we'll define & alias our return as such:
+  using VisitRet = std::expected<void, WorldErr>;
+  
+  // We'll want to modify the agent and the container, so we'll hold on to
+  // some references for them. You'll have to do the same for any other
+  // non-variant external context desired.
+  AgentBase &agent;
+  StepContainer &container;
+  World &world;
+  
+  // Now we'll need to have an operator() overload for each Step type.
+  VisitRet operator()(steps::MovementStep step) {
+    // The simplest step -- the agent just wants to move to a space.
+    if (!world[step.loc.x][step.loc.y].has_value()) {
+      // Then the position is available
+      // FILL IN: logic to change the agent's position
+    }
+    return {};
+  }
+  
+  VisitRet operator()(steps::InfoStep step) {
+    // When we get an info step, the agent would like to do something
+    // conditionally (the container handles the branching internally).
+    // It will provide us with the "aspect" about the world, and the
+    // location it wants the info about. In return, we'll "inform" the
+    // container with what has been requested.
+    switch (step.aspect) {
+      using Aspect = cse498::steps::InfoStep::Aspect;
+    case Aspect::LOC_AVAIL: {
+      // Is the location available? We'll inform the world with a bool
+      // FILL IN: Implement logic actually generating this value
+      container.inform(false);
+      break;
+    }
+    case Aspect::OCCUPANCY_FRAC: {
+      // What fraction of the location referred to is occupied? We'll
+      // inform the world with a double in [0, 1]
+      // We only have 25 spaces in our example, so it'll just be (# agents) / (# spaces)
+      container.inform(agents.size() / (WIDTH * HEIGHT));
+      break;
+    }
+    case Aspect::OCCUPANCY_RAW: {
+      // How many agents are in/at the location referred to? We'll inform
+      // the world with a integer
+      // In our example this would just be the number of agents in the world
+      container.inform(agents.size());
+      break;
+    }
+    };
+    return {};
+  }
+  
+  VisitRet operator()([[maybe_unused]] steps::ConditionalStep step) {
+    // The compiler needs this, but this should never be reached. A
+    // better solution is forthcoming, for now just leave empty.
+    return {};
+  }
+  
+  VisitRet operator()([[maybe_unused]] steps::ReconStep step) {
+    // The compiler needs this, but this should (for now) never be
+    // reached. A better solution is forthcoming, for now just leave empty.
+    return {};
+  }
+};
+#+end_src
+The biggest thing to note is that we're now making use of that "Functions with state" material from before by having the visitor be instantiated with a reference to an agent, container, and world. If desired, this visitor /could/ be defined outside of the ~SimpleWorld~ class, and then simply take in a reference to the world for a more expansive level of access.
+** Evaluation
+Here we just want to define the main loop in which we'll process each agent's turn.
+#+begin_src cpp
+void do_turns() {
+  for (StepAgentBase &agent : this->agents) {
+    StepContainer steps = agent.GetTurn();
+
+    // Instantiate visitor w/ context
+    StepVisitor visitor{agent, steps, this->world};
+
+    // Evaluate the steps
+    while (!steps.exhausted()) {
+      StepVisitor::VisitRet step_result = std::visit(visitor, steps.get_next());
+
+      if (!step_result.has_value()) {
+	// Handle error
+      }
+    }
+
+    // Do whatever is needed after the agent's turn
+  };
+}
+#+end_src
 * Agent Usage Example
+~Step~ usage on the agent side is even more straightforward -- it just serves as a semantic way to build an agent's turn.
+
+The driving idea that needs to be internalized here is that the ~StepContainer~ is just a "translation" between your own internal turn-generation logic and a uniform action representation. To show this, I'll pull out a simple example from ~Group-11-PolishedClasses~ and ~ScriptedAgent.hpp~. The internal turn-generation approach for this simple agent is just to walk in a square. We track a ~step_index~, and choose a direction from =down/right/up/left= based on ~step_index % 4~. All that's relevant to ~Step~ here is that it just serves to take our turn generation logic, and build it into an actionable turn for the world to execute:
+#+begin_src cpp
+StepContainer GetTurn() override {
+  WorldPosition pos = GetState().pos;
+  StepContainer container{};
+  
+  switch (step_index % 4) {
+  case 0:
+    container.add_step(MovementStep{pos.Down()});
+    break;
+  case 1:
+    container.add_step(MovementStep{pos.Right()});
+    break;
+  case 2:
+    container.add_step(MovementStep{pos.Up()});
+    break;
+  case 3:
+    container.add_step(MovementStep{pos.Left()});
+    break;
+  }
+  
+  step_index++;
+  return container;
+}
+#+end_src
