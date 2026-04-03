@@ -169,8 +169,8 @@ I won't be able to do this section justice myself, so here are some resources th
 ** Visitors & ~std::visit~
 
 * World Usage Example
-Usage within the context of one of the simulation worlds is designed to be as straightforward as is reasonable. We'll need (X) main things:
-- A way of getting a ~StepContainer~ to evaluate (this is the ~.GetTurn()~ method on the ~StepAgentBase~
+Usage within the context of one of the simulation worlds is designed to be as straightforward as is reasonable. We'll need 3 main things:
+- A way of getting a ~StepContainer~ to evaluate (this is the ~.GetTurn()~ method on the ~StepAgentBase~)
 - A loop in which we sequentially evaluate the steps
 - A visitor which takes a ~Step~ variant and does what's needed with the actual underlying step
 So we'll start by throwing together our visitor (applying the =functors= section earlier), and then we'll see how the actual processing step within the world might look.
@@ -209,7 +209,7 @@ class SimpleWorld {
   void do_turns();
 };
 #+end_src
-Note that is supposed to be an illustrative but not totally complete example -- see =Group-11-PolishedClasses= for a compilable example.
+Note that is supposed to be an illustrative but not totally complete example -- see =Group-11-PolishedClasses= for an example which can compile.
 ** Visitor
 The valid step types and what we need to do with them are:
 - ~MovementStep~ :: Move the agent to that position if possible
@@ -270,6 +270,12 @@ struct StepVisitor {
     };
     return {};
   }
+
+  // Note for someone who may want to refactor in the future to not have to fill
+  // fill in overloads for steps we shouldn't reach (like ConditionalStep), we
+  // could either (a) extend the InfoHandler approach for a defaulted visitor or
+  // apply CRTP and have it build in these overloads.
+  
   
   VisitRet operator()([[maybe_unused]] steps::ConditionalStep step) {
     // The compiler needs this, but this should never be reached. A
@@ -311,7 +317,7 @@ void do_turns() {
 * Agent Usage Example
 ~Step~ usage on the agent side is even more straightforward -- it just serves as a semantic way to build an agent's turn.
 
-The driving idea that needs to be internalized here is that the ~StepContainer~ is just a "translation" between your own internal turn-generation logic and a uniform action representation. To show this, I'll pull out a simple example from ~Group-11-PolishedClasses~ and ~ScriptedAgent.hpp~. The internal turn-generation approach for this simple agent is just to walk in a square. We track a ~step_index~, and choose a direction from =down/right/up/left= based on ~step_index % 4~. All that's relevant to ~Step~ here is that it just serves to take our turn generation logic, and build it into an actionable turn for the world to execute:
+The driving idea that needs to be internalized here is that the ~StepContainer~ is just a "translation" between your own internal turn-generation logic and a uniform action representation. To show this, I'll pull out a simple example from ~Group-11-PolishedClasses~ and ~ScriptedAgent.hpp~. The internal turn-generation approach for this simple agent is just to walk in a square. We track a ~step_index~, and choose a direction from =down/right/up/left= based on ~step_index % 4~. All that's relevant to ~Step~ here is that it just serves to take our turn generation logic and build it into an actionable turn for the world to execute:
 #+begin_src cpp
 StepContainer GetTurn() override {
   WorldPosition pos = GetState().pos;
@@ -333,6 +339,23 @@ StepContainer GetTurn() override {
   }
   
   step_index++;
+  return container;
+}
+#+end_src
+** Conditional Example
+Here we'll take a quick look at an example usage of the ~ConditionalStep~. 
+
+Say we want our agent wants to move to the left (further into the space) if the space it's currently in is under 50% occupancy, otherwise it wants to go to the right (leaving the space). We'll need to create an ~InfoStep~ which requests ~Aspect::OCCUPANCY_FRAC~ at point ~agent.pos()~, a condition function which returns true if our predicate is satisfied, and the moves corresponding to each outcome:
+#+begin_src cpp
+StepContainer GetTurn() override {
+  WorldPosition pos = GetState().pos;
+  StepContianer container{};
+
+  container.add_step(InfoStep{Aspect::OCCUPANCY_FRAC, pos}, // The info for the condition
+		     ConditionalStep{[](double occupancy){ return (occupancy < 0.5); }}, // The condition
+		     MovementStep{pos.Left()}, // True branch/step
+		     MovementStep{pos.Right()}); // False branch/step
+
   return container;
 }
 #+end_src
