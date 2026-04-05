@@ -30,7 +30,7 @@ concept ReplayAgent = requires(AgentT* agent, const nlohmann::json& eventData) {
 
 /// @brief ReplayDriver is responsible for replaying logged events from a JSON
 /// file. It reads the events and sends instructions to matching agents by id.
-template <typename AgentT>
+template <ReplayAgent AgentT>
 class ReplayDriver : public IReplayDriver<AgentT> {
  public:
   ReplayDriver() = default;
