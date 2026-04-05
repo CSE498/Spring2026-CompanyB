@@ -82,12 +82,16 @@ class MockReplayDriver : public IReplayDriver<AgentBase> {
   mutable size_t mLastAgentCount = 0;
   bool mShouldSucceed = true;
 
-  bool ReplayFromFile(const std::string& filePath,
+  std::expected<bool, std::string> ReplayFromFile(const std::string& filePath,
                       std::vector<AgentBase*>& agents) override {
     mReplayCalled = true;
     mLastFile = filePath;
     mLastAgentCount = agents.size();
-    return mShouldSucceed;
+    if (mShouldSucceed) {
+      return true;
+    } else {
+      return std::unexpected("Replay failed");
+    }
   }
 };
 

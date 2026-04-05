@@ -9,6 +9,7 @@
 #include <concepts>
 #include <fstream>
 #include <optional>
+#include <expected>
 #include <string>
 #include <string_view>
 #include <type_traits>
@@ -39,11 +40,11 @@ class ReplayDriver : public IReplayDriver<AgentT> {
   /// @param filePath Path to the JSON file containing logged events.
   /// @param agents Reference vector of replayable agents.
   /// @return Success status of the replay operation.
-  bool ReplayFromFile(const std::string& filePath,
+  std::expected<bool, std::string> ReplayFromFile(const std::string& filePath,
                       std::vector<AgentT*>& agents) override {
     std::ifstream inFile(filePath);
     if (!inFile.is_open()) {
-      return false;
+      return std::unexpected("Failed to open file");
     }
 
     nlohmann::json eventData;
@@ -51,7 +52,7 @@ class ReplayDriver : public IReplayDriver<AgentT> {
       inFile >> eventData;
     } catch (const nlohmann::json::parse_error& e) {
       (void)e;  // Suppress unused variable warning
-      return false;
+      return std::unexpected("Failed to parse JSON");
     }
 
     // Accept either a top-level array of events or the OutputManager shape:
@@ -60,25 +61,25 @@ class ReplayDriver : public IReplayDriver<AgentT> {
     if (eventData.is_object() && eventData.contains("action_events")) {
       eventsToReplay = &eventData.at("action_events");
       if (!eventsToReplay->is_array()) {
-        return false;
+        return std::unexpected("Invalid event format");
       }
     }
 
     if (eventsToReplay->is_array()) {
       for (const auto& event : *eventsToReplay) {
         if (!SendInstructions(event, agents)) {
-          return false;
+          return std::unexpected("Failed to send instructions");
         }
       }
       return true;
     }
 
     if (!eventsToReplay->is_object()) {
-      return false;
+      return std::unexpected("Invalid event format");
     }
 
     if (!SendInstructions(*eventsToReplay, agents)) {
-      return false;
+      return std::unexpected("Failed to send instructions");
     }
 
     return true;
