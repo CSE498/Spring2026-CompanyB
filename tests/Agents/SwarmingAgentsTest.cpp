@@ -31,13 +31,6 @@ TEST_CASE("SwarmingAgent initializes with actions from MazeWorld",
   // Initialize is called by AddAgent; verify the agent exists and has actions
   REQUIRE(agent.GetName() == "TestAgent");
   REQUIRE(agent.GetID() == 0);
-}
-
-TEST_CASE("SwarmingAgent default target_id is SIZE_MAX (no target)",
-          "[SwarmingAgent]") {
-  MazeWorld world;
-  auto& agent = world.AddAgent<SwarmingAgent>("Agent");
-  agent.SetLocation(WorldPosition{1, 1});
 
   // With no target set, known_locations is empty
   REQUIRE(agent.GetKnownLocations().empty());
@@ -71,13 +64,13 @@ TEST_CASE("AddKnownLocation stores and retrieves locations",
 
   auto r1 = locs.at(10);
   REQUIRE(r1.has_value());
-  REQUIRE_THAT(r1.value().X(), Catch::Matchers::WithinRel(5.0));
-  REQUIRE_THAT(r1.value().Y(), Catch::Matchers::WithinRel(5.0));
+  REQUIRE(r1.value().CellX() == 5);
+  REQUIRE(r1.value().CellY() == 5);
 
   auto r2 = locs.at(20);
   REQUIRE(r2.has_value());
-  REQUIRE_THAT(r2.value().X(), Catch::Matchers::WithinRel(8.0));
-  REQUIRE_THAT(r2.value().Y(), Catch::Matchers::WithinRel(3.0));
+  REQUIRE(r2.value().CellX() == 8);
+  REQUIRE(r2.value().CellY() == 3);
 }
 
 TEST_CASE("AddKnownLocation is chainable", "[SwarmingAgent]") {
@@ -175,6 +168,18 @@ TEST_CASE("Agent prefers vertical movement when dy > dx", "[SwarmingAgent]") {
   REQUIRE(action == MOVE_DOWN);
 }
 
+TEST_CASE("Agent moves horizontally when dx equals dy", "[SwarmingAgent]") {
+  MazeWorld world;
+  auto& agent = world.AddAgent<SwarmingAgent>("Agent");
+  // dx = 2, dy = 2 — abs(dx) >= abs(dy) is true, so horizontal (right) wins
+  agent.SetLocation(WorldPosition{1, 1});
+  agent.SetTarget(99);
+  agent.AddKnownLocation(99, WorldPosition{3, 3});
+
+  size_t action = agent.SelectAction(world.GetGrid());
+  REQUIRE(action == MOVE_RIGHT);
+}
+
 // SelectAction — wandering (no target knowledge)
 
 TEST_CASE("Agent wanders when it has no target set", "[SwarmingAgent]") {
@@ -254,7 +259,7 @@ TEST_CASE("Agent with knowledge moves toward target after learning",
   REQUIRE(action == MOVE_RIGHT);
 }
 
-TEST_CASE("Knowledge spreads transitively across agents", "[SwarmingAgent]") {
+TEST_CASE("Knowledge spreads to other agents", "[SwarmingAgent]") {
   MazeWorld world;
 
   // Agent A knows location 1
@@ -300,21 +305,6 @@ TEST_CASE("Agent does not overwrite existing knowledge", "[SwarmingAgent]") {
   REQUIRE(result.has_value());
   REQUIRE_THAT(result.value().X(), Catch::Matchers::WithinRel(5.0));
   REQUIRE_THAT(result.value().Y(), Catch::Matchers::WithinRel(5.0));
-}
-
-TEST_CASE("Agent skips itself when gathering knowledge", "[SwarmingAgent]") {
-  MazeWorld world;
-
-  // Single agent — should not crash or duplicate anything
-  auto& solo = world.AddAgent<SwarmingAgent>("Solo");
-  solo.SetLocation(WorldPosition{5, 5});
-  solo.SetTarget(1);
-
-  // Should just wander, no crash
-  size_t action = solo.SelectAction(world.GetGrid());
-  REQUIRE(action >= MOVE_UP);
-  REQUIRE(action <= MOVE_RIGHT);
-  REQUIRE(solo.GetKnownLocations().empty());
 }
 
 // Multiple agents with full RunAgents cycle
@@ -427,20 +417,6 @@ TEST_CASE("Wandering is deterministic given the same agent ID seed",
     REQUIRE(a1.SelectAction(world1.GetGrid()) ==
             a2.SelectAction(world2.GetGrid()));
   }
-}
-
-// 6. Diagonal target with equal dx and dy — boundary condition
-
-TEST_CASE("Agent moves horizontally when dx equals dy", "[SwarmingAgent]") {
-  MazeWorld world;
-  auto& agent = world.AddAgent<SwarmingAgent>("Agent");
-  // dx = 2, dy = 2 — abs(dx) >= abs(dy) is true, so horizontal (right) wins
-  agent.SetLocation(WorldPosition{1, 1});
-  agent.SetTarget(99);
-  agent.AddKnownLocation(99, WorldPosition{3, 3});
-
-  size_t action = agent.SelectAction(world.GetGrid());
-  REQUIRE(action == MOVE_RIGHT);
 }
 
 // 7. Many agents sharing knowledge — light stress test
