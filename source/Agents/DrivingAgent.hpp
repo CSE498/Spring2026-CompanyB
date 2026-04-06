@@ -118,6 +118,8 @@ class DrivingAgent : public AgentBase {
   size_t SelectAction(const WorldGrid &grid) override {
     grid_pos.SetLocation(GetLocation().AsWorldPosition());
 
+    // Stay put when the world signals that we were blocked last turn, e.g. by a
+    // traffic light.
     if (action_result == 0) {
       return action_map["stay"];
     }
