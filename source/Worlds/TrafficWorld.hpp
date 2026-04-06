@@ -1,5 +1,6 @@
 #pragma once
 #include <algorithm>
+#include <map>
 
 #include "../core/WorldBase.hpp"
 #include "../tools/WeightedSet.hpp"
@@ -36,7 +37,7 @@ class TrafficWorld : public WorldBase {
       spawner_positions;  ///< Positions of all spawner tiles.
   WeightedSet<WorldPosition>
       destination_positions;  // Weighted set to randomly assign destinations
-  std::vector<std::pair<WorldPosition, std::string>>
+  std::map<WorldPosition, std::string>
       destination_colours;  ///< Per-destination ANSI colour codes.
 
   /// @brief Indicates whether traffic lights in the world allow agents to pass
@@ -155,7 +156,7 @@ class TrafficWorld : public WorldBase {
         WorldPosition pos(x, y);
         if (main_grid[pos] == destination_id) {
           destination_positions.Insert(pos, 1.0);  // equal weight for now
-          destination_colours.emplace_back(
+          destination_colours.emplace(
               pos, colour_palette[colour_idx % colour_palette.size()]);
           ++colour_idx;
         }
@@ -167,10 +168,9 @@ class TrafficWorld : public WorldBase {
   ///        or an empty string if the position is not a destination.
   [[nodiscard]] const std::string &GetDestinationColour(
       const WorldPosition &pos) const {
-    for (const auto &[dest_pos, col] : destination_colours) {
-      if (dest_pos.CellX() == pos.CellX() && dest_pos.CellY() == pos.CellY()) {
-        return col;
-      }
+    auto it = destination_colours.find(pos);
+    if (it != destination_colours.end()) {
+      return it->second;
     }
     static const std::string empty{};
     return empty;
