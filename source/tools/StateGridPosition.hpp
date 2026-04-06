@@ -94,7 +94,7 @@ class StateGridPosition {
     if (direction_facing == Direction::West && col == 0) return false;
     StateGridPosition new_pos = GetForwardPosition();
     return grid.inBoundsAndTraversable(static_cast<int>(new_pos.row),
-                         static_cast<int>(new_pos.col));
+                                       static_cast<int>(new_pos.col));
   }
 
   /// @brief Check if a backward move is allowed without moving
@@ -107,7 +107,7 @@ class StateGridPosition {
     if (direction_facing == Direction::South && row == 0) return false;
     StateGridPosition new_pos = GetBackwardPosition();
     return grid.inBoundsAndTraversable(static_cast<int>(new_pos.row),
-                         static_cast<int>(new_pos.col));
+                                       static_cast<int>(new_pos.col));
   }
 
   // -- Distance Functions --
