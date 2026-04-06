@@ -8,13 +8,13 @@
 #pragma once
 
 #include <algorithm>
+#include <bit>
 #include <cassert>
 #include <concepts>
 #include <expected>
 #include <functional>
 #include <type_traits>
 #include <vector>
-#include <bit>
 
 class RobinHoodMapTest;
 
