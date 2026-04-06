@@ -5,6 +5,7 @@
 
 #pragma once
 
+#include <expected>
 #include <string>
 #include <vector>
 
@@ -13,6 +14,10 @@
 #include "IReplayDriver.hpp"
 
 namespace cse498 {
+
+enum class SaveAgentActionsError {
+  FlushFailed,
+};
 
 /**
  * @class ILogger
@@ -35,10 +40,10 @@ class ILogger {
 
   /// @brief Extract and validate action events from agents.
   /// @param agents Vector of agents to extract actions from.
-  /// @param filePath Optional file path to save the logged events; if empty, a
-  /// default path will be generated.
-  virtual void SaveAgentActions(const std::vector<AgentType>& agents,
-                                const std::string& filePath = "") = 0;
+  /// @return Empty expected on success; otherwise an error describing the
+  /// failed stage.
+  virtual std::expected<void, SaveAgentActionsError> SaveAgentActions(
+      const std::vector<AgentType>& agents) = 0;
 };
 
 }  // namespace cse498

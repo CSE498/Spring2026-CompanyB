@@ -136,12 +136,13 @@ bool RunSaveScenario(const std::filesystem::path& outputPath) {
   agents[1].AddMovementAction("south", 0, -1, 2002, LogLevel::Debug);
 
   Logger<DemoAgent> logger;
-  logger.SaveAgentActions(agents, outputPath.string());
+  const auto loggerSaveResult = logger.SaveAgentActions(agents);
+  const bool loggerSaveOk = loggerSaveResult.has_value();
 
   bool saveOk = false;
   std::size_t savedCount = 0;
   std::ifstream in(outputPath);
-  if (in.is_open()) {
+  if (loggerSaveOk && in.is_open()) {
     nlohmann::json saved;
     try {
       in >> saved;
@@ -157,11 +158,12 @@ bool RunSaveScenario(const std::filesystem::path& outputPath) {
   const auto bytes = saveOk ? std::filesystem::file_size(outputPath) : 0;
 
   std::cout << "   Saved action_events via Logger: " << savedCount << "\n";
-  std::cout << "   Save status: " << (saveOk ? "success" : "failure") << "\n";
+  std::cout << "   Save status: "
+            << ((loggerSaveOk && saveOk) ? "success" : "failure") << "\n";
   std::cout << "   Output file: " << outputPath << " (" << bytes
             << " bytes)\n\n";
 
-  return saveOk;
+  return loggerSaveOk && saveOk;
 }
 
 bool RunLoadScenario(const std::filesystem::path& replayPath) {
@@ -214,7 +216,7 @@ int main() {
   namespace fs = std::filesystem;
 
   const fs::path logsDir = "logs";
-  const fs::path saveAndReplayPath = logsDir / "group20_action_events_demo.json";
+  const fs::path saveAndReplayPath = logsDir / "simulation_log.json";
 
   std::error_code ec;
   fs::create_directories(logsDir, ec);

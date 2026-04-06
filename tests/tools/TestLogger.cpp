@@ -1,4 +1,5 @@
 #include <catch2/catch_test_macros.hpp>
+#include <expected>
 #include <filesystem>
 #include <memory>
 #include <string>
@@ -59,21 +60,22 @@ class MockOutputManager : public IOutputManager {
   mutable std::vector<ActionEventBase> mReceivedEvents;
   mutable std::string mLastSetFile;
   mutable std::vector<std::string> mLoggedMessages;
+  bool mFlushResult = true;
 
   void WriteActionEvents(const std::vector<ActionEventBase>& events) override {
     mWriteCalled = true;
     mReceivedEvents = events;
   }
 
-  bool SetOutputFile(const std::string& path) override { 
+  bool SetOutputFile(const std::string& path) override {
     mLastSetFile = path;
-    return true; 
+    return true;
   }
   void LogMessage(LogLevel /*level*/, const std::string& message) override {
     mLoggedMessages.push_back(message);
   }
   void SetLogLevel(LogLevel /*level*/) noexcept override {}
-  bool Flush() override { return true; }
+  bool Flush() override { return mFlushResult; }
   void WriteSimulationOutput(const DataLog& /*dataLog*/) override {}
   const nlohmann::json& GetBufferedLog() const noexcept override {
     static nlohmann::json j;
@@ -152,22 +154,22 @@ TEST_CASE("Logger - SaveAgentActions Operations", "[Logger]") {
 
   std::vector<AgentBase> agents(2);
 
-  SECTION("Saves with explicit file path") {
+  SECTION("Saves agent actions through OutputManager") {
     actionLogPtr->mEventsToReturn.resize(1);
 
-    logger.SaveAgentActions(agents, "custom_path.json");
+    const auto saveResult = logger.SaveAgentActions(agents);
 
+    REQUIRE(saveResult.has_value());
     REQUIRE(outputManagerPtr->mWriteCalled == true);
     REQUIRE(outputManagerPtr->mReceivedEvents.size() == 1);
   }
 
-  SECTION("Saves with empty file path generates default path") {
-    logger.SaveAgentActions(agents, "");
+  SECTION("Leaves output path selection to OutputManager") {
+    const auto saveResult = logger.SaveAgentActions(agents);
     
+    REQUIRE(saveResult.has_value());
     REQUIRE(outputManagerPtr->mWriteCalled == true);
-    // Verify the auto-generated file starts with "replay_" and ends with ".json"
-    REQUIRE(outputManagerPtr->mLastSetFile.find("replay_") == 0);
-    REQUIRE(outputManagerPtr->mLastSetFile.find(".json") != std::string::npos);
+    REQUIRE(outputManagerPtr->mLastSetFile.empty());
   }
 
   SECTION("Logs validation failures when ActionLog returns errors") {
@@ -175,9 +177,20 @@ TEST_CASE("Logger - SaveAgentActions Operations", "[Logger]") {
     LogEventFailure failure{dummyEvent, "Test validation error"};
     actionLogPtr->mFailuresToReturn.push_back(failure);
 
-    logger.SaveAgentActions(agents, "error_test.json");
+    const auto saveResult = logger.SaveAgentActions(agents);
+    REQUIRE(saveResult.has_value());
     REQUIRE(outputManagerPtr->mLoggedMessages.size() == 1);
     REQUIRE(outputManagerPtr->mLoggedMessages.front().find("Test validation error") != std::string::npos);
+  }
+
+  SECTION("Returns false when flush fails") {
+    outputManagerPtr->mFlushResult = false;
+
+    const auto saveResult = logger.SaveAgentActions(agents);
+
+    REQUIRE_FALSE(saveResult.has_value());
+    REQUIRE(saveResult.error() == SaveAgentActionsError::FlushFailed);
+    REQUIRE(outputManagerPtr->mWriteCalled);
   }
 }
 
@@ -200,16 +213,18 @@ TEST_CASE("Logger - Stress Test for Memory Bloat", "[Logger][Stress]") {
       std::string path;
       FileCleaner(std::string p) : path(std::move(p)) { std::filesystem::remove(path); }
       ~FileCleaner() { std::filesystem::remove(path); }
-    } cleaner("stress_test_log.json");
+    } cleaner("logs/simulation_log.json");
 
     constexpr size_t kNumActions = 15000;
     actionLogPtr->mEventsToReturn.resize(kNumActions);
     
     // We expect this to run without throwing std::bad_alloc or crashing
-    REQUIRE_NOTHROW(logger.SaveAgentActions(agents, "stress_test_log.json"));
+    std::expected<void, SaveAgentActionsError> saveResult;
+    REQUIRE_NOTHROW(saveResult = logger.SaveAgentActions(agents));
+    REQUIRE(saveResult.has_value());
 
     // Verify the file was created as a result of the Flush() step
-    REQUIRE(std::filesystem::exists("stress_test_log.json"));
+    REQUIRE(std::filesystem::exists("logs/simulation_log.json"));
   }
 }
 

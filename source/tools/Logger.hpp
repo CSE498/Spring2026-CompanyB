@@ -5,6 +5,7 @@
 
 #pragma once
 
+#include <expected>
 #include <memory>
 #include <string>
 #include <type_traits>
@@ -87,17 +88,10 @@ class Logger : public ILogger<AgentType> {
   // SAVING DURING LIVE SIMULATION:
   /// @brief Extract and validate action events from all agents.
   /// @param agents Vector of agents to extract actions from.
-  /// @param filePath Optional file path to save the logged events; if empty, a
-  /// default path will be generated.
-  void SaveAgentActions(const std::vector<AgentType>& agents,
-                        const std::string& filePath = "") override {
-    if (filePath.empty()) {
-      std::string defaultPath =
-          "replay_" + std::to_string(std::time(nullptr)) + ".json";
-      mOutputManager->SetOutputFile(defaultPath);
-    } else {
-      mOutputManager->SetOutputFile(filePath);
-    }
+  /// @return Empty expected on success; otherwise an error describing the
+  /// failed stage.
+  std::expected<void, SaveAgentActionsError> SaveAgentActions(
+      const std::vector<AgentType>& agents) override {
 
     auto [events, eventFailures] = mActionLog->LogAgentActions(agents);
     for (const auto& failure : eventFailures) {
@@ -111,7 +105,10 @@ class Logger : public ILogger<AgentType> {
               ". Reason: " + failure.message);
     }
     mOutputManager->WriteActionEvents(events);
-    mOutputManager->Flush();
+    if (!mOutputManager->Flush()) {
+      return std::unexpected(SaveAgentActionsError::FlushFailed);
+    }
+    return {};
   }
 };
 
