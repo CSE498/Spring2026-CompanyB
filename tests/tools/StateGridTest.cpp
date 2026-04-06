@@ -85,16 +85,16 @@ TEST_CASE("Test StateGrid") {
   CHECK(Stategrid1.getHeight() == 2);
 
   // Out of bounds check also checks for wall collisions
-  CHECK(Stategrid1.inBounds(0, 0) == true);
-  CHECK(Stategrid1.inBounds(1, 2) == true);
-  CHECK(Stategrid1.inBounds(0, 2) == false);  // wall
-  CHECK(Stategrid1.inBounds(1, 1) == false);  // Wall
+  CHECK(Stategrid1.inBoundsAndTraversable(0, 0) == true);
+  CHECK(Stategrid1.inBoundsAndTraversable(1, 2) == true);
+  CHECK(Stategrid1.inBoundsAndTraversable(0, 2) == false);  // wall
+  CHECK(Stategrid1.inBoundsAndTraversable(1, 1) == false);  // Wall
 
   // All out of bounds, greater, less than height, width
-  CHECK(Stategrid1.inBounds(-1, 0) == false);
-  CHECK(Stategrid1.inBounds(0, -1) == false);
-  CHECK(Stategrid1.inBounds(2, 0) == false);
-  CHECK(Stategrid1.inBounds(0, 3) == false);
+  CHECK(Stategrid1.inBoundsAndTraversable(-1, 0) == false);
+  CHECK(Stategrid1.inBoundsAndTraversable(0, -1) == false);
+  CHECK(Stategrid1.inBoundsAndTraversable(2, 0) == false);
+  CHECK(Stategrid1.inBoundsAndTraversable(0, 3) == false);
 }
 
 // AI helped with conversting test case from using Agent* to shared pointers

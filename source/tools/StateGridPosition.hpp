@@ -93,7 +93,7 @@ class StateGridPosition {
     if (direction_facing == Direction::North && row == 0) return false;
     if (direction_facing == Direction::West && col == 0) return false;
     StateGridPosition new_pos = GetForwardPosition();
-    return grid.inBounds(static_cast<int>(new_pos.row),
+    return grid.inBoundsAndTraversable(static_cast<int>(new_pos.row),
                          static_cast<int>(new_pos.col));
   }
 
@@ -106,7 +106,7 @@ class StateGridPosition {
     if (direction_facing == Direction::East && col == 0) return false;
     if (direction_facing == Direction::South && row == 0) return false;
     StateGridPosition new_pos = GetBackwardPosition();
-    return grid.inBounds(static_cast<int>(new_pos.row),
+    return grid.inBoundsAndTraversable(static_cast<int>(new_pos.row),
                          static_cast<int>(new_pos.col));
   }
 

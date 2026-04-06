@@ -52,7 +52,7 @@ class StateGrid {
    *
    * @returns True if (row, col) is inside the grid and the tile is traversable.
    ************************************************/
-  [[nodiscard]] bool inBounds(size_t row, size_t col) const;
+  [[nodiscard]] bool inBoundsAndTraversable(size_t row, size_t col) const;
 
   // ==================== Tile Access (read-only) ====================
 
