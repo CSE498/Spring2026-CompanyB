@@ -91,7 +91,7 @@ class WeightedSet {
    * generate a random number, including in GetRandomElement which is a const
    * function.
    */
-  
+
   /**
    * @brief Maps elements to their nodes in the tree.
    * @remark Keys are elements stored in the WeightedSet; values are non-owning

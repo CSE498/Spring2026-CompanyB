@@ -31,7 +31,8 @@ StateGrid::StateGrid(const std::vector<std::vector<char>> &premadeMap) {
 
 [[nodiscard]] size_t StateGrid::getHeight() const { return tiles.size(); }
 
-[[nodiscard]] bool StateGrid::inBoundsAndTraversable(size_t row, size_t col) const {
+[[nodiscard]] bool StateGrid::inBoundsAndTraversable(size_t row,
+                                                     size_t col) const {
   if (row >= getHeight() || col >= getWidth()) return false;
   return tiles[row][col].getCanTraverse();
 }
