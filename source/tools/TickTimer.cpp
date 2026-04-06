@@ -1,15 +1,15 @@
-#include "Timer.hpp"
+#include "TickTimer.hpp"
 
 #include <cassert>
 
 #include "GlobalClock.hpp"
 namespace cse498 {
 // Constructor with the initialized member variables
-Timer::Timer(const std::string& name) : mName(name) {}
+TickTimer::TickTimer(const std::string& name) : mName(name) {}
 
-void Timer::Start() {
+void TickTimer::Start() {
   // Assert to prevent calling Start multiple times
-  assert(!mIsRunning && "Timer is already running");
+  assert(!mIsRunning && "TickTimer is already running");
 
   mIsRunning = true;
   mIsPaused = false;
@@ -17,9 +17,9 @@ void Timer::Start() {
   mStartTime = GlobalClock::GetTime();
 }
 
-void Timer::Stop() {
+void TickTimer::Stop() {
   // Assert to prevent calling Stop multiple times
-  assert(mIsRunning && "Timer is not running");
+  assert(mIsRunning && "TickTimer is not running");
 
   const uint64_t endTime = GlobalClock::GetTime();
   if (!mIsPaused) {
@@ -30,31 +30,31 @@ void Timer::Stop() {
   mIsPaused = false;
 }
 
-void Timer::Pause() {
+void TickTimer::Pause() {
   // Assert guards to verify it has started and is not already paused
-  assert(mIsRunning && "Timer is not running");
-  assert(!mIsPaused && "Timer is already paused");
+  assert(mIsRunning && "TickTimer is not running");
+  assert(!mIsPaused && "TickTimer is already paused");
 
   const uint64_t pauseTime = GlobalClock::GetTime();
   mAccumulatedTime += (pauseTime - mStartTime);
   mIsPaused = true;
 }
 
-void Timer::Resume() {
+void TickTimer::Resume() {
   // Assert guards to verify it has paused and is not already running
-  assert(mIsRunning && "Timer is not running");
-  assert(mIsPaused && "Timer is not paused");
+  assert(mIsRunning && "TickTimer is not running");
+  assert(mIsPaused && "TickTimer is not paused");
 
   mStartTime = GlobalClock::GetTime();  // Reset start time for the new interval
   mIsPaused = false;
 }
 
-void Timer::Reset() {
+void TickTimer::Reset() {
   // Reset the internal variables of the stopwatch
-  *this = Timer{mName};
+  *this = TickTimer{mName};
 }
 
-uint64_t Timer::GetTotalTime() const {
+uint64_t TickTimer::GetTotalTime() const {
   if (!mIsRunning || mIsPaused) {
     return mAccumulatedTime;
   }
@@ -63,23 +63,23 @@ uint64_t Timer::GetTotalTime() const {
 }
 
 /*
-double Timer::GetTimeInSeconds() const {
+double TickTimer::GetTimeInSeconds() const {
   // Assuming 1 tick = 1 millisecond
   constexpr double millisecondsPerSecond = 1000.0;
   return GetTotalTime() / millisecondsPerSecond;
 }
 
-double Timer::GetTimeInMinutes() const {
+double TickTimer::GetTimeInMinutes() const {
   constexpr double secondsPerMinute = 60.0;
   return GetTimeInSeconds() / secondsPerMinute;
 }
 
-double Timer::GetTimeInHours() const {
+double TickTimer::GetTimeInHours() const {
   constexpr double minutesPerHour = 60.0;
   return GetTimeInMinutes() / minutesPerHour;
 }
 */
 
-const std::string& Timer::GetName() const { return mName; }
+const std::string& TickTimer::GetName() const { return mName; }
 
 }  // namespace cse498

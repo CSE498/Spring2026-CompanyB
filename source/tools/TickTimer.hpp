@@ -1,5 +1,5 @@
 /**
- * @file Timer.hpp
+ * @file TickTimer.hpp
  * @author Abdulrahman Alanazi
  **/
 
@@ -19,10 +19,10 @@ namespace cse498 {
  * intended.
  */
 
-class Timer {
+class TickTimer {
  public:
   /// Initialize the object with a @param name
-  Timer(const std::string& name);
+  TickTimer(const std::string& name);
   /// Start the stopwatch for the object
   void Start();
   /// Stop the stopwatch for the object

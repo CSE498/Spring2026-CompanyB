@@ -1,20 +1,20 @@
 #include <catch2/catch_test_macros.hpp>
 
 #include "../../source/tools/GlobalClock.hpp"
-#include "../../source/tools/Timer.hpp"
+#include "../../source/tools/TickTimer.hpp"
 
 TEST_CASE("Ensure we can create a timer with the expected initalized values",
-          "[Timer]") {
+          "[TickTimer]") {
   cse498::GlobalClock::Reset();
 
-  cse498::Timer testTimer("TEST");
+  cse498::TickTimer testTimer("TEST");
   REQUIRE(testTimer.GetName() == "TEST");
   REQUIRE(testTimer.GetTotalTime() == 0);
 }
 
 TEST_CASE("Test start and stop and assosicated methods of getting the time",
-          "[Timer]") {
-  cse498::Timer testTimer("TEST");
+          "[TickTimer]") {
+  cse498::TickTimer testTimer("TEST");
   cse498::GlobalClock::Reset();
   testTimer.Start();
   cse498::GlobalClock::Tick(100);
@@ -26,9 +26,9 @@ TEST_CASE("Test start and stop and assosicated methods of getting the time",
   REQUIRE(testTimer.GetTotalTime() == 100);
 }
 
-TEST_CASE("Test reset and associated methods of getting the time", "[Timer]") {
+TEST_CASE("Test reset and associated methods of getting the time", "[TickTimer]") {
   cse498::GlobalClock::Reset();
-  cse498::Timer testTimer("TEST");
+  cse498::TickTimer testTimer("TEST");
 
   testTimer.Start();
   cse498::GlobalClock::Tick(100);
@@ -40,9 +40,9 @@ TEST_CASE("Test reset and associated methods of getting the time", "[Timer]") {
 }
 
 TEST_CASE("Test pause and resume and assosicated methods of getting the time",
-          "[Timer]") {
+          "[TickTimer]") {
   cse498::GlobalClock::Reset();
-  cse498::Timer testTimer("TEST");
+  cse498::TickTimer testTimer("TEST");
 
   testTimer.Start();
   cse498::GlobalClock::Tick(100);
@@ -58,9 +58,9 @@ TEST_CASE("Test pause and resume and assosicated methods of getting the time",
   REQUIRE(testTimer.GetTotalTime() == 150);
 }
 
-TEST_CASE("Test getting time while running", "[Timer]") {
+TEST_CASE("Test getting time while running", "[TickTimer]") {
   cse498::GlobalClock::Reset();
-  cse498::Timer testTimer("test");
+  cse498::TickTimer testTimer("test");
 
   testTimer.Start();
   cse498::GlobalClock::Tick(10);
@@ -73,9 +73,9 @@ TEST_CASE("Test getting time while running", "[Timer]") {
   REQUIRE(testTimer.GetTotalTime() == 30);
 }
 
-TEST_CASE("Test accumulation across multiple Start/Stop cycles", "[Timer]") {
+TEST_CASE("Test accumulation across multiple Start/Stop cycles", "[TickTimer]") {
   cse498::GlobalClock::Reset();
-  cse498::Timer testTimer("test");
+  cse498::TickTimer testTimer("test");
 
   // Cycle 1
   testTimer.Start();
