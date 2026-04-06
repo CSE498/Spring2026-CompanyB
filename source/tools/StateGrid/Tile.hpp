@@ -101,8 +101,7 @@ class Tile {
   [[nodiscard]] constexpr bool getCanTraverse() const { return canTraverse; };
 
   /***********************************************
-   *  Sets traverseability, no error checking, If its set to true
-   *  and you try to set it to true anyway, this will work
+   *  Sets whether the tile can be traversed.
    *
    * @param traversability to set the new status
    ***********************************************/
