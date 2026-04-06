@@ -12,6 +12,7 @@
 #include <expected>
 #include <functional>
 #include <vector>
+#include <concepts>
 
 class RobinHoodMapTest;
 
@@ -21,10 +22,20 @@ namespace cse498 {
  * A hash map implementation using the Robin Hood hashing algorithm.
  */
 template <typename K, typename V>
+requires std::equality_comparable<K> && requires(K k) { std::hash<K>{}(k); }
 class RobinHoodMap {
   static_assert(std::is_default_constructible_v<K>,
                 "RobinHoodMap requires K to be default-constructible (used by "
                 "operator[])");
+  static_assert(std::is_default_constructible_v<V>,
+                "RobinHoodMap requires V to be default-constructible (default"
+                "values used for Entries)");
+
+ public:
+  /// Error types for RobinHoodMap operations
+  enum class Error {
+    KeyNotFound  ///< The requested key does not exist in the map
+  };
 
  private:
   /**
@@ -243,7 +254,7 @@ class RobinHoodMap {
    * @param key The key to look up.
    * @return ValueResult containing success flag and reference to value.
    */
-  std::expected<V, std::string> at(const K& key) const {
+  std::expected<V, Error> at(const K& key) const {
     const size_t mask = mTable.size() - 1;
     const size_t hash = mHasher(key);
     const size_t homeIndex = hash & mask;
@@ -254,13 +265,13 @@ class RobinHoodMap {
       const Entry& entry = mTable[index];
 
       if (!entry.filled) {
-        return std::unexpected("Key not found");
+        return std::unexpected(Error::KeyNotFound);
       }
 
       if (size_t entryProbeCount =
               (index - (entry.hash & mask) + mTable.size()) & mask;
           entryProbeCount < probeCount) {
-        return std::unexpected("Key not found");
+        return std::unexpected(Error::KeyNotFound);
       }
 
       if (entry.hash == hash && entry.key == key) {
@@ -278,7 +289,7 @@ class RobinHoodMap {
    * @param key The key to look up.
    * @return Expected containing the value if found, or an error message.
    */
-  std::expected<V, std::string> operator[](const K& key) const {
+  std::expected<V, Error> operator[](const K& key) const {
     return at(key);
   }
 

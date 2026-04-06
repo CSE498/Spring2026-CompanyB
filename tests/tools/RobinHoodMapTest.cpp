@@ -33,10 +33,20 @@
 #include <type_traits>
 #include <unordered_set>
 #include <vector>
+#include <concepts>
 
 #include "../../source/tools/RobinHoodMap.hpp"
 
 using cse498::RobinHoodMap;
+
+/**
+ * Helper class to test non-comparable keys
+ */
+class NonComparable {
+ public:
+  NonComparable() = default;
+  bool operator==(const NonComparable&) const = delete;
+};
 
 // ============================================================================
 // COMPILE-TIME ASSERTIONS
