@@ -192,13 +192,16 @@ class DataMap {
   }
 
   /**
-   * Returns the value associated with the given key if it exists and can be
-   * cast to the specified type; otherwise, returns an Error
+   * Returns the value associated with the given key if it exists and the stored
+   * value's type exactly matches V; otherwise, returns an Error.
+   *
+   * This function does not perform implicit or explicit type conversions (ex. a
+   * stored int will not satisfy Get<double>()).
+   *
    * @tparam V The expected type of the value.
    * @param name The key associated with the value.
-   * @return The value if the key exists and the type matches; otherwise, an
+   * @return The value if the key exists and the type matches; otherwise an
    * Error with details about the failure.
-   *
    */
   template <typename V>
   [[nodiscard]] std::expected<V, Error> Get(const std::string& name) const {
