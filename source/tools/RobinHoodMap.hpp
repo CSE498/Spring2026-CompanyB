@@ -20,13 +20,16 @@ class RobinHoodMapTest;
 
 namespace cse498 {
 
+template <typename T>
+concept HashableType = requires(T a) { std::hash<T>{}(a); };
+
 /**
  * A hash map implementation using the Robin Hood hashing algorithm.
  */
 template <typename K, typename V>
   requires std::is_default_constructible_v<K> &&
            std::is_default_constructible_v<V> && std::equality_comparable<K> &&
-           requires(K k) { std::hash<K>{}(k); }
+           HashableType<K>
 class RobinHoodMap {
  public:
   /// Error types for RobinHoodMap operations
