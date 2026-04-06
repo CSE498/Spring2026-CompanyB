@@ -1,6 +1,7 @@
 #pragma once
 #include <algorithm>
 #include <map>
+#include <queue>
 
 #include "../core/WorldBase.hpp"
 #include "../tools/WeightedSet.hpp"
@@ -70,6 +71,10 @@ class TrafficWorld : public WorldBase {
   /// @brief Cap on the number of active spawned agents that can exist at a
   /// time, to prevent the world from getting too chaotic.
   static constexpr int max_spawned_agents = 15;
+
+  /// @brief Queue of IDs of despawned agents available for recycling.
+  /// Written by Claude.
+  std::queue<size_t> despawned_agent_ids;
 
   /// Provide the agent with movement actions.
   void ConfigAgent(AgentBase &agent) override {
@@ -337,16 +342,43 @@ class TrafficWorld : public WorldBase {
           auto dest = destination_positions.GetRandomElement();
           if (dest.has_value()) {
             WorldPosition dest_pos = dest.value();
-            auto &agent = AddAgent<DrivingAgent>("Car");
-            agent.SetLocation(pos);
-            agent.SetGridDestination(dest_pos.CellX(), dest_pos.CellY());
-            agent.SetColour(GetDestinationColour(dest_pos));
+
+            if (!despawned_agent_ids.empty()) {
+              RecycleDespawnedAgent(pos, dest_pos);
+            } else {
+              auto &agent = AddAgent<DrivingAgent>("Car");
+              agent.SetLocation(pos);
+              agent.SetGridDestination(dest_pos.CellX(), dest_pos.CellY());
+              agent.SetColour(GetDestinationColour(dest_pos));
+            }
 
             ++num_spawned_agents;
           }
         }
       }
     }
+  }
+  // Modified from code written by Claude.
+  // Pulls, from despawned_agent_ids, the ID of an agent that previously
+  // despawned and is now inactive, then respawns that agent at the given
+  // spawner with the given destination.
+  void RecycleDespawnedAgent(const WorldPosition &spawner_pos,
+                             const WorldPosition &dest_pos) {
+    assert(!despawned_agent_ids.empty());
+    size_t reuse_id = despawned_agent_ids.front();
+    despawned_agent_ids.pop();
+    auto *driver = dynamic_cast<DrivingAgent *>(&GetAgent(reuse_id));
+    // Note for future use. Currently a non-DrivingAgent id should never make it
+    // into despawned_agent_ids since those are the only agents that support
+    // spawning, despawning, and destinations. In the future, with multiple
+    // agent types, we'll find a way to relax this.
+    assert(driver != nullptr);
+    driver->SetLocation(spawner_pos);
+    driver->SetReachedDestination(false);
+    driver->SetDirection(Direction::East);
+    driver->SetGridDestination(dest_pos.CellX(), dest_pos.CellY());
+    driver->SetColour(GetDestinationColour(dest_pos));
+    driver->SetActionResult(1);
   }
   /// @brief Despawn any agents that have reached their destination.
   void HandleDestinations() {
@@ -360,6 +392,8 @@ class TrafficWorld : public WorldBase {
       if (pos.CellX() == dest.CellX() && pos.CellY() == dest.CellY()) {
         driver->SetReachedDestination(true);
         driver->SetSymbol('D');
+        // Written by Claude — enqueue this agent's ID for recycling
+        despawned_agent_ids.push(agent_ptr->GetID());
         --num_spawned_agents;
         assert(num_spawned_agents >= 0);
       }
