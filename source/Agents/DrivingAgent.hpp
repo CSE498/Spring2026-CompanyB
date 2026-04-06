@@ -74,7 +74,7 @@ class DrivingAgent : public AgentBase {
     return *this;
   }
 
-  [[nodiscard]] bool GetReachedDestination() { return reached_destination; }
+  [[nodiscard]] bool GetReachedDestination() const { return reached_destination; }
   void SetReachedDestination(bool reached) { reached_destination = reached; }
 
   /// @brief Get the agent's current facing direction.
