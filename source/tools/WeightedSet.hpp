@@ -84,7 +84,6 @@ class WeightedSet {
   };
 
   std::unique_ptr<Node> root_{};  ///< Root of the tree
-  std::random_device rd_{};       ///< Random device.
 
   /**
    * @brief Xoshiro random number generator.
@@ -92,7 +91,7 @@ class WeightedSet {
    * generate a random number, including in GetRandomElement which is a const
    * function.
    */
-  mutable cse498::Random rng_{rd_()};
+  
   /**
    * @brief Maps elements to their nodes in the tree.
    * @remark Keys are elements stored in the WeightedSet; values are non-owning
