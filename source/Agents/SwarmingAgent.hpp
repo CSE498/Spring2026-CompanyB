@@ -18,10 +18,6 @@
 
 namespace cse498 {
 
-/// @brief  State struct for the SwarmingAgent, needed for new AgentBase API but
-/// not currently used.
-struct SwarmingState {};
-
 /**
  * @brief A simple agent that tries to swarm around to a target area
  * by talking to other agents

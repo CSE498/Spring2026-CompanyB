@@ -13,6 +13,7 @@
 #include <functional>
 #include <vector>
 #include <concepts>
+#include <type_traits>
 
 class RobinHoodMapTest;
 
@@ -22,19 +23,23 @@ namespace cse498 {
  * A hash map implementation using the Robin Hood hashing algorithm.
  */
 template <typename K, typename V>
-requires std::equality_comparable<K> && requires(K k) { std::hash<K>{}(k); }
+requires std::is_default_constructible_v<K> && 
+         std::is_default_constructible_v<V> && 
+         std::equality_comparable<K> && 
+         requires(K k) { std::hash<K>{}(k); }
 class RobinHoodMap {
-  static_assert(std::is_default_constructible_v<K>,
-                "RobinHoodMap requires K to be default-constructible (used by "
-                "operator[])");
-  static_assert(std::is_default_constructible_v<V>,
-                "RobinHoodMap requires V to be default-constructible (default"
-                "values used for Entries)");
 
  public:
   /// Error types for RobinHoodMap operations
-  enum class Error {
-    KeyNotFound  ///< The requested key does not exist in the map
+  struct RHMError {
+    enum class Type {
+      KeyNotFound,  ///< The requested key does not exist in the map
+    };
+
+    Type type;
+    std::string message;
+
+    RHMError(Type type, std::string message) : type(type), message(std::move(message)) {}
   };
 
  private:
@@ -254,7 +259,7 @@ class RobinHoodMap {
    * @param key The key to look up.
    * @return ValueResult containing success flag and reference to value.
    */
-  std::expected<V, Error> at(const K& key) const {
+  std::expected<V, RHMError> at(const K& key) const {
     const size_t mask = mTable.size() - 1;
     const size_t hash = mHasher(key);
     const size_t homeIndex = hash & mask;
@@ -265,13 +270,13 @@ class RobinHoodMap {
       const Entry& entry = mTable[index];
 
       if (!entry.filled) {
-        return std::unexpected(Error::KeyNotFound);
+        return std::unexpected(RHMError(RHMError::Type::KeyNotFound, "Provided key not found in map"));
       }
 
       if (size_t entryProbeCount =
               (index - (entry.hash & mask) + mTable.size()) & mask;
           entryProbeCount < probeCount) {
-        return std::unexpected(Error::KeyNotFound);
+        return std::unexpected(RHMError(RHMError::Type::KeyNotFound, "Provided key not found in map"));
       }
 
       if (entry.hash == hash && entry.key == key) {
@@ -289,7 +294,7 @@ class RobinHoodMap {
    * @param key The key to look up.
    * @return Expected containing the value if found, or an error message.
    */
-  std::expected<V, Error> operator[](const K& key) const {
+  std::expected<V, RHMError> operator[](const K& key) const {
     return at(key);
   }
 
@@ -401,11 +406,7 @@ class RobinHoodMap {
    * @param capacity The minimum capacity to reserve.
    */
   void reserve(size_t capacity) {
-    size_t targetSize = capacity * 2;
-    size_t newSize = 8;
-    while (newSize < targetSize) {
-      newSize *= 2;
-    }
+    size_t newSize = 8 << (std::bit_width(capacity << 1));
 
     // Only resize if the new size is larger than the current table size
     if (newSize > mTable.size()) {
