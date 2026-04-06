@@ -9,11 +9,11 @@
 
 #include <algorithm>
 #include <cassert>
+#include <concepts>
 #include <expected>
 #include <functional>
-#include <vector>
-#include <concepts>
 #include <type_traits>
+#include <vector>
 
 class RobinHoodMapTest;
 
@@ -23,12 +23,10 @@ namespace cse498 {
  * A hash map implementation using the Robin Hood hashing algorithm.
  */
 template <typename K, typename V>
-requires std::is_default_constructible_v<K> && 
-         std::is_default_constructible_v<V> && 
-         std::equality_comparable<K> && 
-         requires(K k) { std::hash<K>{}(k); }
+  requires std::is_default_constructible_v<K> &&
+           std::is_default_constructible_v<V> && std::equality_comparable<K> &&
+           requires(K k) { std::hash<K>{}(k); }
 class RobinHoodMap {
-
  public:
   /// Error types for RobinHoodMap operations
   struct RHMError {
@@ -39,7 +37,8 @@ class RobinHoodMap {
     Type type;
     std::string message;
 
-    RHMError(Type type, std::string message) : type(type), message(std::move(message)) {}
+    RHMError(Type type, std::string message)
+        : type(type), message(std::move(message)) {}
   };
 
  private:
@@ -222,11 +221,10 @@ class RobinHoodMap {
         size_t nextIndex = (index + 1) & mask;
         while (mTable[nextIndex].filled) {
           // If the next entry is in its home slot, we can stop shifting
-          if (size_t nextProbeCount =
-                  (nextIndex - (mTable[nextIndex].hash & mask) +
-                   mTable.size()) &
-                  mask;
-              nextProbeCount == 0) {
+          size_t nextProbeCount =
+              (nextIndex - (mTable[nextIndex].hash & mask) + mTable.size()) &
+              mask;
+          if (nextProbeCount == 0) {
             break;
           }
 
@@ -239,9 +237,9 @@ class RobinHoodMap {
         return true;
       }
 
-      if (size_t currentProbeCount =
-              (index - (mTable[index].hash & mask) + mTable.size()) & mask;
-          currentProbeCount < probeCount) {
+      size_t currentProbeCount =
+          (index - (mTable[index].hash & mask) + mTable.size()) & mask;
+      if (currentProbeCount < probeCount) {
         return false;
       }
 
@@ -270,13 +268,15 @@ class RobinHoodMap {
       const Entry& entry = mTable[index];
 
       if (!entry.filled) {
-        return std::unexpected(RHMError(RHMError::Type::KeyNotFound, "Provided key not found in map"));
+        return std::unexpected(RHMError(RHMError::Type::KeyNotFound,
+                                        "Provided key not found in map"));
       }
 
       if (size_t entryProbeCount =
               (index - (entry.hash & mask) + mTable.size()) & mask;
           entryProbeCount < probeCount) {
-        return std::unexpected(RHMError(RHMError::Type::KeyNotFound, "Provided key not found in map"));
+        return std::unexpected(RHMError(RHMError::Type::KeyNotFound,
+                                        "Provided key not found in map"));
       }
 
       if (entry.hash == hash && entry.key == key) {
@@ -294,9 +294,7 @@ class RobinHoodMap {
    * @param key The key to look up.
    * @return Expected containing the value if found, or an error message.
    */
-  std::expected<V, RHMError> operator[](const K& key) const {
-    return at(key);
-  }
+  std::expected<V, RHMError> operator[](const K& key) const { return at(key); }
 
   /**
    * Overloaded non-const subscript operator for insertion/update.

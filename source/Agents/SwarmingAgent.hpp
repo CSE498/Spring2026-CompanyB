@@ -8,6 +8,7 @@
 
 #include <cmath>
 #include <limits>
+#include <optional>
 #include <random>
 #include <string>
 
@@ -46,7 +47,7 @@ class SwarmingAgent : public AgentBase {
   };
 
   void MergeKnowledgeFromNeighbor();
-  MoveIntent ChooseTargetIntent();
+  std::optional<MoveIntent> ChooseTargetIntent();
   MoveIntent ChooseRandomIntent();
   size_t IntentToAction(const MoveIntent& intent);
 

@@ -32,25 +32,25 @@ void SwarmingAgent::MergeKnowledgeFromNeighbor() {
 
     // Merge their knowledge into ours
     const auto& other_locations = swarmer->GetKnownLocations();
-    for (auto it = other_locations.begin(); it != other_locations.end(); ++it) {
-      const auto& entry = *it;
-      if (!known_locations.contains(entry.key)) {
-        known_locations.insert(entry.key, entry.value);
-      }
-    }
+
+    std::for_each(other_locations.begin(), other_locations.end(),
+                  [this](const auto& entry) {
+                    if (!known_locations.contains(entry.key)) {
+                      known_locations.insert(entry.key, entry.value);
+                    }
+                  });
   }
 }
 
-SwarmingAgent::MoveIntent SwarmingAgent::ChooseTargetIntent() {
+std::optional<SwarmingAgent::MoveIntent> SwarmingAgent::ChooseTargetIntent() {
   // CASE 2
   // We are aware we have a target AND we know the target location
   // We can then advance towards it
-  MoveIntent intent{0, 0};
   if (target_id == SIZE_MAX || !known_locations.contains(target_id))
-    return intent;
+    return std::nullopt;
 
   auto result = known_locations.at(target_id);
-  if (!result.has_value()) return intent;
+  if (!result.has_value()) return std::nullopt;
 
   WorldPosition target_pos = result.value();
   WorldPosition my_pos = GetLocation().AsWorldPosition();
@@ -58,6 +58,7 @@ SwarmingAgent::MoveIntent SwarmingAgent::ChooseTargetIntent() {
   double dx = target_pos.X() - my_pos.X();
   double dy = target_pos.Y() - my_pos.Y();
 
+  MoveIntent intent{0, 0};
   if (std::abs(dx) >= std::abs(dy)) {
     if (dx > 0)
       intent.dx = 1;
@@ -108,29 +109,12 @@ size_t SwarmingAgent::IntentToAction(const MoveIntent& intent) {
 size_t SwarmingAgent::SelectAction(const WorldGrid& /*grid*/) {
   MergeKnowledgeFromNeighbor();
 
-  // Check if we have a target and know where it is, and if we are already at
-  // the target, do nothing
-  if (target_id != SIZE_MAX && known_locations.contains(target_id)) {
-    auto result = known_locations.at(target_id);
-    if (result.has_value()) {
-      WorldPosition target_pos = result.value();
-      WorldPosition my_pos = GetLocation().AsWorldPosition();
-
-      double dx = target_pos.X() - my_pos.X();
-      double dy = target_pos.Y() - my_pos.Y();
-
-      if (std::abs(dx) < 1e-9 && std::abs(dy) < 1e-9) {
-        return 0;
-      }
-    }
+  auto target_intent = ChooseTargetIntent();
+  if (target_intent.has_value()) {
+    return IntentToAction(target_intent.value());
   }
 
-  MoveIntent intent = ChooseTargetIntent();
-  if (intent.dx == 0 && intent.dy == 0) {
-    intent = ChooseRandomIntent();
-  }
-
-  return IntentToAction(intent);
+  return IntentToAction(ChooseRandomIntent());
 }
 
 }  // namespace cse498
