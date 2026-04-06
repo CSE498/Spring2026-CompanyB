@@ -30,7 +30,7 @@ namespace cse498 {
  * drawing shapes, text, and images, as well as controlling rendering state
  * (colors, transforms, etc.).
  **/
-class WebCanvas : public WebElement, public std::enable_shared_from_this<WebCanvas> {
+class WebCanvas : public WebElement {
  public:
   using RGB = std::tuple<int, int, int>;
 
@@ -111,10 +111,6 @@ class WebCanvas : public WebElement, public std::enable_shared_from_this<WebCanv
   /// Destructor that removes the canvas element from the DOM if this instance
   /// created it
   ~WebCanvas();
-
-  std::shared_ptr<WebCanvas> GetSharedPtr() {
-    return shared_from_this();
-  }
 
   /**
    * @brief Resize the canvas to the given dimensions.

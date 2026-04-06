@@ -23,7 +23,7 @@ namespace cse498 {
  * 
  * Note: `std::enable_shared_from_this` allows us to use fluent interface style APIs with shared pointers
  */
-class WebLayout : public WebElement, public std::enable_shared_from_this<WebLayout> {
+class WebLayout : public WebElement {
  private:
   std::vector<std::shared_ptr<WebElement>> elements;
 
@@ -43,10 +43,6 @@ class WebLayout : public WebElement, public std::enable_shared_from_this<WebLayo
 
   /// Disable copy assignment operator
   WebLayout& operator=(const WebLayout&) = delete;
-
-  std::shared_ptr<WebLayout> GetSharedPtr() {
-    return shared_from_this();
-  }
 
   /**
    * @brief Appends a child WebElement to this layout in the DOM.

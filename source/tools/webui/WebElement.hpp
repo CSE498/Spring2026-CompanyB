@@ -12,7 +12,7 @@
 #include "WebOptions.hpp"
 
 namespace cse498 {
-class WebElement {
+class WebElement : public std::enable_shared_from_this<WebElement> {
  protected:
   /// @brief Handle to the DOM element
   emscripten::val dom_element = emscripten::val::null();
@@ -23,6 +23,13 @@ class WebElement {
  public:
   /// @brief Delete the default constructor
   WebElement() = delete;
+
+  /**
+   * @brief Get shared pointer to the WebElement
+   */
+  std::shared_ptr<WebElement> GetSharedPtr() {
+    return shared_from_this();
+  }
 
   /**
    * @brief Create an element with the given tag and options in the DOM

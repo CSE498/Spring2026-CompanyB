@@ -35,7 +35,7 @@ struct TextStyle {
  * Designed for high-throughput logging with memory constraints and headless CI
  * support.
  */
-class WebTextbox : public WebElement, public std::enable_shared_from_this<WebTextbox> {
+class WebTextbox : public WebElement {
  private:
   std::string mock_text_content_;
   size_t max_length_ = 50000;
@@ -70,10 +70,6 @@ class WebTextbox : public WebElement, public std::enable_shared_from_this<WebTex
    * @brief Destroys the WebTextbox and removes the element from the DOM.
    */
   ~WebTextbox();
-
-  std::shared_ptr<WebTextbox> GetSharedPtr() {
-    return shared_from_this();
-  }
 
   /**
    * @brief Overwrites the current text, truncating if it exceeds max length.

@@ -28,7 +28,7 @@ enum class SizeUnit { px, em, rem, percent, vw, vh };
  * allowing programmers to control image source, position, size, alt text,
  * and visibility using C++ functions.
  **/
-class WebImage : public WebElement, public std::enable_shared_from_this<WebImage> {
+class WebImage : public WebElement {
  private:
   /// Image's source
   std::string src{};
@@ -67,10 +67,6 @@ class WebImage : public WebElement, public std::enable_shared_from_this<WebImage
 
   /// Disable copy assignment operator
   WebImage& operator=(const WebImage&) = delete;
-
-  std::shared_ptr<WebImage> GetSharedPtr() {
-    return shared_from_this();
-  }
 
   /**
    * @brief Check if the image is loaded.
