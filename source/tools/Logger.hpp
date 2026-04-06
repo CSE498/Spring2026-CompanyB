@@ -81,7 +81,7 @@ class Logger : public ILogger<AgentType> {
   /// @return true if replay loading was successful
   bool BeginReplay(const std::string& filePath,
                    std::vector<AgentType*>& agents) override {
-    return mReplayDriver->ReplayFromFile(filePath, agents);
+    return mReplayDriver->ReplayFromFile(filePath, agents).value_or(false);
   }
 
   // SAVING DURING LIVE SIMULATION:
