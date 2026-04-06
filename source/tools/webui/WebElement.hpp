@@ -31,6 +31,10 @@ class WebElement : public std::enable_shared_from_this<WebElement> {
     return shared_from_this();
   }
 
+  operator std::shared_ptr<WebElement>() {
+    return shared_from_this();
+  }
+
   /**
    * @brief Create an element with the given tag and options in the DOM
    * @param tag The HTML tag name (e.g. "div", "span")

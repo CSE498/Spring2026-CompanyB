@@ -38,14 +38,14 @@ int main() {
           {"border-radius", "20px"},
         }},
         .children = {
-          UIItem<WebButton>("", WebOptions{ .id = "start-btn", .classes={"button"} })->SetOnClick(btn_lambda).GetSharedPtr(),
-          UIItem<WebButton>("", WebOptions{ .id = "pause-btn", .classes={"button"} })->SetOnClick(btn_lambda).GetSharedPtr(),
-          UIItem<WebButton>("", WebOptions{ .id = "stop-btn", .classes={"button"} })->SetOnClick(btn_lambda).GetSharedPtr(),
-          UIItem<WebButton>("", WebOptions{ .id = "upload-btn", .classes={"button"} })->SetOnClick(btn_lambda).GetSharedPtr(),
-          UIItem<WebButton>("", WebOptions{ .id = "save-btn", .classes={"button"} })->SetOnClick(btn_lambda).GetSharedPtr(),
-          UIItem<WebButton>("", WebOptions{ .id = "exit-btn", .classes={"button"} })->SetOnClick(btn_lambda).GetSharedPtr()
+          UIItem<WebButton>("", WebOptions{ .id = "start-btn", .classes={"button"} })->SetOnClick(btn_lambda),
+          UIItem<WebButton>("", WebOptions{ .id = "pause-btn", .classes={"button"} })->SetOnClick(btn_lambda),
+          UIItem<WebButton>("", WebOptions{ .id = "stop-btn", .classes={"button"} })->SetOnClick(btn_lambda),
+          UIItem<WebButton>("", WebOptions{ .id = "upload-btn", .classes={"button"} })->SetOnClick(btn_lambda),
+          UIItem<WebButton>("", WebOptions{ .id = "save-btn", .classes={"button"} })->SetOnClick(btn_lambda),
+          UIItem<WebButton>("", WebOptions{ .id = "exit-btn", .classes={"button"} })->SetOnClick(btn_lambda)
         }
-      })->SetHeight("80px").SetDirection("row").SetAlignItems("center").SetGap("10px").GetSharedPtr(),
+      })->SetHeight("80px").SetDirection("row").SetAlignItems("center").SetGap("10px"),
 
       UIItem<WebLayout>(WebOptions{
         .id = "main-layout",
@@ -61,26 +61,26 @@ int main() {
                 .id = "top-textbox",
                 .classes = { "textbox" },
                 .style = {{ "flex", "7" }}
-              })->SetText("Info").GetSharedPtr(),
+              })->SetText("Info"),
 
               UIItem<WebTextbox>(TextStyle(), WebOptions{
                 .id = "bottom-textbox",
                 .classes = { "textbox" },
                 .style = {{ "flex", "3" }}
-              })->SetText("Log").GetSharedPtr()
+              })->SetText("Log")
             }
-          })->SetHeight("100%").SetDirection("column").SetGap("10px").SetAlignItems("stretch").GetSharedPtr(),
+          })->SetHeight("100%").SetDirection("column").SetGap("10px").SetAlignItems("stretch"),
 
           UIItem<WebLayout>(WebOptions{
             .id = "game-area",
             .children = {
-              UIItem<WebImage>("assets/images/map2.svg", "Game map", WebOptions{ .id = "map-image" })->SetPosition(0, 0).GetSharedPtr(),
-              UIItem<WebCanvas>(1000, 500, WebOptions{ .id = "game-canvas" })->SetFillColor({255, 255, 255}).SetFont("48px arial").GetSharedPtr()
+              UIItem<WebImage>("assets/images/map2.svg", "Game map", WebOptions{ .id = "map-image" })->SetPosition(0, 0),
+              UIItem<WebCanvas>(1000, 500, WebOptions{ .id = "game-canvas" })->SetFillColor({255, 255, 255}).SetFont("48px arial")
             }
           })
         }
       })
-        ->SetHeight("80vh").SetDirection("row").SetGap("20px").SetAlignItems("stretch").SetJustifyContent("flex-start").GetSharedPtr()
+        ->SetHeight("80vh").SetDirection("row").SetGap("20px").SetAlignItems("stretch").SetJustifyContent("flex-start")
     }
   });
   
