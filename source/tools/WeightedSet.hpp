@@ -500,7 +500,7 @@ class WeightedSet {
     return std::make_optional(removed_value);
   }
 
-  void Clear() {
+  void Clear() noexcept {
     root_ = nullptr;
     element_to_node_.clear();
   }
