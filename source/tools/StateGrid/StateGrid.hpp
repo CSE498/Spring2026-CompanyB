@@ -183,6 +183,6 @@ class StateGrid {
    ************************************************/
   [[nodiscard]] bool hasAgent(size_t row, size_t col) const;
 
-  void print();
+  void print() const;
 };
 }  // namespace cse498

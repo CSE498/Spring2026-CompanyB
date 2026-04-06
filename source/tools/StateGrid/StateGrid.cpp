@@ -122,7 +122,7 @@ bool StateGrid::moveAgent(size_t fromRow, size_t fromCol, size_t toRow,
   return tiles[row][col].hasAgent();
 }
 
-void StateGrid::print() {
+void StateGrid::print() const {
   for (int i = 0; i < getHeight(); i++) {
     for (int j = 0; j < (getWidth()); j++) {
       std::cout << getTile(i, j)->getSymbol();
