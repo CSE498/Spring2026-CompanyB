@@ -1,9 +1,9 @@
-#include "../../source/tools/DataMap.hpp"
-
 #include <catch2/catch_test_macros.hpp>
 #include <set>
 #include <string>
 #include <vector>
+
+#include "../../source/tools/DataMap.hpp"
 
 TEST_CASE("DataMap can store and retrieve values", "[DataMap]") {
   cse498::DataMap data;
@@ -252,7 +252,8 @@ TEST_CASE("DataMap Get returns error for non-existent key", "[DataMap]") {
 
   auto result = data.Get<int>("nonexistent");
   REQUIRE_FALSE(result.has_value());
-  REQUIRE(result.error().errorType == cse498::DataMap::Error::ErrorType::KeyNotFound);
+  REQUIRE(result.error().errorType ==
+          cse498::DataMap::Error::ErrorType::KeyNotFound);
 }
 
 TEST_CASE("DataMap Get returns error for type mismatch", "[DataMap]") {
@@ -261,7 +262,8 @@ TEST_CASE("DataMap Get returns error for type mismatch", "[DataMap]") {
 
   auto result = data.Get<double>("value");
   REQUIRE_FALSE(result.has_value());
-  REQUIRE(result.error().errorType == cse498::DataMap::Error::ErrorType::TypeMismatch);
+  REQUIRE(result.error().errorType ==
+          cse498::DataMap::Error::ErrorType::TypeMismatch);
 }
 
 TEST_CASE("DataMap Get error cases with various types", "[DataMap]") {
@@ -282,7 +284,8 @@ TEST_CASE("DataMap Get error cases with various types", "[DataMap]") {
   SECTION("key not found on non-empty map") {
     auto result = data.Get<int>("missing");
     REQUIRE_FALSE(result.has_value());
-    REQUIRE(result.error().errorType == cse498::DataMap::Error::ErrorType::KeyNotFound);
+    REQUIRE(result.error().errorType ==
+            cse498::DataMap::Error::ErrorType::KeyNotFound);
   }
 }
 

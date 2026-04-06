@@ -22,9 +22,8 @@ class DataMap {
   MapType mData;
 
  public:
-
   class Error {
-    public:
+   public:
     enum class ErrorType {
       KeyNotFound,
       TypeMismatch,
@@ -41,7 +40,6 @@ class DataMap {
     MapType::iterator mIt;
 
    public:
-
     using reference = typename MapType::iterator::reference;
     using pointer = typename MapType::iterator::pointer;
 
