@@ -90,14 +90,6 @@ struct _InfoHandler {
 // Now set our desired InfoHandler type and let the compiler handle the rest
 using InfoHandler = _InfoHandler<int, double, bool>;
 
-template <IsInfoType I>
-std::function<std::expected<bool, StepErr>(I)> default_call() {
-  return [](I) {
-    std::unexpected(StepErr{StepErr::Kind::WRONG_TYPE,
-                            "InfoStep invalid type InfoType into InfoHandler"});
-  };
-}
-
 // Forward decl.
 struct StepContainer;
 
