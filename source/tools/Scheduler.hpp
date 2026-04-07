@@ -553,6 +553,8 @@ class Scheduler {
     if (!std::isfinite(floor))
       return std::unexpected(SchedulerError::InvalidWeight);
     if (floor < 0.0) return std::unexpected(SchedulerError::NegativeWeight);
+    if (floor > weight_ceiling)
+      return std::unexpected(SchedulerError::InvalidParameter);
     weight_floor = floor;
     return {};
   }
@@ -563,6 +565,8 @@ class Scheduler {
   [[nodiscard]] std::expected<void, SchedulerError> SetWeightCeiling(
       double ceiling) {
     if (!std::isfinite(ceiling) || ceiling <= 0.0)
+      return std::unexpected(SchedulerError::InvalidParameter);
+    if (ceiling < weight_floor)
       return std::unexpected(SchedulerError::InvalidParameter);
     weight_ceiling = ceiling;
     return {};
