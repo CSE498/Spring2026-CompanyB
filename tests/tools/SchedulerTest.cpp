@@ -179,11 +179,11 @@
  *
  * ### 6. Manual process control
  * @code
- *   sched.DisableProcess(2);            
- *   sched.EnableProcess(2);                       
- *   sched.SetBaseWeight(1, 20.0);     / change priority at runtime 
- *   sched.RemoveProcess(3); // permanently remove 
- *   sched.Clear();             
+ *   sched.DisableProcess(2);
+ *   sched.EnableProcess(2);
+ *   sched.SetBaseWeight(1, 20.0);     / change priority at runtime
+ *   sched.RemoveProcess(3); // permanently remove
+ *   sched.Clear();
  * @endcode
  *
  */
