@@ -11,19 +11,28 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # TODO: This section might need work. I am not sure what to anticpate just yet.
 # Source files
 file(GLOB_RECURSE SOURCES
-    "${CMAKE_CURRENT_SOURCE_DIR}/*.cpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/*.c"
+        "${CMAKE_CURRENT_SOURCE_DIR}/*.cpp"
+        "${CMAKE_CURRENT_SOURCE_DIR}/*.c"
 )
 
 # Header directories
 set(HEADER_DIRS
-    ${CMAKE_CURRENT_SOURCE_DIR}
-    ${CMAKE_CURRENT_SOURCE_DIR}/agents
-    ${CMAKE_CURRENT_SOURCE_DIR}/core
-    ${CMAKE_CURRENT_SOURCE_DIR}/Interfaces
-    ${CMAKE_CURRENT_SOURCE_DIR}/tools
-    ${CMAKE_CURRENT_SOURCE_DIR}/worlds
+        ${CMAKE_CURRENT_SOURCE_DIR}
+        ${CMAKE_CURRENT_SOURCE_DIR}/agents
+        ${CMAKE_CURRENT_SOURCE_DIR}/core
+        ${CMAKE_CURRENT_SOURCE_DIR}/Interfaces
+        ${CMAKE_CURRENT_SOURCE_DIR}/tools
+        ${CMAKE_CURRENT_SOURCE_DIR}/worlds
 )
+
+include(FetchContent)
+FetchContent_Declare(
+        range-v3
+        GIT_REPOSITORY https://github.com/ericniebler/range-v3.git
+        GIT_TAG 0.12.0
+)
+FetchContent_MakeAvailable(range-v3)
+
 
 if(BUILD_WASM_TESTS)
     # Exclude Qt GUI files (Qt can't be compiled by emcc)
@@ -32,9 +41,9 @@ if(BUILD_WASM_TESTS)
     # Fetch Catch2 v3 from GitHub
     include(FetchContent)
     FetchContent_Declare(
-        Catch2
-        GIT_REPOSITORY https://github.com/catchorg/Catch2.git
-        GIT_TAG v3.12.0
+            Catch2
+            GIT_REPOSITORY https://github.com/catchorg/Catch2.git
+            GIT_TAG v3.12.0
     )
     FetchContent_MakeAvailable(Catch2)
 
@@ -60,26 +69,29 @@ if(BUILD_WASM_TESTS)
     endif()
     add_executable(tests ${TEST_SOURCES})
     target_link_libraries(tests PRIVATE project_lib Catch2::Catch2WithMain)
+    target_include_directories(project_lib SYSTEM PUBLIC
+            $<TARGET_PROPERTY:range-v3,INTERFACE_INCLUDE_DIRECTORIES>
+    )
 
     # Emscripten compatibility: disable POSIX signals
     target_compile_definitions(tests PRIVATE CATCH_CONFIG_NO_POSIX_SIGNALS)
 
     # Install npm modules for jsdom and canvas in the build directory
     execute_process(
-      COMMAND npm install jsdom canvas
-      WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+            COMMAND npm install jsdom canvas
+            WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
     )
 
     # Output as a js file for Node.js execution
     set_target_properties(tests PROPERTIES SUFFIX ".js")
     message(STATUS "Source directory: ${CMAKE_SOURCE_DIR}")
     target_link_options(tests PRIVATE
-        -sNODERAWFS=1
-        -sALLOW_MEMORY_GROWTH=1
-        -lembind
-        -sNO_DISABLE_EXCEPTION_CATCHING
-        # Link JS libraries for Node
-        --pre-js "${CMAKE_CURRENT_SOURCE_DIR}/../third-party/emscripten-test-libs/pre.js"
+            -sNODERAWFS=1
+            -sALLOW_MEMORY_GROWTH=1
+            -lembind
+            -sNO_DISABLE_EXCEPTION_CATCHING
+            # Link JS libraries for Node
+            --pre-js "${CMAKE_CURRENT_SOURCE_DIR}/../third-party/emscripten-test-libs/pre.js"
     )
 
 elseif(BUILD_TESTS)
@@ -99,9 +111,9 @@ elseif(BUILD_TESTS)
     # Fetch Catch2 v3 from GitHub
     include(FetchContent)
     FetchContent_Declare(
-        Catch2
-        GIT_REPOSITORY https://github.com/catchorg/Catch2.git
-        GIT_TAG v3.12.0
+            Catch2
+            GIT_REPOSITORY https://github.com/catchorg/Catch2.git
+            GIT_TAG v3.12.0
     )
     FetchContent_MakeAvailable(Catch2)
 
@@ -131,6 +143,7 @@ elseif(BUILD_TESTS)
     endif()
     add_executable(tests ${TEST_SOURCES})
     target_link_libraries(tests PRIVATE project_lib Catch2::Catch2WithMain)
+    target_link_libraries(project_lib PUBLIC range-v3)
     target_compile_options(tests PRIVATE -O2 -g -Wall -Wextra -Wpedantic)
 
 elseif(DEFINED EMSCRIPTEN)
@@ -143,26 +156,27 @@ elseif(DEFINED EMSCRIPTEN)
     add_executable(index ${SOURCES})
     set_target_properties(index PROPERTIES SUFFIX ".js")
     target_include_directories(index PRIVATE ${HEADER_DIRS})
+    target_link_libraries(index PRIVATE range-v3)
 
     # Emscripten compile options
     target_compile_options(index PRIVATE
-        -O2
-        -Wall
+            -O2
+            -Wall
     )
 
     # Emscripten link options
     target_link_options(index PRIVATE
-        -sALLOW_MEMORY_GROWTH=1
-        -sMAXIMUM_MEMORY=1gb
-        -sEXPORTED_RUNTIME_METHODS=ccall,cwrap
-        -lembind
+            -sALLOW_MEMORY_GROWTH=1
+            -sMAXIMUM_MEMORY=1gb
+            -sEXPORTED_RUNTIME_METHODS=ccall,cwrap
+            -lembind
     )
 
     # Copy custom HTML into build output
     configure_file(
-        ${CMAKE_CURRENT_SOURCE_DIR}/tools/webui/index.html
-        ${CMAKE_BINARY_DIR}/index.html
-        COPYONLY
+            ${CMAKE_CURRENT_SOURCE_DIR}/tools/webui/index.html
+            ${CMAKE_BINARY_DIR}/index.html
+            COPYONLY
     )
 
 else()
@@ -178,12 +192,13 @@ else()
     endif()
 
     add_executable(app ${SOURCES})
+    target_link_libraries(app PRIVATE range-v3)
     target_include_directories(app PRIVATE ${HEADER_DIRS})
     if(NOT NO_QT)
         target_link_libraries(app PRIVATE Qt6::Core Qt6::Gui Qt6::Widgets)
     endif()
     target_compile_options(app PRIVATE
-        -Wall -Wextra -Wcast-align -Wnon-virtual-dtor -Woverloaded-virtual -pedantic
+            -Wall -Wextra -Wcast-align -Wnon-virtual-dtor -Woverloaded-virtual -pedantic
     )
 
 endif()

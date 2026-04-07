@@ -28,7 +28,7 @@ void ImageGrid::MapImages(const std::vector<QString>& imagePaths) {
 
     // map each cell type to corresponding images
     // i: cell type index; i starts at 1 to account for 'Unknown' cell type
-    for (int i = 0; i < cellTypes.size() - 1; i++) {
+    for (size_t i = 0; i < cellTypes.size() - 1; i++) {
         // map each cell type to images
         QString imageID = QString::number(i + 1);
         if (!mImageManager.Load(imageID, imagePaths[i])) {
@@ -54,7 +54,7 @@ void ImageGrid::RenderGrid() {
             // find the corresponding image to the cell_id
             if (mImageManager.HasImage(imageID)) {
                 QGraphicsPixmapItem* item =
-                    mScene.addPixmap(mImageManager.GetImage(imageID));
+                    mScene.addPixmap(mImageManager.GetImage(imageID).value());
                 item->setPos(x * mTileSize, y * mTileSize);
             }
         }
