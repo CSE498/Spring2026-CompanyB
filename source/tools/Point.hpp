@@ -20,11 +20,11 @@ inline bool tol_equal(double a, double b) {
 
 class Point {
  private:
-  double x{}, y{};
+  double x{0.0}, y{0.0};
 
  public:
   // default constructor
-  Point() : x(0.0), y(0.0) {}
+  Point() = default;
 
   // parameterized constructor
   Point(double X, double Y) : x(X), y(Y) {}
@@ -73,17 +73,14 @@ class Point {
     return *this;
   }
 
-  // normalize
-  Point& normalize() {
-    double mag = this->magnitude();
-    if (!tol_equal(mag, 0.0)) {
-      x = x / mag;
-      y = y / mag;
-    }
-    return *this;
+  // Returns a scaled copy without mutating the original.
+  [[nodiscard]] Point scaled(double scalar) const {
+    Point copy = *this;
+    return copy.scale(scalar);
   }
 
-  [[nodiscard]] static std::expected<Point, std::string> safe_normalize(
+  // normalize -- returns error on zero vector instead of silently doing nothing
+  [[nodiscard]] static std::expected<Point, std::string> normalize(
       const Point& p) {
     double mag = p.magnitude();
     if (tol_equal(mag, 0.0))
@@ -111,6 +108,13 @@ class Point {
     y = ((tempx * sin_rad) + (tempy * cos_rad)) + pivot.y;
 
     return *this;
+  }
+
+  // Returns a rotated copy without mutating the original.
+  [[nodiscard]] Point rotated(double deg, const Point& pivot = {0, 0},
+                              bool ccw = true) const {
+    Point copy = *this;
+    return copy.rotate(deg, pivot, ccw);
   }
 
   // 2D cross product -- useful for finding area of the parallelogram
