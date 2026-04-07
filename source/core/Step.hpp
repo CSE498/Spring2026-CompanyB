@@ -148,6 +148,12 @@ struct StepContainer {
     std::unique_ptr<Node> next;
     std::unique_ptr<Node> left;
     std::unique_ptr<Node> right;
+
+    Node() : step({}), next(nullptr), left(nullptr), right(nullptr) {}
+
+    template <StepKind S>
+    Node(S &&s)
+        : step(std::move(s)), next(nullptr), left(nullptr), right(nullptr) {}
   };
 
   // Root is an "empty" node so that "last" can always be bound
@@ -226,7 +232,7 @@ struct StepContainer {
       last->right = std::move(f_body.root);
       f_body.last = nullptr;
     } else {
-      // T is just a step, so put it on last's left
+      // F is just a step, so put it on last's right
       last->right = std::make_unique<Node>();
       last->right->next = std::make_unique<Node>(std::move(f_body));
     }
