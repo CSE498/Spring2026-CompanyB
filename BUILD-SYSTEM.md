@@ -76,6 +76,9 @@ All variants include the base warning flags: `-Wall -Wextra -Wcast-align -Wnon-v
 
 ### Flags
 
+> [!IMPORTANT]  
+> Make sure to run `make clean` before setting these flags. Otherwise the CMake cache will override them.
+
 These can be combined with any variant:
 
 | Flag | Applies to | Effect |
