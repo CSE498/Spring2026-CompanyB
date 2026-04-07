@@ -13,39 +13,39 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Restore clang-format-21 cache
+      - name: Restore clang-format-20 cache
         id: cache-clang-format
         uses: actions/cache/restore@v4
         with:
-          path: ~/llvm-21-cache
-          key: clang-format-21-${{ runner.os }}
+          path: ~/llvm-20-cache
+          key: clang-format-20-${{ runner.os }}
 
-      - name: Install clang-format-21
+      - name: Install clang-format-20
         if: steps.cache-clang-format.outputs.cache-hit != 'true'
         run: |
           DISTRO=$(lsb_release -cs)
           wget -qO- https://apt.llvm.org/llvm-snapshot.gpg.key | sudo tee /etc/apt/trusted.gpg.d/apt.llvm.org.asc
-          echo "deb http://apt.llvm.org/${DISTRO}/ llvm-toolchain-${DISTRO}-21 main" | sudo tee /etc/apt/sources.list.d/llvm-21.list
+          echo "deb http://apt.llvm.org/${DISTRO}/ llvm-toolchain-${DISTRO}-20 main" | sudo tee /etc/apt/sources.list.d/llvm-20.list
           sudo apt-get update
-          sudo apt-get install -y --no-install-recommends clang-format-21
-          mkdir -p ~/llvm-21-cache/bin ~/llvm-21-cache/lib
-          cp /usr/lib/llvm-21/bin/clang-format ~/llvm-21-cache/bin/clang-format-21
-          ldd /usr/lib/llvm-21/bin/clang-format | grep "=> /" | awk '{print $3}' | xargs -I{} cp -L {} ~/llvm-21-cache/lib/
+          sudo apt-get install -y --no-install-recommends clang-format-20
+          mkdir -p ~/llvm-20-cache/bin ~/llvm-20-cache/lib
+          cp /usr/lib/llvm-20/bin/clang-format ~/llvm-20-cache/bin/clang-format-20
+          ldd /usr/lib/llvm-20/bin/clang-format | grep "=> /" | awk '{print $3}' | xargs -I{} cp -L {} ~/llvm-20-cache/lib/
 
-      - name: Add clang-format-21 to PATH
+      - name: Add clang-format-20 to PATH
         run: |
-          echo "$HOME/llvm-21-cache/bin" >> $GITHUB_PATH
-          echo "LD_LIBRARY_PATH=$HOME/llvm-21-cache/lib:$LD_LIBRARY_PATH" >> $GITHUB_ENV
+          echo "$HOME/llvm-20-cache/bin" >> $GITHUB_PATH
+          echo "LD_LIBRARY_PATH=$HOME/llvm-20-cache/lib:$LD_LIBRARY_PATH" >> $GITHUB_ENV
 
-      - name: Save clang-format-21 cache
+      - name: Save clang-format-20 cache
         if: always() && steps.cache-clang-format.outputs.cache-hit != 'true'
         uses: actions/cache/save@v4
         with:
-          path: ~/llvm-21-cache
-          key: clang-format-21-${{ runner.os }}
+          path: ~/llvm-20-cache
+          key: clang-format-20-${{ runner.os }}
 
       - name: Formatting Checks
-        run: find source tests -type f \( -name "*.cpp" -o -name "*.hpp" -o -name "*.c" -o -name "*.h" \) | xargs clang-format-21 -n -Werror --verbose
+        run: find source tests -type f \( -name "*.cpp" -o -name "*.hpp" -o -name "*.c" -o -name "*.h" \) | xargs clang-format-20 -n -Werror --verbose --style=Google
 
   native-test:
     runs-on: ubuntu-latest
