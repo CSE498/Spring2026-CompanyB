@@ -33,7 +33,7 @@ class RepeatNode : public DecoratorNode {
 
   int tickCount() const { return m_tickCount; }
 
-  std::string getActivePath() override {
+  std::string getActivePath() const override {
     auto& child = this->getChild();
 
     return (child) ? m_name + " - " + child->getActivePath() : m_name;
