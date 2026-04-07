@@ -26,13 +26,10 @@ std::string MakeDefaultLogFilePath() {
 }
 }  // namespace
 
-/// @brief Stores the active log level threshold for ShouldLog.
 void OutputManager::SetLogLevel(LogLevel level) noexcept {
   mCurrentLevel = level;
 }
 
-/// @brief Initializes default output path and level; file is opened on first
-/// Flush().
 OutputManager::OutputManager(LogLevel level)
     : mOutputFilePath(MakeDefaultLogFilePath()), mCurrentLevel(level) {}
 

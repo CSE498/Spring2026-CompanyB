@@ -66,6 +66,7 @@ class OutputManager : public IOutputManager {
  public:
   /// @brief Constructs with default output path @c logs/simulation_log.json (no
   /// disk write until Flush).
+  /// @param level Initial log level threshold.
   explicit OutputManager(LogLevel level = LogLevel::Normal);
 
   /// @brief Closes the output stream if open.
@@ -87,6 +88,7 @@ class OutputManager : public IOutputManager {
   void LogMessage(LogLevel level, const std::string& message) override;
 
   /// @brief Updates the filter used by ShouldLog for subsequent messages.
+  /// @param level New maximum log level to emit.
   void SetLogLevel(LogLevel level) noexcept override;
 
   /// @brief Serializes the full JSON buffer (including action events) to the
