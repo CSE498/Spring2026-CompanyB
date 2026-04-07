@@ -105,6 +105,10 @@ struct InfoStep {
   Aspect aspect;
   WorldPosition target;
 
+  InfoStep() = delete;
+  InfoStep(Aspect in_aspect, WorldPosition in_pos)
+      : aspect(in_aspect), target(in_pos) {};
+
   bool operator==(InfoStep const &other) const {
     return (other.aspect == aspect) && (other.target == target);
   }
@@ -114,7 +118,7 @@ struct ConditionalStep {
   InfoHandler condition;
 
   bool operator==([[maybe_unused]] ConditionalStep const &other) const {
-    // Figure out how to compare functors...
+    // TODO: Decide how to compare functors
     return true;
   }
 };
