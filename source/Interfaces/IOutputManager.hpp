@@ -34,15 +34,17 @@ class IOutputManager {
   virtual void SetLogLevel(LogLevel level) noexcept = 0;
 
   /// @brief Writes the full in-memory JSON (including pending action events) to
-  /// disk.
+  /// disk, replacing the file contents so repeated flushes stay one valid JSON
+  /// document.
   virtual bool Flush() = 0;
 
   /// @brief Merges simulation entries and statistics into the buffer and
   /// typically flushes.
   virtual void WriteSimulationOutput(const DataLog& dataLog) = 0;
 
-  /// @brief Read-only view of the accumulated JSON for tests or inspection.
-  virtual const nlohmann::json& GetBufferedLog() const noexcept = 0;
+  /// @brief Reference to accumulated JSON for tests or inspection; may refresh
+  /// cached action_events from pending data (not const for that reason).
+  virtual const nlohmann::json& GetBufferedLog() noexcept = 0;
 
   /// @brief Queues action events in memory; disk write happens on Flush().
   virtual void WriteActionEvents(

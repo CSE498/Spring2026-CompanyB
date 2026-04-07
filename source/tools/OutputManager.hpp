@@ -80,7 +80,8 @@ class OutputManager : public IOutputManager {
   void SetLogLevel(LogLevel level) noexcept override;
 
   /// @brief Serializes the full JSON buffer (including action events) to the
-  /// output file.
+  /// output file, then closes the stream so each flush overwrites a single JSON
+  /// document.
   bool Flush() override;
 
   /// @brief Writes DataLog entries and statistics, then calls Flush().
@@ -88,7 +89,7 @@ class OutputManager : public IOutputManager {
 
   /// @brief Returns the in-memory JSON; rebuilds "action_events" from the
   /// pending vector first.
-  [[nodiscard]] const nlohmann::json& GetBufferedLog() const noexcept override;
+  [[nodiscard]] const nlohmann::json& GetBufferedLog() noexcept override;
 
   /// @brief Appends events to the pending vector; no file I/O until Flush().
   void WriteActionEvents(const std::vector<ActionEventBase>& events) override;
