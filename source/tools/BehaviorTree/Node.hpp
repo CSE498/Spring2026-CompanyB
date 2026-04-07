@@ -62,6 +62,8 @@ class Node {
   virtual void addNode(std::unique_ptr<Node> node) = 0;
   virtual void deleteNode(Node* node) = 0;
 
+  // ATTRIBUTIONS: Used ChatGPT to get ASCII implementation
+
   /**
    * @brief Prints a formatted representation of the node.
    *
@@ -71,7 +73,7 @@ class Node {
    *
    * @param depth The current depth within the tree.
    */
-  virtual void print(int depth) const = 0;
+  virtual void print(const std::string& prefix = "", bool isLast = true, bool isRoot = false) const = 0;
 
   /**
    * @brief Returns the active execution path from this node downward.

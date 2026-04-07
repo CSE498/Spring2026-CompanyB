@@ -42,12 +42,19 @@ class DecoratorNode : public Node {
    */
   void deleteNode([[maybe_unused]] Node* node) override { m_child = nullptr; }
 
-  virtual void print(int depth) const {
-    int indent = 2;
+  // ATTRIBUTIONS: Used ChatGPT to get ASCII implementation
 
-    std::cout << std::string(depth * indent, ' ') << m_name << " (" << m_status << ")" << '\n';
+  virtual void print(const std::string& prefix, bool isLast, bool isRoot) const {
+    if (!isRoot) {
+        std::cout << prefix;
+        std::cout << (isLast ? "└── " : "├── ");
+    }
+    std::cout << m_name << " (" << m_status << ")" << '\n';
 
-    m_child->print(depth + 1);
+    if (m_child) {
+        std::string newPrefix = prefix + (isLast ? "    " : "│   ");
+        m_child->print(newPrefix, true);
+    }
   }
 
   virtual Status tick(Blackboard& blackboard) = 0;

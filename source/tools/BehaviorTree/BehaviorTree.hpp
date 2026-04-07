@@ -99,8 +99,7 @@ namespace cse498 {
     * Intended for debugging and development purposes.
     */
     void debugView() const {
-      int depth = 0;
-      m_root->print(depth);
+      m_root->print("", true, true);
     }
 
   private:
