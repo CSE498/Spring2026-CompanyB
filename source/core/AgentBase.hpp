@@ -2,33 +2,30 @@
 
 #include "Step.hpp"
 
-
 namespace cse498 {
 using cse498::steps::StepContainer;
 
-template <typename DataClass> 
-class AgentBase {
+template <typename DataClass> class AgentBase {
 protected:
-  DataClass mData;
+  DataClass m_Data;
 
 public:
-
-  AgentBase(DataClass data) : mData{data} {}
+  AgentBase(DataClass data) : m_Data{data} {}
   virtual ~AgentBase() = default;
 
-  // The main logic that separates the agents. When prompted for their turn, this where
-  // the descisions are made
+  // The main logic that separates the agents. When prompted for their turn,
+  // this where the descisions are made
   [[nodiscard]] virtual StepContainer GetTurn() = 0;
 
   /*
-  * Returning a copy is (most likely) correct here since DataClass is most
-  * likely cheap to copy and we dont to modify the DataClass without passing
-  * through SetState() since thats what logs the state changes for replay (?)
-  */
-  [[nodiscard]] DataClass GetState() const noexcept { return mData; }
+   * Returning a copy is (most likely) correct here since DataClass is most
+   * likely cheap to copy and we dont to modify the DataClass without passing
+   * through SetState() since thats what logs the state changes for replay (?)
+   */
+  [[nodiscard]] DataClass GetState() const noexcept { return m_Data; }
 
   void SetState(DataClass data) {
-    mData = data;
+    m_Data = data;
     // Here handle logic to log for replay?
   }
 };

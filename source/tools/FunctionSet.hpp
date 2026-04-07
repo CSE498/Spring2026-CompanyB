@@ -5,6 +5,7 @@
 #pragma once
 
 #include <algorithm>
+#include <cassert>
 #include <concepts>
 #include <expected>
 #include <functional>
@@ -59,15 +60,15 @@ public:
   constexpr void add(const FuncType &func) { functions.emplace_back(func); }
 
   /**
-   * @brief Check whether a fucntion can be stored in the set.
+   * @brief Check whether a function can be stored in the set.
    *
-   * @pram func The function to check.
+   * @param func The function to check.
    *
    * @note We never actually use f, but its useful so the compiler can auto
    *deduce type
    **/
   template <typename F>
-  constexpr bool check_storable([[maybe_unused]] const F &f) {
+  constexpr bool check_storable([[maybe_unused]] const F &f) const {
     return std::is_constructible_v<FuncType, F>;
   }
 
@@ -77,8 +78,8 @@ public:
    * Exceptions thrown by any function propagate out.
    *
    * @param args Arguments to pass to each stored function.
-   * @returns std::vector<Ret> with the fuction return types, if they are vector
-   * storable, void otherwise.
+   * @returns std::vector<Ret> with the function return types, if they are
+   * vector storable, void otherwise.
    */
   constexpr auto invoke(const Params &...args) const {
     if constexpr (VectorReturnable<Ret>) {
@@ -104,9 +105,9 @@ public:
    *   the index and exception pointer for each function that threw
    *
    * @param args Arguments to pass to each function.
-   * @return std::expected<std::vector<Ret>, ErrorType> if Ret is VectorReturnable,
-   *         std::expected<void, ErrorType> otherwise,
-   *         where ErrorType = std::vector<std::pair<size_t, std::exception_ptr>>
+   * @return std::expected<std::vector<Ret>, ErrorType> if Ret is
+   * VectorReturnable, std::expected<void, ErrorType> otherwise, where ErrorType
+   * = std::vector<std::pair<size_t, std::exception_ptr>>
    */
   constexpr auto invoke_catch(const Params &...args) const {
     using ErrorType = std::vector<std::pair<size_t, std::exception_ptr>>;
@@ -151,36 +152,36 @@ public:
    *   and exception pointer of the first function that threw
    *
    * @param args Arguments to pass to each function.
-   * @return std::expected<std::vector<Ret>, ErrorType> if Ret is VectorReturnable,
-   *         std::expected<void, ErrorType> otherwise,
-   *         where ErrorType = std::pair<size_t, std::exception_ptr>
+   * @return std::expected<std::vector<Ret>, ErrorType> if Ret is
+   * VectorReturnable, std::expected<void, ErrorType> otherwise, where ErrorType
+   * = std::pair<size_t, std::exception_ptr>
    */
   constexpr auto invoke_until_catch(const Params &...args) const {
-      using ErrorType = std::pair<size_t, std::exception_ptr>;
+    using ErrorType = std::pair<size_t, std::exception_ptr>;
 
-      if constexpr (VectorReturnable<Ret>) {
-          std::vector<Ret> results;
-          results.reserve(functions.size());
-          for (size_t index{0}; index < functions.size(); ++index) {
-              try {
-                  results.emplace_back(functions[index](args...));
-              } catch (...) {
-                  return std::expected<std::vector<Ret>, ErrorType>{
-                      std::unexpected{ErrorType{index, std::current_exception()}}};
-              }
-          }
-          return std::expected<std::vector<Ret>, ErrorType>{results};
-      } else {
-          for (size_t index{0}; index < functions.size(); ++index) {
-              try {
-                  functions[index](args...);
-              } catch (...) {
-                  return std::expected<void, ErrorType>{
-                      std::unexpected{ErrorType{index, std::current_exception()}}};
-              }
-          }
-          return std::expected<void, ErrorType>{};
+    if constexpr (VectorReturnable<Ret>) {
+      std::vector<Ret> results;
+      results.reserve(functions.size());
+      for (size_t index{0}; index < functions.size(); ++index) {
+        try {
+          results.emplace_back(functions[index](args...));
+        } catch (...) {
+          return std::expected<std::vector<Ret>, ErrorType>{
+              std::unexpected{ErrorType{index, std::current_exception()}}};
+        }
       }
+      return std::expected<std::vector<Ret>, ErrorType>{results};
+    } else {
+      for (size_t index{0}; index < functions.size(); ++index) {
+        try {
+          functions[index](args...);
+        } catch (...) {
+          return std::expected<void, ErrorType>{
+              std::unexpected{ErrorType{index, std::current_exception()}}};
+        }
+      }
+      return std::expected<void, ErrorType>{};
+    }
   }
 
   /**
@@ -193,15 +194,18 @@ public:
   constexpr void operator()(Params... args) const { invoke(args...); }
 
   /**
-   * @brief Get underlying function container if the caller wants to do any modification or uncommon operations
-   * that hasnt been implemented in the FunctionSet. We can do this because the FunctionSet holds no state on the function vector
-   * ,so it being modified without our knowledge doesnt break any invariant.
+   * @brief Get underlying function container if the caller wants to do any
+   * modification or uncommon operations that hasnt been implemented in the
+   * FunctionSet. We can do this because the FunctionSet holds no state on the
+   * function vector ,so it being modified without our knowledge doesnt break
+   * any invariant.
    */
-  [[nodiscard]] constexpr std::vector<FuncType>& GetFunctions() noexcept {
+  [[nodiscard]] constexpr std::vector<FuncType> &GetFunctions() noexcept {
     return functions;
   }
 
-  [[nodiscard]] constexpr const std::vector<FuncType>& GetFunctions() const noexcept {
+  [[nodiscard]] constexpr const std::vector<FuncType> &
+  GetFunctions() const noexcept {
     return functions;
   }
 
@@ -236,6 +240,7 @@ public:
    * @note UB if index is out of bounds
    */
   [[nodiscard]] constexpr FuncType &operator[](size_t index) noexcept {
+    assert(index < size());
     return functions[index];
   }
 
@@ -249,6 +254,7 @@ public:
    */
   [[nodiscard]] constexpr const FuncType &
   operator[](size_t index) const noexcept {
+    assert(index < size());
     return functions[index];
   }
 
@@ -293,6 +299,7 @@ public:
    * @note UB if set is empty
    */
   [[nodiscard]] constexpr FuncType &front() noexcept {
+    assert(size());
     return functions.front();
   }
 
@@ -303,6 +310,7 @@ public:
    * @note UB if set is empty
    */
   [[nodiscard]] constexpr const FuncType &front() const noexcept {
+    assert(size());
     return functions.front();
   }
 
@@ -312,7 +320,10 @@ public:
    *
    * @note UB if set is empty
    */
-  [[nodiscard]] constexpr FuncType &back() noexcept { return functions.back(); }
+  [[nodiscard]] constexpr FuncType &back() noexcept {
+    assert(size());
+    return functions.back();
+  }
 
   /**
    * @brief Const overload of back().
@@ -321,6 +332,7 @@ public:
    * @note UB if set is empty
    */
   [[nodiscard]] constexpr const FuncType &back() const noexcept {
+    assert(size());
     return functions.back();
   }
 
