@@ -4,6 +4,9 @@
 
 #include "tools/webui/WebImage.hpp"
 
+// NOTE: Duplicate-ID construction is enforced by assert(), which calls abort().
+// Catch2 cannot intercept abort() in the WASM/Node.js environment.
+
 /// Creates fake DOM elements for WebImage tests to run on.
 struct SetupMockDOM {
   SetupMockDOM() {
@@ -313,4 +316,31 @@ struct SetupMockDOM {
     img.SetSize(40, 30, cse498::SizeUnit::vh);
     REQUIRE(img.GetWidth() == 40);
     REQUIRE(img.GetHeight() == 30);
+  }
+
+  TEST_CASE("WebImage IsLoaded returns true when complete and naturalWidth > 0",
+            "[WebImage]") {
+    SetupMockDOM mock;
+    cse498::WebImage img("test-img-loaded-true", "test.png",
+                         "Loaded true test image");
+
+    emscripten::val document = emscripten::val::global("document");
+    emscripten::val elem = document.call<emscripten::val>(
+        "getElementById", std::string("test-img-loaded-true"));
+    elem.set("complete", true);
+    elem.set("naturalWidth", 100);
+
+    REQUIRE(img.IsLoaded() == true);
+  }
+
+  TEST_CASE("WebImage SetVisible updates visibility and GetVisible properly reflects it",
+            "[WebImage]") {
+    SetupMockDOM mock;
+    cse498::WebImage img("test-img-visible", "test.png", "Visible test image");
+
+    img.SetVisible(false);
+    REQUIRE(img.GetVisible() == false);
+
+    img.SetVisible(true);
+    REQUIRE(img.GetVisible() == true);
   }
