@@ -24,8 +24,8 @@
 // if (data.contains("duration") && data["duration"].is_number()) {
 //   double duration = data["duration"].get<double>();
 
-//   // Note: Only non-negative durations are included in statistics, as negative
-//   // durations do not make physical sense in a simulation context.
+//   // Note: Only non-negative durations are included in statistics, as
+//   // negative durations do not make physical sense in a simulation context.
 //   if (duration >= 0.0) {
 //     mRunningSum += duration;
 

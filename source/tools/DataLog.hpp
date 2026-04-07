@@ -70,17 +70,19 @@
 //   /// @brief Assignment operator (disabled)
 //   DataLog& operator=(const DataLog&) = delete;
 
-//   // / @brief Adds a log entry with automatic timestamp.
-//   // / @param data ActionEventBase containing agentId, actionType, duration, and
-//   // / summary.
+//   // / Adds a log entry with automatic timestamp.
+//   // / @param data ActionEventBase containing agentId, actionType, duration,
+//   // / and summary.
 //   // void AddEntry(const ActionEventBase& data) override;
 
 //   /// @brief Gets the mean of all logged action durations.
-//   /// @return Mean duration value, or std::nullopt if no data has been logged.
+//   /// @return Mean duration value, or std::nullopt if no data has been
+//   /// logged.
 //   std::optional<double> GetMean() const override;
 
 //   /// @brief Gets the median of all logged action durations.
-//   /// @return Median duration value, or std::nullopt if no data has been logged.
+//   /// @return Median duration value, or std::nullopt if no data has been
+//   /// logged.
 //   std::optional<double> GetMedian() const override;
 
 //   /// @brief Gets the minimum logged action duration.
