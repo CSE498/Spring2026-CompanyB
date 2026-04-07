@@ -31,7 +31,7 @@ class CompositeNode : public Node {
    *
    * @param node The node to add as a child.
    */
-  void addNode(std::unique_ptr<Node> node) {
+  void addNode(std::unique_ptr<Node> node) override {
     // assert(node.get() != nullptr); // Check for Nullptr
 
     m_children.push_back(std::move(node));
@@ -47,20 +47,19 @@ class CompositeNode : public Node {
 
   // ATTRIBUTIONS: Used ChatGPT to get the remove_if algorithm implementation
 
-  void deleteNode(Node* node) {
+  void deleteNode(Node* node) override {
     std::erase_if(m_children, [node](const std::unique_ptr<Node>& child) {
       return child.get() == node;
     });
-  };
+  }
 
   virtual void print(int depth) const {
     int indent = 2;
 
-    std::cout << std::string(depth * indent, ' ') << m_name << " (" << m_status
-              << ")" << '\n';
+    std::cout << std::string(depth * indent, ' ') << m_name << " (" << m_status << ")" << '\n';
 
     for (const auto& child : m_children) child->print(depth + 1);
-  };
+  }
 
   virtual Status tick(Blackboard& blackboard) = 0;
   virtual std::string getActivePath() const = 0;

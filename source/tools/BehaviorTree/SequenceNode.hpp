@@ -72,8 +72,6 @@ class SequenceNode : public CompositeNode {
     return m_status;
   };
 
-  int tickCount() const { return m_tickCount; }
-
   std::string getActivePath() const override {
     auto& children = this->getChildren();
 
@@ -87,9 +85,6 @@ class SequenceNode : public CompositeNode {
   };
 
  private:
-  /// Tracks the total number of tick() calls made on this node.
-  int m_tickCount{};
-
   /// Index of the currently active child node.
   unsigned int m_index{};
 };

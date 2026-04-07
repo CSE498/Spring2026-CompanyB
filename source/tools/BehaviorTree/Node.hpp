@@ -58,6 +58,10 @@ class Node {
 
   virtual ~Node() = default;
 
+  // Check implementations on CompositeNode and DecoratorNode since it's only meaningful for parent nodes
+  virtual void addNode(std::unique_ptr<Node> node) = 0;
+  virtual void deleteNode(Node* node) = 0;
+
   /**
    * @brief Prints a formatted representation of the node.
    *
@@ -94,7 +98,12 @@ class Node {
    */
   virtual Status tick(Blackboard& blackboard) = 0;
 
+  int tickCount() const { return m_tickCount; }
+
  protected:
   /// Stores the current execution status of the node.
   Status m_status = Status::Running;
+
+  /// Tracks the total number of tick() calls made on this node.
+  int m_tickCount{};
 };
