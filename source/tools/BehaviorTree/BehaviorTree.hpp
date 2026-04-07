@@ -70,7 +70,7 @@ class BehaviorTree {
    *
    * @return A formatted string representing the active node path.
    */
-  std::string getActivePath() { return m_root->getActivePath(); }
+  std::string getActivePath() const { return m_root->getActivePath(); }
 
   Blackboard& getBlackboard() { return m_blackboard; }
 

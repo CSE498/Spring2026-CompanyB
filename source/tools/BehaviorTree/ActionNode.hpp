@@ -48,7 +48,7 @@ class ActionNode : public Node {
 
   int tickCount() const { return m_tickCount; }
 
-  std::string getActivePath() override { return m_name; }
+  std::string getActivePath() const override { return m_name; }
 
  private:
   Action m_action;

@@ -78,7 +78,7 @@ class Node {
    *
    * @return A string describing the active path.
    */
-  virtual std::string getActivePath() = 0;
+  virtual std::string getActivePath() const = 0;
 
   /**
    * @brief Executes one tick of this node.
@@ -88,6 +88,7 @@ class Node {
    * decorators modify child behavior, and leaf nodes
    * perform concrete actions.
    *
+   * @param blackboard Shared data store used for reading and writing state.
    * @return An integer status code (e.g., Success (1), Failure (0), or Running
    * (-1)).
    */

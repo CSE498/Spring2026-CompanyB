@@ -52,7 +52,7 @@ class DecoratorNode : public Node {
   };
 
   virtual Status tick(Blackboard& blackboard) = 0;
-  virtual std::string getActivePath() = 0;
+  virtual std::string getActivePath() const = 0;
 
  protected:
   /**

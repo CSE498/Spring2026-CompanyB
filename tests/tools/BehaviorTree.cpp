@@ -22,7 +22,7 @@ TEST_CASE("BehaviorTree Construction and Node Insertion", "[tree][insert]") {
   rootPtr->addNode(std::move(node1));
 }
 
-TEST_CASE("Inserting and Retreaving Entries in Blackboard (Basic)", "[blackboard]") {
+TEST_CASE("Inserting and Retrieving Entries in Blackboard (Basic)", "[blackboard]") {
   auto root = std::make_unique<SequenceNode>("SeqRoot");
 
   cse498::BehaviorTree tree(std::move(root));
