@@ -30,7 +30,7 @@ int main() {
     .id = "app-layout",
     .children = {
 
-      UIItem<WebLayout>(WebOptions{ 
+      UIItem<WebLayout>(WebOptions{
         .id = "menu-bar",
         .style = {{
           {"width", "100%"},
@@ -50,18 +50,19 @@ int main() {
       UIItem<WebLayout>(WebOptions{
         .id = "main-layout",
         .children = {
-          UIItem<WebLayout>(WebOptions{ 
+          UIItem<WebLayout>(WebOptions{
             .id = "left-column",
             .style = {{
-              {"flex", "3"}, 
+              {"flex", "3"},
             }},
 
             .children = {
-              UIItem<WebTextbox>(TextStyle(), WebOptions{
-                .id = "top-textbox",
-                .classes = { "textbox" },
-                .style = {{ "flex", "7" }}
-              })->SetText("Info"),
+              UIItem<WebCanvas>(500, 500, WebOptions{ .id = "game-info", .classes = { "textbox" }, .style = {{ "flex", "7" }} })->SetBackgroundColor({85, 85, 85}).SetFillColor({255, 255, 255}).DrawRect(10, 10, 480, 480, true).SetPenColor({0, 0, 0}).DrawLine({40, 40}, {40, 450}).DrawLine({40, 450}, {450, 450}),
+              // UIItem<WebTextbox>(TextStyle(), WebOptions{
+              //   .id = "top-textbox",
+              //   .classes = { "textbox" },
+              //   .style = {{ "flex", "7" }}
+              // })->SetText("Info"),
 
               UIItem<WebTextbox>(TextStyle(), WebOptions{
                 .id = "bottom-textbox",
@@ -83,7 +84,7 @@ int main() {
         ->SetHeight("80vh").SetDirection("row").SetGap("20px").SetAlignItems("stretch").SetJustifyContent("flex-start")
     }
   });
-  
+
   layout->SetDirection("column").SetAlignItems("center").SetGap("10px").SetHeight("100vh").SetJustifyContent("flex-start");
 
   return 0;
