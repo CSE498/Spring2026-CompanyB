@@ -6,11 +6,14 @@
 #include <variant>
 
 namespace Concepts {
+/** @brief Require that the type `T` is equivalent to any of the types `...Ts`
+ */
 template <typename T, typename... Ts>
 concept IsOneOf = (std::is_same_v<T, Ts> || ...);
 
-template <typename Head, typename... Tail>
-constexpr bool all_unique() {
+/** @brief Helper compile-time call to check if all types in a list of types are
+ * unique. */
+template <typename Head, typename... Tail> constexpr bool all_unique() {
   // On final element, must be unique
   if constexpr (std::is_void_v<std::tuple<Tail...>>()) {
     return true;
@@ -23,11 +26,12 @@ constexpr bool all_unique() {
 }
 
 /** @brief Wraps `all_unique()` to provide a corresponding concept requirement.
+ * Requires that all types in `...Ts` are unique.
  */
 template <typename... Ts>
 concept UniqueTypes = all_unique<Ts..., std::void_t>();
 
-}  // namespace Concepts
+} // namespace Concepts
 
 namespace StaticUtil {
 /**
@@ -55,4 +59,4 @@ constexpr size_t variant_index() {
     return variant_index<Variant, TargetType, idx + 1>();
   }
 }
-};  // namespace StaticUtil
+}; // namespace StaticUtil
