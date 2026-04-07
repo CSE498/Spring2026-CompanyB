@@ -6,7 +6,8 @@
 #include <sstream>
 #include <string>
 
-// #include "../../source/tools/DataLog.hpp"  // only needed for WriteSimulationOutput tests (disabled below)
+// #include "../../source/tools/DataLog.hpp" // only needed for
+// WriteSimulationOutput tests (disabled below)
 #include "../../source/tools/OutputManager.hpp"
 
 using namespace cse498;
