@@ -15,7 +15,7 @@ concept IsOneOf = (std::is_same_v<T, Ts> || ...);
  * unique. */
 template <typename Head, typename... Tail> constexpr bool all_unique() {
   // On final element, must be unique
-  if constexpr (std::is_void_v<std::tuple<Tail...>>()) {
+  if constexpr (sizeof...(Tail) == 1) {
     return true;
   } else if constexpr (IsOneOf<Head, Tail...>) {
     return false;
@@ -29,7 +29,7 @@ template <typename Head, typename... Tail> constexpr bool all_unique() {
  * Requires that all types in `...Ts` are unique.
  */
 template <typename... Ts>
-concept UniqueTypes = all_unique<Ts..., std::void_t>();
+concept UniqueTypes = all_unique<Ts...>();
 
 } // namespace Concepts
 
