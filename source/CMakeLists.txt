@@ -32,7 +32,13 @@ FetchContent_Declare(
     GIT_REPOSITORY https://github.com/ericniebler/range-v3.git
     GIT_TAG 0.12.0
 )
-FetchContent_MakeAvailable(range-v3)
+set(JSON_BuildTests OFF CACHE INTERNAL "")
+FetchContent_Declare(
+    nlohmann_json
+    GIT_REPOSITORY https://github.com/nlohmann/json.git
+    GIT_TAG v3.12.0
+)
+FetchContent_MakeAvailable(range-v3 nlohmann_json)
 
 
 if(BUILD_WASM_TESTS)
@@ -70,6 +76,7 @@ if(BUILD_WASM_TESTS)
     endif()
     add_executable(tests ${TEST_SOURCES})
     target_link_libraries(tests PRIVATE project_lib Catch2::Catch2WithMain)
+    target_link_libraries(project_lib PUBLIC nlohmann_json::nlohmann_json)
     target_include_directories(project_lib SYSTEM PUBLIC
     $<TARGET_PROPERTY:range-v3,INTERFACE_INCLUDE_DIRECTORIES>
 )
@@ -144,7 +151,7 @@ elseif(BUILD_TESTS)
     endif()
     add_executable(tests ${TEST_SOURCES})
     target_link_libraries(tests PRIVATE project_lib Catch2::Catch2WithMain)
-    target_link_libraries(project_lib PUBLIC range-v3)
+    target_link_libraries(project_lib PUBLIC range-v3 nlohmann_json::nlohmann_json)
 
 elseif(DEFINED EMSCRIPTEN)
     # Exclude Qt GUI files (Qt can't be compiled by emcc)
@@ -156,7 +163,7 @@ elseif(DEFINED EMSCRIPTEN)
     add_executable(index ${SOURCES})
     set_target_properties(index PROPERTIES SUFFIX ".js")
     target_include_directories(index PRIVATE ${HEADER_DIRS})
-    target_link_libraries(index PRIVATE range-v3)
+    target_link_libraries(index PRIVATE range-v3 nlohmann_json::nlohmann_json)
 
     # Emscripten link options
     target_link_options(index PRIVATE
@@ -189,7 +196,7 @@ else()
     endif()
 
     add_executable(app ${SOURCES})
-    target_link_libraries(app PRIVATE range-v3)
+    target_link_libraries(app PRIVATE range-v3 nlohmann_json::nlohmann_json)
     target_include_directories(app PRIVATE ${HEADER_DIRS})
     if(NOT NO_QT)
         target_link_libraries(app PRIVATE Qt6::Core Qt6::Gui Qt6::Widgets)

@@ -10,6 +10,7 @@
 // WriteSimulationOutput tests (disabled below)
 #include "../../source/tools/OutputManager.hpp"
 
+namespace fs = std::filesystem;
 using namespace cse498;
 /*
 TEST_CASE("OutputManager sets log level and output file", "[OutputManager]") {
@@ -88,7 +89,6 @@ void remove_if_exists(const std::string& path) {
 
 TEST_CASE("Constructor sets default path but does not create file until Flush",
           "[OutputManager]") {
-  namespace fs = std::filesystem;
   const fs::path defaultPath =
       fs::current_path() / "logs" / "simulation_log.json";
   remove_if_exists(defaultPath.string());
@@ -105,7 +105,8 @@ TEST_CASE("Constructor sets default path but does not create file until Flush",
 }
 
 TEST_CASE("SetOutputFile switches output path", "[OutputManager]") {
-  const std::string path = "test_om_set_output.json";
+  const fs::path logsDir = "logs";
+  const std::string path = logsDir / "test_om_set_output.json";
   remove_if_exists(path);
   OutputManager manager(LogLevel::Normal);
   REQUIRE(manager.SetOutputFile(path));
@@ -122,7 +123,6 @@ TEST_CASE("SetOutputFile switches output path", "[OutputManager]") {
 
 TEST_CASE("Flush fails when output path parent is not a directory",
           "[OutputManager]") {
-  namespace fs = std::filesystem;
   const fs::path blocker =
       fs::current_path() / "test_om_parent_is_file_not_dir";
   remove_if_exists(blocker.string());
@@ -138,7 +138,8 @@ TEST_CASE("Flush fails when output path parent is not a directory",
 }
 
 TEST_CASE("SetLogLevel filters messages by level", "[OutputManager]") {
-  const std::string path = "test_om_loglevel.json";
+  const fs::path logsDir = "logs";
+  const std::string path = logsDir / "test_om_loglevel.json";
   remove_if_exists(path);
   OutputManager manager(LogLevel::Normal);
   REQUIRE(manager.SetOutputFile(path));
@@ -154,7 +155,8 @@ TEST_CASE("SetLogLevel filters messages by level", "[OutputManager]") {
 
 TEST_CASE("LogMessage writes to buffer at Verbose threshold",
           "[OutputManager]") {
-  const std::string path = "test_om_logmessage.json";
+  const fs::path logsDir = "logs";
+  const std::string path = logsDir / "test_om_logmessage.json";
   remove_if_exists(path);
   OutputManager manager(LogLevel::Verbose);
   REQUIRE(manager.SetOutputFile(path));
@@ -170,7 +172,8 @@ TEST_CASE("LogMessage writes to buffer at Verbose threshold",
 
 TEST_CASE("LogMessage with LogLevel::Silent is never persisted",
           "[OutputManager]") {
-  const std::string path = "test_om_msg_level_silent.json";
+  const fs::path logsDir = "logs";
+  const std::string path = logsDir / "test_om_msg_level_silent.json";
   remove_if_exists(path);
   OutputManager manager(LogLevel::Normal);
   REQUIRE(manager.SetOutputFile(path));
@@ -187,7 +190,8 @@ TEST_CASE("LogMessage with LogLevel::Silent is never persisted",
 }
 
 TEST_CASE("Flush prints log saved message on success", "[OutputManager]") {
-  const std::string path = "test_om_flush_message.json";
+  const fs::path logsDir = "logs";
+  const std::string path = logsDir / "test_om_flush_message.json";
   remove_if_exists(path);
   OutputManager manager(LogLevel::Normal);
   REQUIRE(manager.SetOutputFile(path));
@@ -203,7 +207,6 @@ TEST_CASE("Flush prints log saved message on success", "[OutputManager]") {
 }
 
 TEST_CASE("Flush returns false when file cannot be opened", "[OutputManager]") {
-  namespace fs = std::filesystem;
   const fs::path blocker =
       fs::current_path() / "test_om_flush_no_stream_blocker";
   remove_if_exists(blocker.string());
@@ -262,7 +265,8 @@ TEST_CASE("WriteSimulationOutput still writes entries when Silent",
 */
 
 TEST_CASE("GetBufferedLog reflects in-memory JSON", "[OutputManager]") {
-  const std::string path = "test_om_buffered.json";
+  const fs::path logsDir = "logs";
+  const std::string path = logsDir / "test_om_buffered.json";
   remove_if_exists(path);
   OutputManager manager(LogLevel::Normal);
   REQUIRE(manager.SetOutputFile(path));
@@ -281,11 +285,11 @@ TEST_CASE("GetBufferedLog reflects in-memory JSON", "[OutputManager]") {
 
 TEST_CASE("WriteActionEvents buffers in memory; file written only on Flush",
           "[OutputManager]") {
-  const std::string path = "test_om_actions.json";
+  const fs::path logsDir = "logs";
+  const std::string path = logsDir / "test_om_actions.json";
   remove_if_exists(path);
   OutputManager manager(LogLevel::Normal);
   REQUIRE(manager.SetOutputFile(path));
-  namespace fs = std::filesystem;
   REQUIRE_FALSE(fs::exists(path));
 
   std::vector<ActionEventBase> events;
@@ -312,7 +316,8 @@ TEST_CASE("WriteActionEvents buffers in memory; file written only on Flush",
 TEST_CASE(
     "WriteActionEvents empty vector yields empty action_events until Flush",
     "[OutputManager]") {
-  const std::string path = "test_om_actions_empty.json";
+  const fs::path logsDir = "logs";
+  const std::string path = logsDir / "test_om_actions_empty.json";
   remove_if_exists(path);
   OutputManager manager(LogLevel::Normal);
   REQUIRE(manager.SetOutputFile(path));
@@ -335,7 +340,6 @@ TEST_CASE("WriteActionEvents accumulates across calls", "[OutputManager]") {
 }
 
 TEST_CASE("Buffered action events survive failed Flush", "[OutputManager]") {
-  namespace fs = std::filesystem;
   const fs::path blocker =
       fs::current_path() / "test_om_wae_flush_fail_blocker";
   remove_if_exists(blocker.string());

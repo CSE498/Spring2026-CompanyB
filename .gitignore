@@ -56,6 +56,9 @@
 /docs
 
 
+# Simulation logs
+/logs/
+
 # Build
 /build/
 **/build/
