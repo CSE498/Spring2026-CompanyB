@@ -92,7 +92,6 @@ class Logger : public ILogger<AgentType> {
   /// failed stage.
   std::expected<void, SaveAgentActionsError> SaveAgentActions(
       const std::vector<AgentType>& agents) override {
-
     auto [events, eventFailures] = mActionLog->LogAgentActions(agents);
     for (const auto& failure : eventFailures) {
       mOutputManager->LogMessage(

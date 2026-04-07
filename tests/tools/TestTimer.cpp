@@ -26,7 +26,8 @@ TEST_CASE("Test start and stop and assosicated methods of getting the time",
   REQUIRE(testTimer.GetTotalTime() == 100);
 }
 
-TEST_CASE("Test reset and associated methods of getting the time", "[TickTimer]") {
+TEST_CASE("Test reset and associated methods of getting the time",
+          "[TickTimer]") {
   cse498::GlobalClock::Reset();
   cse498::TickTimer testTimer("TEST");
 
@@ -73,7 +74,8 @@ TEST_CASE("Test getting time while running", "[TickTimer]") {
   REQUIRE(testTimer.GetTotalTime() == 30);
 }
 
-TEST_CASE("Test accumulation across multiple Start/Stop cycles", "[TickTimer]") {
+TEST_CASE("Test accumulation across multiple Start/Stop cycles",
+          "[TickTimer]") {
   cse498::GlobalClock::Reset();
   cse498::TickTimer testTimer("test");
 

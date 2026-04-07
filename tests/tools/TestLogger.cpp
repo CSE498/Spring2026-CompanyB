@@ -93,8 +93,8 @@ class MockReplayDriver : public IReplayDriver<AgentBase> {
   mutable size_t mLastAgentCount = 0;
   bool mShouldSucceed = true;
 
-  std::expected<bool, std::string> ReplayFromFile(const std::string& filePath,
-                      std::vector<AgentBase*>& agents) override {
+  std::expected<bool, std::string> ReplayFromFile(
+      const std::string& filePath, std::vector<AgentBase*>& agents) override {
     mReplayCalled = true;
     mLastFile = filePath;
     mLastAgentCount = agents.size();
@@ -166,7 +166,7 @@ TEST_CASE("Logger - SaveAgentActions Operations", "[Logger]") {
 
   SECTION("Leaves output path selection to OutputManager") {
     const auto saveResult = logger.SaveAgentActions(agents);
-    
+
     REQUIRE(saveResult.has_value());
     REQUIRE(outputManagerPtr->mWriteCalled == true);
     REQUIRE(outputManagerPtr->mLastSetFile.empty());
@@ -180,7 +180,8 @@ TEST_CASE("Logger - SaveAgentActions Operations", "[Logger]") {
     const auto saveResult = logger.SaveAgentActions(agents);
     REQUIRE(saveResult.has_value());
     REQUIRE(outputManagerPtr->mLoggedMessages.size() == 1);
-    REQUIRE(outputManagerPtr->mLoggedMessages.front().find("Test validation error") != std::string::npos);
+    REQUIRE(outputManagerPtr->mLoggedMessages.front().find(
+                "Test validation error") != std::string::npos);
   }
 
   SECTION("Returns false when flush fails") {
@@ -208,16 +209,19 @@ TEST_CASE("Logger - Stress Test for Memory Bloat", "[Logger][Stress]") {
   std::vector<AgentBase> agents;
 
   SECTION("Handle 15000+ actions without crashing") {
-    // RAII helper to ensure file cleanup even if an assertion throws and aborts the test
+    // RAII helper to ensure file cleanup even if an assertion throws and aborts
+    // the test
     struct FileCleaner {
       std::string path;
-      FileCleaner(std::string p) : path(std::move(p)) { std::filesystem::remove(path); }
+      FileCleaner(std::string p) : path(std::move(p)) {
+        std::filesystem::remove(path);
+      }
       ~FileCleaner() { std::filesystem::remove(path); }
     } cleaner("logs/simulation_log.json");
 
     constexpr size_t kNumActions = 15000;
     actionLogPtr->mEventsToReturn.resize(kNumActions);
-    
+
     // We expect this to run without throwing std::bad_alloc or crashing
     std::expected<void, SaveAgentActionsError> saveResult;
     REQUIRE_NOTHROW(saveResult = logger.SaveAgentActions(agents));
@@ -228,4 +232,4 @@ TEST_CASE("Logger - Stress Test for Memory Bloat", "[Logger][Stress]") {
   }
 }
 
-} // namespace cse498
+}  // namespace cse498

@@ -7,9 +7,9 @@
 
 #include <algorithm>
 #include <concepts>
+#include <expected>
 #include <fstream>
 #include <optional>
-#include <expected>
 #include <string>
 #include <string_view>
 #include <type_traits>
@@ -40,8 +40,8 @@ class ReplayDriver : public IReplayDriver<AgentT> {
   /// @param filePath Path to the JSON file containing logged events.
   /// @param agents Reference vector of replayable agents.
   /// @return Success status of the replay operation.
-  std::expected<bool, std::string> ReplayFromFile(const std::string& filePath,
-                      std::vector<AgentT*>& agents) override {
+  std::expected<bool, std::string> ReplayFromFile(
+      const std::string& filePath, std::vector<AgentT*>& agents) override {
     std::ifstream inFile(filePath);
     if (!inFile.is_open()) {
       return std::unexpected("Failed to open file");

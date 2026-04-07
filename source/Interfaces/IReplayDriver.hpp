@@ -5,8 +5,8 @@
 
 #pragma once
 
-#include <string>
 #include <expected>
+#include <string>
 #include <vector>
 
 namespace cse498 {
@@ -27,8 +27,8 @@ class IReplayDriver {
   /// @param filePath Path to the JSON file containing logged events.
   /// @param agents Reference vector of agents to update during replay.
   /// @return true if replay was successful, false otherwise.
-  virtual std::expected<bool, std::string> ReplayFromFile(const std::string& filePath,
-                              std::vector<AgentType*>& agents) = 0;
+  virtual std::expected<bool, std::string> ReplayFromFile(
+      const std::string& filePath, std::vector<AgentType*>& agents) = 0;
 };
 
 }  // namespace cse498
