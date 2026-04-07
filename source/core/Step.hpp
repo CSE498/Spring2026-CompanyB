@@ -18,7 +18,6 @@ namespace cse498 {
 namespace steps {
 
 using InfoType = std::variant<int, double, bool>;
-using _InfoTuple = std::variant<int, double, bool>;
 
 template <typename T>
 concept IsInfoType = Concepts::IsOneOf<T, int, double, bool>;
@@ -34,6 +33,11 @@ struct StepErr {
 
   Kind kind;
   std::string msg;
+
+  StepErr() = delete;
+  StepErr(Kind in_kind) : kind(in_kind), msg("") {};
+  StepErr(Kind in_kind, std::string const &in_msg)
+      : kind(in_kind), msg(in_msg) {};
 };
 
 template <IsInfoType I>
@@ -51,8 +55,8 @@ struct _InfoHandler {
   static InfoFunc<T> defaulted_handler() {
     return [](T) {
       return std::unexpected(
-          StepErr{StepErr::Kind::WRONG_TYPE,
-                  "InfoStep passed invalidly typed InfoType into InfoHandler"});
+          StepErr(StepErr::Kind::WRONG_TYPE,
+                  "InfoStep passed invalidly typed InfoType into InfoHandler"));
     };
   }
 
@@ -254,7 +258,7 @@ struct StepContainer {
         return get_next();
       } else
         return std::unexpected(
-            StepErr{StepErr::Kind::STEPS_EXHAUSTED, "No remaining steps"});
+            StepErr(StepErr::Kind::STEPS_EXHAUSTED, "No remaining steps"));
     }
 
     // Skip empty step(s)
@@ -273,8 +277,8 @@ struct StepContainer {
       // Our world_info object must have information
       if (!world_info.has_value())
         return std::unexpected(
-            StepErr{StepErr::Kind::NOT_INFORMED,
-                    "StepContainer was not informed for ConditionalStep"});
+            StepErr(StepErr::Kind::NOT_INFORMED,
+                    "StepContainer was not informed for ConditionalStep"));
 
       ConditionalStep cur_step =
           std::get<ConditionalStep>(cur_node->step.value());
@@ -294,9 +298,9 @@ struct StepContainer {
         // Likely don't need this check, it *should* be impossible to have a
         // conditional step w/o a true branch
         if (cur_node->left == nullptr)
-          return std::unexpected(StepErr{StepErr::Kind::MISSING_BRANCH,
+          return std::unexpected(StepErr(StepErr::Kind::MISSING_BRANCH,
                                          "ConditionalStep which evaluated true "
-                                         "does not have a true branch"});
+                                         "does not have a true branch"));
 
         // Push the return point onto the stack, then return the first step in
         // the true branch
