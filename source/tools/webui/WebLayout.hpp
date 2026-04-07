@@ -44,6 +44,13 @@ class WebLayout : public WebElement {
   /// Disable copy assignment operator
   WebLayout& operator=(const WebLayout&) = delete;
 
+  ~WebLayout() {
+    if (!id.empty()) {
+      std::printf("WebLayout #%s destructed\n", id.c_str());
+    }
+    else std::printf("WebLayout destructed\n");
+  }
+
   /**
    * @brief Appends a child WebElement to this layout in the DOM.
    * @param elem The child element to add.

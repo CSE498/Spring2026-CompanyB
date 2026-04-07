@@ -6,6 +6,9 @@
 #include <emscripten.h>
 
 #include <memory>
+#include <unordered_map>
+#include <functional>
+#include <print>
 
 #include "WebButton.h"
 #include "WebCanvas.hpp"
@@ -17,16 +20,11 @@ using namespace cse498;
 
 // Globals kept alive for the duration of the page
 static std::shared_ptr<WebCanvas> canvas;
-static std::unique_ptr<WebLayout> layout;
 
-int main() {
-  auto btn_lambda = []() {
-    canvas->Clear();
-    canvas->SetFillColor({0, 200, 100});
-    canvas->DrawText("Running...", 10, 30);
-  };
+static std::unordered_map<std::string, std::shared_ptr<WebElement>> elements{};
 
-  layout = std::make_unique<WebLayout>(WebOptions{
+std::shared_ptr<WebElement> simulation_layout(std::function<void()> btn_lambda) {
+  return UIItem<WebLayout>(WebOptions{
     .id = "app-layout",
     .children = {
 
@@ -82,9 +80,49 @@ int main() {
       })
         ->SetHeight("80vh").SetDirection("row").SetGap("20px").SetAlignItems("stretch").SetJustifyContent("flex-start")
     }
-  });
-  
-  layout->SetDirection("column").SetAlignItems("center").SetGap("10px").SetHeight("100vh").SetJustifyContent("flex-start");
+  })->SetDirection("column").SetAlignItems("center").SetGap("10px").SetHeight("100vh").SetJustifyContent("flex-start");
+}
 
+std::shared_ptr<WebElement> menu_layout() {
+  // return UIItem<WebLayout>(WebOptions{ 
+  //   .id = "menu-bar",
+  //   .style = {{
+  //     {"width", "100%"},
+  //     {"background", "#363636"},
+  //     {"border-radius", "20px"},c+
+  //   }},
+  //   .children = {
+  //   }
+  // })->SetHeight("80px").SetDirection("row").SetAlignItems("center").SetGap("10px");
+  return UIItem<WebLayout>(WebOptions{
+    .id = "menu-screen",
+    .style = {{
+      {"width", "100vw"},
+      // {"height", "100vh"},
+    }},
+    .children = {
+      UIItem<WebButton>("Start Simulation"),
+    }
+  })->SetJustifyContent("center").SetAlignItems("center");
+  // return UIItem<WebTextbox>(TextStyle())->SetText("text");
+}
+
+void load_menu_layout();
+void load_simulation_layout();
+
+void load_menu_layout() {
+  std::println("Loading menu layout");
+  // elements.erase("simulation_layout");
+  elements["menu_layout"] = menu_layout();
+}
+
+void load_simulation_layout() {
+  std::println("Loading simulation layout");
+  elements.erase("menu_layout");
+  elements["simulation_layout"] = simulation_layout(load_menu_layout);
+};
+
+int main() {
+  load_menu_layout();
   return 0;
 }

@@ -3,6 +3,7 @@
 #include <cassert>
 #include <emscripten.h>
 #include <utility>
+#include <emscripten/bind.h>
 
 namespace cse498 {
 
@@ -18,6 +19,10 @@ WebButton::WebButton(const std::string& label, const WebOptions& options)
 }
 
 WebButton::~WebButton() {
+  if (!id.empty()) {
+    std::printf("WebButton #%s destructed\n", id.c_str());
+  }
+  else std::printf("WebButton destructed\n");
 }
 
 const std::string& WebButton::GetLabel() const { return label_; }
@@ -54,6 +59,14 @@ bool WebButton::IsEnabled() const { return enabled_; }
 WebButton& WebButton::SetOnClick(std::function<void()> callback) {
   on_click_ = std::move(callback);
 
+  auto buttonHandle = emscripten::val(std::dynamic_pointer_cast<cse498::WebButton>(shared_from_this()));
+
+  dom_element.call<void>(
+    "addEventListener",
+    std::string("click"),
+    buttonHandle["onClick"].call<val>("bind", buttonHandle)
+  );
+
   return *this;
 }
 
@@ -62,4 +75,10 @@ void WebButton::Click() {
   if (on_click_) on_click_();
 }
 
+}
+
+EMSCRIPTEN_BINDINGS(button_bindings) {
+  emscripten::class_<cse498::WebButton>("WebButton")
+    .smart_ptr<std::shared_ptr<cse498::WebButton>>("std::shared_ptr<WebButton>")
+    .function("onClick", &cse498::WebButton::Click);
 }
