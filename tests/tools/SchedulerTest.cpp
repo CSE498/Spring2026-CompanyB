@@ -1,7 +1,6 @@
 /**
  * @file test_scheduler.cpp
  * @brief Unit tests for the Scheduler class
- * @author Joshua Twumasi
  */
 
 /**
@@ -180,12 +179,11 @@
  *
  * ### 6. Manual process control
  * @code
- *   sched.DisableProcess(2);                       // temporarily remove from
- * scheduling sched.EnableProcess(2);                        // bring it back
- *   sched.SetBaseWeight(1, 20.0);                  // change priority at
- * runtime (rebalancing must be off) sched.RemoveProcess(3); // permanently
- * remove sched.Clear();                                 // remove all processes
- * and reset state
+ *   sched.DisableProcess(2);            
+ *   sched.EnableProcess(2);                       
+ *   sched.SetBaseWeight(1, 20.0);     / change priority at runtime 
+ *   sched.RemoveProcess(3); // permanently remove 
+ *   sched.Clear();             
  * @endcode
  *
  */

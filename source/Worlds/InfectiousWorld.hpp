@@ -144,8 +144,8 @@ class InfectiousWorld : public SimWorldBase {
   /// Each tick: spread infection, then update timers.
   void UpdateWorld() override {
     tick_count++;
-    SpreadInfection();
     UpdateHealthTimers();
+    SpreadInfection();
   }
 
   // -- Infection control --
