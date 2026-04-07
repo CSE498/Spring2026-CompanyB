@@ -1018,7 +1018,7 @@ TEST_CASE("Scheduler: Exponential Backoff", "[scheduler]") {
   Scheduler<size_t> scheduler;
   REQUIRE(scheduler.AddProcess(1, 10.0).has_value());
   scheduler.EnableFailureHandling(true);
-  scheduler.SetInitialBackoffCycles(2);
+  REQUIRE(scheduler.SetInitialBackoffCycles(2).has_value());
   REQUIRE(scheduler.SetBackoffMultiplier(2.0).has_value());
 
   SECTION("First failure sets initial backoff") {
@@ -1053,9 +1053,9 @@ TEST_CASE("Scheduler: Max Backoff Cap", "[scheduler]") {
   Scheduler<size_t> scheduler;
   REQUIRE(scheduler.AddProcess(1, 10.0).has_value());
   scheduler.EnableFailureHandling(true);
-  scheduler.SetInitialBackoffCycles(1);
+  REQUIRE(scheduler.SetInitialBackoffCycles(1).has_value());
   REQUIRE(scheduler.SetBackoffMultiplier(2.0).has_value());
-  scheduler.SetMaxBackoffCycles(10);
+  REQUIRE(scheduler.SetMaxBackoffCycles(10).has_value());
 
   SECTION("Backoff capped at max") {
     for (int i = 0; i < 10; ++i) {
@@ -1149,13 +1149,13 @@ TEST_CASE("Scheduler: Failure Configuration", "[scheduler]") {
     CHECK(scheduler.SetMaxConsecutiveFailures(5).has_value());
     CHECK(scheduler.GetMaxConsecutiveFailures() == 5);
 
-    scheduler.SetInitialBackoffCycles(4);
+    CHECK(scheduler.SetInitialBackoffCycles(4).has_value());
     CHECK(scheduler.GetInitialBackoffCycles() == 4);
 
     CHECK(scheduler.SetBackoffMultiplier(1.5).has_value());
     CHECK(scheduler.GetBackoffMultiplier() == 1.5);
 
-    scheduler.SetMaxBackoffCycles(100);
+    CHECK(scheduler.SetMaxBackoffCycles(100).has_value());
     CHECK(scheduler.GetMaxBackoffCycles() == 100);
 
     CHECK(scheduler.SetRecoverySuccessThreshold(3).has_value());
@@ -1174,6 +1174,14 @@ TEST_CASE("Scheduler: Failure Configuration", "[scheduler]") {
     auto result3 = scheduler.SetRecoverySuccessThreshold(0);
     CHECK_FALSE(result3.has_value());
     CHECK(result3.error() == SchedulerError::ZeroRecoveryThreshold);
+
+    auto result4 = scheduler.SetInitialBackoffCycles(0);
+    CHECK_FALSE(result4.has_value());
+    CHECK(result4.error() == SchedulerError::InvalidParameter);
+
+    auto result5 = scheduler.SetMaxBackoffCycles(0);
+    CHECK_FALSE(result5.has_value());
+    CHECK(result5.error() == SchedulerError::InvalidParameter);
   }
 }
 
@@ -1199,7 +1207,7 @@ TEST_CASE("Scheduler: Process Count Queries", "[scheduler]") {
 
   SECTION("Counts reflect backoff processes") {
     scheduler.EnableFailureHandling(true);
-    scheduler.SetInitialBackoffCycles(5);
+    REQUIRE(scheduler.SetInitialBackoffCycles(5).has_value());
     REQUIRE(scheduler.MarkProcessFailed(1).has_value());
 
     auto next = scheduler.GetNext();

@@ -888,8 +888,13 @@ class Scheduler {
 
   // Set initial backoff period after first failure
   // Must be > 0 (Default: 1)
-  void SetInitialBackoffCycles(size_t cycles) {
+  [[nodiscard]] std::expected<void, SchedulerError> SetInitialBackoffCycles(
+      size_t cycles) {
+    if (cycles <= 0) {
+      return std::unexpected(SchedulerError::InvalidParameter);
+    }
     initial_backoff_cycles = cycles;
+    return {};
   }
 
   [[nodiscard]] size_t GetInitialBackoffCycles() const noexcept {
@@ -914,7 +919,14 @@ class Scheduler {
   // Set maximum backoff period cap:
   // Limits exponential backoff after repeated failures to prevent excessively
   // long delays. Must be > 0 (Default: 64)
-  void SetMaxBackoffCycles(const size_t max) { max_backoff_cycles = max; }
+  [[nodiscard]] std::expected<void, SchedulerError> SetMaxBackoffCycles(
+      size_t max) {
+    if (max == 0) {
+      return std::unexpected(SchedulerError::InvalidParameter);
+    }
+    max_backoff_cycles = max;
+    return {};
+  }
 
   [[nodiscard]] size_t GetMaxBackoffCycles() const noexcept {
     return max_backoff_cycles;
