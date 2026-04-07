@@ -7,7 +7,7 @@
 namespace cse498 {
 
 // Mock Agent that satisfies AgentConcept
-class MockAgent {
+class ActionLogMockAgent {
  public:
   void AddAction(std::string_view agentId, std::string_view actionType,
                  LogLevel level, uint64_t timestamp) {
@@ -21,11 +21,11 @@ class MockAgent {
 };
 
 TEST_CASE("LogEventByOneAgent", "[ActionLog]") {
-  ActionLog<MockAgent> actionLog;
-  MockAgent agent;
+  ActionLog<ActionLogMockAgent> actionLog;
+  ActionLogMockAgent agent;
   agent.AddAction("agent1", "move", LogLevel::Normal, 100);
 
-  std::vector<MockAgent> agents = {agent};
+  std::vector<ActionLogMockAgent> agents = {agent};
   auto [events, failures] = actionLog.LogAgentActions(agents);
 
   REQUIRE(events.size() == 1);
@@ -34,15 +34,15 @@ TEST_CASE("LogEventByOneAgent", "[ActionLog]") {
 }
 
 TEST_CASE("LogEventByMultipleAgent", "[ActionLog]") {
-  ActionLog<MockAgent> actionLog;
+  ActionLog<ActionLogMockAgent> actionLog;
 
-  MockAgent agent1;
+  ActionLogMockAgent agent1;
   agent1.AddAction("agent1", "move", LogLevel::Normal, 100);
 
-  MockAgent agent2;
+  ActionLogMockAgent agent2;
   agent2.AddAction("agent2", "stay", LogLevel::Verbose, 101);
 
-  std::vector<MockAgent> agents = {agent1, agent2};
+  std::vector<ActionLogMockAgent> agents = {agent1, agent2};
   auto [events, failures] = actionLog.LogAgentActions(agents);
 
   REQUIRE(events.size() == 2);
@@ -52,16 +52,16 @@ TEST_CASE("LogEventByMultipleAgent", "[ActionLog]") {
 }
 
 TEST_CASE("LogEventByMultipleAgentMultipleActions", "[ActionLog]") {
-  ActionLog<MockAgent> actionLog;
+  ActionLog<ActionLogMockAgent> actionLog;
 
-  MockAgent agent1;
+  ActionLogMockAgent agent1;
   agent1.AddAction("agent1", "move", LogLevel::Normal, 100);
   agent1.AddAction("agent1", "pickup", LogLevel::Debug, 105);
 
-  MockAgent agent2;
+  ActionLogMockAgent agent2;
   agent2.AddAction("agent2", "drop", LogLevel::Verbose, 110);
 
-  std::vector<MockAgent> agents = {agent1, agent2};
+  std::vector<ActionLogMockAgent> agents = {agent1, agent2};
   auto [events, failures] = actionLog.LogAgentActions(agents);
 
   REQUIRE(events.size() == 3);
@@ -69,12 +69,12 @@ TEST_CASE("LogEventByMultipleAgentMultipleActions", "[ActionLog]") {
 }
 
 TEST_CASE("LogEventFailed_AgentId", "[ActionLog]") {
-  ActionLog<MockAgent> actionLog;
+  ActionLog<ActionLogMockAgent> actionLog;
 
-  MockAgent agent;
+  ActionLogMockAgent agent;
   agent.AddAction("", "move", LogLevel::Normal, 100);  // Empty agentId
 
-  std::vector<MockAgent> agents = {agent};
+  std::vector<ActionLogMockAgent> agents = {agent};
   auto [events, failures] = actionLog.LogAgentActions(agents);
 
   REQUIRE(events.empty());
@@ -82,12 +82,12 @@ TEST_CASE("LogEventFailed_AgentId", "[ActionLog]") {
 }
 
 TEST_CASE("LogEventFailed_ActionType", "[ActionLog]") {
-  ActionLog<MockAgent> actionLog;
+  ActionLog<ActionLogMockAgent> actionLog;
 
-  MockAgent agent;
+  ActionLogMockAgent agent;
   agent.AddAction("agent1", "", LogLevel::Normal, 100);  // Empty actionType
 
-  std::vector<MockAgent> agents = {agent};
+  std::vector<ActionLogMockAgent> agents = {agent};
   auto [events, failures] = actionLog.LogAgentActions(agents);
 
   REQUIRE(events.empty());
@@ -95,13 +95,13 @@ TEST_CASE("LogEventFailed_ActionType", "[ActionLog]") {
 }
 
 TEST_CASE("LogEventFailed_LogLevel", "[ActionLog]") {
-  ActionLog<MockAgent> actionLog;
+  ActionLog<ActionLogMockAgent> actionLog;
 
-  MockAgent agent;
+  ActionLogMockAgent agent;
   // Casting out of range enum value
   agent.AddAction("agent1", "move", static_cast<LogLevel>(99), 100);
 
-  std::vector<MockAgent> agents = {agent};
+  std::vector<ActionLogMockAgent> agents = {agent};
   auto [events, failures] = actionLog.LogAgentActions(agents);
 
   REQUIRE(events.empty());
@@ -109,13 +109,13 @@ TEST_CASE("LogEventFailed_LogLevel", "[ActionLog]") {
 }
 
 TEST_CASE("MultipleLogFailure", "[ActionLog]") {
-  ActionLog<MockAgent> actionLog;
+  ActionLog<ActionLogMockAgent> actionLog;
 
-  MockAgent agent;
+  ActionLogMockAgent agent;
   agent.AddAction("", "move", LogLevel::Normal, 100);    // Fail 1
   agent.AddAction("agent1", "", LogLevel::Normal, 101);  // Fail 2
 
-  std::vector<MockAgent> agents = {agent};
+  std::vector<ActionLogMockAgent> agents = {agent};
   auto [events, failures] = actionLog.LogAgentActions(agents);
 
   REQUIRE(events.empty());
@@ -123,13 +123,13 @@ TEST_CASE("MultipleLogFailure", "[ActionLog]") {
 }
 
 TEST_CASE("PartialLogFailures", "[ActionLog]") {
-  ActionLog<MockAgent> actionLog;
+  ActionLog<ActionLogMockAgent> actionLog;
 
-  MockAgent agent;
+  ActionLogMockAgent agent;
   agent.AddAction("agent1", "move", LogLevel::Normal, 100);  // Success
   agent.AddAction("", "stay", LogLevel::Normal, 101);        // Failure
 
-  std::vector<MockAgent> agents = {agent};
+  std::vector<ActionLogMockAgent> agents = {agent};
   auto [events, failures] = actionLog.LogAgentActions(agents);
 
   REQUIRE(events.size() == 1);
