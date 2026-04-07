@@ -1,6 +1,6 @@
 #include <QApplication>
 #include "MainWindow.hpp"
-#include "MazeWorld.hpp"
+#include "../source/Worlds/MazeWorld.hpp"
 
 int main(int argc, char *argv[])
 {
