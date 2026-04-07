@@ -19,19 +19,23 @@ namespace cse498 {
 
 // ========== Core Path Generation ==========
 
-std::optional<WorldPath> PathGenerator::ShortestPath(const Point& start,
-                                                      const Point& goal) const {
+std::optional<WorldPath> PathGenerator::ShortestPath(const Point &start,
+                                                     const Point &goal) const {
   return ShortestPathImpl(start, goal, canMove_);
 }
 
-std::optional<WorldPath> PathGenerator::ShortestPathImpl(
-    const Point& start, const Point& goal,
-    const WorldQueryFunc& canMove) const {
+std::optional<WorldPath>
+PathGenerator::ShortestPathImpl(const Point &start, const Point &goal,
+                                const WorldQueryFunc &canMove) const {
+
   // Handle degenerate case: start == goal
-  if (std::abs(start.getX() - goal.getX()) <
-          step_size_ * kCoincidentEps &&
-      std::abs(start.getY() - goal.getY()) <
-          step_size_ * kCoincidentEps) {
+  // If start and goal are within one epsilon-scaled step of each other,
+  // treat them as coincident and skip planning.
+  const bool is_coincident =
+      std::abs(start.getX() - goal.getX()) < step_size_ * kCoincidentEps &&
+      std::abs(start.getY() - goal.getY()) < step_size_ * kCoincidentEps;
+
+  if (is_coincident) {
     WorldPath path;
     path.addPoint(start);
     return path;
@@ -52,8 +56,8 @@ std::optional<WorldPath> PathGenerator::ShortestPathImpl(
   using PointSet = std::unordered_set<Point, PointHash>;
   using PointScoreMap = std::unordered_map<Point, double, PointHash>;
 
-  auto cmp = [](const PointDist& a, const PointDist& b) {
-    return a.first > b.first;  // Min-heap: lowest f-score popped first
+  auto cmp = [](const PointDist &a, const PointDist &b) {
+    return a.first > b.first; // Min-heap: lowest f-score popped first
   };
   // openSet: frontier nodes discovered but not yet fully explored,
   // ordered by f-score so the most promising node is always next.
@@ -99,8 +103,9 @@ std::optional<WorldPath> PathGenerator::ShortestPathImpl(
 
     // Explore neighbors
     std::vector<Point> neighbors = GetNeighbors(current);
-    for (const Point& neighbor : neighbors) {
-      if (closedSet.count(neighbor) > 0 || !canMove(neighbor)) continue;
+    for (const Point &neighbor : neighbors) {
+      if (closedSet.count(neighbor) > 0 || !canMove(neighbor))
+        continue;
 
       double tentativeGScore = gScore[current] + heuristic_(current, neighbor);
 
@@ -118,8 +123,9 @@ std::optional<WorldPath> PathGenerator::ShortestPathImpl(
   return std::nullopt;
 }
 
-std::optional<WorldPath> PathGenerator::PatrolPath(
-    const std::vector<Point>& waypoints, bool loop) const {
+std::optional<WorldPath>
+PathGenerator::PatrolPath(const std::vector<Point> &waypoints,
+                          bool loop) const {
   if (waypoints.empty()) {
     return std::nullopt;
   }
@@ -163,15 +169,16 @@ std::optional<WorldPath> PathGenerator::PatrolPath(
   return finalPath.empty() ? std::nullopt : std::optional<WorldPath>(finalPath);
 }
 
-std::optional<WorldPath> PathGenerator::AvoidancePath(const Point& start,
-                                                       const Point& goal,
-                                                       const Point& avoid,
-                                                       double radius) const {
+std::optional<WorldPath> PathGenerator::AvoidancePath(const Point &start,
+                                                      const Point &goal,
+                                                      const Point &avoid,
+                                                      double radius) const {
   assert(radius >= 0.0 && "Avoidance radius cannot be negative");
 
   // Combine canMove_ with the avoidance radius check.
-  auto canMoveWithAvoidance = [&](const Point& p) {
-    if (!canMove_(p)) return false;
+  auto canMoveWithAvoidance = [&](const Point &p) {
+    if (!canMove_(p))
+      return false;
     double dist = std::hypot(p.getX() - avoid.getX(), p.getY() - avoid.getY());
     return dist >= radius;
   };
@@ -181,7 +188,7 @@ std::optional<WorldPath> PathGenerator::AvoidancePath(const Point& start,
 
 // ========== Utility Generation ==========
 
-WorldPath PathGenerator::RandomWalk(const Point& start, size_t steps) const {
+WorldPath PathGenerator::RandomWalk(const Point &start, size_t steps) const {
   WorldPath path;
   path.addPoint(start);
 
@@ -200,7 +207,7 @@ WorldPath PathGenerator::RandomWalk(const Point& start, size_t steps) const {
     validNeighbors.clear();
     neighbors = GetNeighbors(current);
 
-    for (const Point& neighbor : neighbors) {
+    for (const Point &neighbor : neighbors) {
       if (canMove_(neighbor)) {
         validNeighbors.push_back(neighbor);
       }
@@ -219,7 +226,7 @@ WorldPath PathGenerator::RandomWalk(const Point& start, size_t steps) const {
   return path;
 }
 
-WorldPath PathGenerator::SpiralPath(const Point& center, double spacing,
+WorldPath PathGenerator::SpiralPath(const Point &center, double spacing,
                                     size_t turns) const {
   WorldPath path;
 
@@ -268,18 +275,18 @@ void PathGenerator::SetStepSize(double size) {
 
 // ========== Helper Functions ==========
 
-double PathGenerator::EuclideanDistance(const Point& a, const Point& b) {
+double PathGenerator::EuclideanDistance(const Point &a, const Point &b) {
   double dx = b.getX() - a.getX();
   double dy = b.getY() - a.getY();
   return std::hypot(dx, dy);
 }
 
-std::vector<Point> PathGenerator::GetNeighbors(const Point& p) const {
+std::vector<Point> PathGenerator::GetNeighbors(const Point &p) const {
   std::vector<Point> neighbors;
   neighbors.reserve(kUnitDirections.size());
 
   const double step = step_size_;
-  for (const auto& [ux, uy] : kUnitDirections) {
+  for (const auto &[ux, uy] : kUnitDirections) {
     neighbors.emplace_back(p.getX() + ux * step, p.getY() + uy * step);
   }
 
@@ -288,16 +295,17 @@ std::vector<Point> PathGenerator::GetNeighbors(const Point& p) const {
 
 // Follows the came_from map backwards from `current` to the start node,
 // building the path in reverse, then returns it flipped to start→goal order.
-WorldPath PathGenerator::ReconstructPath(const PointMap& came_from,
-                                         const Point& current) const {
+WorldPath PathGenerator::ReconstructPath(const PointMap &came_from,
+                                         const Point &current) const {
   WorldPath reversed_path;
   for (Point node = current;;) {
     reversed_path.addPoint(node);
     auto it = came_from.find(node);
-    if (it == came_from.end()) break;
+    if (it == came_from.end())
+      break;
     node = it->second;
   }
   return reversed_path.reversed();
 }
 
-}  // namespace cse498
+} // namespace cse498
