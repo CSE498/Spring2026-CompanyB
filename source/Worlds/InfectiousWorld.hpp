@@ -151,8 +151,8 @@ class InfectiousWorld : public SimWorldBase {
   // -- Infection control --
 
   void InfectAgent(size_t agent_id) {
-    health_map[agent_id].state = HealthState::INFECTED;
-    health_map[agent_id].ticks_in_state = 0;
+    health_map.at(agent_id).state = HealthState::INFECTED;
+    health_map.at(agent_id).ticks_in_state = 0;
   }
 
   [[nodiscard]] HealthState GetAgentHealth(size_t agent_id) const {
