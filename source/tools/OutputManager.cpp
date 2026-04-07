@@ -13,6 +13,10 @@ constexpr char kEntriesKey[] = "entries";
 constexpr char kStatisticsKey[] = "statistics";
 constexpr char kActionEventsKey[] = "action_events";
 
+/// Spaces per nesting level for pretty-printed JSON written to the log file
+/// (nlohmann::json::dump indent argument).
+constexpr int JsonLogIndentWidth = 2;
+
 /// @brief Default relative path for the JSON log when no path is set
 /// explicitly.
 std::string MakeDefaultLogFilePath() {
@@ -137,15 +141,19 @@ bool OutputManager::Flush() {
   if (!mOutputStream.is_open() && !OpenOutputStream()) {
     return false;
   }
-  mOutputStream << mBufferedLog.dump(2) << '\n';
+  mOutputStream << mBufferedLog.dump(JsonLogIndentWidth) << '\n';
   mOutputStream.flush();
   const bool ok = !mOutputStream.fail();
+  // Close so the next Flush() does not skip OpenOutputStream()'s trunc open;
+  // otherwise multiple dumps would concatenate and break JSON consumers.
+  mOutputStream.close();
   if (ok) {
     std::clog << "log saved in " << mOutputFilePath << '\n';
   }
   return ok;
 }
 
+/*
 void OutputManager::WriteSimulationOutput(const DataLog& dataLog) {
   mBufferedLog[kEntriesKey] = nlohmann::json::array();
   for (const auto& entry : dataLog.GetEntries()) {
@@ -172,10 +180,10 @@ void OutputManager::WriteSimulationOutput(const DataLog& dataLog) {
               << " mean=" << mean_str << " min=" << min_str
               << " max=" << max_str << '\n';
   }
-}
+}*/
 
-const nlohmann::json& OutputManager::GetBufferedLog() const noexcept {
-  const_cast<OutputManager*>(this)->RebuildActionEventsJson();
+const nlohmann::json& OutputManager::GetBufferedLog() noexcept {
+  RebuildActionEventsJson();
   return mBufferedLog;
 }
 
