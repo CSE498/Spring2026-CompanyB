@@ -22,16 +22,17 @@ class OutputManager : public IOutputManager {
   /// @brief Owned copy of an action event for deferred persistence
   /// (string_view-safe).
   struct ActionEventRecord {
-    std::string agentId;   ///< Copied from ActionEventBase::agentId.
+    std::string agentId;     ///< Copied from ActionEventBase::agentId.
     std::string actionType;  ///< Copied from ActionEventBase::actionType.
-    LogLevel logLevel;     ///< Copied from ActionEventBase::logLevel.
-    uint64_t timestamp;    ///< Copied from ActionEventBase::timestamp.
+    LogLevel logLevel;       ///< Copied from ActionEventBase::logLevel.
+    uint64_t timestamp;      ///< Copied from ActionEventBase::timestamp.
   };
 
   std::string mOutputFilePath{};  ///< Target JSON path; empty skips file I/O.
   LogLevel mCurrentLevel = LogLevel::Normal;  ///< Threshold for ShouldLog.
   std::ofstream mOutputStream;  ///< Opened around Flush when writing to disk.
-  nlohmann::json mBufferedLog = nlohmann::json::object();  ///< Serialized on Flush.
+  nlohmann::json mBufferedLog =
+      nlohmann::json::object();  ///< Serialized on Flush.
   /// @brief Queued action events; serialized to JSON on Flush() /
   /// GetBufferedLog().
   std::vector<ActionEventRecord> mPendingActionEvents;
