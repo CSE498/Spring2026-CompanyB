@@ -99,7 +99,7 @@ class OutputManager : public IOutputManager {
 
   /// @brief Returns the in-memory JSON; rebuilds "action_events" from the
   /// pending vector first.
-  /// @return Reference to @c mBufferedLog (includes pending action events).
+  /// @return Reference to mBufferedLog (includes pending action events).
   [[nodiscard]] const nlohmann::json& GetBufferedLog() noexcept override;
 
   /// @brief Appends events to the pending vector; no file I/O until Flush().
