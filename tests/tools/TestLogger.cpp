@@ -76,8 +76,8 @@ class MockOutputManager : public IOutputManager {
   }
   void SetLogLevel(LogLevel /*level*/) noexcept override {}
   bool Flush() override { return mFlushResult; }
-  void WriteSimulationOutput(const DataLog& /*dataLog*/) override {}
-  const nlohmann::json& GetBufferedLog() const noexcept override {
+  // void WriteSimulationOutput(const DataLog& /*dataLog*/) override {}
+  const nlohmann::json& GetBufferedLog() noexcept override {
     static nlohmann::json j;
     return j;
   }
