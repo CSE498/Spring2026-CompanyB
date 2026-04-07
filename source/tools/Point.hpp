@@ -127,7 +127,7 @@ class Point {
   [[nodiscard]] constexpr double lengthSq() const { return x * x + y * y; }
 
   // Distance to another point.
-  [[nodiscard]] constexpr double distanceTo(const Point& other) const {
+  [[nodiscard]] double distanceTo(const Point& other) const {
     return std::sqrt(distanceSqTo(other));
   }
 
@@ -139,12 +139,12 @@ class Point {
   }
 
   // Return a new point translate.
-  [[nodiscard]] constexpr Point translated(const Point& delta) const {
+  [[nodiscard]] Point translated(const Point& delta) const {
     return Point(x + delta.x, y + delta.y);
   }
 
   // Return a perpendicular vector.
-  [[nodiscard]] constexpr Point perpendicular() const { return Point(-y, x); }
+  [[nodiscard]] Point perpendicular() const { return Point(-y, x); }
 
   // Angle of the vector.
   [[nodiscard]] double angle() const { return std::atan2(y, x); }
