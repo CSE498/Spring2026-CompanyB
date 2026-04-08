@@ -36,10 +36,10 @@ class SwarmingAgent : public AgentBase {
   WorldPosition target_pos;
 
   /// @brief map of the locations we know about, may contain target
-  RobinHoodMap<size_t, WorldPosition> known_locations;
+  RobinHoodMap<size_t, WorldPosition> known_locations{};
 
   /// @brief random number generator for any random decisions this agents makes
-  std::mt19937 rng;
+  std::mt19937 rng{};
 
   struct MoveIntent {
     double dx = 0.0;

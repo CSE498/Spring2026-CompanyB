@@ -93,6 +93,8 @@ SwarmingAgent::MoveIntent SwarmingAgent::ChooseRandomIntent() {
     case 4:
       intent.dx = 1;
       break;  // right
+    default:
+      break;  // should never happen
   }
   return intent;
 }
