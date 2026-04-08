@@ -1,6 +1,8 @@
 #include <QApplication>
 #include "MainWindow.hpp"
 #include "../source/Worlds/MazeWorld.hpp"
+#include "StartScreen.h"
+
 
 int main(int argc, char *argv[])
 {
@@ -13,8 +15,8 @@ int main(int argc, char *argv[])
     const std::vector<QString> imagePaths = {"images/test1.png", "images/test2.png"};
     const int tileSize = 64;
 
-    cse498::MainWindow window(world, imagePaths, tileSize);
-    window.show();
+    cse498::StartScreen startScreen(world, imagePaths, tileSize);
+    startScreen.show();
 
     return app.exec();
 }

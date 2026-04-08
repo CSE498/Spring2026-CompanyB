@@ -16,6 +16,8 @@ qt_add_executable(QtApp
         source/Interfaces/gui/MadiQTtest.cpp
         source/Interfaces/gui/ImageManager.cpp
         source/Interfaces/gui/ImageGrid.cpp
+        source/Interfaces/gui/MainWindow.cpp
+        source/Interfaces/gui/StartScreen.cpp
 )
 
 target_link_libraries(QtApp PRIVATE Qt6::Core Qt6::Widgets)
