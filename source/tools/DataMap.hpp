@@ -19,7 +19,7 @@ namespace cse498 {
 class DataMap {
  private:
   using MapType = std::unordered_map<std::string, std::any>;
-  MapType mData;
+  MapType mData{};
 
  public:
   class Error {
@@ -64,7 +64,7 @@ class DataMap {
       return *this;
     }
     Iterator operator++(int) {
-      Iterator tmp = *this;
+      Iterator tmp{*this};
       ++mIt;
       return tmp;
     }
@@ -127,7 +127,7 @@ class DataMap {
       return *this;
     }
     ConstIterator operator++(int) {
-      ConstIterator tmp = *this;
+      ConstIterator tmp{*this};
       ++mIt;
       return tmp;
     }
