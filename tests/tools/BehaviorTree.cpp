@@ -18,7 +18,8 @@ auto unwrap = [](auto&& exp) {
 };
 
 TEST_CASE("BehaviorTree Construction and Node Insertion", "[tree][insert]") {
-  auto root = unwrap(NodeFactory::createParentNode(NodeType::Sequence, "SeqRoot"));
+  auto root =
+      unwrap(NodeFactory::createParentNode(NodeType::Sequence, "SeqRoot"));
   Node* rootPtr = root.get();
 
   cse498::BehaviorTree tree(std::move(root));
@@ -31,8 +32,10 @@ TEST_CASE("BehaviorTree Construction and Node Insertion", "[tree][insert]") {
   rootPtr->addNode(std::move(node1));
 }
 
-TEST_CASE("Inserting and Retrieving Entries in Blackboard (Basic)", "[blackboard]") {
-  auto root = unwrap(NodeFactory::createParentNode(NodeType::Sequence, "SeqRoot"));
+TEST_CASE("Inserting and Retrieving Entries in Blackboard (Basic)",
+          "[blackboard]") {
+  auto root =
+      unwrap(NodeFactory::createParentNode(NodeType::Sequence, "SeqRoot"));
 
   cse498::BehaviorTree tree(std::move(root));
   auto blackboard = tree.getBlackboard();
@@ -52,7 +55,8 @@ TEST_CASE("Inserting and Retrieving Entries in Blackboard (Basic)", "[blackboard
 }
 
 TEST_CASE("Retrieving Missing Entries in Blackboard", "[blackboard]") {
-  auto root = unwrap(NodeFactory::createParentNode(NodeType::Sequence, "SeqRoot"));
+  auto root =
+      unwrap(NodeFactory::createParentNode(NodeType::Sequence, "SeqRoot"));
 
   cse498::BehaviorTree tree(std::move(root));
   auto blackboard = tree.getBlackboard();
@@ -76,7 +80,8 @@ TEST_CASE("Retrieving Missing Entries in Blackboard", "[blackboard]") {
 }
 
 TEST_CASE("Accessing Empty Children in Sequence Node", "[sequence]") {
-  auto root = unwrap(NodeFactory::createParentNode(NodeType::Sequence, "SeqRoot"));
+  auto root =
+      unwrap(NodeFactory::createParentNode(NodeType::Sequence, "SeqRoot"));
   Node* rootPtr = root.get();
 
   cse498::BehaviorTree tree(std::move(root));
@@ -98,7 +103,8 @@ TEST_CASE("Accessing Empty Children in Sequence Node", "[sequence]") {
 }
 
 TEST_CASE("Accessing Empty Children in Select Node", "[select]") {
-  auto root = unwrap(NodeFactory::createParentNode(NodeType::Select, "SelRoot"));
+  auto root =
+      unwrap(NodeFactory::createParentNode(NodeType::Select, "SelRoot"));
   Node* rootPtr = root.get();
 
   cse498::BehaviorTree tree(std::move(root));
@@ -120,7 +126,8 @@ TEST_CASE("Accessing Empty Children in Select Node", "[select]") {
 }
 
 TEST_CASE("Accessing Empty Child in Repeat Node", "[repeat]") {
-  auto root = unwrap(NodeFactory::createParentNode(NodeType::Repeat, "RepRoot"));
+  auto root =
+      unwrap(NodeFactory::createParentNode(NodeType::Repeat, "RepRoot"));
   Node* rootPtr = root.get();
 
   cse498::BehaviorTree tree(std::move(root));
@@ -142,7 +149,8 @@ TEST_CASE("Accessing Empty Child in Repeat Node", "[repeat]") {
 }
 
 TEST_CASE("Accessing Empty Child in Invert Node", "[invert]") {
-  auto root = unwrap(NodeFactory::createParentNode(NodeType::Invert, "InvRoot"));
+  auto root =
+      unwrap(NodeFactory::createParentNode(NodeType::Invert, "InvRoot"));
   Node* rootPtr = root.get();
 
   cse498::BehaviorTree tree(std::move(root));
@@ -165,7 +173,8 @@ TEST_CASE("Accessing Empty Child in Invert Node", "[invert]") {
 
 TEST_CASE("Decorator accepts single child and prevents duplicates",
           "[decorator]") {
-  auto root = unwrap(NodeFactory::createParentNode(NodeType::Sequence, "SeqRoot"));
+  auto root =
+      unwrap(NodeFactory::createParentNode(NodeType::Sequence, "SeqRoot"));
   Node* rootPtr = root.get();
 
   cse498::BehaviorTree tree(std::move(root));
@@ -176,7 +185,9 @@ TEST_CASE("Decorator accepts single child and prevents duplicates",
 
   rootPtr->addNode(std::move(inv));
 
-  Action successAction = []([[maybe_unused]] Blackboard& blackboard){ return Status::Success; };
+  Action successAction = []([[maybe_unused]] Blackboard& blackboard) {
+    return Status::Success;
+  };
 
   auto act1 = NodeFactory::createActionNode("Act1", successAction, 2);
 
@@ -196,13 +207,16 @@ TEST_CASE("Tick propagates correctly through tree (Basic Action)",
         Act1
   */
 
-  auto root = unwrap(NodeFactory::createParentNode(NodeType::Select, "SelRoot"));
+  auto root =
+      unwrap(NodeFactory::createParentNode(NodeType::Select, "SelRoot"));
   Node* rootPtr = root.get();
 
   cse498::BehaviorTree tree(std::move(root));
   auto blackboard = tree.getBlackboard();
 
-  Action successAction = []([[maybe_unused]] Blackboard& blackboard){ return Status::Success; };
+  Action successAction = []([[maybe_unused]] Blackboard& blackboard) {
+    return Status::Success;
+  };
 
   auto act1 = NodeFactory::createActionNode("Act1", successAction, 2);
   Node* act1Ptr = act1.get();
@@ -239,7 +253,8 @@ TEST_CASE("Tick propagates correctly through tree (Even Action)",
         Act1
   */
 
-  auto root = unwrap(NodeFactory::createParentNode(NodeType::Select, "SelRoot"));
+  auto root =
+      unwrap(NodeFactory::createParentNode(NodeType::Select, "SelRoot"));
   Node* rootPtr = root.get();
 
   cse498::BehaviorTree tree(std::move(root));
@@ -247,14 +262,13 @@ TEST_CASE("Tick propagates correctly through tree (Even Action)",
 
   blackboard.setValue("Init Val", 2);
 
-  Action squareGenerator = []([[maybe_unused]] Blackboard& blackboard){ 
+  Action squareGenerator = []([[maybe_unused]] Blackboard& blackboard) {
     auto result = blackboard.getValue("Init Val");
     if (result) {
       int val = std::get<int>(result.value());
       blackboard.setValue("Init Val", val * val);
       return Status::Success;
-    }
-    else{
+    } else {
       return Status::Failure;
     }
   };
@@ -308,7 +322,8 @@ TEST_CASE("Tick propagates correctly through tree (123-Sum Action)",
         Act3
   */
 
-  auto root = unwrap(NodeFactory::createParentNode(NodeType::Sequence, "SeqRoot"));
+  auto root =
+      unwrap(NodeFactory::createParentNode(NodeType::Sequence, "SeqRoot"));
   Node* rootPtr = root.get();
 
   cse498::BehaviorTree tree(std::move(root));
@@ -316,42 +331,38 @@ TEST_CASE("Tick propagates correctly through tree (123-Sum Action)",
 
   blackboard.setValue("Init Val", 0.0);
 
-  Action sumOne = []([[maybe_unused]] Blackboard& blackboard){ 
+  Action sumOne = []([[maybe_unused]] Blackboard& blackboard) {
     auto result = blackboard.getValue("Init Val");
     if (result) {
       double val = std::get<double>(result.value());
       blackboard.setValue("Init Val", val + 1.0);
       return Status::Success;
-    }
-    else{
+    } else {
       return Status::Failure;
     }
   };
 
-  Action sumTwo = []([[maybe_unused]] Blackboard& blackboard){ 
+  Action sumTwo = []([[maybe_unused]] Blackboard& blackboard) {
     auto result = blackboard.getValue("Init Val");
     if (result) {
       double val = std::get<double>(result.value());
       blackboard.setValue("Init Val", val + 2.0);
       return Status::Success;
-    }
-    else{
+    } else {
       return Status::Failure;
     }
   };
 
-  Action sumThree = []([[maybe_unused]] Blackboard& blackboard){ 
+  Action sumThree = []([[maybe_unused]] Blackboard& blackboard) {
     auto result = blackboard.getValue("Init Val");
     if (result) {
       double val = std::get<double>(result.value());
       blackboard.setValue("Init Val", val + 3.0);
       return Status::Success;
-    }
-    else{
+    } else {
       return Status::Failure;
     }
   };
-
 
   auto act1 = NodeFactory::createActionNode("Act1", sumOne, 2);
   Node* act1Ptr = act1.get();
@@ -376,7 +387,6 @@ TEST_CASE("Tick propagates correctly through tree (123-Sum Action)",
   REQUIRE(act1Ptr->tickCount() == 1);
   REQUIRE(act2Ptr->tickCount() == 0);
   REQUIRE(act3Ptr->tickCount() == 0);
-
 
   auto result = blackboard.getValue("Init Val");
   REQUIRE(result.has_value());
@@ -470,13 +480,16 @@ TEST_CASE("Tick propagates correctly through tree (Simple Sequence)",
         Act2
   */
 
-  auto root = unwrap(NodeFactory::createParentNode(NodeType::Sequence, "SeqRoot"));
+  auto root =
+      unwrap(NodeFactory::createParentNode(NodeType::Sequence, "SeqRoot"));
   Node* rootPtr = root.get();
 
   cse498::BehaviorTree tree(std::move(root));
   auto blackboard = tree.getBlackboard();
 
-  Action successAction = []([[maybe_unused]] Blackboard& blackboard){ return Status::Success; };
+  Action successAction = []([[maybe_unused]] Blackboard& blackboard) {
+    return Status::Success;
+  };
 
   auto act1 = NodeFactory::createActionNode("Act1", successAction, 2);
   Node* act1Ptr = act1.get();
@@ -543,7 +556,8 @@ TEST_CASE("Tick propagates correctly through tree (Simple Select)",
         Act2
   */
 
-  auto root = unwrap(NodeFactory::createParentNode(NodeType::Select, "SelRoot"));
+  auto root =
+      unwrap(NodeFactory::createParentNode(NodeType::Select, "SelRoot"));
   Node* rootPtr = root.get();
 
   cse498::BehaviorTree tree(std::move(root));
@@ -552,7 +566,9 @@ TEST_CASE("Tick propagates correctly through tree (Simple Select)",
   auto inv1 = unwrap(NodeFactory::createParentNode(NodeType::Invert, "Inv1"));
   Node* inv1Ptr = inv1.get();
 
-  Action successAction = []([[maybe_unused]] Blackboard& blackboard){ return Status::Success; };
+  Action successAction = []([[maybe_unused]] Blackboard& blackboard) {
+    return Status::Success;
+  };
 
   auto act2 = NodeFactory::createActionNode("Act2", successAction, 2);
   Node* act2Ptr = act2.get();
@@ -627,7 +643,8 @@ TEST_CASE("Tick propagates correctly through tree (Sequence Running)",
           Act2
   */
 
-  auto root = unwrap(NodeFactory::createParentNode(NodeType::Sequence, "SeqRoot"));
+  auto root =
+      unwrap(NodeFactory::createParentNode(NodeType::Sequence, "SeqRoot"));
   Node* rootPtr = root.get();
 
   cse498::BehaviorTree tree(std::move(root));
@@ -636,7 +653,9 @@ TEST_CASE("Tick propagates correctly through tree (Sequence Running)",
   auto rep1 = unwrap(NodeFactory::createParentNode(NodeType::Repeat, "Rep1"));
   Node* rep1Ptr = rep1.get();
 
-  Action successAction = []([[maybe_unused]] Blackboard& blackboard){ return Status::Success; };
+  Action successAction = []([[maybe_unused]] Blackboard& blackboard) {
+    return Status::Success;
+  };
 
   auto act1 = NodeFactory::createActionNode("Act1", successAction, 2);
   Node* act1Ptr = act1.get();
@@ -712,7 +731,8 @@ TEST_CASE("Tick propagates correctly through tree (Select Running)",
           Act2
   */
 
-  auto root = unwrap(NodeFactory::createParentNode(NodeType::Select, "SelRoot"));
+  auto root =
+      unwrap(NodeFactory::createParentNode(NodeType::Select, "SelRoot"));
   Node* rootPtr = root.get();
 
   cse498::BehaviorTree tree(std::move(root));
@@ -727,7 +747,9 @@ TEST_CASE("Tick propagates correctly through tree (Select Running)",
   rootPtr->addNode(std::move(inv1));
   rootPtr->addNode(std::move(rep1));
 
-  Action successAction = []([[maybe_unused]] Blackboard& blackboard){ return Status::Success; };
+  Action successAction = []([[maybe_unused]] Blackboard& blackboard) {
+    return Status::Success;
+  };
 
   auto act1 = NodeFactory::createActionNode("Act1", successAction, 2);
   Node* act1Ptr = act1.get();
@@ -807,7 +829,8 @@ TEST_CASE("Tick propagates correctly through tree (Select Fail)",
             Act2
   */
 
-  auto root = unwrap(NodeFactory::createParentNode(NodeType::Select, "SelRoot"));
+  auto root =
+      unwrap(NodeFactory::createParentNode(NodeType::Select, "SelRoot"));
   Node* rootPtr = root.get();
 
   cse498::BehaviorTree tree(std::move(root));
@@ -831,7 +854,9 @@ TEST_CASE("Tick propagates correctly through tree (Select Fail)",
   rep1Ptr->addNode(std::move(inv1));
   rep2Ptr->addNode(std::move(inv2));
 
-  Action successAction = []([[maybe_unused]] Blackboard& blackboard){ return Status::Success; };
+  Action successAction = []([[maybe_unused]] Blackboard& blackboard) {
+    return Status::Success;
+  };
 
   auto act1 = NodeFactory::createActionNode("Act1", successAction, 2);
   Node* act1Ptr = act1.get();
@@ -909,7 +934,8 @@ TEST_CASE("Tick propagates correctly through tree (Select Fail)",
 }
 
 TEST_CASE("Node deletion works correctly", "[delete]") {
-  auto root = unwrap(NodeFactory::createParentNode(NodeType::Sequence, "SeqRoot"));
+  auto root =
+      unwrap(NodeFactory::createParentNode(NodeType::Sequence, "SeqRoot"));
   Node* rootPtr = root.get();
 
   cse498::BehaviorTree tree(std::move(root));
@@ -929,4 +955,3 @@ TEST_CASE("Node deletion works correctly", "[delete]") {
 
   REQUIRE(tree.getActivePath() == "SeqRoot");
 }
-

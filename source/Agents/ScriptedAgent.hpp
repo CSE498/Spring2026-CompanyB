@@ -16,10 +16,10 @@ using cse498::DummyAgentData;
 using cse498::steps::MovementStep;
 
 class ScriptedAgent : public AgentBase<DummyAgentData> {
-protected:
+ protected:
   size_t step_index = 0;
 
-public:
+ public:
   ScriptedAgent(DummyAgentData initial_state) : AgentBase(initial_state) {}
   ~ScriptedAgent() = default;
 
@@ -29,18 +29,18 @@ public:
     StepContainer container{};
 
     switch (step_index % 4) {
-    case 0:
-      container.add_step(MovementStep{pos.Down()});
-      break;
-    case 1:
-      container.add_step(MovementStep{pos.Right()});
-      break;
-    case 2:
-      container.add_step(MovementStep{pos.Up()});
-      break;
-    case 3:
-      container.add_step(MovementStep{pos.Left()});
-      break;
+      case 0:
+        container.add_step(MovementStep{pos.Down()});
+        break;
+      case 1:
+        container.add_step(MovementStep{pos.Right()});
+        break;
+      case 2:
+        container.add_step(MovementStep{pos.Up()});
+        break;
+      case 3:
+        container.add_step(MovementStep{pos.Left()});
+        break;
     }
 
     step_index++;
@@ -48,4 +48,4 @@ public:
   }
 };
 // clang-format on
-} // End of namespace cse498
+}  // End of namespace cse498

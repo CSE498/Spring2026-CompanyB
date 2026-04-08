@@ -55,17 +55,18 @@ class CompositeNode : public Node {
 
   // ATTRIBUTIONS: Used ChatGPT to get ASCII implementation
 
-  virtual void print(const std::string& prefix, bool isLast, bool isRoot) const {
+  virtual void print(const std::string& prefix, bool isLast,
+                     bool isRoot) const {
     if (!isRoot) {
-        std::cout << prefix;
-        std::cout << (isLast ? "└── " : "├── ");
+      std::cout << prefix;
+      std::cout << (isLast ? "└── " : "├── ");
     }
     std::cout << m_name << " (" << m_status << ")" << '\n';
 
     std::string newPrefix = prefix + (isLast ? "    " : "│   ");
 
     for (size_t i = 0; i < m_children.size(); ++i) {
-        m_children[i]->print(newPrefix, i == m_children.size() - 1);
+      m_children[i]->print(newPrefix, i == m_children.size() - 1);
     }
   }
 

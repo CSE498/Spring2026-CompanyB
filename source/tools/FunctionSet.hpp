@@ -32,12 +32,13 @@ enum class FunctionSetError { IndexOutOfBounds };
  * @tparam Ret Return type of the functions
  * @tparam Params Parameter types of the functions
  */
-template <typename Ret, typename... Params> class FunctionSet {
+template <typename Ret, typename... Params>
+class FunctionSet {
   using FuncType = std::function<Ret(Params...)>;
 
   std::vector<FuncType> functions;
 
-public:
+ public:
   /** @brief Default constructor, creates an empty FunctionSet. */
   constexpr FunctionSet() = default;
 
@@ -47,7 +48,7 @@ public:
    * @param list The initializer list of std::function objects.
    */
   constexpr FunctionSet(std::initializer_list<FuncType> list) {
-    for (const auto &val : list) {
+    for (const auto& val : list) {
       add(val);
     }
   }
@@ -57,7 +58,7 @@ public:
    *
    * @param func The std::function object to add.
    */
-  constexpr void add(const FuncType &func) { functions.emplace_back(func); }
+  constexpr void add(const FuncType& func) { functions.emplace_back(func); }
 
   /**
    * @brief Check whether a function can be stored in the set.
@@ -68,7 +69,7 @@ public:
    *deduce type
    **/
   template <typename F>
-  constexpr bool check_storable([[maybe_unused]] const F &f) const {
+  constexpr bool check_storable([[maybe_unused]] const F& f) const {
     return std::is_constructible_v<FuncType, F>;
   }
 
@@ -81,16 +82,15 @@ public:
    * @returns std::vector<Ret> with the function return types, if they are
    * vector storable, void otherwise.
    */
-  constexpr auto invoke(const Params &...args) const {
+  constexpr auto invoke(const Params&... args) const {
     if constexpr (VectorReturnable<Ret>) {
       std::vector<Ret> results;
       results.reserve(functions.size());
-      for (const auto &func : functions)
-        results.emplace_back(func(args...));
+      for (const auto& func : functions) results.emplace_back(func(args...));
       return results;
     } else {
       std::ranges::for_each(functions,
-                            [&](const FuncType &func) { func(args...); });
+                            [&](const FuncType& func) { func(args...); });
     }
   }
 
@@ -109,7 +109,7 @@ public:
    * VectorReturnable, std::expected<void, ErrorType> otherwise, where ErrorType
    * = std::vector<std::pair<size_t, std::exception_ptr>>
    */
-  constexpr auto invoke_catch(const Params &...args) const {
+  constexpr auto invoke_catch(const Params&... args) const {
     using ErrorType = std::vector<std::pair<size_t, std::exception_ptr>>;
     std::vector<std::pair<size_t, std::exception_ptr>> errors;
 
@@ -156,7 +156,7 @@ public:
    * VectorReturnable, std::expected<void, ErrorType> otherwise, where ErrorType
    * = std::pair<size_t, std::exception_ptr>
    */
-  constexpr auto invoke_until_catch(const Params &...args) const {
+  constexpr auto invoke_until_catch(const Params&... args) const {
     using ErrorType = std::pair<size_t, std::exception_ptr>;
 
     if constexpr (VectorReturnable<Ret>) {
@@ -200,12 +200,12 @@ public:
    * function vector ,so it being modified without our knowledge doesnt break
    * any invariant.
    */
-  [[nodiscard]] constexpr std::vector<FuncType> &GetFunctions() noexcept {
+  [[nodiscard]] constexpr std::vector<FuncType>& GetFunctions() noexcept {
     return functions;
   }
 
-  [[nodiscard]] constexpr const std::vector<FuncType> &
-  GetFunctions() const noexcept {
+  [[nodiscard]] constexpr const std::vector<FuncType>& GetFunctions()
+      const noexcept {
     return functions;
   }
 
@@ -216,7 +216,7 @@ public:
    * @return FuncType& Reference to the function.
    * @throws std::out_of_range if index is invalid.
    */
-  [[nodiscard]] constexpr FuncType &at(size_t index) {
+  [[nodiscard]] constexpr FuncType& at(size_t index) {
     return functions.at(index);
   }
 
@@ -227,7 +227,7 @@ public:
    * @return const FuncType& Const reference to the function.
    * @throws std::out_of_range if index is invalid.
    */
-  [[nodiscard]] constexpr const FuncType &at(size_t index) const {
+  [[nodiscard]] constexpr const FuncType& at(size_t index) const {
     return functions.at(index);
   }
 
@@ -239,7 +239,7 @@ public:
    *
    * @note UB if index is out of bounds
    */
-  [[nodiscard]] constexpr FuncType &operator[](size_t index) noexcept {
+  [[nodiscard]] constexpr FuncType& operator[](size_t index) noexcept {
     assert(index < size());
     return functions[index];
   }
@@ -252,8 +252,8 @@ public:
    *
    * @note UB if index is out of bounds
    */
-  [[nodiscard]] constexpr const FuncType &
-  operator[](size_t index) const noexcept {
+  [[nodiscard]] constexpr const FuncType& operator[](
+      size_t index) const noexcept {
     assert(index < size());
     return functions[index];
   }
@@ -298,7 +298,7 @@ public:
    *
    * @note UB if set is empty
    */
-  [[nodiscard]] constexpr FuncType &front() noexcept {
+  [[nodiscard]] constexpr FuncType& front() noexcept {
     assert(size());
     return functions.front();
   }
@@ -309,7 +309,7 @@ public:
    *
    * @note UB if set is empty
    */
-  [[nodiscard]] constexpr const FuncType &front() const noexcept {
+  [[nodiscard]] constexpr const FuncType& front() const noexcept {
     assert(size());
     return functions.front();
   }
@@ -320,7 +320,7 @@ public:
    *
    * @note UB if set is empty
    */
-  [[nodiscard]] constexpr FuncType &back() noexcept {
+  [[nodiscard]] constexpr FuncType& back() noexcept {
     assert(size());
     return functions.back();
   }
@@ -331,7 +331,7 @@ public:
    *
    * @note UB if set is empty
    */
-  [[nodiscard]] constexpr const FuncType &back() const noexcept {
+  [[nodiscard]] constexpr const FuncType& back() const noexcept {
     assert(size());
     return functions.back();
   }
@@ -372,4 +372,4 @@ public:
     return functions.crend();
   }
 };
-} // namespace cse498
+}  // namespace cse498

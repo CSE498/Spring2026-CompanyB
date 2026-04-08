@@ -30,10 +30,11 @@ class ActionNode : public Node {
 
   // ATTRIBUTIONS: Used ChatGPT to get ASCII implementation
 
-  virtual void print(const std::string& prefix, bool isLast, bool isRoot) const {
+  virtual void print(const std::string& prefix, bool isLast,
+                     bool isRoot) const {
     if (!isRoot) {
-        std::cout << prefix;
-        std::cout << (isLast ? "└── " : "├── ");
+      std::cout << prefix;
+      std::cout << (isLast ? "└── " : "├── ");
     }
     std::cout << m_name << " (" << m_status << "): " << m_tickDuration << '\n';
   };
@@ -43,8 +44,7 @@ class ActionNode : public Node {
 
     if (m_action) {
       m_action(blackboard);
-    }
-    else {
+    } else {
       return Status::Failure;
     }
 

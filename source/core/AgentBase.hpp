@@ -5,11 +5,12 @@
 namespace cse498 {
 using cse498::steps::StepContainer;
 
-template <typename DataClass> class AgentBase {
-protected:
+template <typename DataClass>
+class AgentBase {
+ protected:
   DataClass m_Data;
 
-public:
+ public:
   AgentBase(DataClass data) : m_Data{data} {}
   virtual ~AgentBase() = default;
 
@@ -30,4 +31,4 @@ public:
   }
 };
 
-}; // namespace cse498
+};  // namespace cse498

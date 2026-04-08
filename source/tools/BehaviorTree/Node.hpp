@@ -58,7 +58,8 @@ class Node {
 
   virtual ~Node() = default;
 
-  // Check implementations on CompositeNode and DecoratorNode since it's only meaningful for parent nodes
+  // Check implementations on CompositeNode and DecoratorNode since it's only
+  // meaningful for parent nodes
   virtual void addNode(std::unique_ptr<Node> node) = 0;
   virtual void deleteNode(Node* node) = 0;
 
@@ -73,7 +74,8 @@ class Node {
    *
    * @param depth The current depth within the tree.
    */
-  virtual void print(const std::string& prefix = "", bool isLast = true, bool isRoot = false) const = 0;
+  virtual void print(const std::string& prefix = "", bool isLast = true,
+                     bool isRoot = false) const = 0;
 
   /**
    * @brief Returns the active execution path from this node downward.

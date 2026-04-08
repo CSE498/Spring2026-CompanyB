@@ -44,16 +44,17 @@ class DecoratorNode : public Node {
 
   // ATTRIBUTIONS: Used ChatGPT to get ASCII implementation
 
-  virtual void print(const std::string& prefix, bool isLast, bool isRoot) const {
+  virtual void print(const std::string& prefix, bool isLast,
+                     bool isRoot) const {
     if (!isRoot) {
-        std::cout << prefix;
-        std::cout << (isLast ? "└── " : "├── ");
+      std::cout << prefix;
+      std::cout << (isLast ? "└── " : "├── ");
     }
     std::cout << m_name << " (" << m_status << ")" << '\n';
 
     if (m_child) {
-        std::string newPrefix = prefix + (isLast ? "    " : "│   ");
-        m_child->print(newPrefix, true);
+      std::string newPrefix = prefix + (isLast ? "    " : "│   ");
+      m_child->print(newPrefix, true);
     }
   }
 

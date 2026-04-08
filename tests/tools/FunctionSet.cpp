@@ -4,6 +4,7 @@
 // #include "catch2/catch.hpp"
 
 #include "tools/FunctionSet.hpp"
+
 #include <catch2/catch_test_macros.hpp>
 #include <type_traits>
 
@@ -73,7 +74,7 @@ TEST_CASE("FunctionSet - Invoke all functions with storable return") {
 }
 
 TEST_CASE("FunctionSet - Ensure references cannot be returned into a vector") {
-  cse498::FunctionSet<int &, int> fs;
+  cse498::FunctionSet<int&, int> fs;
   STATIC_REQUIRE(std::is_void_v<decltype(fs.invoke(5))>);
 }
 
@@ -146,13 +147,11 @@ TEST_CASE("FunctionSet - invoke_catch with errors") {
   cse498::FunctionSet<void, int> fs;
 
   fs.add([](int x) {
-    if (x > 0)
-      throw std::runtime_error("error");
+    if (x > 0) throw std::runtime_error("error");
   });
   fs.add([]([[maybe_unused]] int x) {});
   fs.add([](int x) {
-    if (x > 0)
-      throw std::logic_error("error");
+    if (x > 0) throw std::logic_error("error");
   });
 
   auto outcome = fs.invoke_catch(5);
@@ -171,14 +170,13 @@ TEST_CASE("FunctionSet - invoke_catch with errors") {
 }
 
 TEST_CASE("FunctionSet - invoke_until_catch with errors") {
-  cse498::FunctionSet<void, int &> fs;
+  cse498::FunctionSet<void, int&> fs;
 
-  fs.add([](int &x) { x += 5; });
-  fs.add([](int &x) {
-    if (x > 0)
-      throw std::runtime_error("error");
+  fs.add([](int& x) { x += 5; });
+  fs.add([](int& x) {
+    if (x > 0) throw std::runtime_error("error");
   });
-  fs.add([](int &x) { x += 5; });
+  fs.add([](int& x) { x += 5; });
 
   int x = 0;
   auto outcome = fs.invoke_until_catch(x);
@@ -190,7 +188,7 @@ TEST_CASE("FunctionSet - invoke_until_catch with errors") {
   REQUIRE(index1 == 1);
   REQUIRE_THROWS_AS(std::rethrow_exception(err1), std::runtime_error);
 
-  REQUIRE(x == 5); // Only the first increment
+  REQUIRE(x == 5);  // Only the first increment
 }
 
 TEST_CASE("FunctionSet - pop_at") {
@@ -243,7 +241,7 @@ TEST_CASE("FunctionSet - iteration") {
                                       [](int x) { return x * 3; }};
 
   int sum = 0;
-  for (const auto &func : fs) {
+  for (const auto& func : fs) {
     sum += func(10);
   }
 
@@ -251,10 +249,10 @@ TEST_CASE("FunctionSet - iteration") {
 }
 
 TEST_CASE("FunctionSet - empty iteration") {
-  cse498::FunctionSet<void, int &> fs;
+  cse498::FunctionSet<void, int&> fs;
 
   int val = 0;
-  for (const auto &func : fs) {
+  for (const auto& func : fs) {
     func(val);
   }
 
@@ -262,12 +260,12 @@ TEST_CASE("FunctionSet - empty iteration") {
 }
 
 TEST_CASE("FunctionSet - reference iteration") {
-  cse498::FunctionSet<void, int &> fs;
-  fs.add([](int &x) { x += 1; });
-  fs.add([](int &x) { x += 2; });
+  cse498::FunctionSet<void, int&> fs;
+  fs.add([](int& x) { x += 1; });
+  fs.add([](int& x) { x += 2; });
 
   int val = 0;
-  for (const auto &func : fs) {
+  for (const auto& func : fs) {
     func(val);
   }
 

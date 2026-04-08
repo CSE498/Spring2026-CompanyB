@@ -36,7 +36,7 @@ struct StepErr {
 
   StepErr() = delete;
   StepErr(Kind in_kind) : kind(in_kind), msg("") {};
-  StepErr(Kind in_kind, std::string const &in_msg)
+  StepErr(Kind in_kind, std::string const& in_msg)
       : kind(in_kind), msg(in_msg) {};
 };
 
@@ -96,7 +96,7 @@ struct StepContainer;
 struct MovementStep {
   WorldPosition loc;
 
-  bool operator==(MovementStep const &other) { return other.loc == loc; }
+  bool operator==(MovementStep const& other) { return other.loc == loc; }
 };
 
 struct InfoStep {
@@ -113,7 +113,7 @@ struct InfoStep {
   InfoStep(Aspect in_aspect, WorldPosition in_pos)
       : aspect(in_aspect), target(in_pos) {};
 
-  bool operator==(InfoStep const &other) const {
+  bool operator==(InfoStep const& other) const {
     return (other.aspect == aspect) && (other.target == target);
   }
 };
@@ -121,7 +121,7 @@ struct InfoStep {
 struct ConditionalStep {
   InfoHandler condition;
 
-  bool operator==([[maybe_unused]] ConditionalStep const &other) const {
+  bool operator==([[maybe_unused]] ConditionalStep const& other) const {
     // TODO: Decide how to compare functors
     return true;
   }
@@ -129,7 +129,7 @@ struct ConditionalStep {
 
 struct ReconStep {
   // TODO (probably gonna scrap)
-  bool operator==([[maybe_unused]] ReconStep const &other) const {
+  bool operator==([[maybe_unused]] ReconStep const& other) const {
     return false;
   }
 };
@@ -156,21 +156,21 @@ struct StepContainer {
     Node() : step({}), next(nullptr), left(nullptr), right(nullptr) {}
 
     template <StepKind S>
-    Node(S &&s)
+    Node(S&& s)
         : step(std::move(s)), next(nullptr), left(nullptr), right(nullptr) {}
   };
 
   // Root is an "empty" node so that "last" can always be bound
   std::unique_ptr<Node> root = std::make_unique<Node>();
   // This is *non owning* and a shared_ptr doesn't make sense
-  Node *last = root.get();
+  Node* last = root.get();
 
   // When iterating, the "indexing" ptr needs no mutation
-  Node const *cur_node = root.get();
+  Node const* cur_node = root.get();
   // Need one node prior to handle infostep stuff
-  Node const *prev_node = nullptr;
+  Node const* prev_node = nullptr;
 
-  std::stack<Node const *> next_stack;
+  std::stack<Node const*> next_stack;
 
   // Filled in by .inform()
   std::optional<InfoType> world_info = {};
@@ -184,12 +184,12 @@ struct StepContainer {
   }
 
   template <IsInfoType I>
-  void inform(I const &info) {
+  void inform(I const& info) {
     world_info = InfoType{std::in_place_type<I>, info};
   }
 
   template <StepKind S>
-  void add_step(S &&s) {
+  void add_step(S&& s) {
     assert(last != nullptr);
     last->next = std::make_unique<Node>(std::move(s));
     last = last->next.get();
@@ -201,7 +201,7 @@ struct StepContainer {
   // step as a branch w/o needing a full stepcontainer
 
   template <BranchLike T>
-  void add_step(InfoStep &&i, ConditionalStep &&s, T &&t_body) {
+  void add_step(InfoStep&& i, ConditionalStep&& s, T&& t_body) {
     assert(last != nullptr);
 
     // Insert infostep node first
@@ -225,7 +225,7 @@ struct StepContainer {
   }
 
   template <BranchLike T, BranchLike F>
-  void add_step(InfoStep &&i, ConditionalStep &&s, T &&t_body, F &&f_body) {
+  void add_step(InfoStep&& i, ConditionalStep&& s, T&& t_body, F&& f_body) {
     assert(last != nullptr);
 
     // Do everything the single-branch add_step does, then just additionally add
