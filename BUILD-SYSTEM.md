@@ -49,6 +49,20 @@ Other distros vary — you know your system.
 
 ---
 
+## Launching Built Programs
+
+> [!NOTE]
+> The emscripten `index.js` file can be run in the interactive shell using `make docker-dev` as well.
+
+| Command | Output Location | Run Command |
+|---|---|---|
+| make docker-build-emscripten | /build/emscripten/index.js | node /build/emscripten/index.js |
+| make docker-build-native | /build/docker-native/app | `make docker-dev` then run `./build/docker-native/app` |
+| make docker-test-emscripten | /build/tests/emscripten/index.js | node /build/tests/emscripten/index.js |
+| make docker-test-native | /build/tests/docker-native/tests | `make docker-dev` then run `./build/tests/docker-native/app` |
+| make build | /build/native/app | ./build/native/app |
+| make test | /build/tests/native/tests | ./build/tests/native/tests |
+
 ## Docker Builds
 
 All Docker targets build inside a container with the full toolchain pre-installed. No local compiler or Qt installation required.
