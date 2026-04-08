@@ -136,10 +136,10 @@ class WebTextbox : public WebElement {
   [[nodiscard]] std::expected<std::string, std::string> GetText() const;
 
   /**
-     * @brief Template method to append numeric values directly.
-     * @tparam T Any numeric type supported by std::to_string.
-     * @param value The value to append to the textbox.
-     */
+   * @brief Template method to append numeric values directly.
+   * @tparam T Any numeric type supported by std::to_string.
+   * @param value The value to append to the textbox.
+   */
   template <typename T>
   void AppendValue(const T& value) {
     // Uses type deduction to convert the raw value to a string
@@ -147,16 +147,19 @@ class WebTextbox : public WebElement {
   }
 
   /**
-     * @brief Applies a custom lambda transformation to the current text.
-     * @param transform_fn A lambda function that takes a string and returns a modified string.
-     */
-  void TransformText(const std::function<std::string(const std::string&)>& transform_fn);
+   * @brief Applies a custom lambda transformation to the current text.
+   * @param transform_fn A lambda function that takes a string and returns a
+   * modified string.
+   */
+  void TransformText(
+      const std::function<std::string(const std::string&)>& transform_fn);
 
   /**
-     * @brief Appends a new line of text wrapped in a styled span.
-     * @param text The string to append.
-     * @param css_class The CSS class name to apply to the span (e.g., "error-text").
-     */
+   * @brief Appends a new line of text wrapped in a styled span.
+   * @param text The string to append.
+   * @param css_class The CSS class name to apply to the span (e.g.,
+   * "error-text").
+   */
   void AppendStyledLine(const std::string& text, const std::string& css_class);
 };
 
