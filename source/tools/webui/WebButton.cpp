@@ -1,14 +1,15 @@
 #include "WebButton.h"
 
-#include <cassert>
 #include <emscripten.h>
+
+#include <cassert>
 #include <utility>
 
 namespace cse498 {
 
 using emscripten::val;
 
-WebButton::WebButton(const std::string& label, const std::string& id)
+WebButton::WebButton(const std::string &label, const std::string &id)
     : WebElement(id, true), label_(label) {
   assert(!id.empty() && "Button id must not be empty");
 
@@ -33,16 +34,17 @@ WebButton::WebButton(const std::string& label, const std::string& id)
 }
 
 WebButton::~WebButton() {
-  if (button_element_.isNull() || button_element_.isUndefined()) return;
+  if (button_element_.isNull() || button_element_.isUndefined())
+    return;
 
   val document = val::global("document");
   val body = document["body"];
   body.call<void>("removeChild", button_element_);
 }
 
-const std::string& WebButton::GetLabel() const { return label_; }
+const std::string &WebButton::GetLabel() const { return label_; }
 
-void WebButton::SetLabel(const std::string& label) {
+void WebButton::SetLabel(const std::string &label) {
   label_ = label;
   button_element_.set("innerText", label_);
 }
@@ -76,8 +78,10 @@ void WebButton::SetOnClick(std::function<void()> callback) {
 }
 
 void WebButton::Click() {
-  if (!visible_ || !enabled_) return;
-  if (on_click_) on_click_();
+  if (!visible_ || !enabled_)
+    return;
+  if (on_click_)
+    on_click_();
 }
 
-}
+} // namespace cse498

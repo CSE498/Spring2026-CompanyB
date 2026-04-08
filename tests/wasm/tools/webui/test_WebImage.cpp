@@ -333,8 +333,10 @@ struct SetupMockDOM {
     REQUIRE(img.IsLoaded() == true);
   }
 
-  TEST_CASE("WebImage SetVisible updates visibility and GetVisible properly reflects it",
-            "[WebImage]") {
+  TEST_CASE(
+      "WebImage SetVisible updates visibility and GetVisible properly reflects "
+      "it",
+      "[WebImage]") {
     SetupMockDOM mock;
     cse498::WebImage img("test-img-visible", "test.png", "Visible test image");
 

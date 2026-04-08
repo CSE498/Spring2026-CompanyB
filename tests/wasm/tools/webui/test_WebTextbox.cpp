@@ -77,7 +77,7 @@ TEST_CASE("WebTextbox: The Naughty String List", "[edge_case]") {
                                               std::string("\0", 1),
                                               "USER\0NAME"};
 
-  for (const auto& nasty : naughty_strings) {
+  for (const auto &nasty : naughty_strings) {
     REQUIRE_NOTHROW(box.SetText(nasty));
     REQUIRE(box.GetText().value() == nasty);
 
@@ -92,7 +92,8 @@ TEST_CASE("WebTextbox: Numeric Extremes", "[limits]") {
   WebTextbox box("limit_box");
   TextStyle style;
 
-  // Swapped from integer limits to their literal string px equivalents to avoid -Wconstant-conversion
+  // Swapped from integer limits to their literal string px equivalents to avoid
+  // -Wconstant-conversion
   style.font_size = "2147483647px";
   REQUIRE_NOTHROW(box.SetStyle(style));
 
@@ -121,14 +122,14 @@ TEST_CASE("WebTextbox: The Memory Stress Test", "[memory]") {
   WebTextbox heavyBox("heavy_box");
 
   // Temporarily increase limit for the stress test
-  size_t massive_size = 10 * 1024 * 1024;   // 10MB
-  heavyBox.SetMaxLength(massive_size * 2);  // Allow up to 20MB
+  size_t massive_size = 10 * 1024 * 1024;  // 10MB
+  heavyBox.SetMaxLength(massive_size * 2); // Allow up to 20MB
 
   std::string massive(massive_size, 'X');
   REQUIRE_NOTHROW(heavyBox.SetText(massive));
   REQUIRE(heavyBox.GetText().value().size() == massive.size());
 
-  std::string more(1024 * 1024, 'Y');  // 1MB more
+  std::string more(1024 * 1024, 'Y'); // 1MB more
   REQUIRE_NOTHROW(heavyBox.AppendText(more));
   REQUIRE(heavyBox.GetText().value().size() == massive_size + (1024 * 1024));
 }
@@ -141,9 +142,7 @@ TEST_CASE("WebTextbox: Templates and Lambdas", "[webui]") {
   REQUIRE(box.GetText().value() == "404");
 
   // Testing the Lambda (Appending "Error" using a lambda transformation)
-  auto add_error_label = [](const std::string& str) {
-    return str + " Error";
-  };
+  auto add_error_label = [](const std::string &str) { return str + " Error"; };
 
   box.TransformText(add_error_label);
   REQUIRE(box.GetText().value() == "404 Error");
@@ -153,9 +152,11 @@ TEST_CASE("WebTextbox: Styled Span Lines", "[webui]") {
   cse498::WebTextbox box("styled_box");
 
   // Append a styled error message
-  REQUIRE_NOTHROW(box.AppendStyledLine("Fatal Exception: Null Pointer", "text-red-500"));
+  REQUIRE_NOTHROW(
+      box.AppendStyledLine("Fatal Exception: Null Pointer", "text-red-500"));
 
   // Verify that GetText() still returns the raw text without the html tags
-  // Expect to get a newline at the end because AppendStyledLine adds one to the raw buffer
+  // Expect to get a newline at the end because AppendStyledLine adds one to the
+  // raw buffer
   REQUIRE(box.GetText().value() == "Fatal Exception: Null Pointer\n");
 }

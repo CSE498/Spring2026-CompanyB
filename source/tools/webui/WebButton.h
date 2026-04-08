@@ -1,9 +1,9 @@
 #pragma once
 
 #include <emscripten/val.h>
+
 #include <functional>
 #include <string>
-#include "WebElement.hpp"
 
 #include "WebElement.hpp"
 
@@ -44,4 +44,4 @@ class WebButton : public WebElement {
   emscripten::val button_element_{emscripten::val::undefined()};
 };
 
-}
+}  // namespace cse498
