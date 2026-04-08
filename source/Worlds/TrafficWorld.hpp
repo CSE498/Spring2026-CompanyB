@@ -18,28 +18,28 @@ class TrafficWorld : public WorldBase {
     MOVE_RIGHT
   };
 
-  size_t road_id;   ///< ID of road cells, which agents can move on.
-  size_t grass_id;  ///< ID of grass cells, which agents can't move on..
+  size_t road_id{};   ///< ID of road cells, which agents can move on.
+  size_t grass_id{};  ///< ID of grass cells, which agents can't move on..
 
   // Reworked by Claude — two cell types for traffic light phases,
   // with symbols showing which direction traffic may flow.
-  size_t traffic_light_vertical_id;    ///< Traffic light allowing vertical
+  size_t traffic_light_vertical_id{};    ///< Traffic light allowing vertical
                                        ///< movement ('|')
-  size_t traffic_light_horizontal_id;  ///< Traffic light allowing horizontal
+  size_t traffic_light_horizontal_id{};  ///< Traffic light allowing horizontal
                                        ///< movement ('-')
 
-  size_t spawn_id;        ///< ID of cells that spawn agents.
-  size_t destination_id;  ///< ID of cells which are destinations that agents
+  size_t spawn_id{};        ///< ID of cells that spawn agents.
+  size_t destination_id{};  ///< ID of cells which are destinations that agents
                           ///< try to reach.
 
   std::vector<WorldPosition>
-      traffic_light_positions;  ///< Positions of all traffic lights.
+      traffic_light_positions{};  ///< Positions of all traffic lights.
   std::vector<WorldPosition>
-      spawner_positions;  ///< Positions of all spawner tiles.
+      spawner_positions{};  ///< Positions of all spawner tiles.
   WeightedSet<WorldPosition>
-      destination_positions;  // Weighted set to randomly assign destinations
+      destination_positions{};  // Weighted set to randomly assign destinations
   std::map<WorldPosition, std::string>
-      destination_colours;  ///< Per-destination ANSI colour codes.
+      destination_colours{};  ///< Per-destination ANSI colour codes.
 
   /// @brief Indicates whether traffic lights in the world allow agents to pass
   /// through intersections vertically or horizontally.
@@ -74,7 +74,7 @@ class TrafficWorld : public WorldBase {
 
   /// @brief Queue of IDs of despawned agents available for recycling.
   /// Written by Claude.
-  std::queue<size_t> despawned_agent_ids;
+  std::queue<size_t> despawned_agent_ids{};
 
   /// Provide the agent with movement actions.
   void ConfigAgent(AgentBase &agent) override {
