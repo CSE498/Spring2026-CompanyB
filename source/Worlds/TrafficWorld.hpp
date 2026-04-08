@@ -24,13 +24,13 @@ class TrafficWorld : public WorldBase {
   // Reworked by Claude — two cell types for traffic light phases,
   // with symbols showing which direction traffic may flow.
   size_t traffic_light_vertical_id{};    ///< Traffic light allowing vertical
-                                       ///< movement ('|')
+                                         ///< movement ('|')
   size_t traffic_light_horizontal_id{};  ///< Traffic light allowing horizontal
-                                       ///< movement ('-')
+                                         ///< movement ('-')
 
   size_t spawn_id{};        ///< ID of cells that spawn agents.
   size_t destination_id{};  ///< ID of cells which are destinations that agents
-                          ///< try to reach.
+                            ///< try to reach.
 
   std::vector<WorldPosition>
       traffic_light_positions{};  ///< Positions of all traffic lights.
