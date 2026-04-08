@@ -19,8 +19,9 @@ show_help() {
     echo ""
     echo "Environment variables:"
     echo "  NO_QT=1                    Exclude Qt and GUI sources (native and dev only)"
-    echo "  TARGET_MAIN=<file>         Entry point file, e.g. simple_main.cpp (native only)"
-    echo "  Note: NO_QT and TARGET_MAIN are ignored for build-emscripten and serve."
+    echo "  TARGET_MAIN=<file>         Entry point file (searches source/ then demo/)"
+    echo "                             Default: simple_main.cpp (native), web_main.cpp (emscripten)"
+    echo "  Note: NO_QT is ignored for build-emscripten and serve."
 }
 
 SERVICE="$1"
