@@ -47,7 +47,7 @@ int main() {
   stop_btn->SetOnClick([]() {
     canvas->Clear();
     canvas->SetFillColor({0, 200, 100});
-    canvas->DrawText("Running...", 10, 30); 
+    canvas->DrawText("Running...", 10, 30);
   });
 
   auto upload_btn = std::make_shared<WebButton>("", "upload-btn");
