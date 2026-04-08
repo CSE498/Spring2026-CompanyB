@@ -34,8 +34,7 @@ WebButton::WebButton(const std::string &label, const std::string &id)
 }
 
 WebButton::~WebButton() {
-  if (button_element_.isNull() || button_element_.isUndefined())
-    return;
+  if (button_element_.isNull() || button_element_.isUndefined()) return;
 
   val document = val::global("document");
   val body = document["body"];
@@ -78,10 +77,8 @@ void WebButton::SetOnClick(std::function<void()> callback) {
 }
 
 void WebButton::Click() {
-  if (!visible_ || !enabled_)
-    return;
-  if (on_click_)
-    on_click_();
+  if (!visible_ || !enabled_) return;
+  if (on_click_) on_click_();
 }
 
-} // namespace cse498
+}  // namespace cse498

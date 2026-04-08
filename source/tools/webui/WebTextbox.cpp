@@ -28,8 +28,7 @@ bool WebTextbox::IsHeadless() const {
  */
 WebTextbox::WebTextbox(const std::string &id, const TextStyle &style)
     : WebElement(id, true) {
-  if (IsHeadless())
-    return;
+  if (IsHeadless()) return;
 
   val document = val::global("document");
   val existing = document.call<val>("getElementById", id);
@@ -54,8 +53,7 @@ WebTextbox::WebTextbox(const std::string &id, const TextStyle &style)
  * elements and memory leaks when the C++ object goes out of scope.
  */
 WebTextbox::~WebTextbox() {
-  if (IsHeadless())
-    return;
+  if (IsHeadless()) return;
 
   if (!div_element_.isNull() && !div_element_.isUndefined()) {
     div_element_.call<void>("remove");
@@ -102,7 +100,7 @@ void WebTextbox::AppendText(const std::string &text) {
   }
 
   div_element_.set("innerText", current);
-  div_element_.set("scrollTop", div_element_["scrollHeight"]); // Auto-scroll
+  div_element_.set("scrollTop", div_element_["scrollHeight"]);  // Auto-scroll
 }
 
 /**
@@ -116,8 +114,7 @@ void WebTextbox::Clear() { SetText(""); }
  * failed to initialize.
  */
 std::expected<std::string, std::string> WebTextbox::GetText() const {
-  if (IsHeadless())
-    return mock_text_content_;
+  if (IsHeadless()) return mock_text_content_;
 
   if (div_element_.isNull() || div_element_.isUndefined()) {
     return std::unexpected("Error: DOM element is null or undefined.");
@@ -130,12 +127,11 @@ std::expected<std::string, std::string> WebTextbox::GetText() const {
  * modifications.
  */
 void WebTextbox::SetStyle(const TextStyle &style) {
-  if (IsHeadless())
-    return;
+  if (IsHeadless()) return;
 
   val css = div_element_["style"];
   css.set("fontFamily", style.font_family);
-  css.set("fontSize", style.font_size); // Now directly applies the string
+  css.set("fontSize", style.font_size);  // Now directly applies the string
   css.set("color", style.color);
   css.set("backgroundColor", style.background_color);
   css.set("fontWeight", style.bold ? "bold" : "normal");
@@ -145,8 +141,7 @@ void WebTextbox::SetStyle(const TextStyle &style) {
  * @brief Allows the UI team to apply a pre-defined CSS class to the element.
  */
 void WebTextbox::SetClass(const std::string &css_class) {
-  if (IsHeadless())
-    return;
+  if (IsHeadless()) return;
   div_element_.set("className", css_class);
 }
 
@@ -154,8 +149,7 @@ void WebTextbox::SetClass(const std::string &css_class) {
  * @brief Hides or shows the element without removing it from the DOM entirely.
  */
 void WebTextbox::SetVisible(bool visible) {
-  if (IsHeadless())
-    return;
+  if (IsHeadless()) return;
   div_element_["style"].set("display", visible ? "block" : "none");
 }
 
@@ -164,8 +158,7 @@ void WebTextbox::SetVisible(bool visible) {
  * container.
  */
 void WebTextbox::SetPosition(int x, int y) {
-  if (IsHeadless())
-    return;
+  if (IsHeadless()) return;
   val css = div_element_["style"];
   css.set("left", std::to_string(x) + "px");
   css.set("top", std::to_string(y) + "px");
@@ -175,8 +168,7 @@ void WebTextbox::SetPosition(int x, int y) {
  * @brief Hard-codes the bounding box dimensions of the text area.
  */
 void WebTextbox::SetSize(int width, int height) {
-  if (IsHeadless())
-    return;
+  if (IsHeadless()) return;
   val css = div_element_["style"];
   css.set("width", std::to_string(width) + "px");
   css.set("height", std::to_string(height) + "px");
@@ -220,4 +212,4 @@ void WebTextbox::AppendStyledLine(const std::string &text,
   AppendText(text + "\n");
 }
 
-} // namespace cse498
+}  // namespace cse498

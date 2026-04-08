@@ -122,14 +122,14 @@ TEST_CASE("WebTextbox: The Memory Stress Test", "[memory]") {
   WebTextbox heavyBox("heavy_box");
 
   // Temporarily increase limit for the stress test
-  size_t massive_size = 10 * 1024 * 1024;  // 10MB
-  heavyBox.SetMaxLength(massive_size * 2); // Allow up to 20MB
+  size_t massive_size = 10 * 1024 * 1024;   // 10MB
+  heavyBox.SetMaxLength(massive_size * 2);  // Allow up to 20MB
 
   std::string massive(massive_size, 'X');
   REQUIRE_NOTHROW(heavyBox.SetText(massive));
   REQUIRE(heavyBox.GetText().value().size() == massive.size());
 
-  std::string more(1024 * 1024, 'Y'); // 1MB more
+  std::string more(1024 * 1024, 'Y');  // 1MB more
   REQUIRE_NOTHROW(heavyBox.AppendText(more));
   REQUIRE(heavyBox.GetText().value().size() == massive_size + (1024 * 1024));
 }

@@ -66,7 +66,7 @@ void WebImage::SetAlt(const std::string& alt_text) {
 void WebImage::SetVisible(bool is_visible) {
   visible_ = is_visible;
   img_element_["style"].set("display",
-                             std::string(is_visible ? "block" : "none"));
+                            std::string(is_visible ? "block" : "none"));
 }
 
 bool WebImage::IsLoaded() const { return img_element_["complete"].as<bool>(); }
