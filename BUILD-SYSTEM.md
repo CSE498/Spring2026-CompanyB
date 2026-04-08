@@ -98,7 +98,7 @@ These can be combined with any variant:
 | Flag | Applies to | Effect |
 |---|---|---|
 | `NO_QT=1` | `docker-build-native`, `docker-dev`, `docker-test-native` | Excludes Qt and GUI sources |
-| `TARGET_MAIN=<file>` | `docker-build-native`, `docker-dev` | Selects the entry point (must end in `_main.cpp`, default: `simple_main.cpp`) |
+| `TARGET_MAIN=<file>` | `docker-build-native`, `docker-dev` `docker-build-emscripten` | Searches source/ then demo/. (Default: simple_main.cpp (native), web_main.cpp (emscripten)) |
 
 ```bash
 make docker-build-native NO_QT=1
