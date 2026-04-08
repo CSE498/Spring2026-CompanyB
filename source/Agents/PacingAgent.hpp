@@ -8,8 +8,8 @@
 
 #include <cassert>
 
-#include "../core/WorldBase.hpp"
 #include "../core/AgentBase.hpp"
+#include "../core/WorldBase.hpp"
 
 // clang-format off
 namespace cse498 {
