@@ -38,7 +38,8 @@ show_help() {
     echo "  SOURCE_DIR         Source directory (default: /app/source)"
     echo "  BUILD_DIR          Build directory (default: /app/build)"
     echo "  NO_QT              Set to 1 to exclude Qt and GUI sources (native and dev only)"
-    echo "  TARGET_MAIN        Entry point file to build, e.g. simple_main.cpp (native and dev only)"
+    echo "  TARGET_MAIN        Entry point file to build (searches source/ then demo/)"
+    echo "                     Default: simple_main.cpp (native), web_main.cpp (emscripten)"
     echo "  CMAKE_BUILD_TYPE   Passed directly to cmake (e.g. Debug, Release)"
     echo "  CMAKE_EXTRA_FLAGS  Extra C++ flags passed to cmake"
     echo
@@ -60,7 +61,8 @@ do_build_emscripten() {
         -B "${BUILD_DIR}/emscripten" \
         -DCMAKE_RUNTIME_OUTPUT_DIRECTORY="${BUILD_DIR}/emscripten" \
         ${CMAKE_BUILD_TYPE:+-DCMAKE_BUILD_TYPE="${CMAKE_BUILD_TYPE}"} \
-        ${CMAKE_EXTRA_FLAGS:+-DCMAKE_CXX_FLAGS="${CMAKE_EXTRA_FLAGS}"}
+        ${CMAKE_EXTRA_FLAGS:+-DCMAKE_CXX_FLAGS="${CMAKE_EXTRA_FLAGS}"} \
+        ${TARGET_MAIN:+-DTARGET_MAIN="${TARGET_MAIN}"}
 
     # Build with emmake
     # The j flag is for parallel compilation which should help speed up compile jobs later
