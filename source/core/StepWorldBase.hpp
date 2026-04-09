@@ -36,7 +36,7 @@ public:
   /// @note This function must be overridden in any derived world.
   /// @note Do NOT call Agent.SetState() in this function, instead return the
   /// resulting state
-  virtual void DoAction(AgentPtr agent) = 0;
+  virtual DataClass DoAction(AgentPtr agent) = 0;
 
   /// @brief Step through each agent giving them a chance to take an action.
   /// @note Override function to control execution order of agents.

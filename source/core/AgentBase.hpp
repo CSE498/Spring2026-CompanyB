@@ -15,8 +15,6 @@
 #include "Location.hpp"
 #include "WorldGrid.hpp"
 
-#include "core.hpp"
-
 namespace cse498 {
 
 class AgentBase : public Entity {
