@@ -6,14 +6,16 @@
 #include "Step.hpp"
 #include "StepAgentBase.hpp"
 #include "WorldGrid.hpp"
+#include "core.hpp"
 
 namespace cse498 {
 
 using namespace cse498::steps;
+using Concepts::IsDataClass;
 
-template <typename Dataclass> class WorldBase {
+template <IsDataClass DataClass> class StepWorldBase {
 
-  using Agent = StepAgentBase<Dataclass>;
+  using Agent = StepAgentBase<DataClass>;
   using AgentPtr = std::shared_ptr<Agent>;
 
 protected:
@@ -25,8 +27,8 @@ protected:
   WorldGrid main_grid;
 
 public:
-  WorldBase() = default;
-  virtual ~WorldBase() = default;
+  StepWorldBase() = default;
+  virtual ~StepWorldBase() = default;
 
   /// @brief Central function for an agent to take any action
   /// @param agent The specific agent taking the action
@@ -41,7 +43,7 @@ public:
   /// @note Override function to control which grid each agent receives.
   virtual void RunAgents() {
     for (const auto &agent_ptr : agent_set) {
-      StepContainer new_state = DoAction(agent_ptr);
+      DataClass new_state = DoAction(agent_ptr);
       agent_ptr->SetState(new_state);
     }
   }
