@@ -7,6 +7,10 @@
 #include <QSizePolicy>
 #include <QSplitter>
 
+#include <fstream>
+#include <string>
+#include <vector>
+
 namespace cse498 {
 
 const int TIMEOUT = 4000;  // time until status bar messages timeout; 4 seconds
@@ -137,18 +141,41 @@ void MainWindow::onFileOpen() {
     const QString path = QFileDialog::getOpenFileName(
         this, "Open File", QString(), ("All Files (*.*)"));
 
-    if (!path.isEmpty()) {
-        statusBar()->showMessage(QString("Opened: %1").arg(path), TIMEOUT);
-
-        // TODO: load file at path
+    if (path.isEmpty()) {
+        return;
     }
+
+    std::ifstream input(path.toStdString());
+    if (!input.is_open()) {
+        QMessageBox::warning(this, "Open Failed", "Could not open file.");
+        return;
+    }
+    mWorld.GetGrid().Load(input);
+
+    mGraphicsScene->clear();
+    setImageGrid();
+
+    statusBar()->showMessage(QString("Opened: %1").arg(path), TIMEOUT);
 }
 
 void MainWindow::onFileSave() {
     // show message for 2 sec
-    statusBar()->showMessage("File saved", TIMEOUT);
+    const QString path = QFileDialog::getSaveFileName(
+        this, "Save File", QString(), "All Files (*.*)");
 
-    // TODO: implement save logic
+    if (path.isEmpty()) {
+        return;
+    }
+    std::ofstream output(path.toStdString());
+    if (!output.is_open()) {
+        QMessageBox::warning(this, "Save Failed", "Could not save file.");
+        return;
+    }
+
+    mWorld.GetGrid().Print(output);
+
+    statusBar()->showMessage(QString("File Saved: %1").arg(path), TIMEOUT);
+
 }
 
 void MainWindow::onFileExit() { close(); }
