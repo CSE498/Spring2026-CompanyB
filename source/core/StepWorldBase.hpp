@@ -26,19 +26,36 @@ protected:
   /// Main grid for this world
   WorldGrid main_grid;
 
+  /// Helper function that is run whenever a new agent is created.
+  /// @note Override this function to provide agents with actions or other
+  /// setup.
+  virtual void ConfigAgent([[maybe_unused]] Agent &agent) {}
+
 public:
   StepWorldBase() = default;
   virtual ~StepWorldBase() = default;
+
+  ///@ brief Add an agent to the world
+  ///@param data DataClass to add to agent
+  ///@note This signature or logic is may not final, since other logic may need
+  /// to be added to suport different agents, such as scripting agents.
+  template <typename AgentDerived> AgentDerived &AddAgent(DataClass data) {
+    auto agent_ptr = std::make_shared<AgentDerived>(data);
+    AgentDerived &agent_ref = *agent_ptr;
+    ConfigAgent(agent_ref);
+    agent_set.emplace_back(std::move(agent_ptr));
+    return agent_ref;
+  }
 
   /// @brief Central function for an agent to take any action
   /// @param agent The specific agent taking the action
   /// @return The step taken by this agent after the action
   /// @note This function must be overridden in any derived world.
-  /// @note Do NOT call Agent.SetState() in this function, instead return the
-  /// resulting state
+  /// @note Do NOT call Agent.SetState() in this function, instead return
+  /// the resulting state
   virtual DataClass DoAction(AgentPtr agent) = 0;
 
-  /// @brief Step through each agent giving them a chance to take an action.
+  /// @brief Step through each agent giving them a chance to take an action.kkk
   /// @note Override function to control execution order of agents.
   /// @note Override function to control which grid each agent receives.
   virtual void RunAgents() {
