@@ -14,23 +14,19 @@
 
 namespace cse498 {
 
-class WorldBase;  // A pre-declaration of WorldBase so that it can be referred
-                  // to below.
-
 class Entity {
  protected:
   const size_t id;    ///< Unique ID for this entity; should never change.
   std::string name;   ///< Name for this entity (E.g., "Player 1" or "+2 Sword")
   Location location;  ///< Where is this entity located?
-  const WorldBase& world;  ///< Which world does this entity belong to?
 
   // @TODO: entities should probably have annotations or properties...
   //        Any public functions here for properties could be useful
   //        in agents, items, or interfaces.
 
  public:
-  Entity(size_t id, const std::string& name, const WorldBase& world)
-      : id(id), name(name), world(world) {}
+  Entity(size_t id, const std::string& name)
+      : id(id), name(name) {}
   Entity(const Entity&) =
       delete;  // Entities must be unique and shouldn't be copied.
   Entity(Entity&&) = default;   // Entities CAN be moved.

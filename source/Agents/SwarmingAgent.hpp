@@ -1,87 +1,141 @@
-/**
- * @file SwarmingAgent.hpp
- * @brief A simple agent that tries to swarm around to a target
- * area by talking to other agents
- */
-
 #pragma once
 
-#include <cmath>
-#include <limits>
-#include <optional>
+#include <concepts>
 #include <random>
-#include <string>
 
-#include "../core/ActionNames.hpp"
+#include "../core/Step.hpp"
 #include "../core/AgentBase.hpp"
-#include "../core/WorldPosition.hpp"
-#include "../tools/RobinHoodMap.hpp"
+#include "../tools/StateGridPosition.hpp"
+#include "../core/WorldBase.hpp"
+#include "../core/AgentData.hpp"
 
 namespace cse498 {
 
-/**
- * @brief A simple agent that tries to swarm around to a target area
- * by talking to other agents
- *
- * This agent maintains a map of known locations items or other points of
- * interest and their positions. It shares this knowledge with nearby agents and
- * uses it to navigate towards a specified target.
- */
-class SwarmingAgent : public AgentBase {
- protected:
-  /// @brief  ID of the Agents target area (item?)
-  size_t target_id = SIZE_MAX;
+template <typename T>
+concept IsSwarm_Data = Concepts::IsOneOf<T, TrafficData, InfectionData>;
 
-  /// @brief where the target is (unknown until found)
-  WorldPosition target_pos;
+template <IsSwarm_Data SwarmData>
+class SwarmingAgent : public AgentBase<SwarmData> {
+ private:
+  std::mt19937 rng{std::random_device{}()};
 
-  /// @brief map of the locations we know about, may contain target
-  RobinHoodMap<size_t, WorldPosition> known_locations{};
-
-  /// @brief random number generator for any random decisions this agents makes
-  std::mt19937 rng{};
-
-  struct MoveIntent {
-    double dx = 0.0;
-    double dy = 0.0;
-  };
-
-  void MergeKnowledgeFromNeighbor();
-  std::optional<MoveIntent> ChooseTargetIntent();
-  MoveIntent ChooseRandomIntent();
-  size_t IntentToAction(const MoveIntent& intent);
+  // Returns a random neighboring position (up/down/left/right)
+  WorldPosition get_random_neighbor(WorldPosition & pos) {
+    std::uniform_int_distribution<int> dist(1, 4);
+    switch (dist(rng)) {
+      case 1:
+        return pos.Up();  // up
+      case 2:
+        return pos.Down();  // down
+      case 3:
+        return pos.Left();  // left
+      default:
+        return pos.Right();  // right
+    }
+  }
 
  public:
-  SwarmingAgent(size_t id, const std::string& name, const WorldBase& world)
-      : AgentBase(id, name, world), rng(static_cast<unsigned>(id)) {}
+  SwarmingAgent(SwarmData data) : AgentBase<SwarmData>(data) {}
 
-  ~SwarmingAgent() override = default;
-
-  bool Initialize() override {
-    return HasAction(ActionNames::UP) && HasAction(ActionNames::DOWN) &&
-           HasAction(ActionNames::LEFT) && HasAction(ActionNames::RIGHT);
+  [[nodiscard]] StepContainer GetTurn() override {
+    if constexpr (std::is_same_v<SwarmData, TrafficData>) {
+      return TrafficGetTurn();
+    } else if constexpr (std::is_same_v<SwarmData, InfectionData>) {
+      return InfectionGetTurn();
+    }
   }
 
-  /// Set the ID of the target location this agent is seeking.
-  SwarmingAgent& SetTarget(const size_t& id) {
-    target_id = id;
-    return *this;
+  [[nodiscard]] StepContainer TrafficGetTurn() {
+    StepContainer container{};
+
+    if(!this->m_Data.is_active) {
+      // If the agent is not active, it should do nothing (remain still)
+      return container; // empty container means no steps, i.e. remain still
+    }
+
+    // I think we need some sort of conditional that says if we're at an
+    // intersection do this, else continue straight kinda thing (not sure if the
+    // world has this information tbh)
+
+    // No target set — make a random turn and skip the world query entirely
+    if (!this->m_Data.destination.has_value()) {
+      WorldPosition random_pos = get_random_neighbor(this->m_Data.pos); //(3,1)
+      cse498::steps::MovementStep random_move{random_pos};
+      container.add_step(std::move(random_move));
+      return container;
+    }
+
+    // Ask the world if the target position is available
+    cse498::steps::InfoStep query{
+        cse498::steps::InfoStep::Aspect::LOC_AVAIL,
+        this->m_Data.destination.value()  // safe, we checked above
+    };
+
+    // Read the world's answer and branch: true = available, false = not
+    cse498::steps::ConditionalStep has_target{cse498::steps::InfoHandler(
+        [](bool is_available) -> std::expected<bool, cse498::steps::StepErr> {
+          return is_available;
+        })};
+
+
+
+    
+    // True branch: target is open, move toward it (checks if we swarm away or
+    // to the location)
+    cse498::steps::StepContainer true_branch{};
+    if (this->m_Data.swarm_away) {
+      // as of now it just moves randomly (need to implement logic)
+      cse498::steps::MovementStep true_move{
+          get_random_neighbor(this->m_Data.pos)};
+      true_branch.add_step(std::move(true_move));
+    } else {
+      // as of now it sets move to point to the destination, not sure if this is
+      // the correct logic or not
+      cse498::steps::MovementStep true_move{this->m_Data.destination.value()};
+      true_branch.add_step(std::move(true_move));
+    }
+
+    // False branch: target is blocked, move randomly (this likely will never be
+    // called I dont think (unless its a "wall" ig))
+    cse498::steps::StepContainer false_branch{};
+    cse498::steps::MovementStep false_move{
+        get_random_neighbor(this->m_Data.pos)};
+    false_branch.add_step(std::move(false_move));
+
+    // Wire it all together: query → condition → true/false branch
+    container.add_step(std::move(query), std::move(has_target),
+                       std::move(true_branch), std::move(false_branch));
+
+    return container;
   }
 
-  /// Seed this agent's knowledge with a known location.
-  SwarmingAgent& AddKnownLocation(const size_t& name, WorldPosition pos) {
-    known_locations.insert(name, pos);
-    return *this;
+  [[nodiscard]] StepContainer InfectionGetTurn() {
+    // For now, just return an empty container (i.e. do nothing)
+    return StepContainer{};
   }
 
-  /// Get the map of all locations this agent knows about (for knowledge
-  /// sharing).
-  [[nodiscard]] const RobinHoodMap<size_t, WorldPosition>& GetKnownLocations()
-      const {
-    return known_locations;
+  // Following 3 functions are helper functions to set aspects of the agent's state
+
+  // Helper function to set the agent's destination
+  void SetGoal(WorldPosition goal) {
+    auto state = this->GetState();
+    state.destination = goal;
+    this->SetState(state);
   }
 
-  [[nodiscard]] size_t SelectAction(const WorldGrid& grid) override;
+  // Helper function to set whether the agent is swarming away or towards the goal
+  void SetSwarmAway(bool swarm_away) {
+    auto state = this->GetState();
+    state.swarm_away = swarm_away;
+    this->SetState(state);
+  }
+
+  // Helper function to set whether the agent is active or not
+  void SetActive(bool active) {
+    auto state = this->GetState();
+    state.is_active = active;
+    this->SetState(state);
+  }
 };
 
 }  // namespace cse498
