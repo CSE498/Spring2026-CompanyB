@@ -5,6 +5,7 @@ project(cse498-segfault-survivors)
 set(BUILD_TESTS OFF CACHE BOOL "Build native tests")
 set(BUILD_WASM_TESTS OFF CACHE BOOL "Build Emscripten specific wasm tests")
 set(NO_QT OFF CACHE BOOL "Build without Qt and exclude Interfaces/gui sources")
+set(TARGET_MAIN "simple_main.cpp" CACHE STRING "Entry point file (must end in _main.cpp)")
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
@@ -22,6 +23,7 @@ set(HEADER_DIRS
     ${CMAKE_CURRENT_SOURCE_DIR}/core
     ${CMAKE_CURRENT_SOURCE_DIR}/Interfaces
     ${CMAKE_CURRENT_SOURCE_DIR}/tools
+    ${CMAKE_CURRENT_SOURCE_DIR}/tools/webui
     ${CMAKE_CURRENT_SOURCE_DIR}/worlds
 )
 
@@ -48,8 +50,7 @@ if(BUILD_WASM_TESTS)
     FetchContent_MakeAvailable(Catch2)
 
     # Exclude main source files from library
-    list(FILTER SOURCES EXCLUDE REGEX "(_main|^main)\\.cpp$")
-    list(FILTER SOURCES EXCLUDE REGEX "web_entry.cpp$")
+    list(FILTER SOURCES EXCLUDE REGEX "(_main|/main)\\.cpp$")
 
     # Create INTERFACE library if header only, regular if sources exist
     list(LENGTH SOURCES SOURCES_COUNT)
@@ -69,7 +70,9 @@ if(BUILD_WASM_TESTS)
     endif()
     add_executable(tests ${TEST_SOURCES})
     target_link_libraries(tests PRIVATE project_lib Catch2::Catch2WithMain)
-    target_link_libraries(project_lib PUBLIC range-v3)
+    target_include_directories(project_lib SYSTEM PUBLIC
+    $<TARGET_PROPERTY:range-v3,INTERFACE_INCLUDE_DIRECTORIES>
+)
 
     # Emscripten compatibility: disable POSIX signals
     target_compile_definitions(tests PRIVATE CATCH_CONFIG_NO_POSIX_SIGNALS)
@@ -94,7 +97,7 @@ if(BUILD_WASM_TESTS)
 
 elseif(BUILD_TESTS)
     # Exclude Emscripten only sources
-    list(FILTER SOURCES EXCLUDE REGEX "(_main|^main)\\.cpp$")
+    list(FILTER SOURCES EXCLUDE REGEX "(_main|/main)\\.cpp$")
     list(FILTER SOURCES EXCLUDE REGEX ".*/tools/webui/.*")
 
     if(NO_QT)
@@ -142,25 +145,29 @@ elseif(BUILD_TESTS)
     add_executable(tests ${TEST_SOURCES})
     target_link_libraries(tests PRIVATE project_lib Catch2::Catch2WithMain)
     target_link_libraries(project_lib PUBLIC range-v3)
-    target_compile_options(tests PRIVATE -O2 -g -Wall -Wextra -Wpedantic)
 
 elseif(DEFINED EMSCRIPTEN)
     # Exclude Qt GUI files (Qt can't be compiled by emcc)
     list(FILTER SOURCES EXCLUDE REGEX ".*/Interfaces/gui/.*")
 
-    # Exclude native entry points
-    list(FILTER SOURCES EXCLUDE REGEX "(_main|^main)\\.cpp$")
+    # Exclude all entry points then add back the selected one
+    list(FILTER SOURCES EXCLUDE REGEX ".*_main\\.cpp$")
+    # Default to web_main.cpp for Emscripten builds if no target was specified
+    if(TARGET_MAIN STREQUAL "simple_main.cpp")
+        set(TARGET_MAIN "web_main.cpp")
+    endif()
+    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${TARGET_MAIN}")
+        list(APPEND SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/${TARGET_MAIN}")
+    elseif(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../demo/${TARGET_MAIN}")
+        list(APPEND SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/../demo/${TARGET_MAIN}")
+    else()
+        message(FATAL_ERROR "TARGET_MAIN '${TARGET_MAIN}' not found in source/ or demo/")
+    endif()
 
     add_executable(index ${SOURCES})
     set_target_properties(index PROPERTIES SUFFIX ".js")
     target_include_directories(index PRIVATE ${HEADER_DIRS})
     target_link_libraries(index PRIVATE range-v3)
-
-    # Emscripten compile options
-    target_compile_options(index PRIVATE
-        -O2
-        -Wall
-    )
 
     # Emscripten link options
     target_link_options(index PRIVATE
@@ -203,6 +210,15 @@ elseif(DEFINED EMSCRIPTEN)
 else()
     # Native build
     list(FILTER SOURCES EXCLUDE REGEX ".*/tools/webui/.*")
+    # Exclude all entry points then add back the selected one
+    list(FILTER SOURCES EXCLUDE REGEX ".*_main\\.cpp$")
+    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${TARGET_MAIN}")
+        list(APPEND SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/${TARGET_MAIN}")
+    elseif(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../demo/${TARGET_MAIN}")
+        list(APPEND SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/../demo/${TARGET_MAIN}")
+    else()
+        message(FATAL_ERROR "TARGET_MAIN '${TARGET_MAIN}' not found in source/ or demo/")
+    endif()
 
     if(NO_QT)
         # Skip Qt entirely and exclude GUI sources
@@ -218,8 +234,10 @@ else()
     if(NOT NO_QT)
         target_link_libraries(app PRIVATE Qt6::Core Qt6::Gui Qt6::Widgets)
     endif()
-    target_compile_options(app PRIVATE
-        -Wall -Wextra -Wcast-align -Wnon-virtual-dtor -Woverloaded-virtual -pedantic
-    )
 
 endif()
+
+message(STATUS "Build type:  ${CMAKE_BUILD_TYPE}")
+message(STATUS "CXX flags:   ${CMAKE_CXX_FLAGS}")
+message(STATUS "NO_QT:       ${NO_QT}")
+message(STATUS "TARGET_MAIN: ${TARGET_MAIN}")

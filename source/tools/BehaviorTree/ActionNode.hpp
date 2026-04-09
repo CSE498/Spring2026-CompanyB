@@ -20,7 +20,7 @@ class ActionNode : public LeafNode {
   Status tick() override {
     ++m_tickCount;
 
-    //std::cout << m_name << '\n';
+    // std::cout << m_name << '\n';
 
     m_status = (m_tickDuration > 1) ? Status::Running : Status::Success;
 
