@@ -6,6 +6,7 @@
 #include <QPainter>
 #include <QSizePolicy>
 #include <QSplitter>
+#include <QVBoxLayout>
 
 #include <fstream>
 #include <string>
@@ -101,6 +102,13 @@ void MainWindow::setMainWidget() {
     // blank panel (placeholder for graph and log)
     mSidePanel = new QWidget(this);
     mSidePanel->setMinimumWidth(200);
+
+    // graph display on panel
+    mMainGraph = new MainGraph(mSidePanel);
+
+    QVBoxLayout* sidePanelLayout = new QVBoxLayout(mSidePanel);
+    sidePanelLayout->addWidget(mMainGraph);
+    mSidePanel->setLayout(sidePanelLayout);
 
     // horizontal splitter w blank panel on the left, image grid on the right
     auto* splitter = new QSplitter(Qt::Horizontal, this);

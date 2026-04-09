@@ -191,7 +191,7 @@ else()
         # Skip Qt entirely and exclude GUI sources
         list(FILTER SOURCES EXCLUDE REGEX ".*/Interfaces/gui/.*")
     else()
-        find_package(Qt6 REQUIRED COMPONENTS Core Gui Widgets)
+        find_package(Qt6 REQUIRED COMPONENTS Core Gui Widgets Charts)
         set(CMAKE_AUTOMOC ON)
     endif()
 
@@ -200,7 +200,7 @@ else()
     target_link_libraries(app PRIVATE range-v3)
     target_include_directories(app PRIVATE ${HEADER_DIRS})
     if(NOT NO_QT)
-        target_link_libraries(app PRIVATE Qt6::Core Qt6::Gui Qt6::Widgets)
+        target_link_libraries(app PRIVATE Qt6::Core Qt6::Gui Qt6::Widgets Qt6::Charts)
     endif()
     target_compile_options(app PRIVATE
             -Wall -Wextra -Wcast-align -Wnon-virtual-dtor -Woverloaded-virtual -pedantic

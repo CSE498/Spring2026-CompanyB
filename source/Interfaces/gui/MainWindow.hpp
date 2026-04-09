@@ -29,6 +29,7 @@
 
 #include "../../core/WorldBase.hpp"
 #include "ImageGrid.hpp"
+#include "MainGraph.hpp"
 
 namespace cse498 {
 
@@ -79,6 +80,9 @@ class MainWindow : public QMainWindow {
 
     // ImageGrid
     std::unique_ptr<ImageGrid> mImageGrid;
+
+    // Graph
+    MainGraph* mMainGraph;
 };
 
 }  // namespace cse498
