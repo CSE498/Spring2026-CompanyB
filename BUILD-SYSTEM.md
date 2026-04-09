@@ -49,15 +49,68 @@ Other distros vary — you know your system.
 
 ---
 
+## Launching Built Programs
+
+> [!NOTE]
+> The emscripten `index.js` file can be run in the interactive shell using `make docker-dev` as well.
+
+| Command | Output Location | Run Command |
+|---|---|---|
+| make docker-build-emscripten | /build/emscripten/index.js | node /build/emscripten/index.js |
+| make docker-build-native | /build/docker-native/app | `make docker-dev` then run `./build/docker-native/app` |
+| make docker-test-emscripten | /build/tests/emscripten/index.js | node /build/tests/emscripten/index.js |
+| make docker-test-native | /build/tests/docker-native/tests | `make docker-dev` then run `./build/tests/docker-native/app` |
+| make build | /build/native/app | ./build/native/app |
+| make test | /build/tests/native/tests | ./build/tests/native/tests |
+
 ## Docker Builds
 
 All Docker targets build inside a container with the full toolchain pre-installed. No local compiler or Qt installation required.
+
+### Build variants
+
+An optional build variant can be appended to any `docker-build-*`, `docker-serve`, or `docker-dev` target:
+
+```bash
+make docker-build-native debug
+make docker-build-emscripten opt
+make docker-serve grumpy
+make docker-dev quick
+```
+
+All variants include the base warning flags: `-Wall -Wextra -Wcast-align -Wnon-virtual-dtor -Woverloaded-virtual -pedantic`
+
+| Variant | Additional Effect |
+|---|---|
+| *(none)* | Base warnings only |
+| `debug` | `CMAKE_BUILD_TYPE=Debug` — adds `-g -O0` |
+| `opt` | `CMAKE_BUILD_TYPE=Release` — adds `-O3 -DNDEBUG` |
+| `quick` | `-DNDEBUG` — fast compile, no optimization change |
+| `grumpy` | `-Wconversion -Weffc++` — extra picky warnings |
+
+### Flags
+
+> [!IMPORTANT]  
+> Make sure to run `make clean` before setting these flags. Otherwise the CMake cache will override them.
+
+These can be combined with any variant:
+
+| Flag | Applies to | Effect |
+|---|---|---|
+| `NO_QT=1` | `docker-build-native`, `docker-dev`, `docker-test-native` | Excludes Qt and GUI sources |
+| `TARGET_MAIN=<file>` | `docker-build-native`, `docker-dev` `docker-build-emscripten` | Searches source/ then demo/. (Default: simple_main.cpp (native), web_main.cpp (emscripten)) |
+
+```bash
+make docker-build-native NO_QT=1
+make docker-build-native NO_QT=1 debug
+make docker-build-native TARGET_MAIN=simple_main.cpp opt
+```
 
 ### Emscripten (WebAssembly)
 
 | Command | Description |
 |---|---|
-| `make docker-build-emscripten` | Build the project to `/build/emscripten/` |
+| `make docker-build-emscripten` | Build the project to `build/emscripten/` |
 | `make docker-test-emscripten` | Build and run Emscripten Catch2 tests |
 | `make docker-serve` | Build and serve on `http://localhost:8080` |
 
@@ -99,11 +152,17 @@ These run on your host machine and require Qt6 installed (see prereqs above).
 
 Output binary is at `build/native/app`. Test binary is at `build/tests/native/tests`.
 
-You can also forward targets directly to `/source/` or `/tests/`:
+You can also forward targets directly to `source/` or `tests/`:
 ```bash
 make src-debug     # runs 'make debug' in source/
 make test-build    # runs 'make build' in tests/
 make test-list     # list source, test, and object files cmake picked up
+```
+
+Pass `NO_QT=1` to any local build to exclude Qt and GUI sources:
+```bash
+make build NO_QT=1
+make test NO_QT=1
 ```
 
 Run `make help` for a full list.
