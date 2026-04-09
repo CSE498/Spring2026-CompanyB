@@ -1,7 +1,191 @@
 /**
  * @file test_scheduler.cpp
  * @brief Unit tests for the Scheduler class
- * @author Joshua Twumasi
+ */
+
+/**
+ * @class Scheduler
+ * @brief Generic template-based scheduler for priority-weighted process
+ * execution
+ *
+ * @tparam ID_TYPE type used to identify processes (default is size_t)
+ *
+ * ## Overview
+ *
+ * Scheduler maintains a collection of processes, each with a priority weight,
+ * and decides which one should execute next. It has three layers of
+ * functionality that can be enabled independently:
+ *
+ *   1. Core scheduling (always active) — picks the next process by weight.
+ *   2. Dynamic weight adjustment (opt-in) — automatically adjusts weights
+ *      to prevent starvation and penalize over-execution.
+ *   3.   Failure handling (opt-in) — tracks failures, applies exponential
+ *      backoff, and auto-disables unreliable processes.
+ *
+ * ## Weight types
+ *
+ * Each process tracks three weight values:
+ *
+ *   - base_weight    — the user-configured weight (set via AddProcess or
+ * SetBaseWeight)
+ *   - adjusted_weight  — adjusted copy of base_weight (only changes when
+ * rebalancing is on)
+ *   - deficit          — round-robin accumulator used by deterministic mode
+ * (can go negative)
+ *
+ * GetEffectiveWeight() returns adjusted_weight when rebalancing is enabled,
+ * otherwise base_weight. This is the weight used in both scheduling algorithms.
+ *
+ * ## Algorithm 1: Deterministic (Weighted Deficit Round-Robin)
+ *
+ * @code
+ *   for each schedulable process P:
+ *       P.deficit += GetEffectiveWeight(P)
+ *   selected = process with highest deficit (ties broken by insertion order)
+ *   selected.deficit -= sum of all effective weights
+ *   return selected
+ * @endcode
+ *
+ * deficit acts as a deficit counter. It goes negative after selection,
+ * then accumulates back up. Over N cycles, each process is selected in exact
+ * proportion to its weight.
+ *
+ * Example: A(weight=2), B(weight=1), total=3; deficits starts at A=0 and B=0
+ * before we add their weights In the order A,B Cycle 1: deficits  0,0   -> add
+ * weights -> 2,1 -> select A -> subtract 3 -> -1,1 Cycle 2: deficits -1,1   ->
+ * add weights -> 1,2 -> select B -> subtract 3 -> 1,-1 Cycle 3: deficits  1,-1
+ * -> add weights -> 3,0 -> select A -> subtract 3 -> 0,0 Therefore A will run 2
+ * times and B runs 1 time. Consistent with A:B -> 2:1 ratio
+ *
+ *
+ * ## Algorithm 2: Probabilistic (Weighted Random)
+ *
+ * @code
+ *   total = sum of effective weights for schedulable processes
+ *   r = random number in [0, total)
+ *   cumulative = 0
+ *   for each schedulable process P:
+ *       cumulative += GetEffectiveWeight(P)
+ *       if r < cumulative: return P
+ * @endcode
+ *
+ * Each process has selection probability = its weight / total weight.
+ *
+ * ## Rebalancing API (when enabled)
+ *
+ * After each GetNext() call:
+ *
+ * @code
+ *   for each process P:
+ *       if P was selected:
+ *           P.adjusted_weight *= (1 - frequency_penalty)   // penalize over-use
+ *           P.wait_cycles = 0
+ *       else:
+ *           P.wait_cycles++
+ *           P.adjusted_weight += wait_boost_factor * P.wait_cycles  // reward
+ * waiting clamp P.adjusted_weight to [weight_floor, weight_ceiling]
+ * @endcode
+ *
+ * This gradually shifts weight toward starving processes and away from
+ * frequently selected ones.
+ *
+ * ## Failure handling (when enabled)
+ *
+ * @code
+ *   on MarkProcessFailed(id):
+ *       P.failure_count++
+ *       P.backoff_cycles = min(P.backoff_cycles * multiplier, max_backoff)
+ *       P.cycles_until_retry = P.backoff_cycles   // countdown starts
+ *       if P.failure_count >= max_consecutive_failures:
+ *           P.enabled = false                      // auto-disable
+ *
+ *   on each GetNext():
+ *       for each process: if cycles_until_retry > 0, decrement it
+ *       (process is skipped while cycles_until_retry > 0)
+ *
+ *   on MarkProcessSuccess(id):
+ *       P.success_count++
+ *       if P.success_count >= recovery_threshold:
+ *           reset failure state (failure_count, backoff, etc.)
+ * @endcode
+ *
+ * ## Usage Examples
+ *
+ * ### 1. Basic scheduling (deterministic)
+ * @code
+ *   Scheduler<int> sched;                         // deterministic mode by
+ * default sched.AddProcess(1, 10.0);                    // high priority
+ *   sched.AddProcess(2, 5.0);                     // medium
+ *   sched.AddProcess(3, 1.0);                     // low
+ *
+ *   auto next = sched.GetNext();                  // returns std::expected<int,
+ * SchedulerError> if (next) { execute(*next); }
+ *   // Over 16 cycles: process 1 runs ~10x, 2 ~5x, 3 ~1x
+ * @endcode
+ *
+ * ### 2. Probabilistic mode
+ * @code
+ *   Scheduler<int> sched(Scheduler<int>::Mode::PROBABILISTIC);
+ *   sched.AddProcess(1, 10.0);
+ *   sched.AddProcess(2, 5.0);
+ *   // Process 1 has 10/15 -> 67% chance of selection each cycle
+ * @endcode
+ *
+ * ### 3. Custom config at construction
+ * @code
+ *   Scheduler<int>::Config cfg;
+ *   cfg.weight_floor      = 0.5;
+ *   cfg.frequency_penalty = 0.15;
+ *   cfg.max_consecutive_failures = 5;
+ *   Scheduler<int> sched(Scheduler<int>::Mode::DETERMINISTIC,
+ * std::random_device{}(), cfg);
+ * @endcode
+ *
+ * ### 4. Rebalancing (starvation prevention)
+ * @code
+ *   Scheduler<int> sched;
+ *   sched.AddProcess(1, 100.0);
+ *   sched.AddProcess(2, 1.0);
+ *
+ *   sched.EnableRebalancing(true);
+ *   sched.SetWeightFloor(0.5);                    // no weight drops below 0.5
+ *   sched.SetWeightCeiling(200.0);                // no weight exceeds 200
+ *   sched.SetFrequencyPenalty(0.1);               // selected process loses 10%
+ * weight sched.SetWaitBoostFactor(0.2);                // waiting processes
+ * gain 0.2 * wait_cycles
+ *   // Process 2 gradually gets more CPU time despite low base weight
+ * @endcode
+ *
+ * ### 5. Failure handling with exponential backoff
+ * @code
+ *   Scheduler<int> sched;
+ *   sched.AddProcess(1, 10.0);
+ *   sched.AddProcess(2, 10.0);
+ *
+ *   sched.EnableFailureHandling(true);
+ *   sched.SetMaxConsecutiveFailures(3);            // disable after 3
+ * consecutive failures sched.SetBackoffMultiplier(2.0);               //
+ * backoff doubles each failure: 1 -> 2 -> 4
+ *   sched.SetRecoverySuccessThreshold(2);          // 2 successes in a row
+ * clears failure state
+ *
+ *   auto id = sched.GetNext();
+ *   if (id && taskFailed(*id)) {
+ *       sched.MarkProcessFailed(*id);              // triggers backoff
+ * countdown } else if (id) { sched.MarkProcessSuccess(*id);             //
+ * clears failures after enough successes
+ *   }
+ * @endcode
+ *
+ * ### 6. Manual process control
+ * @code
+ *   sched.DisableProcess(2);
+ *   sched.EnableProcess(2);
+ *   sched.SetBaseWeight(1, 20.0);     / change priority at runtime
+ *   sched.RemoveProcess(3); // permanently remove
+ *   sched.Clear();
+ * @endcode
+ *
  */
 
 #include <cmath>
@@ -252,9 +436,9 @@ TEST_CASE("Scheduler: Deterministic GetNext", "[scheduler]") {
       REQUIRE(scheduler.GetNext().has_value());
     }
 
-    auto count1 = scheduler.GetExecutionCount(1);
-    auto count2 = scheduler.GetExecutionCount(2);
-    auto count3 = scheduler.GetExecutionCount(3);
+    auto count1 = scheduler.GetProcessExecutionCount(1);
+    auto count2 = scheduler.GetProcessExecutionCount(2);
+    auto count3 = scheduler.GetProcessExecutionCount(3);
 
     REQUIRE(count1.has_value());
     REQUIRE(count2.has_value());
@@ -340,8 +524,8 @@ TEST_CASE("Scheduler: Execution Count Tracking", "[scheduler]") {
   REQUIRE(scheduler.AddProcess(2, 5.0).has_value());
 
   SECTION("Initial execution counts are zero") {
-    auto count1 = scheduler.GetExecutionCount(1);
-    auto count2 = scheduler.GetExecutionCount(2);
+    auto count1 = scheduler.GetProcessExecutionCount(1);
+    auto count2 = scheduler.GetProcessExecutionCount(2);
 
     REQUIRE(count1.has_value());
     REQUIRE(count2.has_value());
@@ -355,8 +539,8 @@ TEST_CASE("Scheduler: Execution Count Tracking", "[scheduler]") {
       REQUIRE(scheduler.GetNext().has_value());
     }
 
-    auto count1 = scheduler.GetExecutionCount(1);
-    auto count2 = scheduler.GetExecutionCount(2);
+    auto count1 = scheduler.GetProcessExecutionCount(1);
+    auto count2 = scheduler.GetProcessExecutionCount(2);
 
     REQUIRE(count1.has_value());
     REQUIRE(count2.has_value());
@@ -365,8 +549,8 @@ TEST_CASE("Scheduler: Execution Count Tracking", "[scheduler]") {
     CHECK(total == 10);
   }
 
-  SECTION("GetExecutionCount for non-existent process returns error") {
-    auto result = scheduler.GetExecutionCount(99);
+  SECTION("GetProcessExecutionCount for non-existent process returns error") {
+    auto result = scheduler.GetProcessExecutionCount(99);
     CHECK_FALSE(result.has_value());
     CHECK(result.error() == SchedulerError::ProcessNotFound);
   }
@@ -832,7 +1016,7 @@ TEST_CASE("Scheduler: Exponential Backoff", "[scheduler]") {
   Scheduler<size_t> scheduler;
   REQUIRE(scheduler.AddProcess(1, 10.0).has_value());
   scheduler.EnableFailureHandling(true);
-  scheduler.SetInitialBackoffCycles(2);
+  REQUIRE(scheduler.SetInitialBackoffCycles(2).has_value());
   REQUIRE(scheduler.SetBackoffMultiplier(2.0).has_value());
 
   SECTION("First failure sets initial backoff") {
@@ -867,9 +1051,9 @@ TEST_CASE("Scheduler: Max Backoff Cap", "[scheduler]") {
   Scheduler<size_t> scheduler;
   REQUIRE(scheduler.AddProcess(1, 10.0).has_value());
   scheduler.EnableFailureHandling(true);
-  scheduler.SetInitialBackoffCycles(1);
+  REQUIRE(scheduler.SetInitialBackoffCycles(1).has_value());
   REQUIRE(scheduler.SetBackoffMultiplier(2.0).has_value());
-  scheduler.SetMaxBackoffCycles(10);
+  REQUIRE(scheduler.SetMaxBackoffCycles(10).has_value());
 
   SECTION("Backoff capped at max") {
     for (int i = 0; i < 10; ++i) {
@@ -963,13 +1147,13 @@ TEST_CASE("Scheduler: Failure Configuration", "[scheduler]") {
     CHECK(scheduler.SetMaxConsecutiveFailures(5).has_value());
     CHECK(scheduler.GetMaxConsecutiveFailures() == 5);
 
-    scheduler.SetInitialBackoffCycles(4);
+    CHECK(scheduler.SetInitialBackoffCycles(4).has_value());
     CHECK(scheduler.GetInitialBackoffCycles() == 4);
 
     CHECK(scheduler.SetBackoffMultiplier(1.5).has_value());
     CHECK(scheduler.GetBackoffMultiplier() == 1.5);
 
-    scheduler.SetMaxBackoffCycles(100);
+    CHECK(scheduler.SetMaxBackoffCycles(100).has_value());
     CHECK(scheduler.GetMaxBackoffCycles() == 100);
 
     CHECK(scheduler.SetRecoverySuccessThreshold(3).has_value());
@@ -988,6 +1172,14 @@ TEST_CASE("Scheduler: Failure Configuration", "[scheduler]") {
     auto result3 = scheduler.SetRecoverySuccessThreshold(0);
     CHECK_FALSE(result3.has_value());
     CHECK(result3.error() == SchedulerError::ZeroRecoveryThreshold);
+
+    auto result4 = scheduler.SetInitialBackoffCycles(0);
+    CHECK_FALSE(result4.has_value());
+    CHECK(result4.error() == SchedulerError::InvalidParameter);
+
+    auto result5 = scheduler.SetMaxBackoffCycles(0);
+    CHECK_FALSE(result5.has_value());
+    CHECK(result5.error() == SchedulerError::InvalidParameter);
   }
 }
 
@@ -1013,7 +1205,7 @@ TEST_CASE("Scheduler: Process Count Queries", "[scheduler]") {
 
   SECTION("Counts reflect backoff processes") {
     scheduler.EnableFailureHandling(true);
-    scheduler.SetInitialBackoffCycles(5);
+    REQUIRE(scheduler.SetInitialBackoffCycles(5).has_value());
     REQUIRE(scheduler.MarkProcessFailed(1).has_value());
 
     auto next = scheduler.GetNext();

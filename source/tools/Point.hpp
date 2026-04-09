@@ -20,42 +20,39 @@ inline bool tol_equal(double a, double b) {
 
 class Point {
  private:
-  double x{}, y{};
+  double x{0.0}, y{0.0};
 
  public:
   // default constructor
-  Point() : x(0.0), y(0.0) {}
-
-  // disable assignment constructor
-  // Point& operator=(const Point&) = delete;
+  Point() = default;
 
   // parameterized constructor
   Point(double X, double Y) : x(X), y(Y) {}
 
   // getters to get value of x and y
-  double getX() const { return x; }
-  double getY() const { return y; }
+  constexpr double getX() const { return x; }
+  constexpr double getY() const { return y; }
 
   // setters to set value of x and y
-  Point& setX(double x_value = 0.0) {
+  Point& setX(double x_value) {
     x = x_value;
     return *this;
   }
-  Point& setY(double y_value = 0.0) {
+  Point& setY(double y_value) {
     y = y_value;
     return *this;
   }
 
   // operators
   // addition (+=)
-  Point& operator+=(const Point& other) {
+  constexpr Point& operator+=(const Point& other) {
     x += other.x;
     y += other.y;
     return *this;
   }
 
   // subtraction (-=)
-  Point& operator-=(const Point& other) {
+  constexpr Point& operator-=(const Point& other) {
     x -= other.x;
     y -= other.y;
     return *this;
@@ -63,30 +60,27 @@ class Point {
 
   // 3. Geometry: dot and cross product, magnitude, normalize(return unit
   // vector),
-  [[nodiscard]] double dot(const Point& other) const {
+  [[nodiscard]] constexpr double dot(const Point& other) const {
     return ((x * other.getX()) + (y * other.getY()));
   }
 
   [[nodiscard]] double magnitude() const { return std::sqrt(x * x + y * y); }
 
   // 4. Transforms: rotate, scale
-  Point& scale(double scalar) {
+  constexpr Point& scale(double scalar) {
     x = x * scalar;
     y = y * scalar;
     return *this;
   }
 
-  // normalize
-  Point& normalize() {
-    double mag = this->magnitude();
-    if (!tol_equal(mag, 0.0)) {
-      x = x / mag;
-      y = y / mag;
-    }
-    return *this;
+  // Returns a scaled copy without mutating the original.
+  [[nodiscard]] Point scaled(double scalar) const {
+    Point copy = *this;
+    return copy.scale(scalar);
   }
 
-  [[nodiscard]] static std::expected<Point, std::string> safe_normalize(
+  // normalize -- returns error on zero vector instead of silently doing nothing
+  [[nodiscard]] static std::expected<Point, std::string> normalize(
       const Point& p) {
     double mag = p.magnitude();
     if (tol_equal(mag, 0.0))
@@ -116,12 +110,57 @@ class Point {
     return *this;
   }
 
+  // Returns a rotated copy without mutating the original.
+  [[nodiscard]] Point rotated(double deg, const Point& pivot = {0, 0},
+                              bool ccw = true) const {
+    Point copy = *this;
+    return copy.rotate(deg, pivot, ccw);
+  }
+
   // 2D cross product -- useful for finding area of the parallelogram
   // area of triangle, possibly torque
   // 2D cross product yields a fake "k" in ijk system
   // my method will return a scalar, not a point vector
-  [[nodiscard]] double cross_product(const Point& other) const {
+  [[nodiscard]] constexpr double cross_product(const Point& other) const {
     return (x * other.y) - (y * other.x);
+  }
+
+  // Additional geometric operations
+
+  // Squared length.
+  [[nodiscard]] constexpr double lengthSq() const { return x * x + y * y; }
+
+  // Distance to another point.
+  [[nodiscard]] double distanceTo(const Point& other) const {
+    return std::sqrt(distanceSqTo(other));
+  }
+
+  // Squared distance to another point.
+  [[nodiscard]] double distanceSqTo(const Point& other) const {
+    double dx = x - other.x;
+    double dy = y - other.y;
+    return dx * dx + dy * dy;
+  }
+
+  // Return a new point translate.
+  [[nodiscard]] Point translated(const Point& delta) const {
+    return Point(x + delta.x, y + delta.y);
+  }
+
+  // Return a perpendicular vector.
+  [[nodiscard]] Point perpendicular() const { return Point(-y, x); }
+
+  // Angle of the vector.
+  [[nodiscard]] double angle() const { return std::atan2(y, x); }
+
+  // Linear interpolation.
+  [[nodiscard]] Point lerp(const Point& other, double t) const {
+    return Point(x + (other.x - x) * t, y + (other.y - y) * t);
+  }
+
+  // Construct a point from polar coordinates.
+  static Point fromPolar(double r, double theta) {
+    return Point(r * std::cos(theta), r * std::sin(theta));
   }
 };
 
