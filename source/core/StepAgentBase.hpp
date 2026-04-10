@@ -2,11 +2,13 @@
 
 #include "Step.hpp"
 #include "WorldPosition.hpp"
+#include "core.hpp"
 
 namespace cse498 {
+using Concepts::IsDataClass;
 using cse498::steps::StepContainer;
 
-template <typename DataClass>
+template <IsDataClass DataClass>
 class StepAgentBase {
  protected:
   DataClass mData;

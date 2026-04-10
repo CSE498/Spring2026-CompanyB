@@ -130,7 +130,8 @@ help:
 	@echo "  NO_QT=1                Skip Qt. Excludes Interfaces/gui sources. (native only)"
 	@echo "                         Works with: build, test, all, debug, opt, quick, grumpy"
 	@echo "                         Example: make test NO_QT=1"
-	@echo "  TARGET_MAIN=<file>     Entry point file, e.g. simple_main.cpp (native only)""
+	echo "  TARGET_MAIN=<file>      Entry point file (searches source/ then demo/)"
+	echo "                          Default: simple_main.cpp (native), web_main.cpp (emscripten)"
 	@echo
 	@echo "Forwarding targets:"
 	@echo "  make src-<tgt>         Run 'make <tgt>' in source/"

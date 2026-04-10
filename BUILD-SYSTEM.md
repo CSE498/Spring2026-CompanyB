@@ -49,6 +49,20 @@ Other distros vary — you know your system.
 
 ---
 
+## Launching Built Programs
+
+> [!NOTE]
+> The emscripten `index.js` file can be run in the interactive shell using `make docker-dev` as well.
+
+| Command | Output Location | Run Command |
+|---|---|---|
+| make docker-build-emscripten | /build/emscripten/index.js | node /build/emscripten/index.js |
+| make docker-build-native | /build/docker-native/app | `make docker-dev` then run `./build/docker-native/app` |
+| make docker-test-emscripten | /build/tests/emscripten/index.js | node /build/tests/emscripten/index.js |
+| make docker-test-native | /build/tests/docker-native/tests | `make docker-dev` then run `./build/tests/docker-native/app` |
+| make build | /build/native/app | ./build/native/app |
+| make test | /build/tests/native/tests | ./build/tests/native/tests |
+
 ## Docker Builds
 
 All Docker targets build inside a container with the full toolchain pre-installed. No local compiler or Qt installation required.
@@ -84,7 +98,7 @@ These can be combined with any variant:
 | Flag | Applies to | Effect |
 |---|---|---|
 | `NO_QT=1` | `docker-build-native`, `docker-dev`, `docker-test-native` | Excludes Qt and GUI sources |
-| `TARGET_MAIN=<file>` | `docker-build-native`, `docker-dev` | Selects the entry point (must end in `_main.cpp`, default: `simple_main.cpp`) |
+| `TARGET_MAIN=<file>` | `docker-build-native`, `docker-dev` `docker-build-emscripten` | Searches source/ then demo/. (Default: simple_main.cpp (native), web_main.cpp (emscripten)) |
 
 ```bash
 make docker-build-native NO_QT=1
