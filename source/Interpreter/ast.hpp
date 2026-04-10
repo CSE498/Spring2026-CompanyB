@@ -4,6 +4,7 @@
 #include <optional>
 #include <type_traits>
 #include <utility>
+#include <vector>
 
 #include "agentlang.hpp"
 #include "lexer.hpp"
@@ -58,6 +59,16 @@ struct TypedNode : public Node {
   virtual ~TypedNode() = 0;
 };
 
+struct StmtBlock : public Node {
+  std::vector<std::unique_ptr<Node>> body_;
+
+  void add_node(std::unique_ptr<Node> &&node) {
+    body_.emplace_back(std::move(node));
+  }
+
+  StmtBlock(emplex::Token token) : Node(token), body_() {};
+};
+
 // -- Expressions --
 struct ExprUnary : public TypedNode {
   std::unique_ptr<Operators::Operator> op_;
@@ -84,21 +95,23 @@ struct ExprBinary : public TypedNode {
 // Function
 struct StmtFunc : public TypedNode {
   // TODO - Waiting on a symbol type
+
+  std::unique_ptr<StmtBlock> body_;
+  std::vector<size_t> signature_types_;
+
+  StmtFunc(emplex::Token token, std::unique_ptr<StmtBlock> &&body,
+           std::vector<size_t> &&signature_types, Types::Type return_t)
+      : TypedNode(token, return_t), body_(std::move(body)),
+        signature_types_(std::move(signature_types)) {};
 };
-
-// Variable definition
-struct StmtVarDef : public Node {};
-
-// Init definition
-struct StmtInit : public Node {};
 
 // Turn definition
 struct StmtTurn : public Node {};
 
 // Agent definition
 struct StmtAgentDef : public Node {
-  std::unique_ptr<StmtInit> init_;
-  std::unique_ptr<StmtTurn> turn_;
+  std::unique_ptr<StmtBlock> init_;
+  std::unique_ptr<StmtBlock> turn_;
 };
 
 // Agent action
@@ -112,8 +125,5 @@ struct ValLiteral : public Node {
 
 // Variable reference
 struct ValVariable : public Node {};
-
-// Member value reference (self or otherwise)
-struct ValMember : public Node {};
 
 }; // namespace cse498::AST
