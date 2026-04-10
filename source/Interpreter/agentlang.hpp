@@ -17,12 +17,16 @@ enum class Direction {
 };
 
 // TODO : How are agents represented internally?
-struct Car;
-struct Student;
+struct Car {};
+struct Student {};
 
 using Type =
     std::variant<bool, int, double, str, Point, Direction, Car, Student>;
 
 }; // namespace agentlang::Types
+
+namespace agentlang::Operators {
+struct Operator {};
+}; // namespace agentlang::Operators
 
 }; // namespace cse498
