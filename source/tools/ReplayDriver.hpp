@@ -39,7 +39,8 @@ class ReplayDriver : public IReplayDriver<AgentT> {
   /// @brief Method to replay logged events from a JSON file.
   /// @param filePath Path to the JSON file containing logged events.
   /// @param agents Reference vector of replayable agents.
-  /// @return Success status of the replay operation.
+  /// @return true if replay was successful, otherwise an error describing
+  /// replay failure.
   std::expected<bool, std::string> ReplayFromFile(
       const std::string& filePath, std::vector<AgentT*>& agents) override {
     std::ifstream inFile(filePath);

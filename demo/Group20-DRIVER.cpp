@@ -175,7 +175,8 @@ bool RunLoadScenario(const std::filesystem::path& replayPath) {
   std::vector<DemoAgent*> agentPointers{&agents[0], &agents[1]};
 
   Logger<DemoAgent> logger;
-  const bool replayOk = logger.BeginReplay(replayPath.string(), agentPointers);
+  const auto replayResult = logger.BeginReplay(replayPath.string(), agentPointers);
+  const bool replayOk = replayResult.has_value();
 
   std::cout << "   Replay status: " << (replayOk ? "success" : "failure")
             << "\n";

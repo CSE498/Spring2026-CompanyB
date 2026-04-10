@@ -34,9 +34,10 @@ class ILogger {
   /// @brief Replay recorded events from a file.
   /// @param filePath Path to the JSON file containing logged events.
   /// @param agents Reference vector of agents updated during replay.
-  /// @return true if replay was successful, false otherwise.
-  virtual bool BeginReplay(const std::string& filePath,
-                           std::vector<AgentType*>& agents) = 0;
+  /// @return true if replay was successful, otherwise an error describing
+  /// replay failure.
+  virtual std::expected<bool, std::string> BeginReplay(
+      const std::string& filePath, std::vector<AgentType*>& agents) = 0;
 
   /// @brief Extract and validate action events from agents.
   /// @param agents Vector of agents to extract actions from.

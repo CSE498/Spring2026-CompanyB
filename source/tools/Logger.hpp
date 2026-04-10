@@ -79,10 +79,11 @@ class Logger : public ILogger<AgentType> {
   /// @brief Replay recorded events from a file.
   /// @param filePath Path to the JSON file containing logged events.
   /// @param agents Reference vector of agents updated during replay.
-  /// @return true if replay loading was successful
-  bool BeginReplay(const std::string& filePath,
-                   std::vector<AgentType*>& agents) override {
-    return mReplayDriver->ReplayFromFile(filePath, agents).value_or(false);
+  /// @return true if replay was successful, otherwise an error describing
+  /// replay failure.
+  std::expected<bool, std::string> BeginReplay(
+      const std::string& filePath, std::vector<AgentType*>& agents) override {
+    return mReplayDriver->ReplayFromFile(filePath, agents);
   }
 
   // SAVING DURING LIVE SIMULATION:

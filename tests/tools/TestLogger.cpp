@@ -127,7 +127,8 @@ TEST_CASE("Logger - BeginReplay Operations", "[Logger]") {
   SECTION("Replay succeeds when driver succeeds") {
     replayPtr->mShouldSucceed = true;
     auto result = logger.BeginReplay("valid_path.json", agents);
-    REQUIRE(result);
+    REQUIRE(result.has_value());
+    REQUIRE(result.value());
     REQUIRE(replayPtr->mReplayCalled == true);
     REQUIRE(replayPtr->mLastFile == "valid_path.json");
   }
@@ -135,7 +136,8 @@ TEST_CASE("Logger - BeginReplay Operations", "[Logger]") {
   SECTION("Replay fails when driver fails") {
     replayPtr->mShouldSucceed = false;
     auto result = logger.BeginReplay("invalid_path.json", agents);
-    REQUIRE_FALSE(result);
+    REQUIRE_FALSE(result.has_value());
+    REQUIRE(result.error() == "Replay failed");
     REQUIRE(replayPtr->mReplayCalled == true);
     REQUIRE(replayPtr->mLastFile == "invalid_path.json");
   }
