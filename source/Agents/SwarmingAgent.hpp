@@ -1,13 +1,18 @@
 #pragma once
 
+#include <algorithm>
+#include <array>
+#include <cmath>
 #include <concepts>
+#include <deque>
+#include <optional>
 #include <random>
 
-#include "../core/Step.hpp"
 #include "../core/AgentBase.hpp"
-#include "../tools/StateGridPosition.hpp"
-#include "../core/WorldBase.hpp"
 #include "../core/AgentData.hpp"
+#include "../core/Step.hpp"
+#include "../core/WorldBase.hpp"
+#include "../tools/StateGridPosition.hpp"
 
 namespace cse498 {
 
@@ -19,8 +24,31 @@ class SwarmingAgent : public AgentBase<SwarmData> {
  private:
   std::mt19937 rng{std::random_device{}()};
 
+  // Rolling history of the most recent cells the agent has occupied. Used
+  // to bias detours toward unexplored neighbors so the agent doesn't ping-
+  // pong between two cells when it can't take its preferred greedy step.
+  static constexpr std::size_t kHistorySize = 6;
+  std::deque<WorldPosition> recent_positions;
+
+  void record_position(WorldPosition const& pos) {
+    // skip duplicates so a stationary agent doesn't flush the history with
+    // copies of the same cell
+    if (!recent_positions.empty() && recent_positions.back() == pos) return;
+
+    recent_positions.push_back(pos);
+
+    while (recent_positions.size() > kHistorySize) {
+      recent_positions.pop_front();
+    }
+  }
+
+  [[nodiscard]] bool in_recent(WorldPosition const& p) const {
+    return std::find(recent_positions.begin(), recent_positions.end(), p) !=
+           recent_positions.end();
+  }
+
   // Returns a random neighboring position (up/down/left/right)
-  WorldPosition get_random_neighbor(WorldPosition & pos) {
+  WorldPosition get_random_neighbor(WorldPosition& pos) {
     std::uniform_int_distribution<int> dist(1, 4);
     switch (dist(rng)) {
       case 1:
@@ -32,6 +60,46 @@ class SwarmingAgent : public AgentBase<SwarmData> {
       default:
         return pos.Right();  // right
     }
+  }
+
+  // Picks the neighbor with the smallest Manhattan distance to `target`,
+  // preferring cells not in `recent_positions` so the agent naturally
+  // routes around walls and dead ends rather than pounding the same cell.
+  // If `exclude` is set, that cell is skipped (used to find a distinct
+  // "second choice" after already picking a primary). If every neighbor is
+  // in recent history, we fall back to the closest cell overall so the
+  // agent keeps swarming instead of freezing.
+  WorldPosition best_neighbor(WorldPosition const& pos,
+                              WorldPosition const& target,
+                              std::optional<WorldPosition> exclude) {
+    std::array<WorldPosition, 4> neighbors{pos.Up(), pos.Down(), pos.Left(),
+                                           pos.Right()};
+
+    auto manhattan = [&](WorldPosition const& p) {
+      return std::abs(target.X() - p.X()) + std::abs(target.Y() - p.Y());
+    };
+
+    WorldPosition const* best_fresh = nullptr;
+    double best_fresh_d = 0.0;
+    WorldPosition const* best_any = nullptr;
+    double best_any_d = 0.0;
+
+    for (auto const& n : neighbors) {
+      if (exclude.has_value() && n == *exclude) continue;
+      double d = manhattan(n);
+      if (best_any == nullptr || d < best_any_d) {
+        best_any = &n;
+        best_any_d = d;
+      }
+      if (!in_recent(n) && (best_fresh == nullptr || d < best_fresh_d)) {
+        best_fresh = &n;
+        best_fresh_d = d;
+      }
+    }
+
+    if (best_fresh != nullptr) return *best_fresh;
+    if (best_any != nullptr) return *best_any;
+    return pos;  // only reached if `exclude` somehow matches all neighbors
   }
 
  public:
@@ -48,73 +116,72 @@ class SwarmingAgent : public AgentBase<SwarmData> {
   [[nodiscard]] StepContainer TrafficGetTurn() {
     StepContainer container{};
 
-    if(!this->m_Data.is_active) {
-      // If the agent is not active, it should do nothing (remain still)
-      return container; // empty container means no steps, i.e. remain still
+    if (!this->m_Data.is_active) {
+      return container;  // empty container means no steps remain still
     }
 
-    // I think we need some sort of conditional that says if we're at an
-    // intersection do this, else continue straight kinda thing (not sure if the
-    // world has this information tbh)
+    // Remember where we are this turn so future detours can avoid looping
+    // back onto cells we've just visited.
+    record_position(this->m_Data.pos);
 
-    // No target set — make a random turn and skip the world query entirely
+    // make a random turn and skip the world query entirely
     if (!this->m_Data.destination.has_value()) {
-      WorldPosition random_pos = get_random_neighbor(this->m_Data.pos); //(3,1)
+      WorldPosition random_pos = get_random_neighbor(this->m_Data.pos);
       cse498::steps::MovementStep random_move{random_pos};
       container.add_step(std::move(random_move));
       return container;
     }
 
-    // Ask the world if the target position is available
-    cse498::steps::InfoStep query{
-        cse498::steps::InfoStep::Aspect::LOC_AVAIL,
-        this->m_Data.destination.value()  // safe, we checked above
-    };
+    // wander randomly instead of approaching (maybe not have a swarm away
+    // mode?)
+    if (this->m_Data.swarm_away) {
+      cse498::steps::MovementStep away_move{
+          get_random_neighbor(this->m_Data.pos)};
+      container.add_step(std::move(away_move));
+      return container;
+    }
 
-    // Read the world's answer and branch: true = available, false = not
-    cse498::steps::ConditionalStep has_target{cse498::steps::InfoHandler(
+    // if we are already at the destination stay there
+    WorldPosition const& pos = this->m_Data.pos;
+    WorldPosition const& dest = this->m_Data.destination.value();
+    if (pos == dest) {
+      return container;  // empty to stay in place
+    }
+
+    // Pick the best neighbor toward the destination preferring cells we
+    // haven't been to recently. `backup` is the next best choice, used if
+    // the world tells us `primary` is a wall
+    WorldPosition primary = best_neighbor(pos, dest, std::nullopt);
+    WorldPosition backup = best_neighbor(pos, dest, primary);
+
+    // Eagerly mark both as attempted in our history iff both turn out to
+    // be walls and the agent stays put and next turn we'll try different
+    // cells instead of repicking these two forever
+    record_position(primary);
+    record_position(backup);
+
+    cse498::steps::InfoStep query{cse498::steps::InfoStep::Aspect::LOC_AVAIL,
+                                  primary};
+
+    cse498::steps::ConditionalStep is_open{cse498::steps::InfoHandler(
         [](bool is_available) -> std::expected<bool, cse498::steps::StepErr> {
           return is_available;
         })};
 
-
-
-    
-    // True branch: target is open, move toward it (checks if we swarm away or
-    // to the location)
-    cse498::steps::StepContainer true_branch{};
-    if (this->m_Data.swarm_away) {
-      // as of now it just moves randomly (need to implement logic)
-      cse498::steps::MovementStep true_move{
-          get_random_neighbor(this->m_Data.pos)};
-      true_branch.add_step(std::move(true_move));
-    } else {
-      // as of now it sets move to point to the destination, not sure if this is
-      // the correct logic or not
-      cse498::steps::MovementStep true_move{this->m_Data.destination.value()};
-      true_branch.add_step(std::move(true_move));
-    }
-
-    // False branch: target is blocked, move randomly (this likely will never be
-    // called I dont think (unless its a "wall" ig))
-    cse498::steps::StepContainer false_branch{};
-    cse498::steps::MovementStep false_move{
-        get_random_neighbor(this->m_Data.pos)};
-    false_branch.add_step(std::move(false_move));
-
-    // Wire it all together: query → condition → true/false branch
-    container.add_step(std::move(query), std::move(has_target),
-                       std::move(true_branch), std::move(false_branch));
+    container.add_step(std::move(query), std::move(is_open),
+                       cse498::steps::MovementStep{primary},
+                       cse498::steps::MovementStep{backup});
 
     return container;
   }
 
   [[nodiscard]] StepContainer InfectionGetTurn() {
-    // For now, just return an empty container (i.e. do nothing)
+    // for now just return an empty container
     return StepContainer{};
   }
 
-  // Following 3 functions are helper functions to set aspects of the agent's state
+  // Following 3 functions are helper functions to set aspects of the agent's
+  // state
 
   // Helper function to set the agent's destination
   void SetGoal(WorldPosition goal) {
@@ -123,7 +190,8 @@ class SwarmingAgent : public AgentBase<SwarmData> {
     this->SetState(state);
   }
 
-  // Helper function to set whether the agent is swarming away or towards the goal
+  // Helper function to set whether the agent is swarming away or towards the
+  // goal
   void SetSwarmAway(bool swarm_away) {
     auto state = this->GetState();
     state.swarm_away = swarm_away;
