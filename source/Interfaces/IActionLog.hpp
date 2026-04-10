@@ -20,13 +20,13 @@ enum class LogLevel { Normal, Verbose, Debug, Silent };
 /// @brief Base struct for action events, containing common fields.
 struct ActionEventBase {
   /// @brief Unique identifier for the agent performing the action.
-  std::string_view agentId;
+  std::string_view agentId = "";
   /// @brief Type of action being performed; indicates details type.
-  std::string_view actionType;
+  std::string_view actionType = "";
   /// @brief Severity level of the log message.
-  LogLevel logLevel;
+  LogLevel logLevel = LogLevel::Silent;
   /// @brief Timestamp of when the action occurred (determined by world ticks).
-  uint64_t timestamp;
+  uint64_t timestamp = 0;
 };
 /// @brief Struct for action events, generic for action-specific details.
 /// @tparam Details Action-specific details type, allowing for flexible event
@@ -42,7 +42,7 @@ struct LogEventFailure {
   /// @brief Reference to the failed event to provide context for debugging.
   const ActionEventBase& event;
   /// @brief Message explaining the reason for the failure.
-  std::string message;
+  std::string message = "";
 };
 
 template <typename AgentType>

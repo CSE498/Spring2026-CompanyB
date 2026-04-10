@@ -23,18 +23,18 @@ class ActionLog : public IActionLog<AgentType> {
   std::optional<LogEventFailure> ValidateBase(
       const ActionEventBase& eventPayload) {
     // agentId validation
-    if (eventPayload.agentId.empty()) {
+    if (eventPayload.agentId.empty()) [[unlikely]] {
       return LogEventFailure{eventPayload,
                              "Validation failed: agentId is empty."};
     }
     // actionType validation
-    if (eventPayload.actionType.empty()) {
+    if (eventPayload.actionType.empty()) [[unlikely]] {
       return LogEventFailure{eventPayload,
                              "Validation failed: actionType is empty."};
     }
     // logLevel validation
     if (eventPayload.logLevel < LogLevel::Normal ||
-        eventPayload.logLevel > LogLevel::Silent) {
+        eventPayload.logLevel > LogLevel::Silent) [[unlikely]] {
       return LogEventFailure{eventPayload,
                              "Validation failed: logLevel is out of range."};
     }
