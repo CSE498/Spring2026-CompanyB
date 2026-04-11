@@ -1,6 +1,10 @@
+#pragma once
+
 #include "WorldPosition.hpp"
+
 #include <string>
 #include <variant>
+
 namespace cse498 {
 
 namespace agentlang::Types {
@@ -28,5 +32,9 @@ using Type =
 namespace agentlang::Operators {
 struct Operator {};
 }; // namespace agentlang::Operators
+
+namespace agentlang::Symbols {
+struct SymInfo {};
+} // namespace agentlang::Symbols
 
 }; // namespace cse498
