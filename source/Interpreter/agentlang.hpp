@@ -1,6 +1,6 @@
 #pragma once
 
-#include "WorldPosition.hpp"
+#include "core/WorldPosition.hpp"
 
 #include <string>
 #include <variant>
