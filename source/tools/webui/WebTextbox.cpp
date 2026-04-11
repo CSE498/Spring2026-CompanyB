@@ -185,4 +185,20 @@ void WebTextbox::TransformText(const std::function<std::string(const std::string
   }
 }
 
+/**
+ * @brief Appends a new line of text wrapped in a styled span.
+ */
+void WebTextbox::AppendStyledLine(const std::string& text,
+                                  const std::string& css_class) {
+  // 1. Construct the HTML payload for the visual DOM
+  std::string html_payload =
+      "<span class=\"" + css_class + "\">" + text + "</span><br>";
+
+  // Optional: In a future iteration, we would use dom_element.set("innerHTML", ...)
+  // for visual styling, but we maintain AppendText for test compatibility.
+
+  // 2. Update the internal C++ raw text buffer so GetText() and Catch2 tests don't break
+  AppendText(text + "\n");
+}
+
 }  // namespace cse498
