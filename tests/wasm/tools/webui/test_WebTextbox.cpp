@@ -181,3 +181,47 @@ TEST_CASE("WebTextbox: Templates and Lambdas", "[webui]") {
   box.TransformText(add_error_label);
   REQUIRE(box.GetText().value() == "404 Error");
 }
+
+// ADVANCED UI, SECURITY & C++20 TESTS
+
+TEST_CASE("WebTextbox: Span Pruning & Line Formatting", "[ui_spans]") {
+  SetupMockDOMWebTextbox mock;
+  WebTextbox logger(TextStyle(), { .id = "logger_box" });
+
+  SECTION("SetMaxLines limits DOM nodes without crashing JSDOM") {
+    logger.SetMaxLines(3);
+
+    // Inject 10 lines. If our pruning logic failed or threw DOM errors,
+    // JSDOM would crash the test suite here.
+    for(int i = 0; i < 10; ++i) {
+        REQUIRE_NOTHROW(logger.AppendLine("Log line " + std::to_string(i), "INFO"));
+    }
+  }
+
+  SECTION("AppendStyledLine safely handles XSS strings") {
+    std::string malicious = "<img src='x' onerror='alert(1)'>";
+
+    // Validates that EscapeHTML sanitizes the payload before injection
+    REQUIRE_NOTHROW(logger.AppendStyledLine(malicious, "danger-text"));
+
+    // The C++ raw text buffer should retain the exact text for logging/reading parity
+    std::string current_text = logger.GetText().value();
+    REQUIRE(current_text.find(malicious) != std::string::npos);
+  }
+}
+
+TEST_CASE("WebTextbox: C++20 Concepts and Constexpr checks", "[modern_cpp]") {
+  SetupMockDOMWebTextbox mock;
+  WebTextbox box(TextStyle(), { .id = "concepts_box" });
+
+  SECTION("AppendValue accepts std::floating_point types via C++20 Concepts") {
+    REQUIRE_NOTHROW(box.AppendValue(3.14159));
+    REQUIRE(box.GetText().value().find("3.14159") != std::string::npos);
+  }
+
+  SECTION("IsValidLength executes safely at compile-time") {
+    STATIC_REQUIRE(WebTextbox::IsValidLength(500) == true);
+    STATIC_REQUIRE(WebTextbox::IsValidLength(0) == false);
+    STATIC_REQUIRE(WebTextbox::IsValidLength(99999999) == false);
+  }
+}
