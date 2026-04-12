@@ -79,6 +79,12 @@ class StepWorldBase {
       UpdateWorld();
     }
   }
+  /// Return an editable version of the current grid for this world (main_grid
+  /// by default)
+  virtual WorldGrid &GetGrid() { return main_grid; }
+
+  /// Return the current grid for this world (main_grid by default)
+  virtual const WorldGrid &GetGrid() const { return main_grid; }
 };
 
 }  // namespace cse498
