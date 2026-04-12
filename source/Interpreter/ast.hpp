@@ -31,7 +31,7 @@ struct Node {
   emplex::Token token_;
 
   // External-facing call
-  virtual std::expected<Types::Type, ASTErr> get_type() {
+  virtual std::expected<Types::Type, ASTErr> GetType() {
     // Nodes are by default untyped
     return std::unexpected(ASTErr(ASTErr::UNTYPED_NODE, "Node is untyped"));
   }
@@ -45,12 +45,12 @@ struct TypedNode : public Node {
   std::optional<Types::Type> type_;
 
   // Internal-facing call to force the child node to resolve type
-  virtual std::expected<Types::Type, ASTErr> resolve_type() = 0;
+  virtual std::expected<Types::Type, ASTErr> ResolveType() = 0;
 
   // Return the cached type if it exsits, otherwise resolve
-  std::expected<Types::Type, ASTErr> get_type() override {
+  std::expected<Types::Type, ASTErr> GetType() override {
     if (!type_.has_value())
-      return resolve_type();
+      return ResolveType();
     else
       return type_.value();
   }
