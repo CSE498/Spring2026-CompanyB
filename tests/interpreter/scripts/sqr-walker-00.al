@@ -20,6 +20,9 @@ let square_walker : student {
 	 else if (self.step_idx % 4 == 3)
 	    next_dir = right;
 
+	 // Increment step_idx
+	 self.step_idx = self.step_idx + 1;
+
 	 // Make the move decided on
 	 move(next_dir);
     };
