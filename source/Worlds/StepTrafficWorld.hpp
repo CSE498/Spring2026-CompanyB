@@ -4,6 +4,7 @@
 #include <chrono>
 #include <iostream>
 #include <map>
+#include <print>
 #include <ranges>
 #include <thread>
 #include <vector>
@@ -38,6 +39,7 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
 
     // Now we'll need to have an operator() overload for each Step type.
     VisitRet operator()(steps::MovementStep step) {
+      std::println("Desired pos: {}, {}", step.loc.CellX(), step.loc.CellY());
       // The simplest step -- the agent just wants to move to a space.
       if (!world.IsValid(step.loc) || world.IsGrass(step.loc)) {
         return {};
@@ -53,6 +55,9 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
       if (world.CanCollideWithAgentAt(agent, step.loc)) {
         return {};
       }
+      auto curr_state = agent.GetState();
+      curr_state.position = step.loc;
+      agent.SetState(curr_state);
 
       return {};
     }
@@ -66,9 +71,7 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
       switch (step.aspect) {
         using Aspect = cse498::steps::InfoStep::Aspect;
         case Aspect::LOC_AVAIL: {
-          // Just check whether the location is in-bounds and not a grass tile.
-          // Don't bother checking anything about traffic lights and collisions
-          container.inform(false);
+          container.inform(world.IsValid(step.target) && !world.IsGrass(step.target));
           break;
         }
         case Aspect::OCCUPANCY_FRAC: {
@@ -284,7 +287,8 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
     while (!steps.exhausted()) {
       std::expected<Step, StepErr> step = steps.get_next();
       if (!step.has_value()) {
-        // Handle error retrieving step
+        // TEMP
+        break;
       }
       StepVisitor::VisitRet step_result = std::visit(visitor, step.value());
 
