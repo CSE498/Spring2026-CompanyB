@@ -1,6 +1,8 @@
 #pragma once
 
 #include "agentlang.hpp"
+#include "lexer-gen.hpp"
+#include "lexer.hpp"
 #include "tools/RobinHoodMap.hpp"
 
 #include <expected>
@@ -12,8 +14,10 @@
 namespace cse498 {
 
 using agentlang::Symbols::SymInfo;
+using agentlang::Types::Type;
+using namespace emplex;
 
-enum class SymbolError { UNDEFINED_SYMBOL };
+enum class SymbolError { UNDEFINED_SYMBOL, REDEFINITION, INVALID_TYPE };
 
 class SymbolTable {
 public:
@@ -31,6 +35,9 @@ public:
   // Need the actual string because we use it to index into map
   std::expected<SymInfoPtr, SymbolError> GetSym(const std::string &name);
   std::expected<SymInfoPtr, SymbolError> GetSym(size_t id);
+  std::expected<size_t, SymbolError> AddSym(const Token &id_tok,
+                                            const Token &type_tok);
+  std::expected<size_t, SymbolError> AddSym(const Token &id_tok, Type type);
 };
 
 } // namespace cse498
