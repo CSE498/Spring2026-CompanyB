@@ -26,7 +26,9 @@ struct StepVisitor {
   // non-variant external context desired.
   StepAgentBase<TrafficData> &agent;
   StepContainer &container;
-  StepWorldBase &world;
+  TrafficWorld &world;
+
+  size_t grass_id{};
   
   // Now we'll need to have an operator() overload for each Step type.
   VisitRet operator()(steps::MovementStep step) {
@@ -237,15 +239,30 @@ struct StepVisitor {
 
   TrafficData DoAction(AgentPtr agent) override {
     StepContainer steps = agent->GetTurn();
+    StepVisitor visitor{*agent, steps, *this, grass_id};
     // do the sort of stuff in the "do_turns" example in steps.org
     // to run the steps in that container
+    WorldPosition prev_position = agent->GetState().position;
+    while (!steps.exhausted()) {
+      std::expected<Step, StepErr> step = steps.get_next();
+      if (!step.has_value()) {
+	// Handle error retrieving step
+      }
+      StepVisitor::VisitRet step_result = std::visit(visitor, step.value());
 
-    // move the agent if you end up with a movement step. Stop after you've
-    // made a move (maybe?)
+      if (!step_result.has_value()) {
+	// Handle error
+      }
+    }
+    // The position will be updated by the StepVisitor
+    // so all we have left to update is the direction and is_active 
+    TrafficData new_state = agent->GetState();
+    WorldPosition new_position = new_state.position;
+    
+    // if position changed: update direction
+    // if reached destination: deactivate
 
-    // return the agent's TrafficData state but with the direction changed
-    // based on what the move was. E.g. if the agent moved right/east then it
-    // should now be pointing east.
+    return new_state;
   }
 
   void UpdateWorld() override {
