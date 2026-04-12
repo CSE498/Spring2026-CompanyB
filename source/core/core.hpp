@@ -1,5 +1,6 @@
 #pragma once
 
+#include <sstream>
 #include <stdlib.h>
 
 #include <type_traits>
@@ -9,8 +10,7 @@ namespace Concepts {
 template <typename T, typename... Ts>
 concept IsOneOf = (std::is_same_v<T, Ts> || ...);
 
-template <typename Head, typename... Tail>
-constexpr bool all_unique() {
+template <typename Head, typename... Tail> constexpr bool all_unique() {
   // On final element, must be unique
   if constexpr (std::is_void_v<std::tuple<Tail...>>()) {
     return true;
@@ -27,7 +27,12 @@ constexpr bool all_unique() {
 template <typename... Ts>
 concept UniqueTypes = all_unique<Ts..., std::void_t>();
 
-}  // namespace Concepts
+/** @brief Requires given type to have operator<<(std::stringstream&) defined.
+ */
+template <typename T>
+concept Printable = requires(T t) { std::stringstream() << t; };
+
+} // namespace Concepts
 
 namespace StaticUtil {
 /**
@@ -55,4 +60,4 @@ constexpr size_t variant_index() {
     return variant_index<Variant, TargetType, idx + 1>();
   }
 }
-};  // namespace StaticUtil
+}; // namespace StaticUtil

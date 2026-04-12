@@ -21,7 +21,7 @@ namespace emplex {
 
   // Deterministic Finite Automaton (DFA) for token recognition.
   class DFA {
-  private:
+  public:
     // DFA transition table
     static constexpr int NUM_STATES=119;
     using row_t = std::array<int, 128>;
@@ -177,7 +177,7 @@ namespace emplex {
   };
 
   class Lexer {
-  private:
+  public:
     static constexpr int NUM_TOKENS=32;
 
     // -- Load State --
