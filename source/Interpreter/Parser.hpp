@@ -1,12 +1,14 @@
 #pragma once
 #include "Interpreter/SymbolTable.hpp"
 #include "Interpreter/ast.hpp"
+#include "Interpreter/lexer.hpp"
 #include <memory>
 namespace cse498 {
 
 struct ParseErr {
   enum Kind {
     MISSING_TOKEN,
+    TODO,
   };
 
   Kind m_Kind;
@@ -16,11 +18,15 @@ struct ParseErr {
 };
 
 struct Parser {
-  enum class Env { TRAFFIC, INFECTION } env;
-  SymbolTable syms{};
-  std::vector<std::unique_ptr<AST::Node>> nodes;
+  enum class Env { TRAFFIC, INFECTION } m_Env;
+  SymbolTable m_Syms{};
+  std::vector<std::unique_ptr<AST::Node>> m_Nodes;
+
+  std::expected<void, ParseErr> parse(std::istream &);
 
 private:
+  cse498::AgentLexer::Lexer m_Lexer{};
+
   std::expected<std::unique_ptr<AST::Node>, ParseErr> parse_stmt();
   std::expected<std::unique_ptr<AST::Node>, ParseErr> parse_expr();
   std::expected<std::unique_ptr<AST::Node>, ParseErr> parse_stmt_block();
