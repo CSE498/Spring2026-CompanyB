@@ -1,6 +1,8 @@
 #pragma once
 
+#include <algorithm>
 #include <map>
+#include <ranges>
 #include <vector>
 
 #include "../core/StepWorldBase.hpp"
@@ -34,8 +36,9 @@ class TrafficWorld : public StepWorldBase<TrafficData> {
     // Now we'll need to have an operator() overload for each Step type.
     VisitRet operator()(steps::MovementStep step) {
       // The simplest step -- the agent just wants to move to a space.
-      if (world.GetGrid().IsValid(step.loc)) {
-        // also need to check: step isn't onto grass;
+      if (!world.IsValid(step.loc) || world.IsGrass(step.loc)) {
+        return {};
+
         // if trying to move onto a traffic light, it's in a phase which
         // allows this (need to know the agent's position and the new position
         // for this); whether a collision will happen.
@@ -44,6 +47,10 @@ class TrafficWorld : public StepWorldBase<TrafficData> {
 
         // if all that is true, update the agent's location.
       }
+      if (world.CanCollideWithAgentAt(agent, step.loc)) {
+        return {};
+      }
+
       return {};
     }
 
@@ -236,6 +243,34 @@ class TrafficWorld : public StepWorldBase<TrafficData> {
     return empty;
   }
   ~TrafficWorld() = default;
+
+  bool IsValid(const WorldPosition &pos) const {
+    return main_grid.IsValid(pos);
+  }
+
+  bool IsGrass(const WorldPosition &pos) const {
+    return main_grid.IsValid(pos) && main_grid[pos] == grass_id;
+  }
+
+  Direction GetOppositeDirection(const Direction dir) const {
+    // (number) & 3 means bitwise and of the number with 00...011
+    // which grabs the last 2 bits, which is the same as reducing mod 4.
+    return static_cast<Direction>((static_cast<int>(dir) + 2) & 3);
+  }
+
+  bool CanCollideWithAgentAt(const Agent &agent,
+                             const WorldPosition &pos) const {
+    Direction opposite = GetOppositeDirection(agent.GetState().direction);
+    auto is_agent_at_position = [&](const AgentPtr &ptr) {
+      return ptr->GetState().is_active && ptr->GetState().position == pos;
+    };
+    auto has_opposite_direction = [&](const AgentPtr &ptr) {
+      return ptr->GetState().direction == opposite;
+    };
+    return !std::ranges::empty(agent_set |
+                               std::views::filter(is_agent_at_position) |
+                               std::views::filter(has_opposite_direction));
+  }
 
   TrafficData DoAction(AgentPtr agent) override {
     StepContainer steps = agent->GetTurn();
