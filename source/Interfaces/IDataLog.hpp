@@ -8,59 +8,33 @@
 #include <cstddef>
 #include <optional>
 #include <vector>
+#include <unordered_map>
 
-#include "IActionLog.hpp"
+#include "../core/AgentBase.hpp"
 
 namespace cse498 {
+
+template <typename DataClass>
+concept DataConcept = requires(DataClass a) {
+  { a.describe() } -> std::same_as<std::unordered_map<std::string_view, double>>;
+};
 
 /**
  * @class IDataLog
  * @brief Interface for data aggregation and storage.
  */
+template <DataConcept DataClass>
 class IDataLog {
  public:
   virtual ~IDataLog() = default;
 
-  /**
-   * @brief Adds a log entry.
-   * @param data JSON object containing entry details.
-   */
-  // virtual void AddEntry(const ActionEventBase& data) = 0;
+  /// @brief Aggregate agent states; should be called every tick
+  /// @param agents Vector of agents in the world
+  virtual void AggregateData(const std::vector<AgentBase>& agents) = 0;
 
-  /**
-   * @brief Gets the mean of all logged action durations.
-   * @return Mean duration value, or std::nullopt if no data has been logged.
-   */
-  virtual std::optional<double> GetMean() const = 0;
-
-  /**
-   * @brief Gets the median of all logged action durations.
-   * @return Median duration value, or std::nullopt if no data has been logged.
-   */
-  virtual std::optional<double> GetMedian() const = 0;
-
-  /**
-   * @brief Gets the minimum logged action duration.
-   * @return Minimum duration value, or std::nullopt if no data has been logged.
-   */
-  virtual std::optional<double> GetMin() const = 0;
-
-  /**
-   * @brief Gets the maximum logged action duration.
-   * @return Maximum duration value, or std::nullopt if no data has been logged.
-   */
-  virtual std::optional<double> GetMax() const = 0;
-
-  /**
-   * @brief Gets the total number of logged entries.
-   * @return Total entry count.
-   */
-  virtual size_t GetCount() const = 0;
-
-  /**
-   * @brief Clears all entries and resets statistics.
-   */
-  virtual void Reset() = 0;
+  /// @brief Returns all aggregation data for all fields for the most recent tick
+  /// @returns Map of field name to map of aggregation type to aggregate value
+  virtual std::unordered_map<std::string_view, std::unordered_map<std::string_view, double>> GetAggregationData() const = 0;
 };
 
 }  // namespace cse498

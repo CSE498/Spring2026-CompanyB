@@ -20,16 +20,24 @@ class MockAgent {
     eventData["position"] = position;
     eventData["etc"] = etc;
     std::ofstream outFile("test_events.json");
-    outFile << eventData.dump();
-    outFile.close();
+    if (outFile.is_open()) {
+        outFile << eventData.dump();
+        outFile.close();
+    }
 
     position.clear();
     etc = "";
   }
   void loadFromJson(const nlohmann::json& eventData) {
-    id = eventData.at("agentId").get<std::string>();
-    position = eventData.at("position").get<std::vector<int>>();
-    etc = eventData.at("etc").get<std::string>();
+    if (eventData.contains("agentId")) {
+        id = eventData.at("agentId").get<std::string>();
+    }
+    if (eventData.contains("position")) {
+        position = eventData.at("position").get<std::vector<int>>();
+    }
+    if (eventData.contains("etc")) {
+        etc = eventData.at("etc").get<std::string>();
+    }
   }
   std::string getId() const { return id; }
 };

@@ -10,10 +10,12 @@
 #include <vector>
 
 #include "../Interfaces/IActionLog.hpp"
+#include "../Interfaces/IDataLog.hpp"
 #include "../Interfaces/IOutputManager.hpp"
 #include "nlohmann/json.hpp"
 
 namespace cse498 {
+template <DataConcept DataClass>
 class DataLog;
 
 /// @brief Formats and persists simulation log data and programmer log messages.

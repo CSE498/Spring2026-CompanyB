@@ -9,9 +9,7 @@ TEST_CASE("ReplayDriver can read and replay events from a JSON file",
           "[ReplayDriver]") {
   // Create a sample JSON file with event data
   cse498::MockWorld mockWorld;
-
   cse498::MockAgent agent;
-
   mockWorld.agents.push_back(&agent);
   cse498::MockAgent* mockAgent = mockWorld.agents[0];
 
