@@ -41,6 +41,14 @@ class MainWindow : public QMainWindow {
                int tileSize = 32, QWidget* parent = nullptr);
     virtual ~MainWindow() = default;
 
+    // disable copy
+    MainWindow(const MainWindow &) = delete;
+    MainWindow &operator=(const MainWindow &) = delete;
+
+    // disable move
+    MainWindow(MainWindow &&) = delete;
+    MainWindow &operator=(MainWindow &&) = delete;
+
    private:
     void setMenuBar();
     void setStatusBar();
