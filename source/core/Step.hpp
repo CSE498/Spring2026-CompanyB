@@ -10,9 +10,9 @@
 #include <utility>
 #include <variant>
 
-#include "core/WorldPosition.hpp"
-#include "core/core.hpp"
-#include "tools/FuncInfo.hpp"
+#include "WorldPosition.hpp"
+#include "core.hpp"
+#include "../tools/FuncInfo.hpp"
 
 namespace cse498 {
 namespace steps {
