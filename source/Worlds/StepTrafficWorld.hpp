@@ -1,8 +1,11 @@
 #pragma once
 
 #include <algorithm>
+#include <chrono>
+#include <iostream>
 #include <map>
 #include <ranges>
+#include <thread>
 #include <vector>
 
 #include "../core/StepWorldBase.hpp"
@@ -11,7 +14,7 @@
 
 namespace cse498 {
 
-class TrafficWorld : public StepWorldBase<TrafficData> {
+class StepTrafficWorld : public StepWorldBase<TrafficData> {
   using Agent = StepAgentBase<TrafficData>;
   using AgentPtr = std::shared_ptr<Agent>;
 
@@ -29,7 +32,7 @@ class TrafficWorld : public StepWorldBase<TrafficData> {
     // non-variant external context desired.
     StepAgentBase<TrafficData> &agent;
     StepContainer &container;
-    TrafficWorld &world;
+    StepTrafficWorld &world;
 
     size_t grass_id{};
 
@@ -215,7 +218,7 @@ class TrafficWorld : public StepWorldBase<TrafficData> {
   /// @brief Construct a TrafficWorld from a vector of strings representing
   /// the grid layout.
   /// Written by Claude.
-  explicit TrafficWorld(const std::vector<std::string> &grid_lines) {
+  explicit StepTrafficWorld(const std::vector<std::string> &grid_lines) {
     RegisterCellTypes();
     main_grid.Load(grid_lines);
     ScanGrid();
@@ -223,7 +226,7 @@ class TrafficWorld : public StepWorldBase<TrafficData> {
 
   /// @brief Construct a TrafficWorld by reading a grid layout from a file.
   /// Written by Claude.
-  explicit TrafficWorld(const std::string &filepath) {
+  explicit StepTrafficWorld(const std::string &filepath) {
     RegisterCellTypes();
     std::ifstream file(filepath);
     assert(file.is_open() && "TrafficWorld: could not open grid file");
@@ -242,7 +245,7 @@ class TrafficWorld : public StepWorldBase<TrafficData> {
     static const std::string empty{};
     return empty;
   }
-  ~TrafficWorld() = default;
+  ~StepTrafficWorld() = default;
 
   bool IsValid(const WorldPosition &pos) const {
     return main_grid.IsValid(pos);
@@ -305,6 +308,132 @@ class TrafficWorld : public StepWorldBase<TrafficData> {
     // mainly we just need to update the helper functions that uses
 
     // handle traffic lights, spawners, destinations
+  }
+
+  // =====================================================================
+  //  Terminal display — written by Claude.
+  //  Adapted from AutoInterface to work with the StepWorldBase/StepAgentBase
+  //  API.  AutoInterface was an AgentBase that rendered each frame from
+  //  inside SelectAction(); since StepWorldBase has no interface-agent
+  //  concept, we integrate the display directly into the world's run loop.
+  // =====================================================================
+ private:
+  using Clock = std::chrono::steady_clock;
+
+  /// Time between displayed frames (configurable via SetFrameDelay).
+  std::chrono::milliseconds frame_delay{200};
+
+  /// When the last frame was drawn (used for pacing).
+  Clock::time_point last_frame_time{};
+
+  /// Maps a direction enum to the character that represents an agent
+  /// facing that way, matching the symbols the old DrivingAgent used.
+  static constexpr char DirectionSymbol(Direction dir) {
+    switch (dir) {
+      case Direction::North:
+        return '^';
+      case Direction::East:
+        return '>';
+      case Direction::South:
+        return 'v';
+      case Direction::West:
+        return '<';
+    }
+    return '?';
+  }
+
+  /// Render the current grid state plus all active agents to the
+  /// terminal, colouring destination tiles and agents just like
+  /// AutoInterface did.
+  void DrawGrid() {
+    const size_t W = main_grid.GetWidth();
+    const size_t H = main_grid.GetHeight();
+
+    // Build a character grid from the underlying cell symbols.
+    std::vector<std::string> symbol_grid(H);
+    std::vector<std::vector<std::string>> colour_grid(
+        H, std::vector<std::string>(W));
+
+    for (size_t y = 0; y < H; ++y) {
+      symbol_grid[y].resize(W);
+      for (size_t x = 0; x < W; ++x) {
+        symbol_grid[y][x] = main_grid.GetSymbol(WorldPosition{x, y});
+      }
+    }
+
+    // Colour destination tiles using the pre-assigned palette.
+    for (size_t y = 0; y < H; ++y) {
+      for (size_t x = 0; x < W; ++x) {
+        const std::string &col = GetDestinationColour(WorldPosition{x, y});
+        if (!col.empty()) colour_grid[y][x] = col;
+      }
+    }
+
+    // Stamp active agents onto the grid.
+    for (const auto &agent_ptr : agent_set) {
+      const TrafficData &state = agent_ptr->GetState();
+      if (!state.is_active) continue;
+
+      const size_t ax = state.position.CellX();
+      const size_t ay = state.position.CellY();
+      if (ax >= W || ay >= H) continue;
+
+      symbol_grid[ay][ax] = DirectionSymbol(state.direction);
+      if (!state.colour.empty()) {
+        colour_grid[ay][ax] = state.colour;
+      }
+    }
+
+    // Clear screen with ANSI escape, then print the grid with a box
+    // around it — same presentation as AutoInterface.
+    std::cout << "\033[2J\033[H";
+    std::cout << '+' << std::string(W, '-') << "+\n";
+    for (size_t y = 0; y < H; ++y) {
+      std::cout << '|';
+      for (size_t x = 0; x < W; ++x) {
+        const std::string &col = colour_grid[y][x];
+        if (!col.empty()) {
+          std::cout << col << symbol_grid[y][x] << "\033[0m";
+        } else {
+          std::cout << symbol_grid[y][x];
+        }
+      }
+      std::cout << "|\n";
+    }
+    std::cout << '+' << std::string(W, '-') << "+\n";
+    std::cout.flush();
+  }
+
+ public:
+  /// Set the delay between displayed frames (default 200 ms).
+  StepTrafficWorld &SetFrameDelay(std::chrono::milliseconds delay) {
+    frame_delay = delay;
+    return *this;
+  }
+
+  /// Run the simulation with terminal display.
+  /// This replaces the old pattern of adding an AutoInterface agent to
+  /// the world: it calls RunAgents() and UpdateWorld() in a loop and
+  /// renders the grid to the terminal between ticks, sleeping as
+  /// needed to maintain the configured frame rate.
+  void RunWithDisplay() {
+    run_over = false;
+    last_frame_time = Clock::now();
+
+    while (!run_over) {
+      // Pace the loop so each frame takes at least frame_delay.
+      auto now = Clock::now();
+      auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(
+          now - last_frame_time);
+      if (elapsed < frame_delay) {
+        std::this_thread::sleep_for(frame_delay - elapsed);
+      }
+      last_frame_time = Clock::now();
+
+      DrawGrid();
+      RunAgents();
+      UpdateWorld();
+    }
   }
 };
 };  // namespace cse498
