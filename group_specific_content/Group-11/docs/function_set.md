@@ -24,7 +24,7 @@ We plan to implement the following:
 
 #### Calling
 * `void operator(Args&&... args) or void call(Args&&... args)` — call the functions in order.
-* Perhaps other operations such as call_reverse, or maybe a method to add custom operations with lambdas.
+* Perhaps other operations such as call\_reverse, or maybe a method to add custom operations with lambdas.
 
 ### 4) Error Conditions
 

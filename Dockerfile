@@ -1,18 +1,40 @@
-FROM emscripten/emsdk:5.0.0
+FROM ubuntu:24.04
 
-# Install Qt6 and GCC 12 for native builds.
-# GCC 12 is required for some C++23 features
-# We are using Ubuntu 22.04 LTS which only can download gcc-12 and not the latest.
-# https://documentation.ubuntu.com/ubuntu-for-developers/reference/availability/gcc/
+# Prevent apt installs from asking for user input
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Install system dependencies.
+# Install Qt6.
+# GCC 14 is required for some C++23 features.
 RUN apt-get update && apt-get install -y --no-install-recommends \
     qt6-base-dev \
     libgl-dev \
-    gcc-12 \
-    g++-12 \
+    gcc-14 \
+    g++-14 \
+    git \
+    cmake \
+    make \
+    python3 \
+    ca-certificates \
+    xz-utils \
     && rm -rf /var/lib/apt/lists/* \
-    && update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-12 12 \
-    && update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-12 12 \
+    && update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-14 14 \
+    && update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-14 14 \
+    && update-alternatives --install /usr/bin/cc cc /usr/bin/gcc-14 14 \
+    && update-alternatives --install /usr/bin/c++ c++ /usr/bin/g++-14 14 \
     && git config --system --add safe.directory '*'
+
+# Install Emscripten SDK 5.0.0
+RUN git clone https://github.com/emscripten-core/emsdk.git /emsdk && \
+    /emsdk/emsdk install 5.0.0 && \
+    /emsdk/emsdk activate 5.0.0
+
+ENV EMSDK=/emsdk \
+    EM_CONFIG=/emsdk/.emscripten \
+    PATH="/emsdk/upstream/emscripten:/emsdk:${PATH}"
+
+# Start emsdk.sh for all bash scripts
+ENV BASH_ENV=/emsdk/emsdk_env.sh
 
 # Copy docker-entrypoint script and setup directories
 COPY scripts/docker-entrypoint.sh /app/docker-entrypoint.sh
