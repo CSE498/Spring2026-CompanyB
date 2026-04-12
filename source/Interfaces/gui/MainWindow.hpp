@@ -43,7 +43,6 @@ class MainWindow : public QMainWindow {
 
    private:
     void setMenuBar();
-    void setupToolBar();
     void setStatusBar();
     void setMainWidget();
     void setImageGrid();
