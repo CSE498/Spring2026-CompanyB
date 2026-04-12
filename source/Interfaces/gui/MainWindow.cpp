@@ -14,7 +14,7 @@
 
 namespace cse498 {
 
-const int TIMEOUT = 4000;  // time until status bar messages timeout; 4 seconds
+constexpr const int TIMEOUT = 4000;  // time until status bar messages timeout; 4 seconds
 
 MainWindow::MainWindow(WorldBase& world, const std::vector<QString>& imagePaths,
                        int tileSize, QWidget* parent)
