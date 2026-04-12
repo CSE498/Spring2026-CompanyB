@@ -33,8 +33,8 @@ public:
   void PopSymbolScope();
 
   // Need the actual string because we use it to index into map
-  std::expected<SymInfoPtr, SymbolError> GetSym(const std::string &name);
-  std::expected<SymInfoPtr, SymbolError> GetSym(size_t id);
+  std::expected<SymInfoPtr, SymbolError> GetSym(const std::string &name) const;
+  std::expected<SymInfoPtr, SymbolError> GetSym(size_t id) const;
   std::expected<size_t, SymbolError> AddSym(const Token &id_tok,
                                             const Token &type_tok);
   std::expected<size_t, SymbolError> AddSym(const Token &id_tok, Type type);

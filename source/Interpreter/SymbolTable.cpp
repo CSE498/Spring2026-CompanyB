@@ -21,24 +21,26 @@ void SymbolTable::PopSymbolScope() {
   m_ScopeStack.pop_back();
 }
 
-std::expected<SymInfoPtr, SymbolError>
-SymbolTable::GetSym(const std::string &name) {
-  int idx;
+[[nodiscard]] std::expected<SymInfoPtr, SymbolError>
+SymbolTable::GetSym(const std::string &name) const {
+  size_t idx;
 
   // Gives pointer to map w/ found symbol, otherwise end
   auto res = std::ranges::find_if(
       m_ScopeStack | std::views::reverse,
       [name](Scope cur_scope) { return cur_scope.contains(name); });
   if (res != m_ScopeStack.rend())
-    idx = (*res)[name];
+    // idx = (*res)[name];
+    idx = res->at(name).value();
   else
     return std::unexpected(SymbolError::UNDEFINED_SYMBOL);
 
-  return m_SymbolInfo[idx];
+  return m_SymbolInfo.at(idx);
 }
 
-std::expected<SymInfoPtr, SymbolError> SymbolTable::GetSym(size_t id) {
-  return m_SymbolInfo[id];
+[[nodiscard]] std::expected<SymInfoPtr, SymbolError>
+SymbolTable::GetSym(size_t id) const {
+  return m_SymbolInfo.at(id);
 }
 
 std::expected<size_t, SymbolError> SymbolTable::AddSym(const Token &id_tok,
