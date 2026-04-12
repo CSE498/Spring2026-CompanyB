@@ -15,83 +15,83 @@ class TrafficWorld : public StepWorldBase<TrafficData> {
 
   struct WorldErr {};
 
-  // This is "zoomed in" to the definition in the introduction -- this is still defined within SimpleWorld
-struct StepVisitor {
-  // We do want to represent failure, but don't need to represent
-  // any output, so we'll define & alias our return as such:
-  using VisitRet = std::expected<void, WorldErr>;
-  
-  // We'll want to modify the agent and the container, so we'll hold on to
-  // some references for them. You'll have to do the same for any other
-  // non-variant external context desired.
-  StepAgentBase<TrafficData> &agent;
-  StepContainer &container;
-  TrafficWorld &world;
+  // This is "zoomed in" to the definition in the introduction -- this is still
+  // defined within SimpleWorld
+  struct StepVisitor {
+    // We do want to represent failure, but don't need to represent
+    // any output, so we'll define & alias our return as such:
+    using VisitRet = std::expected<void, WorldErr>;
 
-  size_t grass_id{};
-  
-  // Now we'll need to have an operator() overload for each Step type.
-  VisitRet operator()(steps::MovementStep step) {
-    // The simplest step -- the agent just wants to move to a space.
-    if (world.GetGrid().IsValid(step.loc)) {
-        // also need to check: step isn't onto grass; 
+    // We'll want to modify the agent and the container, so we'll hold on to
+    // some references for them. You'll have to do the same for any other
+    // non-variant external context desired.
+    StepAgentBase<TrafficData> &agent;
+    StepContainer &container;
+    TrafficWorld &world;
+
+    size_t grass_id{};
+
+    // Now we'll need to have an operator() overload for each Step type.
+    VisitRet operator()(steps::MovementStep step) {
+      // The simplest step -- the agent just wants to move to a space.
+      if (world.GetGrid().IsValid(step.loc)) {
+        // also need to check: step isn't onto grass;
         // if trying to move onto a traffic light, it's in a phase which
-        // allows this (need to know the agent's position and the new position for this);
-        // whether a collision will happen.
+        // allows this (need to know the agent's position and the new position
+        // for this); whether a collision will happen.
 
         // should have some helper functions for this.
-        
-        // if all that is true, update the agent's location.
-    }
-    return {};
-  }
-  
-  VisitRet operator()(steps::InfoStep step) {
-    // When we get an info step, the agent would like to do something
-    // conditionally (the container handles the branching internally).
-    // It will provide us with the "aspect" about the world, and the
-    // location it wants the info about. In return, we'll "inform" the
-    // container with what has been requested.
-    switch (step.aspect) {
-      using Aspect = cse498::steps::InfoStep::Aspect;
-    case Aspect::LOC_AVAIL: {
-      // Just check whether the location is in-bounds and not a grass tile.
-      // Don't bother checking anything about traffic lights and collisions
-      container.inform(false);
-      break;
-    }
-    case Aspect::OCCUPANCY_FRAC: {
-      // TEMP (but I don't expect this branch to be used much anyway)
-      container.inform(false);
-      break;
-    }
-    case Aspect::OCCUPANCY_RAW: {
-      // TEMP (but I don't expect this branch to be used much anyway)
-      container.inform(false);
-      break;
-    }
-    };
-    return {};
-  }
 
-  // Note for someone who may want to refactor in the future to not have to fill
-  // fill in overloads for steps we shouldn't reach (like ConditionalStep), we
-  // could either (a) extend the InfoHandler approach for a defaulted visitor or
-  // apply CRTP and have it build in these overloads.
-  
-  
-  VisitRet operator()([[maybe_unused]] steps::ConditionalStep step) {
-    // The compiler needs this, but this should never be reached. A
-    // better solution is forthcoming, for now just leave empty.
-    return {};
-  }
-  
-  VisitRet operator()([[maybe_unused]] steps::ReconStep step) {
-    // The compiler needs this, but this should (for now) never be
-    // reached. A better solution is forthcoming, for now just leave empty.
-    return {};
-  }
-};
+        // if all that is true, update the agent's location.
+      }
+      return {};
+    }
+
+    VisitRet operator()(steps::InfoStep step) {
+      // When we get an info step, the agent would like to do something
+      // conditionally (the container handles the branching internally).
+      // It will provide us with the "aspect" about the world, and the
+      // location it wants the info about. In return, we'll "inform" the
+      // container with what has been requested.
+      switch (step.aspect) {
+        using Aspect = cse498::steps::InfoStep::Aspect;
+        case Aspect::LOC_AVAIL: {
+          // Just check whether the location is in-bounds and not a grass tile.
+          // Don't bother checking anything about traffic lights and collisions
+          container.inform(false);
+          break;
+        }
+        case Aspect::OCCUPANCY_FRAC: {
+          // TEMP (but I don't expect this branch to be used much anyway)
+          container.inform(false);
+          break;
+        }
+        case Aspect::OCCUPANCY_RAW: {
+          // TEMP (but I don't expect this branch to be used much anyway)
+          container.inform(false);
+          break;
+        }
+      };
+      return {};
+    }
+
+    // Note for someone who may want to refactor in the future to not have to
+    // fill fill in overloads for steps we shouldn't reach (like
+    // ConditionalStep), we could either (a) extend the InfoHandler approach for
+    // a defaulted visitor or apply CRTP and have it build in these overloads.
+
+    VisitRet operator()([[maybe_unused]] steps::ConditionalStep step) {
+      // The compiler needs this, but this should never be reached. A
+      // better solution is forthcoming, for now just leave empty.
+      return {};
+    }
+
+    VisitRet operator()([[maybe_unused]] steps::ReconStep step) {
+      // The compiler needs this, but this should (for now) never be
+      // reached. A better solution is forthcoming, for now just leave empty.
+      return {};
+    }
+  };
 
  protected:
   size_t road_id{};   ///< ID of road cells, which agents can move on.
@@ -246,19 +246,19 @@ struct StepVisitor {
     while (!steps.exhausted()) {
       std::expected<Step, StepErr> step = steps.get_next();
       if (!step.has_value()) {
-	// Handle error retrieving step
+        // Handle error retrieving step
       }
       StepVisitor::VisitRet step_result = std::visit(visitor, step.value());
 
       if (!step_result.has_value()) {
-	// Handle error
+        // Handle error
       }
     }
     // The position will be updated by the StepVisitor
-    // so all we have left to update is the direction and is_active 
+    // so all we have left to update is the direction and is_active
     TrafficData new_state = agent->GetState();
     WorldPosition new_position = new_state.position;
-    
+
     // if position changed: update direction
     // if reached destination: deactivate
 
