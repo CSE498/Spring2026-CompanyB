@@ -1,10 +1,12 @@
 #pragma once
 
+#include "core.hpp"
 #include "core/WorldPosition.hpp"
 #include "lexer.hpp"
 
 #include <optional>
 #include <string>
+#include <tuple>
 #include <unordered_map>
 #include <variant>
 
@@ -28,6 +30,13 @@ struct Car {};
 struct Student {};
 using Type =
     std::variant<bool, int, double, str, Point, Direction, Car, Student>;
+using TypeTuple =
+    std::tuple<bool, int, double, str, Point, Direction, Car, Student>;
+
+// Concept satisfied if T is a valid agentlang type
+template <typename T>
+concept TypeKind = Concepts::IsOneOf<T, bool, int, double, str, Point,
+                                     Direction, Car, Student>;
 
 inline std::optional<Type> NameToType(const emplex::Token &type_tok) {
   static const std::unordered_map<std::string, Type> type_map = {

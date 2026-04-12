@@ -28,104 +28,124 @@ struct ASTErr {
 // ----------------- Nodes -------------
 using namespace agentlang;
 struct Node {
-  emplex::Token token_;
+  emplex::Token m_Token;
 
   // External-facing call
-  virtual std::expected<Types::Type, ASTErr> GetType() {
+  virtual std::expected<size_t, ASTErr> GetType() {
     // Nodes are by default untyped
     return std::unexpected(ASTErr(ASTErr::UNTYPED_NODE, "Node is untyped"));
   }
 
-  Node(emplex::Token token) : token_(token) {};
+  Node(emplex::Token token) : m_Token(token) {};
   virtual ~Node() = 0;
 };
 
 struct TypedNode : public Node {
-  // Cache a type
-  std::optional<Types::Type> type_;
+  // Cache a type !!INDEX!!
+  std::optional<size_t> m_Type;
 
   // Internal-facing call to force the child node to resolve type
-  virtual std::expected<Types::Type, ASTErr> ResolveType() = 0;
+  virtual std::expected<size_t, ASTErr> ResolveType() = 0;
 
   // Return the cached type if it exsits, otherwise resolve
-  std::expected<Types::Type, ASTErr> GetType() override {
-    if (!type_.has_value())
+  std::expected<size_t, ASTErr> GetType() override {
+    if (!m_Type.has_value())
       return ResolveType();
     else
-      return type_.value();
+      return m_Type.value();
   }
 
   TypedNode(emplex::Token token) : Node(token) {};
-  TypedNode(emplex::Token token, Types::Type type)
-      : Node(token), type_(type) {};
+  TypedNode(emplex::Token token, size_t type) : Node(token), m_Type(type) {};
   virtual ~TypedNode() = 0;
 };
 
 struct StmtBlock : public Node {
-  std::vector<std::unique_ptr<Node>> body_;
+  std::vector<std::unique_ptr<Node>> m_Body;
 
   void add_node(std::unique_ptr<Node> &&node) {
-    body_.emplace_back(std::move(node));
+    m_Body.emplace_back(std::move(node));
   }
 
-  StmtBlock(emplex::Token token) : Node(token), body_() {};
+  StmtBlock(emplex::Token token) : Node(token), m_Body() {};
+  StmtBlock(emplex::Token token, std::vector<std::unique_ptr<Node>> &&body)
+      : Node(token), m_Body(std::move(body)) {}
 };
 
 // -- Expressions --
 struct ExprUnary : public TypedNode {
-  std::unique_ptr<Operators::Operator> op_;
-  std::unique_ptr<Node> left_;
+  std::unique_ptr<Operators::Operator> m_Op;
+  std::unique_ptr<Node> m_Left;
 
   ExprUnary(emplex::Token token, std::unique_ptr<Node> &&left,
             std::unique_ptr<Operators::Operator> &&op)
-      : TypedNode(token), op_(std::move(op)), left_(std::move(left)) {};
+      : TypedNode(token), m_Op(std::move(op)), m_Left(std::move(left)) {};
 };
 
 struct ExprBinary : public TypedNode {
-  std::unique_ptr<Operators::Operator> op_;
-  std::unique_ptr<Node> left_;
-  std::unique_ptr<Node> right_;
+  std::unique_ptr<Operators::Operator> m_Op;
+  std::unique_ptr<Node> m_Left;
+  std::unique_ptr<Node> m_Right;
 
   ExprBinary(emplex::Token token, std::unique_ptr<Node> &&left,
              std::unique_ptr<Node> &&right,
              std::unique_ptr<Operators::Operator> &&op)
-      : TypedNode(token), op_(std::move(op)), left_(std::move(left)),
-        right_(std::move(right)) {};
+      : TypedNode(token), m_Op(std::move(op)), m_Left(std::move(left)),
+        m_Right(std::move(right)) {};
 };
 
 // -- Statements --
 // Function
 struct StmtFunc : public TypedNode {
-  // TODO - Waiting on a symbol type
-
-  std::unique_ptr<StmtBlock> body_;
-  std::vector<size_t> signature_types_;
+  // TODO : Not including in alpha
+  /*
+  std::unique_ptr<StmtBlock> m_Body;
+  std::vector<size_t> m_SignatureTypes;
 
   StmtFunc(emplex::Token token, std::unique_ptr<StmtBlock> &&body,
            std::vector<size_t> &&signature_types, Types::Type return_t)
-      : TypedNode(token, return_t), body_(std::move(body)),
-        signature_types_(std::move(signature_types)) {};
+      : TypedNode(token, return_t), m_Body(std::move(body)),
+        m_SignatureTypes(std::move(signature_types)) {};
+  */
 };
-
-// Turn definition
-struct StmtTurn : public Node {};
 
 // Agent definition
 struct StmtAgentDef : public Node {
-  std::unique_ptr<StmtBlock> init_;
-  std::unique_ptr<StmtBlock> turn_;
+  std::unique_ptr<StmtBlock> m_Init;
+  std::unique_ptr<StmtBlock> m_Turn;
 };
 
 // Agent action
-struct StmtAction : public Node {};
+struct StmtAction : public Node {
+  // The only action is currently a movement in a direction
+  // So this node MUST resolve to a direction
+  std::unique_ptr<Node> m_Direction;
+
+  StmtAction(emplex::Token token, std::unique_ptr<Node> &&direction)
+      : Node(token), m_Direction(std::move(direction)) {}
+};
 
 // -- Values --
 // Literal reference
-struct ValLiteral : public Node {
-  Types::Type val_;
+struct ValLiteral : public TypedNode {
+  Types::Type m_Val;
+
+  // Construct from raw type value
+  template <Types::TypeKind T>
+  ValLiteral(emplex::Token token, T val)
+      : TypedNode(token, StaticUtil::variant_index<Types::Type, T>()),
+        m_Val(Types::Type{std::in_place_type<T>, val}) {}
+  // Construct from already constructed variant
+  ValLiteral(emplex::Token token, Types::Type val)
+      : TypedNode(token, val.index()), m_Val(val) {}
 };
 
 // Variable reference
-struct ValVariable : public Node {};
+struct ValVariable : public TypedNode {
+  std::shared_ptr<Symbols::SymInfo> m_Symbol;
+
+  ValVariable(emplex::Token token, std::shared_ptr<Symbols::SymInfo> symbol)
+      : TypedNode(token, symbol->type.index()), m_Symbol(symbol) {}
+};
 
 }; // namespace cse498::AST
