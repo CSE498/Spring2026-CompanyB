@@ -3,6 +3,6 @@
 
 namespace cse498 {
 
-std::expected<std::unique_ptr<AST::Node>, ParseErr> Parser::parse_expr() {}
+std::expected<std::unique_ptr<AST::Node>, InterpErr> Parser::parse_expr() {}
 
 }; // namespace cse498
