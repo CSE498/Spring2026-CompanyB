@@ -71,7 +71,8 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
       switch (step.aspect) {
         using Aspect = cse498::steps::InfoStep::Aspect;
         case Aspect::LOC_AVAIL: {
-          container.inform(world.IsValid(step.target) && !world.IsGrass(step.target));
+          container.inform(world.IsValid(step.target) &&
+                           !world.IsGrass(step.target));
           break;
         }
         case Aspect::OCCUPANCY_FRAC: {
@@ -301,8 +302,11 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
     TrafficData new_state = agent->GetState();
     WorldPosition new_position = new_state.position;
 
-    // if position changed: update direction
-    // if reached destination: deactivate
+    if (new_position == new_state.destination) {
+      new_state.is_active = false;
+    }
+
+    // TODO: if position changed: update direction
 
     return new_state;
   }
