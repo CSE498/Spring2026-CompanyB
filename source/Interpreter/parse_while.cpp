@@ -1,9 +1,10 @@
 #include "Interpreter/ast.hpp"
+#include "Interpreter/errors.hpp"
 #include "Parser.hpp"
 
 namespace cse498 {
 
-std::expected<std::unique_ptr<AST::Node>, ParseErr> Parser::parse_while() {}
+std::expected<std::unique_ptr<AST::Node>, InterpErr> Parser::parse_while() {
   /*
   Assuming there's a curly-brace-enclosed body:
   ---
@@ -11,45 +12,37 @@ std::expected<std::unique_ptr<AST::Node>, ParseErr> Parser::parse_while() {}
   ---
   */
   using AgentLexer::IDs;
-  using AgentLexer::LexerErr;
   using AgentLexer::Token;
 
   // Expect: KW_WHILE
-  res = m_Lexer.UseIf(IDs::KW_WHILE);
-  if (!res) {
-    // Figure out what to do with a LexerErr
-    return std::unexpected(ParseErr(ParseErr::TODO, res.error().m_Msg));
-  }
-  // Imp: Symbol table interaction
+  auto res = m_Lexer.UseIf(IDs::ID_KW_WHILE);
+  if (!res.has_value())
+    return std::unexpected(res.error());
+
   Token while_token = res.value();
 
   // Expect: DELIM_PAREN_OPEN
-  res = m_Lexer.UseIf(IDs::DELIM_PAREN_OPEN);
-  if (!res) {
-    // Figure out what to do with a LexerErr
-    return std::unexpected(ParseErr(ParseErr::TODO, res.error().m_Msg));
-  }
+  res = m_Lexer.UseIf(IDs::ID_DELIM_PAREN_OPEN);
+  if (!res.has_value())
+    return std::unexpected(res.error());
 
   // Extract expr
   auto expr = parse_expr();
-  if (!expr.has_value()) {
+  if (!expr.has_value())
     return std::unexpected(expr.error());
-  }
 
   // Expect: DELIM_PAREN_CLOSE
-  res = m_Lexer.UseIf(IDs::DELIM_PAREN_CLOSE);
-  if (!res) {
-    // Figure out what to do with a LexerErr
-    return std::unexpected(ParseErr(ParseErr::TODO, res.error().m_Msg));
-  }
+  res = m_Lexer.UseIf(IDs::ID_DELIM_PAREN_CLOSE);
+  if (!res.has_value())
+    return std::unexpected(res.error());
 
-  // Extract stmt_block
-  auto stmt_block = parse_stmt_block();
-  if (!stmt_block.has_value()) {
-    return std::unexpected(stmt_block.error());
-  }
+  auto body =
+      (m_Lexer.Is(IDs::ID_DELIM_CLY_OPEN)) ? parse_stmt_block() : parse_stmt();
 
-  m_InLoop = true;
+  if (!body.has_value())
+    return std::unexpected(body.error());
 
-  return std::make_unique<AST::StmtWhile>(while_token, std::move(expr.value()), std::move(stmt_block.value()));
+  return std::make_unique<AST::StmtWhile>(while_token, std::move(expr.value()),
+                                          std::move(body.value()));
+}
 }; // namespace cse498
