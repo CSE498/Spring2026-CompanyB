@@ -26,6 +26,9 @@ struct Parser {
 
 private:
   cse498::AgentLexer::Lexer m_Lexer{};
+  bool m_InLoop = false;
+  bool m_InInit = false;
+  bool m_InTurn = false;
 
   std::expected<std::unique_ptr<AST::Node>, ParseErr> parse_stmt();
   std::expected<std::unique_ptr<AST::Node>, ParseErr> parse_expr();
