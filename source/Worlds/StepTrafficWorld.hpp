@@ -315,6 +315,7 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
     // this should be basically the same as the one in the old TrafficWorld
     // mainly we just need to update the helper functions that uses
     UpdateTrafficLights();
+    UpdateSpawners();
     // handle spawners, destinations
   }
 
@@ -338,6 +339,67 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
         main_grid[pos] = new_type;
       }
     }
+  }
+
+  bool AgentExistsAt(WorldPosition pos) const {
+    auto agent_at = [&](const AgentPtr &ptr) {
+      return ptr->GetState().position == pos;
+    };
+    return std::ranges::find_if(agent_set, agent_at) != agent_set.end();
+  }
+
+  /// @brief Update the spawn clock by 1 tick. If it's time to spawn more
+  /// agents, go to each spawner without an agent currently on top of it and
+  /// spawn a new DrivingAgent with a randomly chosen destination.
+  void UpdateSpawners() {
+    if (++spawn_clock >= spawn_period) {
+      spawn_clock = 0;
+      for (const WorldPosition &pos : spawner_positions) {
+        // Don't spawn on top of an existing agent
+        if (main_grid[pos] == spawn_id && !AgentExistsAt(pos) &&
+            num_spawned_agents < max_spawned_agents) {
+          auto dest = destination_positions.GetRandomElement();
+          if (dest.has_value()) {
+            WorldPosition dest_pos = dest.value();
+
+            if (!despawned_agent_ids.empty()) {
+              RecycleDespawnedAgent(pos, dest_pos);
+            } else {
+              TrafficData state = {
+                  dest_pos, pos, Direction::East,
+                  true,     '>', GetDestinationColour(dest_pos)};
+              AddAgent<StepDrivingAgent>(state);
+            }
+
+            ++num_spawned_agents;
+          }
+        }
+      }
+    }
+  }
+
+  // Modified from code written by Claude.
+  // Pulls, from despawned_agent_ids, the ID of an agent that previously
+  // despawned and is now inactive, then respawns that agent at the given
+  // spawner with the given destination.
+  void RecycleDespawnedAgent(const WorldPosition &spawner_pos,
+                             const WorldPosition &dest_pos) {
+    assert(!despawned_agent_ids.empty());
+    size_t reuse_id = despawned_agent_ids.front();
+    despawned_agent_ids.pop();
+    auto driver = agent_set.at(reuse_id);
+    // Note for future use. Currently a non-DrivingAgent id should never make it
+    // into despawned_agent_ids since those are the only agents that support
+    // spawning, despawning, and destinations. In the future, with multiple
+    // agent types, we'll find a way to relax this.
+    TrafficData state = driver->GetState();
+    state.position = spawner_pos;
+    state.destination = dest_pos;
+    state.direction = Direction::East;
+    state.is_active = true;
+    state.symbol = '>';
+    state.colour = GetDestinationColour(dest_pos);
+    driver->SetState(state);
   }
 
   // =====================================================================
