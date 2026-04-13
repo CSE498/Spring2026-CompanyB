@@ -13,12 +13,14 @@ namespace cse498 {
 using namespace cse498::steps;
 using Concepts::IsDataClass;
 
-template <IsDataClass DataClass>
-class StepWorldBase {
+template <IsDataClass DataClass> class StepWorldBase {
   using Agent = StepAgentBase<DataClass>;
   using AgentPtr = std::shared_ptr<Agent>;
 
- protected:
+  /// Id of the next created agent
+  size_t next_id = 0;
+
+protected:
   /// Whether the simulation is running
   bool run_over = false;
   /// Collection of agents
@@ -31,7 +33,7 @@ class StepWorldBase {
   /// setup.
   virtual void ConfigAgent([[maybe_unused]] Agent &agent) {}
 
- public:
+public:
   StepWorldBase() = default;
   virtual ~StepWorldBase() = default;
 
@@ -39,9 +41,8 @@ class StepWorldBase {
   ///@param data DataClass to add to agent
   ///@note This signature or logic is may not final, since other logic may need
   /// to be added to suport different agents, such as scripting agents.
-  template <typename AgentDerived>
-  AgentDerived &AddAgent(DataClass data) {
-    auto agent_ptr = std::make_shared<AgentDerived>(data);
+  template <typename AgentDerived> AgentDerived &AddAgent(DataClass data) {
+    auto agent_ptr = std::make_shared<AgentDerived>(data, next_id++);
     AgentDerived &agent_ref = *agent_ptr;
     ConfigAgent(agent_ref);
     agent_set.emplace_back(std::move(agent_ptr));
@@ -81,4 +82,4 @@ class StepWorldBase {
   }
 };
 
-}  // namespace cse498
+} // namespace cse498
