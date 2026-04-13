@@ -7,14 +7,17 @@ body {
     width: 100%;
 }
 
-.textbox {
-  position: relative !important;
-  border-radius: 20px;
-  background: #555 !important;
-  font-size: 13px;
-  overflow-y: auto;
-  border: none !important;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+.textbox,
+.game-info {
+    position: relative !important;
+    border-radius: 20px;
+    background: #555 !important;
+    font-size: 13px;
+    overflow-y: auto;
+    border: none !important;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+    padding: 1em;
+    box-sizing: border-box;
 }
 
 #game-area {
@@ -42,16 +45,16 @@ body {
 }
 
 .button {
-  width: 48px;
-  height: 48px;
-  margin-left: 1em;
-  border-radius: 10px;
-  border: none;
-  background-color: transparent;
-  background-size: contain;
-  background-repeat: no-repeat;
-  background-position: center;
-  cursor: pointer;
+    width: 48px;
+    height: 48px;
+    margin-left: 1em;
+    border-radius: 10px;
+    border: none;
+    background-color: transparent;
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    cursor: pointer;
 }
 
 #start-btn {
@@ -73,4 +76,11 @@ body {
     background-image: url("assets/images/exit.svg");
     margin-left: auto;
     margin-right: 1em;
+}
+
+.log-ERROR {
+    color: red;
+}
+.log-INFO {
+    color: blue;
 }

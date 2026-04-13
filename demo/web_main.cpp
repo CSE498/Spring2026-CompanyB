@@ -82,7 +82,7 @@ int main() {
                                          WebOptions{
                                              .id = "game-info",
                                              .classes =
-                                                 {"textbox"},
+                                                 {"game-info"},
                                              .style =
                                                  {{"flex", "7"}}}))
                                         ->SetBackgroundColor({85, 85, 85})
@@ -99,7 +99,7 @@ int main() {
                                                 {"textbox"},
                                             .style =
                                                 {{"flex", "3"}}})
-                                        ->SetText("Log")}})
+                                        ->SetText("Log").AppendLine("INFO", "INFO").AppendLine("ERROR", "ERROR")}})
                            ->SetHeight("100%")
                            .SetDirection("column")
                            .SetGap("10px")

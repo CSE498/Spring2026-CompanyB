@@ -51,7 +51,6 @@ WebTextbox::WebTextbox(const TextStyle& style, const WebOptions& options)
 
   dom_element["style"].set("position", "absolute");
   dom_element["style"].set("border", kDefaultBorder);
-  dom_element["style"].set("padding", kDefaultPadding);
   dom_element["style"].set("overflow", kDefaultOverflow);
   dom_element["style"].set("zIndex", kDefaultZIndex);
 
@@ -214,13 +213,13 @@ void WebTextbox::SetMaxLines(size_t lines) {
 /**
  * @brief Appends a distinct DOM span element for granular line-by-line styling.
  */
-void WebTextbox::AppendLine(const std::string& text, const std::string& log_level) {
+WebTextbox& WebTextbox::AppendLine(const std::string& text, const std::string& log_level) {
   if (IsHeadless()) {
     mock_text_content_ += text + "\n";
     if (mock_text_content_.length() > max_length_) {
       mock_text_content_ = mock_text_content_.substr(mock_text_content_.length() - max_length_);
     }
-    return;
+    return *this;
   }
 
   val document = val::global("document");
@@ -243,6 +242,7 @@ void WebTextbox::AppendLine(const std::string& text, const std::string& log_leve
   }
 
   dom_element.set("scrollTop", dom_element["scrollHeight"]);
+  return *this;
 }
 
 /**

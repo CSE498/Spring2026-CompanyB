@@ -173,7 +173,7 @@ class WebTextbox : public WebElement {
    * @param text The text for the log line.
    * @param log_level The identifier for styling (Defaults to "INFO", creates class "log-INFO").
    */
-  void AppendLine(const std::string& text, const std::string& log_level = "INFO");
+  WebTextbox& AppendLine(const std::string& text, const std::string& log_level = "INFO");
 
   /**
    * @brief Appends a new line of text wrapped in a styled span.
