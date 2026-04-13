@@ -8,6 +8,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 # GCC 14 is required for some C++23 features.
 RUN apt-get update && apt-get install -y --no-install-recommends \
     qt6-base-dev \
+    libqt6charts6-dev \
     libgl-dev \
     gcc-14 \
     g++-14 \
