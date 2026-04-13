@@ -8,7 +8,6 @@ ENV DEBIAN_FRONTEND=noninteractive
 # GCC 14 is required for some C++23 features.
 RUN apt-get update && apt-get install -y --no-install-recommends \
     qt6-base-dev \
-    qt6-charts-dev \
     libgl-dev \
     gcc-14 \
     g++-14 \
@@ -39,7 +38,8 @@ ENV BASH_ENV=/emsdk/emsdk_env.sh
 
 # Copy docker-entrypoint script and setup directories
 COPY scripts/docker-entrypoint.sh /app/docker-entrypoint.sh
-RUN mkdir -p /app/source /app/build /app/output && chmod +x /app/docker-entrypoint.sh
+RUN mkdir -p /app/source /app/build /app/output && chmod +x /app/docker-entrypoint.sh \
+    && mkdir -p /tmp/xdg-runtime && chmod 700 /tmp/xdg-runtime && chown 1000:1000 /tmp/xdg-runtime
 
 # Copy source code
 COPY source/ /app/source/
