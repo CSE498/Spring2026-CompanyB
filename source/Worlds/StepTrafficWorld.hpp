@@ -21,16 +21,11 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
 
   struct WorldErr {};
 
-  // This is "zoomed in" to the definition in the introduction -- this is still
-  // defined within SimpleWorld
   struct StepVisitor {
     // We do want to represent failure, but don't need to represent
     // any output, so we'll define & alias our return as such:
     using VisitRet = std::expected<void, WorldErr>;
 
-    // We'll want to modify the agent and the container, so we'll hold on to
-    // some references for them. You'll have to do the same for any other
-    // non-variant external context desired.
     StepAgentBase<TrafficData> &agent;
     StepContainer &container;
     StepTrafficWorld &world;
@@ -41,16 +36,13 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
     VisitRet operator()(steps::MovementStep step) {
       // The simplest step -- the agent just wants to move to a space.
       if (!world.IsValid(step.loc) || world.IsGrass(step.loc)) {
+        // TODO: return an error here maybe?
+        // not necessarily though, will have to think about it.
         return {};
-
-        // if trying to move onto a traffic light, it's in a phase which
-        // allows this (need to know the agent's position and the new position
-        // for this); whether a collision will happen.
-
-        // should have some helper functions for this.
-
-        // if all that is true, update the agent's location.
       }
+      // TODO: classify move being made as left/right/up/down/stay (error if it's not one of those)
+
+      // TODO: check whether the agent's move would be blocked by a traffic light
       if (world.CanCollideWithAgentAt(agent, step.loc)) {
         return {};
       }
@@ -284,19 +276,17 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
     }
     StepContainer steps = agent->GetTurn();
     StepVisitor visitor{*agent, steps, *this, grass_id};
-    // do the sort of stuff in the "do_turns" example in steps.org
-    // to run the steps in that container
     WorldPosition prev_position = agent->GetState().position;
     while (!steps.exhausted()) {
       std::expected<Step, StepErr> step = steps.get_next();
       if (!step.has_value()) {
-        // TEMP
+        // TODO: better error handling
         break;
       }
       StepVisitor::VisitRet step_result = std::visit(visitor, step.value());
 
       if (!step_result.has_value()) {
-        // Handle error
+        // TODO: better error handling
       }
     }
     // The position will be updated by the StepVisitor
@@ -312,16 +302,14 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
     }
 
     // TODO: if position changed: update direction
+    // and update symbol too
 
     return new_state;
   }
 
   void UpdateWorld() override {
-    // this should be basically the same as the one in the old TrafficWorld
-    // mainly we just need to update the helper functions that uses
     UpdateTrafficLights();
     UpdateSpawners();
-    // handle spawners, destinations
   }
 
  private:
@@ -373,6 +361,7 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
               TrafficData state = {
                   dest_pos, pos, Direction::East,
                   true,     '>', GetDestinationColour(dest_pos)};
+              // TODO: make this generic, remove explicit use of StepDrivingAgent
               AddAgent<StepDrivingAgent>(state);
             }
 
