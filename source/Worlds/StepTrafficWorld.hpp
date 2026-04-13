@@ -314,8 +314,30 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
   void UpdateWorld() override {
     // this should be basically the same as the one in the old TrafficWorld
     // mainly we just need to update the helper functions that uses
+    UpdateTrafficLights();
+    // handle spawners, destinations
+  }
 
-    // handle traffic lights, spawners, destinations
+ private:
+  // Reworked by Claude — swap traffic light cell types to update both
+  // movement rules and display symbol in one step
+  void UpdateTrafficLights() {
+    if (++traffic_light_clock >= traffic_light_period) {
+      traffic_light_clock = 0;
+      traffic_light_phase =
+          traffic_light_phase == TrafficLightPhase::ALLOW_HORIZONTAL
+              ? TrafficLightPhase::ALLOW_VERTICAL
+              : TrafficLightPhase::ALLOW_HORIZONTAL;
+      // Swap the cell type at every traffic light position to match the new
+      // phase
+      const size_t new_type =
+          (traffic_light_phase == TrafficLightPhase::ALLOW_VERTICAL)
+              ? traffic_light_vertical_id
+              : traffic_light_horizontal_id;
+      for (const auto &pos : traffic_light_positions) {
+        main_grid[pos] = new_type;
+      }
+    }
   }
 
   // =====================================================================
@@ -325,7 +347,7 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
   //  inside SelectAction(); since StepWorldBase has no interface-agent
   //  concept, we integrate the display directly into the world's run loop.
   // =====================================================================
- private:
+
   using Clock = std::chrono::steady_clock;
 
   /// Time between displayed frames (configurable via SetFrameDelay).
