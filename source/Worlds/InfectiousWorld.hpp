@@ -1,7 +1,9 @@
 /**
  * InfectiousWorld.hpp
  * @brief A grid-based world that simulates infectious disease spread.
- * @note Status: PROPOSAL
+ * @note Extends SimWorldBase<DiseaseData> which in turn extends
+ *       StepWorldBase<DiseaseData>. Health state is stored inside each agent's
+ *       DiseaseData, so no separate health_map is needed.
  **/
 
 #pragma once
@@ -9,31 +11,26 @@
 #include <cassert>
 #include <random>
 #include <ranges>
-#include <unordered_map>
+#include <stdexcept>
 #include <unordered_set>
+#include <variant>
 #include <vector>
 
-#include "../tools/Box.hpp"     // quarantine zones with restricted movement
-#include "../tools/Circle.hpp"  //infection radius around each agent
-#include "../tools/Point.hpp"  // continuous agent positions for geometry calculations
-#include "../tools/Surface.hpp"  // efficient overlap detection for infection spread
+#include "../core/DiseaseData.hpp"
+#include "../core/Step.hpp"
+#include "../tools/Box.hpp" // quarantine zones with restricted movement
+#include "../tools/Circle.hpp" //infection radius around each agent
+#include "../tools/Point.hpp" // continuous agent positions for geometry calculations
+#include "../tools/Surface.hpp" // efficient overlap detection for infection spread
 #include "SimWorldBase.hpp"
 
 namespace cse498 {
 
-class InfectiousWorld : public SimWorldBase {
- public:
-  enum class HealthState { SUSCEPTIBLE, INFECTED, RECOVERED };
+class InfectiousWorld : public SimWorldBase<DiseaseData> {
+  using Base = SimWorldBase<DiseaseData>;
+  using AgentPtr = std::shared_ptr<StepAgentBase<DiseaseData>>;
 
  private:
-  /// Per-agent infection tracking.
-  struct AgentHealth {
-    HealthState state{HealthState::SUSCEPTIBLE};
-    size_t ticks_in_state{0};
-  };
-
-  std::unordered_map<size_t, AgentHealth> health_map;
-
   // Geometry infrastructure
   Surface surface;
   std::vector<Box> quarantine_zones;  // rectangular restricted areas.
@@ -47,75 +44,76 @@ class InfectiousWorld : public SimWorldBase {
   mutable std::mt19937 rng{
       std::random_device{}()};  // Maybe use random.hpp from group 19
 
-  /// Register new agents into the health tracking system.
-  void ConfigAgent(AgentBase& agent) override {
-    SimWorldBase::ConfigAgent(agent);
-    health_map[agent.GetID()] = AgentHealth{};
+  // -- Private helpers --
+
+  /// Convert a WorldPosition to the centre of its grid cell as a Point.
+  [[nodiscard]] static Point PosToPoint(WorldPosition pos) {
+    return Point(pos.X() + 0.5, pos.Y() + 0.5);
   }
 
-  /// Convert an agent's grid position to a Point for geometry operations.
-  [[nodiscard]] Point AgentToPoint(size_t agent_id) const {
-    WorldPosition pos = GetAgent(agent_id).GetLocation().AsWorldPosition();
-    return Point(pos.X() + 0.5, pos.Y() + 0.5);  // center of cell
+  /// Build the infection-radius Circle for a given position.
+  [[nodiscard]] Circle MakeInfectionZone(WorldPosition pos) const {
+    return Circle(PosToPoint(pos), infection_radius);
   }
 
-  /// Build a Circle representing an infected agent's transmission zone.
-  [[nodiscard]] Circle MakeInfectionZone(size_t agent_id) const {
-    return Circle(AgentToPoint(agent_id), infection_radius);
+  /// True if \p pos falls inside any quarantine zone.
+  [[nodiscard]] bool IsInQuarantine(WorldPosition pos) const {
+    Point p = PosToPoint(pos);
+    return std::ranges::any_of(quarantine_zones,
+                               [&](const Box& z) { return z.Contains(p); });
   }
 
-  /// Check if an agent is inside any quarantine zone.
-  [[nodiscard]] bool IsInQuarantine(size_t agent_id) const {
-    Point p = AgentToPoint(agent_id);
-    for (const auto& zone : quarantine_zones) {
-      if (zone.Contains(p)) return true;
-    }
-    return false;
-  }
-
-  /// Spread infection: infected agent's Circle overlaps with susceptible
-  /// agent's position.
+  /// Spread infection this tick: for every INFECTED agent, any SUSCEPTIBLE
+  /// agent within infection_radius has a transmission_rate chance of being
+  /// infected. Newly infected agents start with ticks_in_state == 0.
   void SpreadInfection() {
     std::uniform_real_distribution<double> roll(0.0, 1.0);
     std::unordered_set<size_t> newly_infected;
 
-    for (const auto& [id, info] : health_map) {
-      if (info.state != HealthState::INFECTED) continue;
+    for (size_t i = 0; i < agent_set.size(); ++i) {
+      DiseaseData src = agent_set[i]->GetState();
+      if (src.health != HealthState::INFECTED) continue;
 
-      Circle zone = MakeInfectionZone(id);
+      Circle zone = MakeInfectionZone(src.position);
 
-      for (const auto& [other_id, other_info] : health_map) {
-        if (other_id == id) continue;
-        if (other_info.state != HealthState::SUSCEPTIBLE) continue;
+      for (size_t j = 0; j < agent_set.size(); ++j) {
+        if (i == j) continue;
+        DiseaseData tgt = agent_set[j]->GetState();
+        if (tgt.health != HealthState::SUSCEPTIBLE) continue;
 
-        Point other_pos = AgentToPoint(other_id);
-        if (zone.Contains(other_pos) && roll(rng) < transmission_rate) {
-          newly_infected.insert(other_id);
+        if (zone.Contains(PosToPoint(tgt.position)) &&
+            roll(rng) < transmission_rate) {
+          newly_infected.insert(j);
         }
       }
     }
 
     for (size_t id : newly_infected) {
-      health_map[id].state = HealthState::INFECTED;
-      health_map[id].ticks_in_state = 0;
+      DiseaseData state = agent_set[id]->GetState();
+      state.health = HealthState::INFECTED;
+      state.ticks_in_state = 0;
+      agent_set[id]->SetState(state);
     }
   }
 
-  /// Advance infection/immunity timers and transition health states.
+  /// Advance each agent's disease timer and transition states.
   void UpdateHealthTimers() {
-    for (auto& [id, info] : health_map) {
-      info.ticks_in_state++;
+    for (auto& agent_ptr : agent_set) {
+      DiseaseData state = agent_ptr->GetState();
+      state.ticks_in_state++;
 
-      if (info.state == HealthState::INFECTED &&
-          info.ticks_in_state >= infection_duration) {
-        info.state = HealthState::RECOVERED;
-        info.ticks_in_state = 0;
-      } else if (info.state == HealthState::RECOVERED &&
+      if (state.health == HealthState::INFECTED &&
+          state.ticks_in_state >= infection_duration) {
+        state.health = HealthState::RECOVERED;
+        state.ticks_in_state = 0;
+      } else if (state.health == HealthState::RECOVERED &&
                  immunity_duration > 0 &&
-                 info.ticks_in_state >= immunity_duration) {
-        info.state = HealthState::SUSCEPTIBLE;
-        info.ticks_in_state = 0;
+                 state.ticks_in_state >= immunity_duration) {
+        state.health = HealthState::SUSCEPTIBLE;
+        state.ticks_in_state = 0;
       }
+
+      agent_ptr->SetState(state);
     }
   }
 
@@ -125,24 +123,51 @@ class InfectiousWorld : public SimWorldBase {
   }
   ~InfectiousWorld() override = default;
 
-  /// Allow agents to move. Quarantine zones block movement.
-  int DoAction(AgentBase& agent, size_t action_id) override {
-    // Save position in case quarantine blocks the move.
-    WorldPosition old_pos = agent.GetLocation().AsWorldPosition();
+  /// Process one agent's turn: walk its StepContainer and execute
+  /// MovementSteps against the grid. Returns the updated DiseaseData.
+  DiseaseData DoAction(AgentPtr agent) override {
+    using namespace cse498::steps;
 
-    if (!MoveAgent(agent, action_id)) return 0;
+    DiseaseData state = agent->GetState();
+    StepContainer turn = agent->GetTurn();
 
-    // If agent moved into a quarantine zone, push them back.
-    if (!quarantine_zones.empty() && IsInQuarantine(agent.GetID())) {
-      agent.SetLocation(old_pos);
-      return 0;
+    while (!turn.exhausted()) {
+      auto step_result = turn.get_next();
+      if (!step_result.has_value()) break;
+
+      std::visit(
+          [&](auto&& step) {
+            using S = std::decay_t<decltype(step)>;
+
+            if constexpr (std::is_same_v<S, MovementStep>) {
+              WorldPosition new_pos = step.loc;
+              if (main_grid.IsValid(new_pos) &&
+                  main_grid[new_pos] != wall_id &&
+                  !IsInQuarantine(new_pos)) {
+                state.position = new_pos;
+              }
+            } else if constexpr (std::is_same_v<S, InfoStep>) {
+              // Respond to LOC_AVAIL queries so agents can use ConditionalSteps
+              if (step.aspect == InfoStep::Aspect::LOC_AVAIL) {
+                WorldPosition target = step.target;
+                bool avail = main_grid.IsValid(target) &&
+                             main_grid[target] != wall_id &&
+                             !IsInQuarantine(target);
+                turn.inform(avail);
+              }
+            }
+            // ConditionalStep / ReconStep are handled by StepContainer itself
+          },
+          step_result.value());
     }
 
-    return 1;
+    return state;
   }
 
-  /// Each tick: advance timers, then spread infection so agents infected this
-  /// tick keep ticks_in_state == 0 until the next UpdateWorld().
+  /// Each tick: advance health timers, then spread infection.
+  /// Running timers first ensures agents infected this tick have
+  /// ticks_in_state == 0 until the next UpdateWorld(), preventing
+  /// same-tick recovery with infection_duration == 1.
   void UpdateWorld() override {
     tick_count++;
     UpdateHealthTimers();
@@ -151,26 +176,32 @@ class InfectiousWorld : public SimWorldBase {
 
   // -- Infection control --
 
-  void InfectAgent(size_t agent_id) {
-    health_map.at(agent_id).state = HealthState::INFECTED;
-    health_map.at(agent_id).ticks_in_state = 0;
+  /// Manually infect an agent. Throws std::out_of_range for invalid \p id.
+  void InfectAgent(size_t id) {
+    if (id >= agent_set.size())
+      throw std::out_of_range("InfectAgent: agent id out of range");
+    DiseaseData state = agent_set[id]->GetState();
+    state.health = HealthState::INFECTED;
+    state.ticks_in_state = 0;
+    agent_set[id]->SetState(state);
   }
 
-  /// @return Current health state, or SUSCEPTIBLE if \p agent_id is not in the
-  /// health map (no record / unknown id).
-  [[nodiscard]] HealthState GetAgentHealth(size_t agent_id) const {
-    auto it = health_map.find(agent_id);
-    if (it == health_map.end()) return HealthState::SUSCEPTIBLE;
-    return it->second.state;
+  /// @return Current health state; SUSCEPTIBLE if \p id is out of range.
+  [[nodiscard]] HealthState GetAgentHealth(size_t id) const {
+    if (id >= agent_set.size()) return HealthState::SUSCEPTIBLE;
+    return agent_set[id]->GetState().health;
   }
 
-  [[nodiscard]] bool IsAgentInfected(size_t agent_id) const {
-    return GetAgentHealth(agent_id) == HealthState::INFECTED;
+  [[nodiscard]] bool IsAgentInfected(size_t id) const {
+    return GetAgentHealth(id) == HealthState::INFECTED;
   }
 
   // -- Quarantine zones (Box) --
 
   void AddQuarantineZone(const Box& zone) { quarantine_zones.push_back(zone); }
+
+
+
 
   void ClearQuarantineZones() { quarantine_zones.clear(); }
 
@@ -182,22 +213,22 @@ class InfectiousWorld : public SimWorldBase {
 
   [[nodiscard]] size_t GetInfectedCount() const {
     return static_cast<size_t>(std::ranges::count_if(
-        health_map | std::views::values, [](const AgentHealth& h) {
-          return h.state == HealthState::INFECTED;
+        agent_set, [](const auto& ptr) {
+          return ptr->GetState().health == HealthState::INFECTED;
         }));
   }
 
   [[nodiscard]] size_t GetRecoveredCount() const {
     return static_cast<size_t>(std::ranges::count_if(
-        health_map | std::views::values, [](const AgentHealth& h) {
-          return h.state == HealthState::RECOVERED;
+        agent_set, [](const auto& ptr) {
+          return ptr->GetState().health == HealthState::RECOVERED;
         }));
   }
 
   [[nodiscard]] size_t GetSusceptibleCount() const {
     return static_cast<size_t>(std::ranges::count_if(
-        health_map | std::views::values, [](const AgentHealth& h) {
-          return h.state == HealthState::SUSCEPTIBLE;
+        agent_set, [](const auto& ptr) {
+          return ptr->GetState().health == HealthState::SUSCEPTIBLE;
         }));
   }
 
