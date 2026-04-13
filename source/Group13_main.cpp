@@ -9,6 +9,7 @@
  * ./infectious_demo
  **/
 
+#include <cstddef>
 #include <iomanip>
 #include <iostream>
 #include <thread>
@@ -18,6 +19,11 @@
 #include "Worlds/InfectiousWorld.hpp"
 
 using namespace cse498;
+
+namespace infectious_demo {
+constexpr int kFrameDelayMs = 300;
+constexpr std::size_t kSimulationTicks = 80;
+}  // namespace infectious_demo
 
 namespace ansi {
 constexpr const char* CLEAR_SCREEN = "\033[2J\033[H";
@@ -140,11 +146,12 @@ int RunInfectiousDemo() {
   world.InfectAgent(0);
 
   // Run simulation with visual output.
-  for (size_t tick = 0; tick < 80; ++tick) {
+  for (size_t tick = 0; tick < infectious_demo::kSimulationTicks; ++tick) {
     DrawWorld(world);
     world.RunAgents();
     world.UpdateWorld();
-    std::this_thread::sleep_for(std::chrono::milliseconds(300));
+    std::this_thread::sleep_for(
+        std::chrono::milliseconds(infectious_demo::kFrameDelayMs));
   }
 
   DrawWorld(world);
