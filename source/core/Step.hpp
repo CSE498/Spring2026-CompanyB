@@ -77,7 +77,7 @@ struct _InfoHandler {
   _InfoHandler(F f)
       : funcs({pick_handler<typename std::tuple_element<
                                 0, typename FuncInfo::FuncInfo<F>::args>::type,
-                            Ts>(f)...}){};
+                            Ts>(f)...}) {};
 
   template <typename S>
   std::expected<bool, StepErr> operator()(S s) {
@@ -116,7 +116,7 @@ struct InfoStep {
 
   // Fill in the world info -- the world calls this
   template <IsInfoType I>
-  void inform(I const &world_info) {
+  void inform(I const& world_info) {
     info = InfoType{std::in_place_type<I>, world_info};
   }
 };
@@ -149,24 +149,24 @@ struct StepContainer {
   // Root is an "empty" node so that "last" can always be bound
   std::unique_ptr<Node> root = std::make_unique<Node>();
   // This is *non owning* and a shared_ptr doesn't make sense
-  Node *last = root.get();
+  Node* last = root.get();
 
   // When iterating, the "indexing" ptr needs no mutation
-  Node const *cur_node = root.get();
+  Node const* cur_node = root.get();
   // Need one node prior to handle infostep stuff
-  Node const *prev_node = nullptr;
+  Node const* prev_node = nullptr;
 
-  std::stack<Node const *> next_stack;
+  std::stack<Node const*> next_stack;
 
   template <StepKind S>
-  void add_node(S &&s) {
+  void add_node(S&& s) {
     assert(last != nullptr);  // Should never be possible
     last->next = std::make_unique<Node>(std::move(s));
     last = last->next.get();
     assert(last != nullptr);
   }
 
-  void add_node(InfoStep &&i, ConditionalStep &&s, StepContainer &&t_body) {
+  void add_node(InfoStep&& i, ConditionalStep&& s, StepContainer&& t_body) {
     assert(last != nullptr);
 
     // Insert infostep node first
@@ -183,8 +183,8 @@ struct StepContainer {
     assert(last != nullptr);
   }
 
-  void add_node(InfoStep &&i, ConditionalStep &&s, StepContainer &&t_body,
-                StepContainer &&f_body) {
+  void add_node(InfoStep&& i, ConditionalStep&& s, StepContainer&& t_body,
+                StepContainer&& f_body) {
     assert(last != nullptr);
 
     // Do everything the single-branch add_node does, then just additionally add

@@ -10,8 +10,9 @@
 #include <vector>
 
 // #include "../tools/DataLog.hpp"
-#include "IActionLog.hpp"  // For LogLevel definition and ActionEventBase
 #include <nlohmann/json.hpp>
+
+#include "IActionLog.hpp"  // For LogLevel definition and ActionEventBase
 
 namespace cse498 {
 

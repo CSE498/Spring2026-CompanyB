@@ -14,9 +14,9 @@
 
 namespace cse498 {
 
-// Minimal LoggerTestAgent to satisfy AgentConcept without pulling in full engine deps
-// This allows us to test Logger isolated from the heavy WorldGrid and Entity
-// dependencies Used AI to help with the test cases.
+// Minimal LoggerTestAgent to satisfy AgentConcept without pulling in full
+// engine deps This allows us to test Logger isolated from the heavy WorldGrid
+// and Entity dependencies Used AI to help with the test cases.
 class LoggerTestAgent {
  public:
   virtual ~LoggerTestAgent() = default;
@@ -94,7 +94,8 @@ class MockReplayDriver : public IReplayDriver<LoggerTestAgent> {
   bool mShouldSucceed = true;
 
   std::expected<bool, std::string> ReplayFromFile(
-      const std::string& filePath, std::vector<LoggerTestAgent*>& agents) override {
+      const std::string& filePath,
+      std::vector<LoggerTestAgent*>& agents) override {
     mReplayCalled = true;
     mLastFile = filePath;
     mLastAgentCount = agents.size();
@@ -120,7 +121,7 @@ TEST_CASE("Logger - BeginReplay Operations", "[Logger]") {
   auto* replayPtr = replayDriver.get();
 
   Logger<LoggerTestAgent> logger(std::move(actionLog), std::move(outputManager),
-                           std::move(replayDriver));
+                                 std::move(replayDriver));
 
   std::vector<LoggerTestAgent*> agents;
 
@@ -152,7 +153,7 @@ TEST_CASE("Logger - SaveAgentActions Operations", "[Logger]") {
   auto* outputManagerPtr = outputManager.get();
 
   Logger<LoggerTestAgent> logger(std::move(actionLog), std::move(outputManager),
-                           std::move(replayDriver));
+                                 std::move(replayDriver));
 
   std::vector<LoggerTestAgent> agents(2);
 
@@ -206,7 +207,7 @@ TEST_CASE("Logger - Stress Test for Memory Bloat", "[Logger][Stress]") {
   auto* actionLogPtr = actionLog.get();
 
   Logger<LoggerTestAgent> logger(std::move(actionLog), std::move(outputManager),
-                           std::move(replayDriver));
+                                 std::move(replayDriver));
 
   std::vector<LoggerTestAgent> agents;
 
