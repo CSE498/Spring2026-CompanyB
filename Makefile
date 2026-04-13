@@ -113,7 +113,7 @@ docker-rebuild:
 
 # Forwards the display from WSL to Windows
 run-native:
-	DISPLAY=:0 XDG_RUNTIME_DIR=/run/user/1000 WAYLAND_DISPLAY=wayland-0 build/docker-native/app
+	docker compose run --rm run-native
 
 make format:
 	sudo find source tests -iname "*.cpp" -o -iname "*.hpp" ! -name "MazeWorld.hpp" ! -name "TrashInterface.hpp" ! -name "PacingAgent.hpp" | xargs clang-format-20 -i -style=Google
@@ -150,4 +150,4 @@ help:
 	@echo "  make docker-shell            Alias for docker-dev"
 	@echo "  make docker-image            Build the Docker image"
 	@echo "  make docker-rebuild          Rebuild the Docker image without cache"
-	@echo "  make run-native              Enables x11 forwarding for the GUI from WSL to a Windows host"
+	@echo "  make run-native              Run native Qt binary in container with WSLg display forwarding (WSL2)"

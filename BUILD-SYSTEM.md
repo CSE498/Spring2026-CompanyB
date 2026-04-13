@@ -57,7 +57,7 @@ Other distros vary — you know your system.
 | Command | Output Location | Run Command |
 |---|---|---|
 | make docker-build-emscripten | /build/emscripten/index.js | node /build/emscripten/index.js |
-| make docker-build-native | /build/docker-native/app | `make docker-dev` then run `./build/docker-native/app` |
+| make docker-build-native | /build/docker-native/app | `make run-native` (WSL2), or `make docker-dev` then `./build/docker-native/app` |
 | make docker-test-emscripten | /build/tests/emscripten/index.js | node /build/tests/emscripten/index.js |
 | make docker-test-native | /build/tests/docker-native/tests | `make docker-dev` then run `./build/tests/docker-native/app` |
 | make build | /build/native/app | ./build/native/app |
@@ -131,7 +131,7 @@ make docker-build-native TARGET_MAIN=simple_main.cpp opt
 | `make docker-dev` / `make docker-shell` | Interactive shell inside the container |
 | `make docker-image` | Build the Docker image |
 | `make docker-rebuild` | Rebuild the Docker image from scratch (no cache) |
-| `make run-native` | Run the native app from WSL with X11 forwarding to Windows |
+| `make run-native` | Run the native Qt binary inside the container with WSLg (Wayland/X11) display forwarding on Windows (WSL2). Requires a prior `make docker-build-native`. |
 
 ---
 
