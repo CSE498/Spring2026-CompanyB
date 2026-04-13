@@ -14,12 +14,12 @@
 
 namespace cse498 {
 
-// Minimal AgentBase to satisfy AgentConcept without pulling in full engine deps
+// Minimal LoggerTestAgent to satisfy AgentConcept without pulling in full engine deps
 // This allows us to test Logger isolated from the heavy WorldGrid and Entity
 // dependencies Used AI to help with the test cases.
-class AgentBase {
+class LoggerTestAgent {
  public:
-  virtual ~AgentBase() = default;
+  virtual ~LoggerTestAgent() = default;
 
   std::string id = "0";
 
@@ -40,13 +40,13 @@ namespace cse498 {
 // Mock implementation of IActionLog that just returns empty events
 // Required because Logger needs an IActionLog, but we don't need its real logic
 // here
-class MockActionLog : public IActionLog<AgentBase> {
+class MockActionLog : public IActionLog<LoggerTestAgent> {
  public:
   std::vector<ActionEventBase> mEventsToReturn;
   std::vector<LogEventFailure> mFailuresToReturn;
 
   std::pair<std::vector<ActionEventBase>, std::vector<LogEventFailure>>
-  LogAgentActions(const std::vector<AgentBase>& /*agents*/) override {
+  LogAgentActions(const std::vector<LoggerTestAgent>& /*agents*/) override {
     return {mEventsToReturn, mFailuresToReturn};
   }
 };
@@ -86,7 +86,7 @@ class MockOutputManager : public IOutputManager {
 // Mock replay driver to simulate reading replay files
 // We can toggle 'should_succeed' to test both the success and error paths of
 // the Logger
-class MockReplayDriver : public IReplayDriver<AgentBase> {
+class MockReplayDriver : public IReplayDriver<LoggerTestAgent> {
  public:
   mutable bool mReplayCalled = false;
   mutable std::string mLastFile;
@@ -94,7 +94,7 @@ class MockReplayDriver : public IReplayDriver<AgentBase> {
   bool mShouldSucceed = true;
 
   std::expected<bool, std::string> ReplayFromFile(
-      const std::string& filePath, std::vector<AgentBase*>& agents) override {
+      const std::string& filePath, std::vector<LoggerTestAgent*>& agents) override {
     mReplayCalled = true;
     mLastFile = filePath;
     mLastAgentCount = agents.size();
@@ -119,10 +119,10 @@ TEST_CASE("Logger - BeginReplay Operations", "[Logger]") {
 
   auto* replayPtr = replayDriver.get();
 
-  Logger<AgentBase> logger(std::move(actionLog), std::move(outputManager),
+  Logger<LoggerTestAgent> logger(std::move(actionLog), std::move(outputManager),
                            std::move(replayDriver));
 
-  std::vector<AgentBase*> agents;
+  std::vector<LoggerTestAgent*> agents;
 
   SECTION("Replay succeeds when driver succeeds") {
     replayPtr->mShouldSucceed = true;
@@ -151,10 +151,10 @@ TEST_CASE("Logger - SaveAgentActions Operations", "[Logger]") {
   auto* actionLogPtr = actionLog.get();
   auto* outputManagerPtr = outputManager.get();
 
-  Logger<AgentBase> logger(std::move(actionLog), std::move(outputManager),
+  Logger<LoggerTestAgent> logger(std::move(actionLog), std::move(outputManager),
                            std::move(replayDriver));
 
-  std::vector<AgentBase> agents(2);
+  std::vector<LoggerTestAgent> agents(2);
 
   SECTION("Saves agent actions through OutputManager") {
     actionLogPtr->mEventsToReturn.resize(1);
@@ -205,10 +205,10 @@ TEST_CASE("Logger - Stress Test for Memory Bloat", "[Logger][Stress]") {
 
   auto* actionLogPtr = actionLog.get();
 
-  Logger<AgentBase> logger(std::move(actionLog), std::move(outputManager),
+  Logger<LoggerTestAgent> logger(std::move(actionLog), std::move(outputManager),
                            std::move(replayDriver));
 
-  std::vector<AgentBase> agents;
+  std::vector<LoggerTestAgent> agents;
 
   SECTION("Handle 15000+ actions without crashing") {
     // RAII helper to ensure file cleanup even if an assertion throws and aborts
