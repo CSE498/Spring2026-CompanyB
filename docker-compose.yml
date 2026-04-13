@@ -5,6 +5,7 @@ services:
       context: .
     volumes:
       - ./source:/app/source:ro
+      - ./demo:/app/demo:ro
       - ./build:/app/build
       - ./scripts/docker-entrypoint.sh:/app/docker-entrypoint.sh:ro
     environment:
@@ -12,6 +13,7 @@ services:
       - HOST_GID=${HOST_GID}
       - CMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE:-}
       - CMAKE_EXTRA_FLAGS=${CMAKE_EXTRA_FLAGS:-}
+      - TARGET_MAIN=${TARGET_MAIN:-}
     command: build-emscripten
 
   # Build natively with Qt
@@ -20,6 +22,7 @@ services:
       context: .
     volumes:
       - ./source:/app/source:ro
+      - ./demo:/app/demo:ro
       - ./build:/app/build
       - ./scripts/docker-entrypoint.sh:/app/docker-entrypoint.sh:ro
     environment:
@@ -69,6 +72,7 @@ services:
       - "8080:8080"
     volumes:
       - ./source:/app/source:ro
+      - ./demo:/app/demo:ro
       - ./build:/app/build
       - ./scripts/docker-entrypoint.sh:/app/docker-entrypoint.sh:ro
     environment:
@@ -77,6 +81,7 @@ services:
       - HOST_GID=${HOST_GID}
       - CMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE:-}
       - CMAKE_EXTRA_FLAGS=${CMAKE_EXTRA_FLAGS:-}
+      - TARGET_MAIN=${TARGET_MAIN:-}
     command: serve
 
   # Interactive development shell
@@ -89,6 +94,7 @@ services:
       - "8080:8080"
     volumes:
       - ./source:/app/source
+      - ./demo:/app/demo
       - ./build:/app/build
       - ./scripts/docker-entrypoint.sh:/app/docker-entrypoint.sh:ro
     environment:
@@ -100,3 +106,19 @@ services:
       - TARGET_MAIN=${TARGET_MAIN:-}
     working_dir: /app
     command: shell
+
+  # Run the native Qt binary
+  run-native:
+    build:
+      context: .
+    entrypoint: /app/build/docker-native/app
+    volumes:
+      - ./build:/app/build
+      - ./assets:/app/assets:ro
+      - /tmp/.X11-unix:/tmp/.X11-unix
+      - /mnt/wslg:/mnt/wslg
+    environment:
+      - DISPLAY=${DISPLAY:-:0}
+      - WAYLAND_DISPLAY=${WAYLAND_DISPLAY:-wayland-0}
+      - XDG_RUNTIME_DIR=${XDG_RUNTIME_DIR:-/run/user/1000}
+      - PULSE_SERVER=${PULSE_SERVER:-}
