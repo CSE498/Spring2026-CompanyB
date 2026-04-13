@@ -56,7 +56,8 @@ TEST_CASE("Menu removeItem by id removes item and normalizes selection", "[gui][
     auto id3 = m.addItem("c", "C", [] {}, true, true);
 
     REQUIRE(m.select(id2).has_value());
-    CHECK(m.removeItem(id2));
+    auto removeResult = m.removeItem(id2);
+    CHECK(removeResult.has_value());
 
     auto model = m.buildRenderModel();
     REQUIRE(model.size() == 2);
@@ -81,8 +82,12 @@ TEST_CASE("Menu removeItem by key removes matching item", "[gui][menu]")
     auto id1 = m.addItem("settings", "Settings", [] {}, true, true);
     auto id2 = m.addItem("help", "Help", [] {}, true, true);
 
-    CHECK(m.removeItem("settings"));
-    CHECK_FALSE(m.removeItem("missing"));
+    auto removeSettings = m.removeItem("settings");
+    CHECK(removeSettings.has_value());
+
+    auto removeMissing = m.removeItem("missing");
+    CHECK_FALSE(removeMissing.has_value());
+    CHECK(removeMissing.error() == "removeItem failed: key not found");
 
     auto model = m.buildRenderModel();
     REQUIRE(model.size() == 1);
@@ -166,8 +171,8 @@ TEST_CASE("Menu predicates affect visibility and enabled state", "[gui][menu]")
 
     auto id = m.addItem("dynamic", "Dynamic", [] {}, true, true);
 
-    m.setEnabledPredicate(id, [&] { return allowEnabled; });
-    m.setVisiblePredicate(id, [&] { return allowVisible; });
+    CHECK(m.setEnabledPredicate(id, [&] { return allowEnabled; }).has_value());
+    CHECK(m.setVisiblePredicate(id, [&] { return allowVisible; }).has_value());
 
     auto model = m.buildRenderModel();
     auto* item = findRenderItem(model, id);
@@ -230,7 +235,7 @@ TEST_CASE("Menu activate returns error when callback is missing", "[gui][menu]")
     Menu m;
 
     auto id = m.addItem("x", "X", [] {}, true, true);
-    m.setActivateAction(id, Menu::Action{});
+    CHECK(m.setActivateAction(id, Menu::Action{}).has_value());
 
     auto result = m.activate(id);
     CHECK_FALSE(result.has_value());
@@ -243,12 +248,12 @@ TEST_CASE("Menu hover works for visible items even if disabled", "[gui][menu]")
 
     int hoverCount = 0;
     auto id = m.addItem("x", "X", [] {}, false, true);
-    m.setHoverAction(id, [&] { hoverCount++; });
+    CHECK(m.setHoverAction(id, [&] { hoverCount++; }).has_value());
 
     CHECK(m.hover(id));
     CHECK(hoverCount == 1);
 
-    m.setItemVisible(id, false);
+    CHECK(m.setItemVisible(id, false).has_value());
     CHECK_FALSE(m.hover(id));
     CHECK(hoverCount == 1);
 }
@@ -263,8 +268,8 @@ TEST_CASE("Menu onSelected callback fires only when selection changes", "[gui][m
     auto id1 = m.addItem("a", "A", [] {}, true, true);
     auto id2 = m.addItem("b", "B", [] {}, true, true);
 
-    m.setSelectedAction(id1, [&] { selectedA++; });
-    m.setSelectedAction(id2, [&] { selectedB++; });
+    CHECK(m.setSelectedAction(id1, [&] { selectedA++; }).has_value());
+    CHECK(m.setSelectedAction(id2, [&] { selectedB++; }).has_value());
 
     auto toB = m.select(id2);
     CHECK(toB.has_value());

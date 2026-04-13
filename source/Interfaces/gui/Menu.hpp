@@ -28,6 +28,11 @@ namespace cse498 {
 class Menu {
 public:
     /**
+     * Default constructor
+     */
+    Menu() = default;
+
+    /**
      * Numeric identifier for menu items
      */
     using ItemId = std::uint32_t;
@@ -77,11 +82,6 @@ public:
     };
 
     /**
-     * Default constructor.
-     */
-    Menu();
-
-    /**
      * Constructs a menu with a title.
      * @param title Menu title displayed by the GUI.
      */
@@ -106,12 +106,12 @@ public:
     /**
      * Removes an item by ItemId.
      */
-    bool removeItem(ItemId id);
+    std::expected<void, std::string> removeItem(ItemId id);
 
     /**
      * Removes an item by its string key.
      */
-    bool removeItem(std::string_view key);
+    std::expected<void, std::string> removeItem(std::string_view key);
 
     /**
      * Removes all items and clears the key->id mapping.
@@ -124,28 +124,28 @@ public:
     std::optional<ItemId> findItemIdByKey(std::string_view key) const;
 
     /** Set an item's base enabled flag. */
-    void setItemEnabled(ItemId id, bool enabled);
+    std::expected<void, std::string> setItemEnabled(ItemId id, bool enabled);
 
     /** Set an item's base visible flag. */
-    void setItemVisible(ItemId id, bool visible);
+    std::expected<void, std::string> setItemVisible(ItemId id, bool visible);
 
     /** Set an item's label text. */
-    void setItemLabel(ItemId id, std::string label);
+    std::expected<void, std::string> setItemLabel(ItemId id, std::string label);
 
     /** Set an item's enabled predicate. */
-    void setEnabledPredicate(ItemId id, Predicate pred);
+    std::expected<void, std::string> setEnabledPredicate(ItemId id, Predicate pred);
 
     /** Set an item's visible predicate. */
-    void setVisiblePredicate(ItemId id, Predicate pred);
+    std::expected<void, std::string> setVisiblePredicate(ItemId id, Predicate pred);
 
     /** Set an item's activation callback. */
-    void setActivateAction(ItemId id, Action action);
+    std::expected<void, std::string> setActivateAction(ItemId id, Action action);
 
     /** Set an item's hover callback. */
-    void setHoverAction(ItemId id, Action action);
+    std::expected<void, std::string> setHoverAction(ItemId id, Action action);
 
     /** Set an item's selection callback. */
-    void setSelectedAction(ItemId id, Action action);
+    std::expected<void, std::string> setSelectedAction(ItemId id, Action action);
 
     /**
      * Select an item by ItemId.
@@ -180,7 +180,7 @@ public:
     /**
      * Activate the currently selected item.
      */
-    bool activateSelected();
+    std::expected<void, std::string> activateSelected();
 
     /**
      * Activate an item by ItemId.

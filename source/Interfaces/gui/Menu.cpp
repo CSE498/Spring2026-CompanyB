@@ -10,10 +10,6 @@
 
 namespace cse498 {
 
-/**
- * Default constructor.
- */
-Menu::Menu() = default;
 
 /**
  * Constructs a menu with a title.
@@ -69,13 +65,13 @@ Menu::ItemId Menu::addItem(const std::string& key,
  * Removes an item by ItemId.
  * Updates storage and key->id mapping, then normalizes selection.
  */
-bool Menu::removeItem(ItemId id)
+std::expected<void, std::string> Menu::removeItem(ItemId id)
 {
     auto item = std::find_if(m_items.begin(), m_items.end(),
         [id](const Item& it) { return it.id == id; });
 
     if (item == m_items.end()) {
-        return false;
+        return std::unexpected("removeItem failed: invalid item id");
     }
 
     if (!item->key.empty()) {
@@ -87,18 +83,19 @@ bool Menu::removeItem(ItemId id)
 
     m_items.erase(item);
     normalizeSelection();
-    return true;
+    return {};
 }
 
 /**
  * Removes an item by its string key.
  */
-bool Menu::removeItem(std::string_view key)
+std::expected<void, std::string> Menu::removeItem(std::string_view key)
 {
     auto opt = findItemIdByKey(key);
     if (!opt) {
-        return false;
+        return std::unexpected("removeItem failed: key not found");
     }
+
     return removeItem(*opt);
 }
 
@@ -166,86 +163,117 @@ const Menu::Item* Menu::getItemByKey(std::string_view key) const
 /**
  * Set an item's base enabled flag.
  */
-void Menu::setItemEnabled(ItemId id, bool enabled)
+std::expected<void, std::string> Menu::setItemEnabled(ItemId id, bool enabled)
 {
     Item* item = getItem(id);
-    if (!item) return;
+    if (!item) {
+        return std::unexpected("setItemEnabled failed: invalid item id");
+    }
+
     item->enabled = enabled;
     normalizeSelection();
+    return {};
 }
 
 /**
  * Set an item's base visible flag.
  */
-void Menu::setItemVisible(ItemId id, bool visible)
+std::expected<void, std::string> Menu::setItemVisible(ItemId id, bool visible)
 {
     Item* item = getItem(id);
-    assert(item && "setItemVisible: invalid item id");
+    if (!item) {
+        return std::unexpected("setItemVisible failed: invalid item id");
+    }
 
     item->visible = visible;
     normalizeSelection();
+    return {};
 }
 
 /**
  * Set an item's label text.
  */
-void Menu::setItemLabel(ItemId id, std::string label)
+std::expected<void, std::string> Menu::setItemLabel(ItemId id, std::string label)
 {
     Item* item = getItem(id);
-    if (!item) return;
+    if (!item) {
+        return std::unexpected("setItemLabel failed: invalid item id");
+    }
+
     item->label = std::move(label);
+    return {};
 }
 
 /**
  * Set an item's enabled predicate.
  */
-void Menu::setEnabledPredicate(ItemId id, Predicate pred)
+std::expected<void, std::string> Menu::setEnabledPredicate(ItemId id, Predicate pred)
 {
     Item* item = getItem(id);
-    if (!item) return;
+    if (!item) {
+        return std::unexpected("setEnabledPredicate failed: invalid item id");
+    }
+
     item->enabledIf = std::move(pred);
     normalizeSelection();
+    return {};
 }
 
 /**
  * Set an item's visible predicate.
  */
-void Menu::setVisiblePredicate(ItemId id, Predicate pred)
+std::expected<void, std::string> Menu::setVisiblePredicate(ItemId id, Predicate pred)
 {
     Item* item = getItem(id);
-    if (!item) return;
+    if (!item) {
+        return std::unexpected("setVisiblePredicate failed: invalid item id");
+    }
+
     item->visibleIf = std::move(pred);
     normalizeSelection();
+    return {};
 }
 
 /**
  * Set an item's activation callback.
  */
-void Menu::setActivateAction(ItemId id, Action action)
+std::expected<void, std::string> Menu::setActivateAction(ItemId id, Action action)
 {
     Item* item = getItem(id);
-    if (!item) return;
+    if (!item) {
+        return std::unexpected("setActivateAction failed: invalid item id");
+    }
+
     item->onActivate = std::move(action);
+    return {};
 }
 
 /**
  * Set an item's hover action.
  */
-void Menu::setHoverAction(ItemId id, Action action)
+std::expected<void, std::string> Menu::setHoverAction(ItemId id, Action action)
 {
     Item* item = getItem(id);
-    if (!item) return;
+    if (!item) {
+        return std::unexpected("setHoverAction failed: invalid item id");
+    }
+
     item->onHover = std::move(action);
+    return {};
 }
 
 /**
  * Set an item's selection callback.
  */
-void Menu::setSelectedAction(ItemId id, Action action)
+std::expected<void, std::string> Menu::setSelectedAction(ItemId id, Action action)
 {
     Item* item = getItem(id);
-    if (!item) return;
+    if (!item) {
+        return std::unexpected("setSelectedAction failed: invalid item id");
+    }
+
     item->onSelected = std::move(action);
+    return {};
 }
 
 /**
@@ -429,13 +457,16 @@ bool Menu::hover(ItemId id)
 /**
  * Activate the currently selected item.
  */
-bool Menu::activateSelected()
+std::expected<void, std::string> Menu::activateSelected()
 {
     auto it = std::find_if(m_items.begin(), m_items.end(),
         [](const Item& item) { return item.selected; });
 
-    if (it == m_items.end()) return false;
-    return activate(it->id).has_value();
+    if (it == m_items.end()) {
+        return std::unexpected("activateSelected failed: no selected item");
+    }
+
+    return activate(it->id);
 }
 
 /**
