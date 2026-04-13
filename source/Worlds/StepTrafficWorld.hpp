@@ -4,7 +4,6 @@
 #include <chrono>
 #include <iostream>
 #include <map>
-#include <print>
 #include <queue>
 #include <ranges>
 #include <thread>
@@ -159,7 +158,7 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
   int num_spawned_agents = 0;
   /// @brief Cap on the number of active spawned agents that can exist at a
   /// time, to prevent the world from getting too chaotic.
-  static constexpr int max_spawned_agents = 15;
+  static constexpr int max_spawned_agents = 3;
 
   /// @brief Queue of IDs of despawned agents available for recycling.
   /// Written by Claude.
@@ -280,6 +279,9 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
   }
 
   TrafficData DoAction(AgentPtr agent) override {
+    if (!agent->GetState().is_active) {
+        return agent->GetState();
+    }
     StepContainer steps = agent->GetTurn();
     StepVisitor visitor{*agent, steps, *this, grass_id};
     // do the sort of stuff in the "do_turns" example in steps.org
@@ -304,6 +306,9 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
 
     if (new_position == new_state.destination) {
       new_state.is_active = false;
+      // TODO: IDs for StepAgentBase so this actually works
+      // despawned_agent_ids.push(agent->GetId());
+      --num_spawned_agents;
     }
 
     // TODO: if position changed: update direction
