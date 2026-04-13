@@ -148,6 +148,37 @@ struct StmtAction : public Node {
   ~StmtAction() = default;
 };
 
+// Loop (while)
+struct StmtWhile : public Node {
+  // Must resolve to a bool-convertible type
+  std::unique_ptr<Node> m_Condition;
+  std::unique_ptr<Node> m_Body;
+
+  StmtWhile(emplex::Token token, std::unique_ptr<Node> &&condition,
+            std::unique_ptr<Node> &&body)
+      : Node(token), m_Condition(std::move(condition)),
+        m_Body(std::move(body)) {}
+  ~StmtWhile() = default;
+};
+
+// Conditional
+struct StmtIf : public Node {
+  // Must resolve to a bool-convertible type
+  std::unique_ptr<Node> m_Condition;
+  std::unique_ptr<Node> m_TBody;
+  std::optional<std::unique_ptr<Node>> m_FBody;
+
+  StmtIf(emplex::Token token, std::unique_ptr<Node> &&condition,
+         std::unique_ptr<Node> &&t_body, std::unique_ptr<Node> &&f_body)
+      : Node(token), m_Condition(std::move(condition)),
+        m_TBody(std::move(t_body)), m_FBody(std::move(f_body)) {}
+  StmtIf(emplex::Token token, std::unique_ptr<Node> &&condition,
+         std::unique_ptr<Node> &&t_body)
+      : Node(token), m_Condition(std::move(condition)),
+        m_TBody(std::move(t_body)), m_FBody({}) {}
+  ~StmtIf() = default;
+};
+
 // -- Values --
 // Literal reference
 struct ValLiteral : public TypedNode {
