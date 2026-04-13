@@ -75,6 +75,8 @@ class MainWindow : public QMainWindow {
     QMenu* mHelpMenu;
 
     // Actions
+    // Raw pointers intentional because of the QT paraent ownership for the menu
+    // They get destroyed automatically when the window gets destroyed.
     QAction* mNewFileAction;
     QAction* mOpenFileAction;
     QAction* mSaveFileAction;

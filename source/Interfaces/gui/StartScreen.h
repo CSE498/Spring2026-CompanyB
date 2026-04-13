@@ -30,13 +30,13 @@ namespace cse498 {
         void launchMainWindow(const QString& mode);
 
            ///reference to world
-        WorldBase& mWorld;
-        std::vector<QString> mImagePaths;
-        int mTileSize;
+	WorldBase& mWorld;
+	std::vector<QString> mImagePaths{};
+	int mTileSize{};
 
-        QPushButton* mTrafficBtn;
-        QPushButton* mVirusBtn;
-        QPushButton* mGearBtn;
+	QPushButton* mTrafficBtn{};
+	QPushButton* mVirusBtn{};
+	QPushButton* mGearBtn{};
     };
 
 } // namespace cse498
