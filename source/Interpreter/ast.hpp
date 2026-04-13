@@ -70,6 +70,13 @@ struct StmtBlock : public Node {
   StmtBlock(emplex::Token token) : Node(token), m_Body() {};
   StmtBlock(emplex::Token token, std::vector<std::unique_ptr<Node>> &&body)
       : Node(token), m_Body(std::move(body)) {}
+  ~StmtBlock() = default;
+};
+
+// Filler for scaffolding
+struct EmptyNode : public Node {
+  EmptyNode(emplex::Token token) : Node(token) {}
+  ~EmptyNode() = default;
 };
 
 // -- Expressions --
@@ -80,6 +87,7 @@ struct ExprUnary : public TypedNode {
   ExprUnary(emplex::Token token, std::unique_ptr<Node> &&left,
             std::unique_ptr<Operators::Operator> &&op)
       : TypedNode(token), m_Op(std::move(op)), m_Left(std::move(left)) {};
+  ~ExprUnary() = default;
 };
 
 struct ExprBinary : public TypedNode {
@@ -92,6 +100,19 @@ struct ExprBinary : public TypedNode {
              std::unique_ptr<Operators::Operator> &&op)
       : TypedNode(token), m_Op(std::move(op)), m_Left(std::move(left)),
         m_Right(std::move(right)) {};
+  ~ExprBinary() = default;
+};
+
+struct Assign : public TypedNode {
+  std::shared_ptr<Symbols::SymInfo> m_Sym;
+  std::unique_ptr<Node> m_Value;
+
+  std::expected<size_t, ASTErr> ResolveType() { return m_Sym->type.index(); }
+
+  Assign(emplex::Token token, std::shared_ptr<Symbols::SymInfo> sym,
+         std::unique_ptr<Node> &&value)
+      : TypedNode(token), m_Sym(sym), m_Value(std::move(value)) {}
+  ~Assign() = default;
 };
 
 // -- Statements --
@@ -113,6 +134,7 @@ struct StmtFunc : public TypedNode {
 struct StmtAgentDef : public Node {
   std::unique_ptr<StmtBlock> m_Init;
   std::unique_ptr<StmtBlock> m_Turn;
+  ~StmtAgentDef() = default;
 };
 
 // Agent action
@@ -123,6 +145,7 @@ struct StmtAction : public Node {
 
   StmtAction(emplex::Token token, std::unique_ptr<Node> &&direction)
       : Node(token), m_Direction(std::move(direction)) {}
+  ~StmtAction() = default;
 };
 
 // -- Values --
@@ -138,6 +161,7 @@ struct ValLiteral : public TypedNode {
   // Construct from already constructed variant
   ValLiteral(emplex::Token token, Types::Type val)
       : TypedNode(token, val.index()), m_Val(val) {}
+  ~ValLiteral() = default;
 };
 
 // Variable reference
@@ -146,6 +170,7 @@ struct ValVariable : public TypedNode {
 
   ValVariable(emplex::Token token, std::shared_ptr<Symbols::SymInfo> symbol)
       : TypedNode(token, symbol->type.index()), m_Symbol(symbol) {}
+  ~ValVariable() = default;
 };
 
 }; // namespace cse498::AST
