@@ -271,12 +271,12 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
     auto is_agent_at_position = [&](const AgentPtr &ptr) {
       return ptr->GetState().is_active && ptr->GetState().position == pos;
     };
-    auto has_opposite_direction = [&](const AgentPtr &ptr) {
-      return ptr->GetState().direction == opposite;
+    auto not_opposite_direction = [&](const AgentPtr &ptr) {
+      return ptr->GetState().direction != opposite;
     };
     return !std::ranges::empty(agent_set |
                                std::views::filter(is_agent_at_position) |
-                               std::views::filter(has_opposite_direction));
+                               std::views::filter(not_opposite_direction));
   }
 
   TrafficData DoAction(AgentPtr agent) override {
