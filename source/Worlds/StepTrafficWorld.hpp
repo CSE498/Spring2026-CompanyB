@@ -40,7 +40,6 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
 
     // Now we'll need to have an operator() overload for each Step type.
     VisitRet operator()(steps::MovementStep step) {
-      std::println("Desired pos: {}, {}", step.loc.CellX(), step.loc.CellY());
       // The simplest step -- the agent just wants to move to a space.
       if (!world.IsValid(step.loc) || world.IsGrass(step.loc)) {
         return {};
