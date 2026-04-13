@@ -120,5 +120,6 @@ services:
     environment:
       - DISPLAY=${DISPLAY:-:0}
       - WAYLAND_DISPLAY=${WAYLAND_DISPLAY:-wayland-0}
-      - XDG_RUNTIME_DIR=${XDG_RUNTIME_DIR:-/run/user/1000}
+      - XDG_RUNTIME_DIR=/mnt/wslg/runtime-dir
+      - QT_QPA_PLATFORM=${QT_QPA_PLATFORM:-xcb}
       - PULSE_SERVER=${PULSE_SERVER:-}
