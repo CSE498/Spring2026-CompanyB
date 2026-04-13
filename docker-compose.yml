@@ -111,6 +111,7 @@ services:
   run-native:
     build:
       context: .
+    user: "${HOST_UID:-1000}:${HOST_GID:-1000}"
     entrypoint: /app/build/docker-native/app
     volumes:
       - ./build:/app/build
@@ -120,5 +121,6 @@ services:
     environment:
       - DISPLAY=${DISPLAY:-:0}
       - WAYLAND_DISPLAY=${WAYLAND_DISPLAY:-wayland-0}
-      - XDG_RUNTIME_DIR=${XDG_RUNTIME_DIR:-/run/user/1000}
+      - XDG_RUNTIME_DIR=/mnt/wslg/runtime-dir
+      - QT_QPA_PLATFORM=${QT_QPA_PLATFORM:-xcb}
       - PULSE_SERVER=${PULSE_SERVER:-}
