@@ -5,6 +5,7 @@
 #include <iostream>
 #include <map>
 #include <print>
+#include <queue>
 #include <ranges>
 #include <thread>
 #include <vector>
