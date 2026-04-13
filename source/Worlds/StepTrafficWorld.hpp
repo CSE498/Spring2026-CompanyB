@@ -280,7 +280,7 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
 
   TrafficData DoAction(AgentPtr agent) override {
     if (!agent->GetState().is_active) {
-        return agent->GetState();
+      return agent->GetState();
     }
     StepContainer steps = agent->GetTurn();
     StepVisitor visitor{*agent, steps, *this, grass_id};
