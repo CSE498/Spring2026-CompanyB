@@ -13,6 +13,7 @@
 
 # Token names and regular expressions
 # Keywords
+# Types
 KW_BOOL "bool"
 KW_INT "int"
 KW_DOUBLE "double"
@@ -21,9 +22,14 @@ KW_POINT "point"
 KW_DIRECTION_T "direction"
 KW_CAR "car"
 KW_STUDENT "student"
+# Worlds
 KW_WORLD "world"
 KW_TRAFFIC "traffic"
 KW_INFECTION "infection"
+# Loop ctl
+KW_BREAK "break"
+KW_CONTINUE "continue"
+# Other keywords
 KW_LET "let"
 KW_CONST "const"
 KW_MUT "mut"
