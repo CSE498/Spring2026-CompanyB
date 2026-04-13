@@ -1,6 +1,7 @@
 #include "Parser.hpp"
 #include "Interpreter/agentlang.hpp"
 #include "Interpreter/ast.hpp"
+#include "Interpreter/errors.hpp"
 #include "Interpreter/lexer.hpp"
 #include <expected>
 #include <memory>
@@ -8,24 +9,21 @@
 
 namespace cse498 {
 
-std::expected<void, ParseErr> Parser::parse(std::istream &in) {
+std::expected<void, InterpErr> Parser::parse(std::istream &in) {
   m_Nodes.clear();
   auto tokenize_res = m_Lexer.Tokenize(in);
   if (!tokenize_res.has_value()) {
-    // Figure out what to do with a LexerErr
-    return std::unexpected(
-        ParseErr(ParseErr::TODO, tokenize_res.error().m_Msg));
+    return std::unexpected(tokenize_res.error());
   }
 
   while (m_Lexer.Any()) {
     auto stmt_res = parse_stmt();
     if (!stmt_res.has_value()) {
       // Figure out what to do with a LexerErr
-      return std::unexpected(
-          ParseErr(ParseErr::TODO, tokenize_res.error().m_Msg));
-    }
+      return std::unexpected(tokenize_res.error());
 
-    m_Nodes.emplace_back(std::move(stmt_res.value()));
+      m_Nodes.emplace_back(std::move(stmt_res.value()));
+    }
   }
 
   // Interpreter will steal m_Nodes and m_Syms rather than returning them
@@ -33,7 +31,7 @@ std::expected<void, ParseErr> Parser::parse(std::istream &in) {
   return {};
 }
 
-std::expected<AgentLexer::Token, AgentLexer::LexerErr> Parser::parse_type() {
+std::expected<AgentLexer::Token, InterpErr> Parser::parse_type() {
   using AgentLexer::IDs;
   return m_Lexer.UseIf(IDs::ID_KW_BOOL, IDs::ID_KW_INT, IDs::ID_KW_DOUBLE,
                        IDs::ID_KW_DIRECTION_T, IDs::ID_KW_CAR,

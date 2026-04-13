@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Interpreter/errors.hpp"
 #include "core.hpp"
 #include "lexer-gen.hpp"
 #include <expected>
@@ -10,18 +11,6 @@
 
 namespace cse498::AgentLexer {
 
-struct LexerErr {
-  enum Kind {
-    UNEXP_TOKEN,
-  };
-
-  Kind m_Kind;
-  std::string m_Msg;
-
-  LexerErr(Kind kind) : m_Kind(kind), m_Msg("") {}
-  LexerErr(Kind kind, std::string const &msg) : m_Kind(kind), m_Msg("") {}
-};
-
 using Token = emplex::Token;
 using IDs = emplex::Lexer;
 
@@ -29,8 +18,14 @@ class Lexer {
   emplex::Lexer m_Lexer{};
 
 public:
-  std::expected<void, LexerErr> Tokenize(std::string_view);
-  std::expected<void, LexerErr> Tokenize(std::istream &);
+  std::expected<void, InterpErr> Tokenize(std::string_view i) {
+    m_Lexer.Tokenize(i);
+    return {};
+  };
+  std::expected<void, InterpErr> Tokenize(std::istream &i) {
+    m_Lexer.Tokenize(i);
+    return {};
+  };
 
   bool Any() const { return m_Lexer.token_id < m_Lexer.tokens.size(); }
   bool None() const { return m_Lexer.token_id >= m_Lexer.tokens.size(); };
@@ -38,13 +33,13 @@ public:
     return (Any() && (... || (Peek().id == id)));
   }
 
-  std::expected<Token, LexerErr> Use() {
+  std::expected<Token, InterpErr> Use() {
     if (None())
       return m_Lexer.eof_token;
 
     return m_Lexer.tokens.at(m_Lexer.token_id++);
   }
-  std::expected<Token, LexerErr> UseIf(std::convertible_to<int> auto... id) {
+  std::expected<Token, InterpErr> UseIf(std::convertible_to<int> auto... id) {
     if (!Is(id...)) {
       return std::unexpected(LexerErr(
           LexerErr::UNEXP_TOKEN,
@@ -60,7 +55,9 @@ public:
       m_Lexer.token_id = 0;
   }
 
-  const Token &Peek(size_t skip_count = 0) const;
+  const Token &Peek(size_t skip_count = 0) const {
+    return m_Lexer.Peek(skip_count);
+  };
 };
 
 }; // namespace cse498::AgentLexer

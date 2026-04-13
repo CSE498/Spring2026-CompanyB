@@ -12,26 +12,13 @@
 #include "lexer.hpp"
 
 namespace cse498::AST {
-// ----------------- Utility -------------
-struct ASTErr {
-  enum Kind {
-    UNTYPED_NODE,
-  };
-
-  Kind kind_;
-  std::string why_;
-
-  ASTErr(Kind kind) : kind_(kind) {};
-  ASTErr(Kind kind, std::string const &why) : kind_(kind), why_(why) {};
-};
-
 // ----------------- Nodes -------------
 using namespace agentlang;
 struct Node {
   emplex::Token m_Token;
 
   // External-facing call
-  virtual std::expected<size_t, ASTErr> GetType() {
+  virtual std::expected<size_t, InterpErr> GetType() {
     // Nodes are by default untyped
     return std::unexpected(ASTErr(ASTErr::UNTYPED_NODE, "Node is untyped"));
   }
@@ -45,10 +32,10 @@ struct TypedNode : public Node {
   std::optional<size_t> m_Type;
 
   // Internal-facing call to force the child node to resolve type
-  virtual std::expected<size_t, ASTErr> ResolveType() = 0;
+  virtual std::expected<size_t, InterpErr> ResolveType() = 0;
 
   // Return the cached type if it exsits, otherwise resolve
-  std::expected<size_t, ASTErr> GetType() override {
+  std::expected<size_t, InterpErr> GetType() override {
     if (!m_Type.has_value())
       return ResolveType();
     else
@@ -107,7 +94,7 @@ struct Assign : public TypedNode {
   std::shared_ptr<Symbols::SymInfo> m_Sym;
   std::unique_ptr<Node> m_Value;
 
-  std::expected<size_t, ASTErr> ResolveType() { return m_Sym->type.index(); }
+  std::expected<size_t, InterpErr> ResolveType() { return m_Sym->type.index(); }
 
   Assign(emplex::Token const &token, std::shared_ptr<Symbols::SymInfo> sym,
          std::unique_ptr<Node> &&value)
@@ -132,8 +119,15 @@ struct StmtFunc : public TypedNode {
 
 // Agent definition
 struct StmtAgentDef : public Node {
-  std::unique_ptr<StmtBlock> m_Init;
-  std::unique_ptr<StmtBlock> m_Turn;
+  std::unique_ptr<Node> m_Init;
+  std::unique_ptr<Node> m_Turn;
+  std::shared_ptr<Symbols::SymInfo> m_Sym;
+
+  StmtAgentDef(emplex::Token token, std::unique_ptr<Node> &&init,
+               std::unique_ptr<Node> &&turn,
+               std::shared_ptr<Symbols::SymInfo> sym)
+      : Node(token), m_Init(std::move(init)), m_Turn(std::move(turn)),
+        m_Sym(sym) {}
   ~StmtAgentDef() = default;
 };
 
