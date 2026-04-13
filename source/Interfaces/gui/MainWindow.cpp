@@ -31,6 +31,9 @@ MainWindow::MainWindow(WorldBase& world, const std::vector<QString>& imagePaths,
     setMainWidget();
     setImageGrid();
     setStatusBar();
+
+    logCommand("TEST Tick 1: [Agent 0] Move forward TEST");
+    logCommand("TEST Tick 2: [Agent 1] Stop TEST");
 }
 
 void MainWindow::setMenuBar() {
@@ -106,9 +109,26 @@ void MainWindow::setMainWidget() {
     // graph display on panel
     mMainGraph = new MainGraph(mSidePanel);
 
-    QVBoxLayout* sidePanelLayout = new QVBoxLayout(mSidePanel);
-    sidePanelLayout->addWidget(mMainGraph);
-    mSidePanel->setLayout(sidePanelLayout);
+    mSidePanelLayout = new QVBoxLayout(mSidePanel);
+    mSidePanelLayout->addWidget(mMainGraph);
+
+    // Command log
+    mCommandLog = new QTextEdit(this);
+    mCommandLog->setReadOnly(true);
+    mCommandLog->setStyleSheet(
+        "QTextEdit {"
+        "  background-color: #4a6741;"
+        "  color: #e0e0e0;"
+        "  border: 2px solid #2d4a2d;"
+        "  border-radius: 8px;"
+        "  padding: 8px;"
+        "  font-family: monospace;"
+        "  font-size: 12px;"
+        "}");
+    mCommandLog->setPlaceholderText("Commands will appear here...");
+    mSidePanelLayout->addWidget(mCommandLog, 1);
+
+    mSidePanel->setLayout(mSidePanelLayout);
 
     // horizontal splitter w blank panel on the left, image grid on the right
     auto* splitter = new QSplitter(Qt::Horizontal, this);
@@ -190,6 +210,10 @@ void MainWindow::onFileExit() { close(); }
 
 void MainWindow::onHelpAbout() {
     QMessageBox::about(this, "About", "<b>Group 21 Demo</b>");
+}
+
+void MainWindow::logCommand(const QString& message) {
+    mCommandLog->append(message);
 }
 
 }  // namespace cse498

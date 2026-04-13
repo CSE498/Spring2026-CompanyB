@@ -24,6 +24,8 @@
 #include <QString>
 #include <QToolBar>
 #include <QWidget>
+#include <QTextEdit>
+#include <QVBoxLayout>
 #include <memory>
 #include <vector>
 
@@ -40,6 +42,8 @@ class MainWindow : public QMainWindow {
     MainWindow(WorldBase& world, const std::vector<QString>& imagePaths,
                int tileSize = 32, QWidget* parent = nullptr);
     virtual ~MainWindow() = default;
+    void logCommand(const QString& message);
+
 
     // disable copy
     MainWindow(const MainWindow &) = delete;
@@ -90,6 +94,10 @@ class MainWindow : public QMainWindow {
 
     // Graph
     MainGraph* mMainGraph;
+
+    // Command Log
+    QTextEdit* mCommandLog;
+    QVBoxLayout* mSidePanelLayout;
 };
 
 }  // namespace cse498
