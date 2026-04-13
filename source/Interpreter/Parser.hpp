@@ -39,6 +39,8 @@ private:
   std::expected<std::unique_ptr<AST::Node>, ParseErr> parse_var_def();
   std::expected<std::unique_ptr<AST::Node>, ParseErr> parse_agent_def();
   std::expected<std::unique_ptr<AST::Node>, ParseErr> parse_assignment();
+
+  std::expected<Token, AgentLexer::LexerErr> parse_type();
 };
 
 }; // namespace cse498

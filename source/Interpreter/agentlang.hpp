@@ -4,6 +4,8 @@
 #include "core/WorldPosition.hpp"
 #include "lexer.hpp"
 
+#include <cstddef>
+#include <limits>
 #include <optional>
 #include <string>
 #include <tuple>

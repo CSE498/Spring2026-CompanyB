@@ -109,7 +109,7 @@ struct Assign : public TypedNode {
 
   std::expected<size_t, ASTErr> ResolveType() { return m_Sym->type.index(); }
 
-  Assign(emplex::Token token, std::shared_ptr<Symbols::SymInfo> sym,
+  Assign(emplex::Token const &token, std::shared_ptr<Symbols::SymInfo> sym,
          std::unique_ptr<Node> &&value)
       : TypedNode(token), m_Sym(sym), m_Value(std::move(value)) {}
   ~Assign() = default;

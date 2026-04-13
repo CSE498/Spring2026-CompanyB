@@ -23,6 +23,7 @@ struct LexerErr {
 };
 
 using Token = emplex::Token;
+using IDs = emplex::Lexer;
 
 class Lexer {
   emplex::Lexer m_Lexer{};
