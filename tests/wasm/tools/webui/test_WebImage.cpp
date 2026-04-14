@@ -9,13 +9,10 @@ struct SetupMockDOMWebImage {
   SetupMockDOMWebImage() {
     // clang-format off
     EM_ASM({
-      /// Creates a document if it doesn't exist
-      if (typeof document === 'undefined') {
-        const { JSDOM } = jsdom;
-        const dom = new JSDOM("<!DOCTYPE html> <html><head></head><body></body></html>");
-        globalThis.window = dom.window;
-        globalThis.document = dom.window.document;
-      }
+      const { JSDOM } = jsdom;
+      const dom = new JSDOM("<!DOCTYPE html> <html><head></head><body></body></html>");
+      globalThis.window = dom.window;
+      globalThis.document = dom.window.document;
     });
     // clang-format on
   }
@@ -23,6 +20,9 @@ struct SetupMockDOMWebImage {
   ~SetupMockDOMWebImage() {
     // clang-format off
       EM_ASM({
+        if (globalThis.window && globalThis.window.close) {
+          globalThis.window.close();
+        }
         delete globalThis.document;
         delete globalThis.window;
       });

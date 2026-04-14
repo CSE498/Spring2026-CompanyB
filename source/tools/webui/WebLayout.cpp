@@ -31,7 +31,7 @@ WebLayout::WebLayout(const WebOptions& options) : WebElement("div", options) {
 }
 
 std::expected<void, WebLayout::Error> WebLayout::AddChild(
-    std::shared_ptr<WebElement> elem) {
+    const std::shared_ptr<WebElement>& elem) {
   if (!elem) {
     return std::unexpected(WebLayout::Error::NullPtr);
   }
@@ -40,6 +40,10 @@ std::expected<void, WebLayout::Error> WebLayout::AddChild(
   }
 
   // Add child element to the layout's DOM tree
+  if (dom_element.isNull() || dom_element.isUndefined()) {
+    return std::unexpected(WebLayout::Error::DOMElementNotFound);
+  }
+
   dom_element.call<void>("appendChild", elem->GetDOMElement());
 
   // Add pointer to the element to the list of children
@@ -49,7 +53,7 @@ std::expected<void, WebLayout::Error> WebLayout::AddChild(
 }
 
 std::expected<void, WebLayout::Error> WebLayout::RemoveChild(
-    std::shared_ptr<WebElement> elem) {
+    const std::shared_ptr<WebElement>& elem) {
   if (!elem) {
     return std::unexpected(WebLayout::Error::NullPtr);
   }
@@ -58,6 +62,10 @@ std::expected<void, WebLayout::Error> WebLayout::RemoveChild(
   }
 
   // Remove child element from the layout
+  if (dom_element.isNull() || dom_element.isUndefined()) {
+    return std::unexpected(WebLayout::Error::DOMElementNotFound);
+  }
+
   dom_element.call<void>("removeChild", elem->GetDOMElement());
 
   // Remove child element pointer from the list of children
@@ -68,7 +76,7 @@ std::expected<void, WebLayout::Error> WebLayout::RemoveChild(
 
 size_t WebLayout::GetNumChildren() const { return elements.size(); }
 
-bool WebLayout::ContainsChild(std::shared_ptr<WebElement> elem) const {
+bool WebLayout::ContainsChild(const std::shared_ptr<WebElement>& elem) const {
   return std::find(elements.begin(), elements.end(), elem) != elements.end();
 }
 

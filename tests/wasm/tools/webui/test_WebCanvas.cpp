@@ -10,31 +10,27 @@ struct SetupMockCanvas {
   SetupMockCanvas() {
     // clang-format off
     EM_ASM({
-      /// Creates a document if it doesn't exist
-      if (typeof document === 'undefined') {
-        const { JSDOM } = jsdom;
-        const dom = new JSDOM("<!DOCTYPE html> <html><head></head><body></body></html>");
-        globalThis.window = dom.window;
-        globalThis.document = dom.window.document;
-      }
+      const { JSDOM } = jsdom;
+      const dom = new JSDOM("<!DOCTYPE html> <html><head></head><body></body></html>");
+      globalThis.window = dom.window;
+      globalThis.document = dom.window.document;
 
       // Support for RequestAnimationFrame
       if (typeof globalThis.requestAnimationFrame === 'undefined') {
         globalThis.requestAnimationFrame = function(cb) { return 0; };
       }
 
-      // Support for LoadImage or DrawImage
-      if (typeof window === 'undefined') {
-        globalThis.window = globalThis;
-      }
-      globalThis.Image = function() { this.complete = false; };
-      window._imageCache = {};
-});
+      globalThis.Image = dom.window.Image;
+      globalThis.window._imageCache = {};
+    });
     // clang-format on
   }
   ~SetupMockCanvas() {
     // clang-format off
   EM_ASM({
+    if (globalThis.window && globalThis.window.close) {
+      globalThis.window.close();
+    }
     delete globalThis.document;
     delete globalThis.window;
     delete globalThis.Image;
