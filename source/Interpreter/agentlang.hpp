@@ -1,10 +1,12 @@
 #pragma once
 
+#include "Interpreter/errors.hpp"
 #include "core.hpp"
 #include "core/WorldPosition.hpp"
 #include "lexer.hpp"
 
 #include <cstddef>
+#include <functional>
 #include <limits>
 #include <optional>
 #include <string>
@@ -54,10 +56,6 @@ inline std::optional<Type> NameToType(const emplex::Token &type_tok) {
   return std::nullopt;
 }
 }; // namespace agentlang::Types
-
-namespace agentlang::Operators {
-struct Operator {};
-}; // namespace agentlang::Operators
 
 namespace agentlang::Symbols {
 

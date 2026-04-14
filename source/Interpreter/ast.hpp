@@ -68,24 +68,23 @@ struct EmptyNode : public Node {
 
 // -- Expressions --
 struct ExprUnary : public TypedNode {
-  std::unique_ptr<Operators::Operator> m_Op;
+  AgentLexer::Token m_OpToken;
   std::unique_ptr<Node> m_Left;
 
-  ExprUnary(emplex::Token token, std::unique_ptr<Node> &&left,
-            std::unique_ptr<Operators::Operator> &&op)
-      : TypedNode(token), m_Op(std::move(op)), m_Left(std::move(left)) {};
+  ExprUnary(emplex::Token token, emplex::Token op_token,
+            std::unique_ptr<Node> &&left)
+      : TypedNode(token), m_OpToken(op_token), m_Left(std::move(left)) {};
   ~ExprUnary() = default;
 };
 
 struct ExprBinary : public TypedNode {
-  std::unique_ptr<Operators::Operator> m_Op;
+  AgentLexer::Token m_OpToken;
   std::unique_ptr<Node> m_Left;
   std::unique_ptr<Node> m_Right;
 
-  ExprBinary(emplex::Token token, std::unique_ptr<Node> &&left,
-             std::unique_ptr<Node> &&right,
-             std::unique_ptr<Operators::Operator> &&op)
-      : TypedNode(token), m_Op(std::move(op)), m_Left(std::move(left)),
+  ExprBinary(emplex::Token token, emplex::Token op_token,
+             std::unique_ptr<Node> &&left, std::unique_ptr<Node> &&right)
+      : TypedNode(token), m_OpToken(op_token), m_Left(std::move(left)),
         m_Right(std::move(right)) {};
   ~ExprBinary() = default;
 };
