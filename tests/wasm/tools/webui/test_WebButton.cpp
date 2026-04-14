@@ -18,6 +18,8 @@ struct SetupMockDOMWebButton {
         const dom = new JSDOM("<!DOCTYPE html> <html><head></head><body></body></html>");
         globalThis.window = dom.window;
         globalThis.document = dom.window.document;
+        globalThis.AbortController = dom.window.AbortController;
+        globalThis.AbortSignal = dom.window.AbortSignal;
       }
     });
     // clang-format on
@@ -28,6 +30,8 @@ struct SetupMockDOMWebButton {
       EM_ASM({
         delete globalThis.document;
         delete globalThis.window;
+        delete globalThis.AbortController;
+        delete globalThis.AbortSignal;
       });
     // clang-format on
   }
@@ -35,50 +39,50 @@ struct SetupMockDOMWebButton {
 
 TEST_CASE("WebButton basics") {
   SetupMockDOMWebButton mock;
-  cse498::WebButton b("Start", { .id = "startBtn" });
+  auto b = std::make_shared<cse498::WebButton>("Start", WebOptions{ .id = "startBtn" });
 
   SECTION("Label set/get works") {
-    REQUIRE(b.GetLabel() == "Start");
-    b.SetLabel("Pause");
-    REQUIRE(b.GetLabel() == "Pause");
+    REQUIRE(b->GetLabel() == "Start");
+    b->SetLabel("Pause");
+    REQUIRE(b->GetLabel() == "Pause");
   }
 
   SECTION("Visibility works") {
-    REQUIRE(b.IsVisible());
-    b.Hide();
-    REQUIRE_FALSE(b.IsVisible());
-    b.Show();
-    REQUIRE(b.IsVisible());
+    REQUIRE(b->IsVisible());
+    b->Hide();
+    REQUIRE_FALSE(b->IsVisible());
+    b->Show();
+    REQUIRE(b->IsVisible());
   }
 
   SECTION("Enable/Disable works") {
-    REQUIRE(b.IsEnabled());
-    b.Disable();
-    REQUIRE_FALSE(b.IsEnabled());
-    b.Enable();
-    REQUIRE(b.IsEnabled());
+    REQUIRE(b->IsEnabled());
+    b->Disable();
+    REQUIRE_FALSE(b->IsEnabled());
+    b->Enable();
+    REQUIRE(b->IsEnabled());
   }
 
   SECTION("Click runs callback only when enabled and visible") {
     int count = 0;
-    b.SetOnClick([&count]() { ++count; });
+    b->SetOnClick([&count]() { ++count; });
 
     emscripten::val arg;
 
-    b.Click(arg);
+    b->Click(arg);
     REQUIRE(count == 1);
 
-    b.Disable();
-    b.Click(arg);
+    b->Disable();
+    b->Click(arg);
     REQUIRE(count == 1);
 
-    b.Enable();
-    b.Hide();
-    b.Click(arg);
+    b->Enable();
+    b->Hide();
+    b->Click(arg);
     REQUIRE(count == 1);
 
-    b.Show();
-    b.Click(arg);
+    b->Show();
+    b->Click(arg);
     REQUIRE(count == 2);
   }
 }
