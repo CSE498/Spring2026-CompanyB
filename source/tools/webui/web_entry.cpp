@@ -23,18 +23,22 @@ static std::shared_ptr<WebCanvas> canvas;
 
 static std::unordered_map<std::string, std::shared_ptr<WebElement>> elements{};
 
+void set_active_layout(std::shared_ptr<WebElement>&& layout) {
+  elements["active_layout"] = layout;
+}
+
 std::shared_ptr<WebElement> simulation_layout(std::function<void()> btn_lambda) {
   return UIItem<WebLayout>(WebOptions{
     .id = "app-layout",
     .children = {
 
-      UIItem<WebLayout>(WebOptions{ 
+      UIItem<WebLayout>(WebOptions{
         .id = "menu-bar",
-        .style = {{
+        .style = {
           {"width", "100%"},
           {"background", "#363636"},
           {"border-radius", "20px"},
-        }},
+        },
         .children = {
           UIItem<WebButton>("", WebOptions{ .id = "start-btn", .classes={"button"} })->SetOnClick(btn_lambda),
           UIItem<WebButton>("", WebOptions{ .id = "pause-btn", .classes={"button"} })->SetOnClick(btn_lambda),
@@ -50,9 +54,9 @@ std::shared_ptr<WebElement> simulation_layout(std::function<void()> btn_lambda) 
         .children = {
           UIItem<WebLayout>(WebOptions{ 
             .id = "left-column",
-            .style = {{
+            .style = {
               {"flex", "3"}, 
-            }},
+            },
 
             .children = {
               UIItem<WebTextbox>(TextStyle(), WebOptions{
@@ -83,28 +87,18 @@ std::shared_ptr<WebElement> simulation_layout(std::function<void()> btn_lambda) 
   })->SetDirection("column").SetAlignItems("center").SetGap("10px").SetHeight("100vh").SetJustifyContent("flex-start");
 }
 
-std::shared_ptr<WebElement> menu_layout() {
-  // return UIItem<WebLayout>(WebOptions{ 
-  //   .id = "menu-bar",
-  //   .style = {{
-  //     {"width", "100%"},
-  //     {"background", "#363636"},
-  //     {"border-radius", "20px"},c+
-  //   }},
-  //   .children = {
-  //   }
-  // })->SetHeight("80px").SetDirection("row").SetAlignItems("center").SetGap("10px");
+std::shared_ptr<WebElement> menu_layout(std::function<void()> button_lambda) {
+  // This code works
   return UIItem<WebLayout>(WebOptions{
     .id = "menu-screen",
-    .style = {{
+    .style = {
       {"width", "100vw"},
-      // {"height", "100vh"},
-    }},
+      {"height", "100vh"},
+    },
     .children = {
-      UIItem<WebButton>("Start Simulation"),
+      UIItem<WebButton>("Start Simulation")->SetOnClick(button_lambda),
     }
   })->SetJustifyContent("center").SetAlignItems("center");
-  // return UIItem<WebTextbox>(TextStyle())->SetText("text");
 }
 
 void load_menu_layout();
@@ -112,17 +106,16 @@ void load_simulation_layout();
 
 void load_menu_layout() {
   std::println("Loading menu layout");
-  // elements.erase("simulation_layout");
-  elements["menu_layout"] = menu_layout();
+  set_active_layout(menu_layout(load_simulation_layout));
 }
 
 void load_simulation_layout() {
   std::println("Loading simulation layout");
-  elements.erase("menu_layout");
-  elements["simulation_layout"] = simulation_layout(load_menu_layout);
+  set_active_layout(simulation_layout(load_menu_layout));
 };
 
 int main() {
   load_menu_layout();
+
   return 0;
 }

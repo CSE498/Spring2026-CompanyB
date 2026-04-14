@@ -42,6 +42,8 @@ class WebButton : public WebElement {
   bool visible_{true};
   bool enabled_{true};
   std::function<void()> on_click_{};
+  /// @brief Allows us to remove event listeners on destruction. 
+  emscripten::val abort_controller_;
 };
 
 }

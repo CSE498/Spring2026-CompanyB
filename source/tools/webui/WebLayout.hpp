@@ -15,6 +15,8 @@
 
 #include "WebElement.hpp"
 
+// #define DEBUG_LOG_WEB_ELEMENTS
+
 namespace cse498 {
 
 /**
@@ -45,10 +47,12 @@ class WebLayout : public WebElement {
   WebLayout& operator=(const WebLayout&) = delete;
 
   ~WebLayout() {
+    #ifdef DEBUG_LOG_WEB_ELEMENTS
     if (!id.empty()) {
       std::printf("WebLayout #%s destructed\n", id.c_str());
     }
     else std::printf("WebLayout destructed\n");
+    #endif
   }
 
   /**

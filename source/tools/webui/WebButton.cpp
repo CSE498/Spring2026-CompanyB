@@ -16,13 +16,20 @@ WebButton::WebButton(const std::string& label, const WebOptions& options)
   // Basic default state.
   dom_element["style"].set("display", std::string("block"));
   dom_element.set("disabled", false);
+
+  abort_controller_ = val::global("AbortController").new_();
 }
 
 WebButton::~WebButton() {
+  #ifdef DEBUG_LOG_WEB_ELEMENTS
   if (!id.empty()) {
     std::printf("WebButton #%s destructed\n", id.c_str());
   }
   else std::printf("WebButton destructed\n");
+  #endif
+
+  // Remove event listener from button
+  abort_controller_.call<void>("abort");
 }
 
 const std::string& WebButton::GetLabel() const { return label_; }
@@ -61,10 +68,14 @@ WebButton& WebButton::SetOnClick(std::function<void()> callback) {
 
   auto buttonHandle = emscripten::val(std::dynamic_pointer_cast<cse498::WebButton>(shared_from_this()));
 
+  val config = emscripten::val::object();
+  config.set("signal", abort_controller_["signal"]);
+
   dom_element.call<void>(
     "addEventListener",
     std::string("click"),
-    buttonHandle["onClick"].call<val>("bind", buttonHandle)
+    buttonHandle["onClick"].call<val>("bind", buttonHandle),
+    config
   );
 
   return *this;
@@ -74,7 +85,6 @@ void WebButton::Click() {
   if (!visible_ || !enabled_) return;
   if (on_click_) on_click_();
 }
-
 }
 
 EMSCRIPTEN_BINDINGS(button_bindings) {
