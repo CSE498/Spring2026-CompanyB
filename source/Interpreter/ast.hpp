@@ -151,6 +151,19 @@ struct StmtWhile : public Node {
   ~StmtWhile() = default;
 };
 
+// Loop control
+struct StmtLoopCtl : public Node {
+  enum Action {
+    BREAK,
+    CONTINUE,
+  };
+
+  Action m_Action;
+
+  StmtLoopCtl(emplex::Token token, Action action)
+      : Node(token), m_Action(action) {}
+};
+
 // Conditional
 struct StmtIf : public Node {
   // Must resolve to a bool-convertible type

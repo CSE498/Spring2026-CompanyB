@@ -36,8 +36,13 @@ std::expected<std::unique_ptr<AST::Node>, InterpErr> Parser::parse_while() {
   if (!res.has_value())
     return std::unexpected(res.error());
 
+  ++m_InLoop;
+
   auto body =
       (m_Lexer.Is(IDs::ID_DELIM_CLY_OPEN)) ? parse_stmt_block() : parse_stmt();
+
+  --m_InLoop;
+  assert(m_InLoop >= 0);
 
   if (!body.has_value())
     return std::unexpected(body.error());
@@ -45,4 +50,23 @@ std::expected<std::unique_ptr<AST::Node>, InterpErr> Parser::parse_while() {
   return std::make_unique<AST::StmtWhile>(while_token, std::move(expr.value()),
                                           std::move(body.value()));
 }
+
+std::expected<std::unique_ptr<AST::Node>, InterpErr> Parser::parse_loop_ctl() {
+  using AgentLexer::IDs;
+  using AgentLexer::Token;
+
+  assert(m_InLoop >= 0);
+  if (m_InLoop == 0)
+    return std::unexpected(ParseErr(ParseErr::OUT_OF_LOOP));
+
+  auto res = m_Lexer.UseIf(IDs::ID_KW_BREAK, IDs::ID_KW_CONTINUE);
+  if (!res.has_value())
+    return std::unexpected(res.error());
+
+  return std::make_unique<AST::StmtLoopCtl>(res.value(),
+                                            (res.value().id == IDs::ID_KW_BREAK)
+                                                ? AST::StmtLoopCtl::BREAK
+                                                : AST::StmtLoopCtl::CONTINUE);
+}
+
 }; // namespace cse498

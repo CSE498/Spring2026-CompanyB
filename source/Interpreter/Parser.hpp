@@ -15,7 +15,7 @@ struct Parser {
 
 private:
   cse498::AgentLexer::Lexer m_Lexer{};
-  bool m_InLoop = false;
+  int m_InLoop = 0;
   bool m_InInit = false;
   bool m_InTurn = false;
 
