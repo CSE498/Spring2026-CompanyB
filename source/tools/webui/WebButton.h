@@ -35,7 +35,7 @@ class WebButton : public WebElement {
   bool IsEnabled() const;
 
   WebButton& SetOnClick(std::function<void()> callback);
-  void Click();
+  void Click(emscripten::val arg);
 
  private:
   std::string label_;

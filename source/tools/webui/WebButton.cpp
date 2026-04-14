@@ -81,7 +81,7 @@ WebButton& WebButton::SetOnClick(std::function<void()> callback) {
   return *this;
 }
 
-void WebButton::Click() {
+void WebButton::Click(val arg) {
   if (!visible_ || !enabled_) return;
   if (on_click_) on_click_();
 }
