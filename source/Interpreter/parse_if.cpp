@@ -1,9 +1,10 @@
 #include "Interpreter/ast.hpp"
+#include "Interpreter/errors.hpp"
 #include "Parser.hpp"
 
 namespace cse498 {
 
-std::expected<std::unique_ptr<AST::Node>, ParseErr> Parser::parse_if() {}
+std::expected<std::unique_ptr<AST::Node>, InterpErr> Parser::parse_if() {
   /*
   Assuming there's a curly-brace-enclosed body:
   ---
@@ -11,69 +12,60 @@ std::expected<std::unique_ptr<AST::Node>, ParseErr> Parser::parse_if() {}
   ---
   */
   using AgentLexer::IDs;
-  using AgentLexer::LexerErr;
   using AgentLexer::Token;
 
-  Token else_if_token = nullptr;
+  // Expect: KW_IF | KW_ELSE_IF
+  auto res = m_Lexer.UseIf(IDs::ID_KW_IF, IDs::ID_KW_ELSE_IF);
+  if (!res.has_value())
+    return std::unexpected(res.error());
 
-  // Expect: KW_IF
-  res = m_Lexer.UseIf(IDs::KW_IF);
-  if (!res) {
-    // Expect: KW_ELSE_IF
-    res = m_Lexer.UseIf(IDs::KW_ELSE_IF);
-    if (!res) {
-        return std::unexpected(ParseErr(ParseErr::TODO, res.error().m_Msg));
-    }
-
-    // Imp: Symbol table interaction
-    Token else_if_token = res.value();
-  }
-  // Imp: Symbol table interaction
   Token if_token = res.value();
 
   // Expect: DELIM_PAREN_OPEN
-  res = m_Lexer.UseIf(IDs::DELIM_PAREN_OPEN);
-  if (!res) {
-    // Figure out what to do with a LexerErr
-    return std::unexpected(ParseErr(ParseErr::TODO, res.error().m_Msg));
-  }
+  res = m_Lexer.UseIf(IDs::ID_DELIM_PAREN_OPEN);
+  if (!res.has_value())
+    return std::unexpected(res.error());
 
   // Extract expr
-  auto expr = parse_expr();
-  if (!expr.has_value()) {
-    return std::unexpected(expr.error());
-  }
+  auto cond = parse_expr();
+  if (!cond.has_value())
+    return std::unexpected(cond.error());
 
   // Expect: DELIM_PAREN_CLOSE
-  res = m_Lexer.UseIf(IDs::DELIM_PAREN_CLOSE);
-  if (!res) {
-    // Figure out what to do with a LexerErr
-    return std::unexpected(ParseErr(ParseErr::TODO, res.error().m_Msg));
-  }
+  res = m_Lexer.UseIf(IDs::ID_DELIM_PAREN_CLOSE);
+  if (!res.has_value())
+    return std::unexpected(res.error());
 
   // Extract stmt_block
-  auto stmt_block = parse_stmt_block();
-  if (!stmt_block.has_value()) {
-    return std::unexpected(stmt_block.error());
+  auto t_body =
+      (m_Lexer.Is(IDs::ID_DELIM_CLY_OPEN)) ? parse_stmt_block() : parse_stmt();
+
+  if (!t_body.has_value())
+    return std::unexpected(t_body.error());
+
+  // Construct the node up to now
+  std::unique_ptr<AST::StmtIf> node = std::make_unique<AST::StmtIf>(
+      if_token, std::move(cond.value()), std::move(t_body.value()));
+
+  // Optionally handle an else, else-if, or nothing
+  if (m_Lexer.Is(IDs::ID_KW_ELSE)) {
+    auto f_body = (m_Lexer.Is(IDs::ID_DELIM_CLY_OPEN)) ? parse_stmt_block()
+                                                       : parse_stmt();
+
+    if (!f_body.has_value())
+      return std::unexpected(f_body.error());
+
+    node->m_FBody = std::move(f_body.value());
+  } else if (m_Lexer.Is(IDs::ID_KW_ELSE_IF)) {
+    auto f_body = parse_if();
+
+    if (!f_body.has_value())
+      return std::unexpected(f_body.error());
+
+    node->m_FBody = std::move(f_body.value());
   }
 
-  if (else_if_token) {
-    // Make recursive call to parse_if()
-    return parse_if();
-  }
+  return node;
+}
 
-  // Expect: KW_ELSE
-  res = m_Lexer.UseIf(IDs::KW_ELSE);
-  if (!res) {
-    // Return Regular if-block
-    return std::make_unique<AST::StmtIf>(if_token, std::move(expr.value()), std::move(stmt_block.value()));
-  }
-  // Imp: Symbol table interaction
-  Token else_token = res.value();
-
-  // Extract stmt_block
-  auto stmt_block = parse_stmt_block();
-  if (!stmt_block.has_value()) {
-    return std::unexpected(stmt_block.error());
-  }
 }; // namespace cse498
