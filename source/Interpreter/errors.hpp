@@ -31,6 +31,9 @@ struct ParseErr {
   enum Kind {
     MISSING_TOKEN,
     EXPECTED_STMT,
+    OUT_OF_TURN,
+    OUT_OF_INIT,
+    OUT_OF_LOOP,
     TODO,
   };
 
