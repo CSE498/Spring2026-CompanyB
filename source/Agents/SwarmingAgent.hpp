@@ -176,8 +176,22 @@ class SwarmingAgent : public AgentBase<SwarmData> {
   }
 
   [[nodiscard]] StepContainer InfectionGetTurn() {
-    // for now just return an empty container
-    return StepContainer{};
+    // Behavior in each state:
+    // SUSCEPTIBLE:
+    // Move randomly
+    // Transition to INFECTED when near infected agents (handled by world logic)
+    // INFECTED:
+    // Move randomly
+    // Infect susceptible agents on contact/proximity (handled by world logic)
+    // RECOVERED:
+    // Move randomly
+    // No infection interaction behavior
+    
+    StepContainer container{};
+    WorldPosition random_pos = get_random_neighbor(this->m_Data.pos);
+    cse498::steps::MovementStep random_move{random_pos};
+    container.add_step(std::move(random_move));
+    return container;
   }
 
   // Following 3 functions are helper functions to set aspects of the agent's
