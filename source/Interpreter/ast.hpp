@@ -120,13 +120,10 @@ struct StmtFunc : public TypedNode {
 struct StmtAgentDef : public Node {
   std::unique_ptr<Node> m_Init;
   std::unique_ptr<Node> m_Turn;
-  std::shared_ptr<Symbols::SymInfo> m_Sym;
 
   StmtAgentDef(emplex::Token token, std::unique_ptr<Node> &&init,
-               std::unique_ptr<Node> &&turn,
-               std::shared_ptr<Symbols::SymInfo> sym)
-      : Node(token), m_Init(std::move(init)), m_Turn(std::move(turn)),
-        m_Sym(sym) {}
+               std::unique_ptr<Node> &&turn)
+      : Node(token), m_Init(std::move(init)), m_Turn(std::move(turn)) {}
   ~StmtAgentDef() = default;
 };
 
