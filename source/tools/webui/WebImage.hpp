@@ -88,13 +88,13 @@ class WebImage : public WebElement {
    * @brief Change the image source to a new file or URL.
    * @param source The new image source path or URL.
    **/
-  void SetSource(const std::string& source);
+  WebImage& SetSource(const std::string& source);
 
   /**
    * @brief Set the alt text for accessibility and screen readers.
    * @param alt_text The alternative text describing the image.
    **/
-  void SetAlt(const std::string& alt_text);
+  WebImage& SetAlt(const std::string& alt_text);
 
   /**
    * @brief Set the position of the image on the page.
@@ -113,7 +113,7 @@ class WebImage : public WebElement {
    **/
   template <typename T>
     requires std::is_arithmetic_v<T> && (!std::is_same_v<T, bool>)
-  void SetSize(T w, T h, SizeUnit unit = SizeUnit::px) {
+  WebImage& SetSize(T w, T h, SizeUnit unit = SizeUnit::px) {
     width_ = static_cast<double>(w);
     height_ = static_cast<double>(h);
 
@@ -142,13 +142,14 @@ class WebImage : public WebElement {
 
     dom_element["style"].set("width", std::to_string(w) + unit_str);
     dom_element["style"].set("height", std::to_string(h) + unit_str);
+    return *this;
   }
 
   /**
    * @brief Show or hide the image element.
    * @param is_visible If true, display the image; if false, hide it.
    **/
-  void SetVisible(bool is_visible);
+  WebImage& SetVisible(bool is_visible);
 
   /**
    * @brief Get the current width and height of the image.

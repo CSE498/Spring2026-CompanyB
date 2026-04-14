@@ -29,10 +29,11 @@ WebImage::WebImage(const std::string& src,
 WebImage::~WebImage() {
 }
 
-void WebImage::SetSource(const std::string& new_src) {
+WebImage& WebImage::SetSource(const std::string& new_src) {
   assert(!new_src.empty() && "Image source path cannot be empty");
   src_ = new_src;
   dom_element.set("src", src_);
+  return *this;
 }
 
 WebImage& WebImage::SetPosition(int x, int y) {
@@ -45,15 +46,17 @@ WebImage& WebImage::SetPosition(int x, int y) {
   return *this;
 }
 
-void WebImage::SetAlt(const std::string& alt_text) {
+WebImage& WebImage::SetAlt(const std::string& alt_text) {
   alt_ = alt_text;
   dom_element.set("alt", alt_);
+  return *this;
 }
 
-void WebImage::SetVisible(bool is_visible) {
+WebImage& WebImage::SetVisible(bool is_visible) {
   visible_ = is_visible;
   dom_element["style"].set("display",
                             std::string(is_visible ? "block" : "none"));
+  return *this;
 }
 
 bool WebImage::IsLoaded() const { return dom_element["complete"].as<bool>(); }
