@@ -52,6 +52,17 @@ struct SymbolErr {
   SymbolErr(Kind kind, std::string const &msg) : m_Kind(kind), m_Msg(msg) {}
 };
 
+struct RuntimeErr {
+  enum Kind {
+    TYPE_MISMATCH,
+  };
+
+  Kind m_Kind;
+  std::string m_Msg;
+  RuntimeErr(Kind kind) : m_Kind(kind), m_Msg("") {}
+  RuntimeErr(Kind kind, std::string const &msg) : m_Kind(kind), m_Msg(msg) {}
+};
+
 using InterpErr = std::variant<LexerErr, ParseErr, SymbolErr, ASTErr>;
 
 }; // namespace cse498
