@@ -34,7 +34,7 @@ struct SetupMockDOMWebButton {
 
 TEST_CASE("WebButton basics") {
   SetupMockDOMWebButton mock;
-  cse498::WebButton b("Start", "startBtn");
+  cse498::WebButton b("Start", { .id = "startBtn" });
 
   SECTION("Label set/get works") {
     REQUIRE(b.GetLabel() == "Start");

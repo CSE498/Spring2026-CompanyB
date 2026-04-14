@@ -107,7 +107,7 @@ void TEST_REMOVE_ELEMENT(WebLayout& layout, std::shared_ptr<WebElement> elem) {
 
 TEST_CASE("WebLayout constructor creates DOM element with ID", "[WebLayout]") {
   SetupMockDOMWebLayout mock;
-  WebLayout layout("layout1");
+  WebLayout layout({ .id = "layout1" });
 
   REQUIRE(layout.GetId() == "layout1");
 
@@ -130,7 +130,7 @@ TEST_CASE("WebLayout DOM element is removed on object being destructed",
           "[WebLayout]") {
   SetupMockDOMWebLayout mock;
   {
-    WebLayout layout("layout1");
+    WebLayout layout({ .id = "layout1" });
   }
 
   std::string id = "layout1";
@@ -140,10 +140,10 @@ TEST_CASE("WebLayout DOM element is removed on object being destructed",
 
 TEST_CASE("WebLayout can add and remove children", "[WebLayout]") {
   SetupMockDOMWebLayout mock;
-  WebLayout layout("layout1");
+  WebLayout layout({ .id = "layout1" });
 
-  auto elem1 = std::make_shared<WebElement>("elem1");
-  auto elem2 = std::make_shared<WebElement>("elem2");
+  auto elem1 = std::make_shared<WebElement>("div", WebOptions{ .id = "elem1" });
+  auto elem2 = std::make_shared<WebElement>("div", WebOptions{ .id = "elem2" });
 
   TEST_ADD_ELEMENT(layout, elem1);
   TEST_ADD_ELEMENT(layout, elem2);
@@ -155,9 +155,9 @@ TEST_CASE("WebLayout can add and remove children", "[WebLayout]") {
 TEST_CASE("WebLayout: adding or removing null pointers is an error",
           "[WebLayout]") {
   SetupMockDOMWebLayout mock;
-  WebLayout layout("layout1");
+  WebLayout layout({ .id = "layout1" });
 
-  auto elem1 = std::make_shared<WebElement>("elem1");
+  auto elem1 = std::make_shared<WebElement>("div", WebOptions{ .id = "elem1" });
   auto elem2 = std::shared_ptr<WebElement>();
 
   TEST_ADD_ELEMENT(layout, elem1);
@@ -169,9 +169,9 @@ TEST_CASE("WebLayout: adding or removing null pointers is an error",
 TEST_CASE("WebLayout: adding the same element twice gives an error",
           "[WebLayout]") {
   SetupMockDOMWebLayout mock;
-  WebLayout layout("layout1");
+  WebLayout layout({ .id = "layout1" });
 
-  auto elem1 = std::make_shared<WebElement>("elem1");
+  auto elem1 = std::make_shared<WebElement>("div", WebOptions{ .id = "elem1" });
 
   TEST_ADD_ELEMENT(layout, elem1);
 
@@ -182,7 +182,7 @@ TEST_CASE("WebLayout: adding the same element twice gives an error",
 TEST_CASE("WebLayout can set properties with chained function calls",
           "[WebLayout]") {
   SetupMockDOMWebLayout mock;
-  WebLayout layout("layout1");
+  WebLayout layout({ .id = "layout1" });
 
   REQUIRE_NOTHROW(layout.SetDirection("column")
                       .SetJustifyContent("flex-start")
@@ -194,7 +194,7 @@ TEST_CASE("WebLayout can set properties with chained function calls",
 
 TEST_CASE("WebLayout properties can be retrieved via getters", "[WebLayout]") {
   SetupMockDOMWebLayout mock;
-  WebLayout layout("layout2");
+  WebLayout layout({ .id = "layout2" });
 
   layout.SetDirection("row");
   CHECK(layout.GetDirection() == "row");

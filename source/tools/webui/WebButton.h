@@ -4,6 +4,7 @@
 
 #include <functional>
 #include <string>
+#include <memory>
 
 #include "WebElement.hpp"
 
@@ -19,7 +20,7 @@ namespace cse498 {
 
 class WebButton : public WebElement {
  public:
-  explicit WebButton(const std::string& label, const std::string& id);
+  explicit WebButton(const std::string& label, const WebOptions& options = {});
   ~WebButton();
 
   const std::string& GetLabel() const;
@@ -33,15 +34,16 @@ class WebButton : public WebElement {
   void Disable();
   bool IsEnabled() const;
 
-  void SetOnClick(std::function<void()> callback);
-  void Click();
+  WebButton& SetOnClick(std::function<void()> callback);
+  void Click(emscripten::val arg);
 
  private:
   std::string label_;
   bool visible_{true};
   bool enabled_{true};
   std::function<void()> on_click_{};
-  emscripten::val button_element_{emscripten::val::undefined()};
+  /// @brief Allows us to remove event listeners on destruction. 
+  emscripten::val abort_controller_;
 };
 
 }  // namespace cse498

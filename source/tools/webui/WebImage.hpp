@@ -10,6 +10,7 @@
 
 #include <expected>
 #include <string>
+#include <memory>
 
 #include "WebElement.hpp"
 
@@ -47,21 +48,18 @@ class WebImage : public WebElement {
   /// Image's Y position
   int y_pos_ = 0;
 
-  /// DOM image element
-  emscripten::val img_element_ = emscripten::val::null();
-
   /// Current visibility state
   bool visible_ = true;
 
  public:
   /**
    * @brief Construct a WebImage, creating the <img> element in the DOM.
-   * @param img_id The DOM element ID for the image. Must be unique.
    * @param src The image source URL or file path.
    * @param alt_text Alternative text for accessibility
+   * @param options Optional WebOptions to apply to the image.
    **/
-  WebImage(const std::string& img_id, const std::string& src,
-           const std::string& alt_text);
+  WebImage(const std::string& src,
+           const std::string& alt_text, const WebOptions& options = {});
 
   /// Destructor that removes the image element from the DOM
   ~WebImage();
@@ -105,7 +103,7 @@ class WebImage : public WebElement {
    * @note Negative values are supported and will position the element partially
    *       or fully outside the visible viewport.
    **/
-  void SetPosition(int x, int y);
+  WebImage& SetPosition(int x, int y);
 
   /**
    * @brief Set the display size of the image.
@@ -142,8 +140,8 @@ class WebImage : public WebElement {
         break;
     }
 
-    img_element_["style"].set("width", std::to_string(w) + unit_str);
-    img_element_["style"].set("height", std::to_string(h) + unit_str);
+    dom_element["style"].set("width", std::to_string(w) + unit_str);
+    dom_element["style"].set("height", std::to_string(h) + unit_str);
   }
 
   /**

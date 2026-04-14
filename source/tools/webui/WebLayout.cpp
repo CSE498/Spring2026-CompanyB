@@ -15,22 +15,18 @@ using emscripten::val;
 
 namespace cse498 {
 
-WebLayout::WebLayout(const std::string& id) : WebElement(id, false) {
-  val document = val::global("document");
-  val existing = document.call<val>("getElementById", id);
+WebLayout::WebLayout(const WebOptions& options) : WebElement("div", options) {
+  #ifdef DEBUG_LOG_WEB_ELEMENTS
+  if (!id.empty()) {
+    std::printf("WebLayout #%s constructed\n", id.c_str());
+  }
+  #endif
 
-  assert((existing.isNull() || existing.isUndefined()) &&
-         "Element with this ID already exists in the DOM");
-
-  dom_element = document.call<val>("createElement", std::string("div"));
   dom_element["style"].set("display", "flex");
-  dom_element.set("id", id);
-  document["body"].call<void>("appendChild", dom_element);
-}
 
-WebLayout::~WebLayout() {
-  if (!dom_element.isNull() && !dom_element.isUndefined()) {
-    dom_element.call<void>("remove");
+  // Add children from options if any
+  for (const auto& child : options.children) {
+    AddChild(child);
   }
 }
 
@@ -44,13 +40,9 @@ std::expected<void, WebLayout::Error> WebLayout::AddChild(
   }
 
   // Add child element to the layout's DOM tree
-  val document = val::global("document");
-  val childElem = document.call<val>("getElementById", elem->GetId());
-  if (childElem.isNull() || childElem.isUndefined()) {
-    return std::unexpected(WebLayout::Error::DOMElementNotFound);
-  }
-  dom_element.call<void>("appendChild", childElem);
+  dom_element.call<void>("appendChild", elem->GetDOMElement());
 
+  // Add pointer to the element to the list of children
   elements.push_back(elem);
 
   return {};
@@ -66,13 +58,9 @@ std::expected<void, WebLayout::Error> WebLayout::RemoveChild(
   }
 
   // Remove child element from the layout
-  val document = val::global("document");
-  val childElem = document.call<val>("getElementById", elem->GetId());
-  if (childElem.isNull() || childElem.isUndefined()) {
-    return std::unexpected(WebLayout::Error::DOMElementNotFound);
-  }
-  dom_element.call<void>("removeChild", childElem);
+  dom_element.call<void>("removeChild", elem->GetDOMElement());
 
+  // Remove child element pointer from the list of children
   std::erase(elements, elem);
 
   return {};

@@ -4,81 +4,92 @@
 
 #include <cassert>
 #include <utility>
+#include <emscripten/bind.h>
 
 namespace cse498 {
 
 using emscripten::val;
 
-WebButton::WebButton(const std::string &label, const std::string &id)
-    : WebElement(id, true), label_(label) {
-  assert(!id.empty() && "Button id must not be empty");
-
-  val document = val::global("document");
-
-  // Make sure the ID is unique.
-  val existing = document.call<val>("getElementById", id);
-  assert((existing.isNull() || existing.isUndefined()) &&
-         "Button with this id already exists");
-
-  // Create the <button> element.
-  button_element_ = document.call<val>("createElement", std::string("button"));
-  button_element_.set("id", id);
-  button_element_.set("innerText", label_);
+WebButton::WebButton(const std::string& label, const WebOptions& options)
+    : WebElement("button", options), label_(label) {
+  dom_element.set("innerText", label_);
 
   // Basic default state.
-  button_element_["style"].set("display", std::string("block"));
-  button_element_.set("disabled", false);
+  dom_element["style"].set("display", std::string("block"));
+  dom_element.set("disabled", false);
 
-  // Add to page.
-  document["body"].call<void>("appendChild", button_element_);
+  abort_controller_ = val::global("AbortController").new_();
 }
 
 WebButton::~WebButton() {
-  if (button_element_.isNull() || button_element_.isUndefined()) return;
+  #ifdef DEBUG_LOG_WEB_ELEMENTS
+  if (!id.empty()) {
+    std::printf("WebButton #%s destructed\n", id.c_str());
+  }
+  else std::printf("WebButton destructed\n");
+  #endif
 
-  val document = val::global("document");
-  val body = document["body"];
-  body.call<void>("removeChild", button_element_);
+  // Remove event listener from button
+  abort_controller_.call<void>("abort");
 }
 
 const std::string &WebButton::GetLabel() const { return label_; }
 
 void WebButton::SetLabel(const std::string &label) {
   label_ = label;
-  button_element_.set("innerText", label_);
+  dom_element.set("innerText", label_);
 }
 
 void WebButton::Show() {
   visible_ = true;
-  button_element_["style"].set("display", std::string("block"));
+  dom_element["style"].set("display", std::string("block"));
 }
 
 void WebButton::Hide() {
   visible_ = false;
-  button_element_["style"].set("display", std::string("none"));
+  dom_element["style"].set("display", std::string("none"));
 }
 
 bool WebButton::IsVisible() const { return visible_; }
 
 void WebButton::Enable() {
   enabled_ = true;
-  button_element_.set("disabled", false);
+  dom_element.set("disabled", false);
 }
 
 void WebButton::Disable() {
   enabled_ = false;
-  button_element_.set("disabled", true);
+  dom_element.set("disabled", true);
 }
 
 bool WebButton::IsEnabled() const { return enabled_; }
 
-void WebButton::SetOnClick(std::function<void()> callback) {
+WebButton& WebButton::SetOnClick(std::function<void()> callback) {
   on_click_ = std::move(callback);
+
+  auto buttonHandle = emscripten::val(std::dynamic_pointer_cast<cse498::WebButton>(shared_from_this()));
+
+  val config = emscripten::val::object();
+  config.set("signal", abort_controller_["signal"]);
+
+  dom_element.call<void>(
+    "addEventListener",
+    std::string("click"),
+    buttonHandle["onClick"].call<val>("bind", buttonHandle),
+    config
+  );
+
+  return *this;
 }
 
-void WebButton::Click() {
+void WebButton::Click(val arg) {
   if (!visible_ || !enabled_) return;
   if (on_click_) on_click_();
 }
+}
 
-}  // namespace cse498
+EMSCRIPTEN_BINDINGS(button_bindings) {
+  emscripten::class_<cse498::WebButton>("WebButton")
+    .smart_ptr<std::shared_ptr<cse498::WebButton>>("std::shared_ptr<WebButton>")
+    .function("onClick", &cse498::WebButton::Click);
+}

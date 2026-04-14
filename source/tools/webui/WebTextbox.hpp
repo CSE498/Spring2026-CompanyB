@@ -8,8 +8,10 @@
 #include <emscripten/val.h>
 
 #include <algorithm>  // For std::clamp
+#include <concepts>   // For C++20 Concepts
 #include <expected>   // For std::expected
 #include <functional>
+#include <memory>
 #include <string>
 
 #include "WebElement.hpp"
@@ -36,11 +38,9 @@ struct TextStyle {
  */
 class WebTextbox : public WebElement {
  private:
-  // Google Style: Member variables end with a trailing underscore.
-  emscripten::val div_element_ = emscripten::val::null();
-
   std::string mock_text_content_;
   size_t max_length_ = 50000;
+  size_t max_lines_ = 1000; // Added for span pruning logic
 
   // Google Style: constexpr variables start with 'k' and use mixed case.
   static constexpr const char* kDefaultBorder = "1px solid #ccc";
@@ -58,15 +58,24 @@ class WebTextbox : public WebElement {
 
  public:
   /**
-   * @brief Constructs a new WebTextbox and attaches it to the DOM.
-   * @param id The unique HTML ID for the generated div.
-   * @param style Optional TextStyle to apply upon creation.
+   * @brief Compile-time helper to validate truncation bounds (Advanced C++).
    */
-  WebTextbox(const std::string& id, const TextStyle& style = TextStyle());
+  static constexpr bool IsValidLength(size_t length) {
+    return length >= kMinAllowedLength && length <= kMaxAllowedLength;
+  }
 
-  // Prevent copying to avoid DOM element duplication and memory leaks.
+  /**
+   * @brief Constructs a new WebTextbox and attaches it to the DOM.
+   * @param style Optional TextStyle to apply upon creation.
+   * @param options Optional WebOptions for generic CSS properties and classes.
+   */
+  WebTextbox(const TextStyle& style = TextStyle(), const WebOptions& options = {});
+
+  // Prevent copying and moving to avoid DOM element duplication and memory leaks.
   WebTextbox(const WebTextbox&) = delete;
   WebTextbox& operator=(const WebTextbox&) = delete;
+  WebTextbox(WebTextbox&&) = delete;
+  WebTextbox& operator=(WebTextbox&&) = delete;
 
   /**
    * @brief Destroys the WebTextbox and removes the element from the DOM.
@@ -77,7 +86,7 @@ class WebTextbox : public WebElement {
    * @brief Overwrites the current text, truncating if it exceeds max length.
    * @param text The new text to display.
    */
-  void SetText(const std::string& text);
+  WebTextbox& SetText(const std::string& text);
 
   /**
    * @brief Appends text to the end of the box and auto-scrolls to the bottom.
@@ -129,6 +138,12 @@ class WebTextbox : public WebElement {
   void SetMaxLength(size_t length);
 
   /**
+   * @brief Sets the maximum number of lines (spans) the DOM will hold before deleting old ones.
+   * @param lines The maximum line count.
+   */
+  void SetMaxLines(size_t lines);
+
+  /**
    * @brief Retrieves the current text contained in the box.
    * @return A std::expected containing the inner text, or an error string if
    * invalid.
@@ -136,29 +151,34 @@ class WebTextbox : public WebElement {
   [[nodiscard]] std::expected<std::string, std::string> GetText() const;
 
   /**
-   * @brief Template method to append numeric values directly.
-   * @tparam T Any numeric type supported by std::to_string.
-   * @param value The value to append to the textbox.
-   */
+     * @brief Template method to append numeric values directly.
+     * @tparam T Any numeric type, constrained via C++20 concepts.
+     * @param value The value to append to the textbox.
+     */
   template <typename T>
+  requires std::integral<T> || std::floating_point<T>
   void AppendValue(const T& value) {
     // Uses type deduction to convert the raw value to a string
     AppendText(std::to_string(value));
   }
 
   /**
-   * @brief Applies a custom lambda transformation to the current text.
-   * @param transform_fn A lambda function that takes a string and returns a
-   * modified string.
+     * @brief Applies a custom lambda transformation to the current text.
+     * @param transform_fn A lambda function that takes a string and returns a modified string.
+     */
+  void TransformText(const std::function<std::string(const std::string&)>& transform_fn);
+
+  /**
+   * @brief Appends a distinct DOM span element for granular line-by-line styling.
+   * @param text The text for the log line.
+   * @param log_level The identifier for styling (Defaults to "INFO", creates class "log-INFO").
    */
-  void TransformText(
-      const std::function<std::string(const std::string&)>& transform_fn);
+  void AppendLine(const std::string& text, const std::string& log_level = "INFO");
 
   /**
    * @brief Appends a new line of text wrapped in a styled span.
    * @param text The string to append.
-   * @param css_class The CSS class name to apply to the span (e.g.,
-   * "error-text").
+   * @param css_class The CSS class name to apply to the span (e.g., "error-text").
    */
   void AppendStyledLine(const std::string& text, const std::string& css_class);
 };

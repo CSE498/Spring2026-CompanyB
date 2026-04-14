@@ -2,11 +2,11 @@
  * This file is part of the Fall 2026, CSE 498, section 2, course project.
  * @brief Class to layout web UI elements in a simple flex container.
  * @note Status: PROPOSAL
+ * @author Udbhav Saxena
+ * Note: Claude was used to generate docstrings
  **/
 
 #pragma once
-
-#include <emscripten/val.h>
 
 #include <expected>
 #include <memory>
@@ -15,17 +15,19 @@
 
 #include "WebElement.hpp"
 
+// #define DEBUG_LOG_WEB_ELEMENTS
+
 namespace cse498 {
 
 /**
  * @brief Manages a flex container in the DOM for laying out WebElement
  * children.
+ * 
+ * Note: `std::enable_shared_from_this` allows us to use fluent interface style APIs with shared pointers
  */
 class WebLayout : public WebElement {
  private:
   std::vector<std::shared_ptr<WebElement>> elements;
-  /// The DOM layout element
-  emscripten::val dom_element = emscripten::val::null();
 
  public:
   enum class Error {
@@ -36,16 +38,22 @@ class WebLayout : public WebElement {
   };
 
   /**
-   * @brief Constructs a WebLayout, creating a flex div in the DOM with the
-   * given ID.
-   * @param id The HTML element ID to assign to the layout container.
+   * @brief Constructs a WebLayout, creating a flex div in the DOM.
+   * @param options Optional WebOptions to apply to the layout.
    */
-  WebLayout(const std::string& id);
+  WebLayout(const WebOptions& options = {});
 
-  /**
-   * @brief Destructor. Removes the layout container from the DOM.
-   */
-  ~WebLayout();
+  /// Disable copy assignment operator
+  WebLayout& operator=(const WebLayout&) = delete;
+
+  ~WebLayout() {
+    #ifdef DEBUG_LOG_WEB_ELEMENTS
+    if (!id.empty()) {
+      std::printf("WebLayout #%s destructed\n", id.c_str());
+    }
+    else std::printf("WebLayout destructed\n");
+    #endif
+  }
 
   /**
    * @brief Appends a child WebElement to this layout in the DOM.
@@ -63,6 +71,10 @@ class WebLayout : public WebElement {
   std::expected<void, WebLayout::Error> RemoveChild(
       std::shared_ptr<WebElement> elem);
 
+  /**
+   * @brief Get the number of children in the WebLayout
+   * @return The number of children
+   */
   [[nodiscard]] size_t GetNumChildren() const;
 
   bool ContainsChild(std::shared_ptr<WebElement> elem) const;
