@@ -27,7 +27,8 @@ private:
   std::expected<std::unique_ptr<AST::Node>, InterpErr> parse_while();
   std::expected<std::unique_ptr<AST::Node>, InterpErr> parse_var_def();
   std::expected<std::unique_ptr<AST::Node>, InterpErr> parse_agent_def();
-  std::expected<std::unique_ptr<AST::Node>, InterpErr> parse_assignment();
+  std::expected<std::unique_ptr<AST::Node>, InterpErr> parse_loop_ctl();
+  std::expected<std::unique_ptr<AST::Node>, InterpErr> parse_move();
 
   std::expected<Token, InterpErr> parse_type();
 };
