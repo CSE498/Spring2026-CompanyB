@@ -53,8 +53,6 @@ constexpr const int TIMEOUT = 4000;  // time until status bar messages timeout; 
         mImageGrid->RenderGrid();
         mImageGrid->RenderAgents();
     
-    logCommand("TEST Tick 1: [Agent 0] Move forward TEST");
-    logCommand("TEST Tick 2: [Agent 1] Stop TEST");
 }
 
     void MainWindow::setMenuBar()
