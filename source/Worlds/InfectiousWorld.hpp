@@ -9,6 +9,7 @@
 #pragma once
 
 #include <cassert>
+#include <functional>
 #include <random>
 #include <ranges>
 #include <stdexcept>
@@ -40,6 +41,9 @@ class InfectiousWorld : public SimWorldBase<DiseaseData> {
   // Per-agent surface tracking: one ShapeID per agent, indexed to match agent_set
   std::vector<Surface::ShapeID> agent_surface_ids;
   std::unordered_map<Surface::ShapeID, size_t> surface_to_agent_idx;
+
+  //  observer called at the end of every UpdateWorld tick.
+  std::function<void(const InfectiousWorld&)> tick_observer;
 
   // Disease parameters
   double transmission_rate = 0.3;
@@ -201,6 +205,12 @@ class InfectiousWorld : public SimWorldBase<DiseaseData> {
     tick_count++;
     UpdateHealthTimers();
     SpreadInfection();
+    if (tick_observer) tick_observer(*this);
+  }
+
+  /// Register a callback invoked at the end of every tick.
+  void RegisterTickObserver(std::function<void(const InfectiousWorld&)> observer) {
+    tick_observer = std::move(observer);
   }
 
   // -- Infection control --
