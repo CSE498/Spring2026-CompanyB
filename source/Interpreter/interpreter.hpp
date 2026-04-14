@@ -20,12 +20,8 @@ template <typename Dataclass> class Interpreter {
       std::function<std::expected<Type, InterpErr>(Type, Type)>;
 
   // --- Operator visits ---
-  // Unary
-  static auto m_OpVisit_Un_PLUS = Overload{[](auto a) {
-    return std::unexpected(RuntimeErr(RuntimeErr::TYPE_MISMATCH));
-  }};
-
   // clang-format off
+  // Unary
   static auto m_OpVisit_Un_GEQ = Overload{
     [](auto a){return std::unexpected(RuntimeErr(RuntimeErr::TYPE_MISMATCH));}
   };

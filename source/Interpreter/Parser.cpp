@@ -11,19 +11,17 @@ namespace cse498 {
 
 std::expected<void, InterpErr> Parser::parse(std::istream &in) {
   m_Nodes.clear();
+
   auto tokenize_res = m_Lexer.Tokenize(in);
-  if (!tokenize_res.has_value()) {
+  if (!tokenize_res.has_value())
     return std::unexpected(tokenize_res.error());
-  }
 
   while (m_Lexer.Any()) {
     auto stmt_res = parse_stmt();
-    if (!stmt_res.has_value()) {
-      // Figure out what to do with a LexerErr
-      return std::unexpected(tokenize_res.error());
+    if (!stmt_res.has_value())
+      return std::unexpected(stmt_res.error());
 
-      m_Nodes.emplace_back(std::move(stmt_res.value()));
-    }
+    m_Nodes.emplace_back(std::move(stmt_res.value()));
   }
 
   // Interpreter will steal m_Nodes and m_Syms rather than returning them
