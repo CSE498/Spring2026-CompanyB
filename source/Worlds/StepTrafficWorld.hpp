@@ -18,8 +18,10 @@ namespace cse498 {
 class StepTrafficWorld : public StepWorldBase<TrafficData> {
   using Agent = StepAgentBase<TrafficData>;
   using AgentPtr = std::shared_ptr<Agent>;
-
-  struct WorldErr {};
+  // Kind of a dummy design for now, should upgrade later
+  struct WorldErr {
+    std::string message = "";
+  };
 
   struct StepVisitor {
     // We do want to represent failure, but don't need to represent
@@ -40,9 +42,41 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
         // not necessarily though, will have to think about it.
         return {};
       }
-      // TODO: classify move being made as left/right/up/down/stay (error if it's not one of those)
 
-      // TODO: check whether the agent's move would be blocked by a traffic light
+      WorldPosition pos = agent.GetState().position;
+      size_t old_x = pos.CellX();
+      size_t old_y = pos.CellY();
+      size_t new_x = step.loc.CellX();
+      size_t new_y = step.loc.CellY();
+      Direction new_dir{};
+      if (new_x == old_x) {
+        if (new_y == old_y - 1) {
+          new_dir = Direction::North;
+        } else if (new_y == old_y + 1) {
+          new_dir = Direction::South;
+        } else {
+          return std::unexpected<WorldErr>("invalid move");
+        }
+      } else if (new_y == old_y) {
+        if (new_x == old_x - 1) {
+          new_dir = Direction::West;
+        } else if (new_x == old_x + 1) {
+          new_dir = Direction::East;
+        } else {
+          return std::unexpected<WorldErr>("invalid move");
+        }
+      } else {
+        return std::unexpected<WorldErr>("invalid move");
+      }
+
+      if (world.HorizontalBlockedAt(step.loc) &&
+          (new_dir == Direction::East || new_dir == Direction::West)) {
+        return {};
+      } else if (world.VerticalBlockedAt(step.loc) &&
+                 (new_dir == Direction::North || new_dir == Direction::South)) {
+        return {};
+      }
+
       if (world.CanCollideWithAgentAt(agent, step.loc)) {
         return {};
       }
@@ -250,6 +284,16 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
     return main_grid.IsValid(pos) && main_grid[pos] == grass_id;
   }
 
+  bool HorizontalBlockedAt(const WorldPosition &pos) const {
+    return main_grid.IsValid(pos) &&
+           main_grid[pos] == traffic_light_vertical_id;
+  }
+
+  bool VerticalBlockedAt(const WorldPosition &pos) const {
+    return main_grid.IsValid(pos) &&
+           main_grid[pos] == traffic_light_horizontal_id;
+  }
+
   Direction GetOppositeDirection(const Direction dir) const {
     // (number) & 3 means bitwise and of the number with 00...011
     // which grabs the last 2 bits, which is the same as reducing mod 4.
@@ -361,7 +405,8 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
               TrafficData state = {
                   dest_pos, pos, Direction::East,
                   true,     '>', GetDestinationColour(dest_pos)};
-              // TODO: make this generic, remove explicit use of StepDrivingAgent
+              // TODO: make this generic, remove explicit use of
+              // StepDrivingAgent
               AddAgent<StepDrivingAgent>(state);
             }
 
