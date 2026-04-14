@@ -1,5 +1,6 @@
 
 #include <emscripten.h>
+#include <emscripten/val.h>
 
 #include <catch2/catch_test_macros.hpp>
 
@@ -62,20 +63,22 @@ TEST_CASE("WebButton basics") {
     int count = 0;
     b.SetOnClick([&count]() { ++count; });
 
-    b.Click();
+    emscripten::val arg;
+
+    b.Click(arg);
     REQUIRE(count == 1);
 
     b.Disable();
-    b.Click();
+    b.Click(arg);
     REQUIRE(count == 1);
 
     b.Enable();
     b.Hide();
-    b.Click();
+    b.Click(arg);
     REQUIRE(count == 1);
 
     b.Show();
-    b.Click();
+    b.Click(arg);
     REQUIRE(count == 2);
   }
 }
