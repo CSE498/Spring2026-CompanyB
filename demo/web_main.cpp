@@ -23,16 +23,26 @@ static std::shared_ptr<WebCanvas> canvas;
 
 static std::unordered_map<std::string, std::shared_ptr<WebElement>> elements{};
 
+// We switch screens by holding a shared pointer to the active screen's
+// WebElement in a static map
+// Note: This requires that there not be other shared pointers to the WebElement around,
+// Or the screen won't be removed as it won't be destructed when we replace it!
 void set_active_layout(std::shared_ptr<WebElement>&& layout) {
   elements["active_layout"] = layout;
 }
 
+// This is a web component that returns a canvas
+// Here, we choose to take our options for the canvas as a parameter
+// So the function can be treated as a component with the caller specifying
+// attributes like ID, styles, CSS classes etc. 
 std::shared_ptr<WebElement> GameInfoCanvas(WebOptions options) {
+  // UIItem is just syntax sugar for make_shared that creates a shared pointer
   auto gameInfo = UIItem<WebCanvas>(
     500,
     500,
     options);
 
+  // We can set properties on our WebCanvas using methods defined on it
   gameInfo->SetBackgroundColor({85, 85, 85})
     .SetFillColor({255, 255, 255})
     .DrawRect(10, 10, 480, 480, true)
@@ -58,7 +68,12 @@ std::shared_ptr<WebElement> GameInfoCanvas(WebOptions options) {
   return gameInfo;
 }
 
+// Here we create a function that creates the layout for the simulation screen
+// It takes a lambda as a parameter
+// This is a function we want to run when a button is clicked
+// We could take more lambdas if we want more types of button handlers
 std::shared_ptr<WebElement> SimulationLayout(std::function<void()> btn_lambda) {
+  // Here we initialize our game info canvas with id, classes, and style properties.
   auto gameInfo = GameInfoCanvas(WebOptions{
       .id = "game-info",
       .classes = {"textbox"},
@@ -68,7 +83,8 @@ std::shared_ptr<WebElement> SimulationLayout(std::function<void()> btn_lambda) {
   return UIItem<WebLayout>(WebOptions{
     .id = "app-layout",
     .children = {
-
+      // We can use the .children property to declare elements inside WebLayouts
+      // Which can include other WebLayouts - allowing us to create arbitrary layouts
       UIItem<WebLayout>(WebOptions{
         .id = "menu-bar",
         .style = {
@@ -84,6 +100,10 @@ std::shared_ptr<WebElement> SimulationLayout(std::function<void()> btn_lambda) {
           UIItem<WebButton>("", WebOptions{ .id = "save-btn", .classes={"button"} })->SetOnClick(btn_lambda),
           UIItem<WebButton>("", WebOptions{ .id = "exit-btn", .classes={"button"} })->SetOnClick(btn_lambda)
         }
+        // Notice that the fluent API style also lets us call WebLayout's methods
+        // while including it as a parameter to the function call
+        // This is possible because they return a reference to the WebElement,
+        // Which in turn is implicitly casted to the shared pointer with an operator overload
       })->SetHeight("80px").SetDirection("row").SetAlignItems("center").SetGap("10px"),
 
       UIItem<WebLayout>(WebOptions{
@@ -121,8 +141,9 @@ std::shared_ptr<WebElement> SimulationLayout(std::function<void()> btn_lambda) {
   })->SetDirection("column").SetAlignItems("center").SetGap("10px").SetHeight("100vh").SetJustifyContent("flex-start");
 }
 
+
+// We create another component for our menu screen layout
 std::shared_ptr<WebElement> MenuLayout(std::function<void()> button_lambda) {
-  // This code works
   return UIItem<WebLayout>(WebOptions{
     .id = "menu-screen",
     .style = {
@@ -135,6 +156,7 @@ std::shared_ptr<WebElement> MenuLayout(std::function<void()> button_lambda) {
   })->SetJustifyContent("center").SetAlignItems("center");
 }
 
+// These are our two button click handlers
 void load_menu_layout();
 void load_simulation_layout();
 
@@ -149,6 +171,7 @@ void load_simulation_layout() {
 };
 
 int main() {
+  // We start the application by loading the menu layout. 
   load_menu_layout();
 
   return 0;
