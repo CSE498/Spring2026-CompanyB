@@ -24,6 +24,7 @@
 #include <QString>
 #include <QToolBar>
 #include <QWidget>
+#include <QTimer>
 #include <QTextEdit>
 #include <QVBoxLayout>
 #include <memory>
@@ -40,7 +41,7 @@ class MainWindow : public QMainWindow {
 
    public:
     MainWindow(WorldBase& world, const std::vector<QString>& imagePaths,
-               int tileSize = 32, QWidget* parent = nullptr);
+               int tileSize = 32, const QString& agentImagePath = QString(), QWidget* parent = nullptr);
     virtual ~MainWindow() = default;
     void logCommand(const QString& message);
 
@@ -65,10 +66,19 @@ class MainWindow : public QMainWindow {
     void onFileExit();
     void onHelpAbout();
 
+    void startSimulation();
+    void onTick();
+
+    // Timer
+    QTimer* mTimer = nullptr;
+    int mTickInterval = 300;
+
     // For ImageGrid construction
     WorldBase& mWorld;
     const std::vector<QString>& mImagePaths;
     int mTileSize;
+    QString mAgentImagePath;
+
 
     // Menu bar
     QMenu* mFileMenu;

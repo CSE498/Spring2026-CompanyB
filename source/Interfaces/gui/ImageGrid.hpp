@@ -29,22 +29,18 @@ namespace cse498
         QGraphicsScene &mScene = *(new QGraphicsScene());
         int mTileSize{32}; // default tile size
         ImageManager mImageManager;
+        std::vector<QGraphicsItem *> mAgentItems;
 
     public:
         ImageGrid() = delete;
         virtual ~ImageGrid() = default;
 
-        // disable copy
-        ImageGrid(const ImageGrid &) = delete;
-        ImageGrid &operator=(const ImageGrid &) = delete;
-
-        // disable move
-        ImageGrid(ImageGrid &&) = delete;
-        ImageGrid &operator=(ImageGrid &&) = delete;
-
         ImageGrid(WorldBase &world, QGraphicsScene &scene, int tileSize);
         void MapImages(const std::vector<QString> &imagePaths);
         void RenderGrid();
+        void RenderAgents();
+        void ClearAgents();
+        void LoadAgentImage(const QString &imagePath);
         void SetSceneAndView(QGraphicsView &view);
     };
 } // namespace cse498
