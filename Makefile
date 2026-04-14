@@ -23,10 +23,19 @@ HOST_GID := $(shell id -g)
 export HOST_UID HOST_GID NO_QT TARGET_MAIN
 
 .PHONY: default all build test clean debug opt quick grumpy \
-        src-% test-% help docker-build-emscripten docker-build-native \
+	src-% test-% benchmark help docker-build-emscripten docker-build-native \
         docker-test-emscripten docker-test-native \
         docker-serve docker-dev docker-shell docker-clean \
         docker-image docker-rebuild run-native
+
+BENCH_GOAL := $(word 2,$(MAKECMDGOALS))
+
+ifneq ($(filter benchmark,$(MAKECMDGOALS)),)
+ifneq ($(BENCH_GOAL),)
+BENCH_FILE ?= $(BENCH_GOAL)
+$(eval $(BENCH_GOAL):;@:)
+endif
+endif
 
 # ---------- High-level targets ----------
 
@@ -42,6 +51,18 @@ test:
 
 # Build program(s) + run tests
 all: build test
+
+# Build and run a benchmark main from benchmarking/groups/
+# Usage:
+#   make benchmark my_benchmark.cpp
+#   make benchmark BENCH_FILE=my_benchmark.cpp
+benchmark:
+	@if [ -z "$(BENCH_FILE)" ]; then \
+		echo "Usage: make benchmark <file_name.cpp>"; \
+		echo "       make benchmark BENCH_FILE=<file_name.cpp>"; \
+		exit 1; \
+	fi
+	$(MAKE) -C source benchmark BENCH_FILE=$(BENCH_FILE)
 
 DOCKER_BUILD_GOALS := $(filter docker-build-% docker-serve docker-dev,$(MAKECMDGOALS))
 
