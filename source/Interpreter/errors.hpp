@@ -30,6 +30,7 @@ struct LexerErr {
 struct ParseErr {
   enum Kind {
     MISSING_TOKEN,
+    EXPECTED_STMT,
     TODO,
   };
 
