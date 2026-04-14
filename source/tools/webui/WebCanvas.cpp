@@ -39,7 +39,7 @@ WebCanvas::~WebCanvas() {
   }
 }
 
-void WebCanvas::Resize(int new_width, int new_height) {
+WebCanvas& WebCanvas::Resize(int new_width, int new_height) {
   assert(new_width > 0 && "Canvas width must be positive");
   assert(new_height > 0 && "Canvas height must be positive");
   width = new_width;
@@ -47,6 +47,7 @@ void WebCanvas::Resize(int new_width, int new_height) {
   dom_element.set("width", width);
   dom_element.set("height", height);
   ApplyState();
+  return *this;
 }
 
 std::string WebCanvas::RgbString(RGB rgb) {
@@ -55,7 +56,7 @@ std::string WebCanvas::RgbString(RGB rgb) {
          std::to_string(b) + ")";
 }
 
-void WebCanvas::ApplyState() {
+WebCanvas& WebCanvas::ApplyState() {
   ctx.set("strokeStyle", RgbString(pen_color));
   ctx.set("fillStyle", RgbString(fill_color));
 
@@ -69,28 +70,34 @@ void WebCanvas::ApplyState() {
   if (!transform_matrix.isUndefined()) {
     ctx.call<void>("setTransform", transform_matrix);
   }
+  return *this;
 }
 
-void WebCanvas::Clear() { ctx.call<void>("clearRect", 0, 0, width, height); }
+WebCanvas& WebCanvas::Clear() {
+    ctx.call<void>("clearRect", 0, 0, width, height);
+    return *this;
+}
 
-void WebCanvas::SetBackgroundColor(RGB rgb) {
+WebCanvas& WebCanvas::SetBackgroundColor(RGB rgb) {
   auto [r, g, b] = rgb;
   assert(r >= 0 && r <= 255 && "Red value must be 0-255");
   assert(g >= 0 && g <= 255 && "Green value must be 0-255");
   assert(b >= 0 && b <= 255 && "Blue value must be 0-255");
   background_color = rgb;
   dom_element["style"].set("backgroundColor", RgbString(rgb));
+  return *this;
 }
 
-void WebCanvas::DrawLine(std::pair<double, double> start,
+WebCanvas& WebCanvas::DrawLine(std::pair<double, double> start,
                          std::pair<double, double> end) {
   ctx.call<void>("beginPath");
   ctx.call<void>("moveTo", start.first, start.second);
   ctx.call<void>("lineTo", end.first, end.second);
   ctx.call<void>("stroke");
+  return *this;
 }
 
-void WebCanvas::DrawRect(double x_top_l, double y_top_l, double w, double h,
+WebCanvas& WebCanvas::DrawRect(double x_top_l, double y_top_l, double w, double h,
                          bool filled) {
   assert(w >= 0 && "Rectangle width must be non-negative");
   assert(h >= 0 && "Rectangle height must be non-negative");
@@ -99,9 +106,10 @@ void WebCanvas::DrawRect(double x_top_l, double y_top_l, double w, double h,
   } else {
     ctx.call<void>("strokeRect", x_top_l, y_top_l, w, h);
   }
+  return *this;
 }
 
-void WebCanvas::DrawCircle(double x, double y, double radius, bool filled) {
+WebCanvas& WebCanvas::DrawCircle(double x, double y, double radius, bool filled) {
   assert(radius >= 0 && "Circle radius must be non-negative");
   ctx.call<void>("beginPath");
   ctx.call<void>("arc", x, y, radius, 0,
@@ -111,9 +119,10 @@ void WebCanvas::DrawCircle(double x, double y, double radius, bool filled) {
   } else {
     ctx.call<void>("stroke");
   }
+  return *this;
 }
 
-void WebCanvas::DrawPolygon(
+WebCanvas& WebCanvas::DrawPolygon(
     const std::vector<std::pair<double, double>>& points, bool filled) {
   assert(points.size() >= 3 && "Polygon must have at least 3 points");
 
@@ -131,13 +140,15 @@ void WebCanvas::DrawPolygon(
   } else {
     ctx.call<void>("stroke");
   }
+  return *this;
 }
 
-void WebCanvas::DrawText(const std::string& text, double x, double y) {
+WebCanvas& WebCanvas::DrawText(const std::string& text, double x, double y) {
   ctx.call<void>("fillText", text, x, y);
+  return *this;
 }
 
-void WebCanvas::LoadImage(const std::string& path) {
+WebCanvas& WebCanvas::LoadImage(const std::string& path) {
   val window = val::global("window");
   if (window["_imageCache"].isUndefined()) {
     window.set("_imageCache", val::object());
@@ -161,10 +172,11 @@ void WebCanvas::LoadImage(const std::string& path) {
         },
         path.c_str());
   }
+  return *this;
 }
 
 // Still requires the macro. So I am keeping this function the same.
-void WebCanvas::DrawImage(const std::string& path, double x, double y, double w,
+WebCanvas& WebCanvas::DrawImage(const std::string& path, double x, double y, double w,
                           double h) {
   EM_ASM(
       {
@@ -187,15 +199,17 @@ void WebCanvas::DrawImage(const std::string& path, double x, double y, double w,
         }
       },
       id.c_str(), path.c_str(), x, y, w, h);
+  return *this;
 }
 
-void WebCanvas::SetPenColor(RGB rgb) {
+WebCanvas& WebCanvas::SetPenColor(RGB rgb) {
   auto [r, g, b] = rgb;
   assert(r >= 0 && r <= 255 && "Red value must be 0-255");
   assert(g >= 0 && g <= 255 && "Green value must be 0-255");
   assert(b >= 0 && b <= 255 && "Blue value must be 0-255");
   pen_color = rgb;
   ctx.set("strokeStyle", RgbString(rgb));
+  return *this;
 }
 
 WebCanvas& WebCanvas::SetFillColor(RGB rgb) {
@@ -209,11 +223,12 @@ WebCanvas& WebCanvas::SetFillColor(RGB rgb) {
   return *this;
 }
 
-void WebCanvas::SetLineWidth(double w) {
+WebCanvas& WebCanvas::SetLineWidth(double w) {
   assert(w >= 0 && "Line width must be non-negative");
   line_width = w;
 
   ctx.set("lineWidth", line_width);
+  return *this;
 }
 
 WebCanvas& WebCanvas::SetFont(const std::string& new_font) {
@@ -223,37 +238,42 @@ WebCanvas& WebCanvas::SetFont(const std::string& new_font) {
   return *this;
 }
 
-void WebCanvas::SetAlpha(double new_alpha) {
+WebCanvas& WebCanvas::SetAlpha(double new_alpha) {
   assert(new_alpha >= 0.0 && new_alpha <= 1.0 &&
          "Alpha must be between 0 and 1");
   alpha = new_alpha;
   ctx.set("globalAlpha", alpha);
+  return *this;
 }
 
-void WebCanvas::Translate(std::pair<double, double> point) {
+WebCanvas& WebCanvas::Translate(std::pair<double, double> point) {
   location = point;
   ctx.call<void>("translate", point.first, point.second);
   transform_matrix = ctx.call<val>("getTransform");
+  return *this;
 }
 
-void WebCanvas::Rotate(double angle, bool clockwise) {
+WebCanvas& WebCanvas::Rotate(double angle, bool clockwise) {
   double directed_angle = clockwise ? angle : -angle;
   ctx.call<void>("rotate", directed_angle);
   transform_matrix = ctx.call<val>("getTransform");
+  return *this;
 }
 
-void WebCanvas::Scale(double x, double y) {
+WebCanvas& WebCanvas::Scale(double x, double y) {
   ctx.call<void>("scale", x, y);
   transform_matrix = ctx.call<val>("getTransform");
+  return *this;
 }
 
-void WebCanvas::Save() {
+WebCanvas& WebCanvas::Save() {
   saved_states.push_back(
       {pen_color, fill_color, alpha, line_width, font, location});
   ctx.call<void>("save");
+  return *this;
 }
 
-void WebCanvas::Restore() {
+WebCanvas& WebCanvas::Restore() {
   assert(!saved_states.empty() && "No saved state to restore");
   CanvasState state = saved_states.back();
   saved_states.pop_back();
@@ -265,6 +285,7 @@ void WebCanvas::Restore() {
   location = state.location;
   ctx.call<void>("restore");
   transform_matrix = ctx.call<val>("getTransform");
+  return *this;
 }
 
 int WebCanvas::GetWidth() const { return width; }

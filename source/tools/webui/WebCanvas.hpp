@@ -84,7 +84,7 @@ class WebCanvas : public WebElement {
   /**
    * @brief Reapplies all tracked C++ state to the 2D context
    **/
-  void ApplyState();
+  WebCanvas&ApplyState();
 
   /**
    * @brief Converts an RGB tuple to a CSS rgb() string
@@ -117,25 +117,25 @@ class WebCanvas : public WebElement {
    * @param width The new width in pixels. Must be positive.
    * @param height The new height in pixels. Must be positive.
    **/
-  void Resize(int width, int height);
+  WebCanvas& Resize(int width, int height);
 
   /**
    * @brief Clear the entire canvas, removing all drawn content.
    **/
-  void Clear();
+  WebCanvas& Clear();
 
   /**
    * @brief Set the CSS background color of the canvas element.
    * @param rgb An (r, g, b) tuple with values in the range [0, 255].
    **/
-  void SetBackgroundColor(RGB rgb);
+  WebCanvas& SetBackgroundColor(RGB rgb);
 
   /**
    * @brief Draw a straight line between two points.
    * @param x The starting point as (x, y).
    * @param y The ending point as (x, y).
    **/
-  void DrawLine(std::pair<double, double> start, std::pair<double, double> end);
+  WebCanvas& DrawLine(std::pair<double, double> start, std::pair<double, double> end);
 
   /**
    * @brief Draw a rectangle on the canvas.
@@ -145,7 +145,7 @@ class WebCanvas : public WebElement {
    * @param height The height of the rectangle. Must be non-negative.
    * @param filled If true, fill the rectangle; otherwise, stroke the outline.
    **/
-  void DrawRect(double x_top_l, double y_top_l, double width, double height,
+  WebCanvas& DrawRect(double x_top_l, double y_top_l, double width, double height,
                 bool filled = true);
 
   /**
@@ -155,7 +155,7 @@ class WebCanvas : public WebElement {
    * @param radius The radius of the circle. Must be non-negative.
    * @param filled If true, fill the circle; otherwise, stroke the outline.
    **/
-  void DrawCircle(double x, double y, double radius, bool filled = true);
+  WebCanvas& DrawCircle(double x, double y, double radius, bool filled = true);
 
   /**
    * @brief Draw a closed polygon from a series of points.
@@ -163,7 +163,7 @@ class WebCanvas : public WebElement {
    *               Must contain at least 3 points.
    * @param filled If true, fill the polygon; otherwise, stroke the outline.
    **/
-  void DrawPolygon(const std::vector<std::pair<double, double>>& points,
+  WebCanvas& DrawPolygon(const std::vector<std::pair<double, double>>& points,
                    bool filled = true);
 
   /**
@@ -173,14 +173,14 @@ class WebCanvas : public WebElement {
    * @param x The x-coordinate of the text origin.
    * @param y The y-coordinate of the text baseline.
    **/
-  void DrawText(const std::string& text, double x, double y);
+  WebCanvas& DrawText(const std::string& text, double x, double y);
 
   /**
    * @brief Preload an image into the cache so that subsequent DrawImage
    * calls with the same path can draw synchronously.
    * @param path The file path or URL of the image to preload.
    **/
-  void LoadImage(const std::string& path);
+  WebCanvas& LoadImage(const std::string& path);
 
   /**
    * @brief Draw an image on the canvas. If the image has been preloaded via
@@ -192,14 +192,14 @@ class WebCanvas : public WebElement {
    * @param width The width to draw the image.
    * @param height The height to draw the image.
    **/
-  void DrawImage(const std::string& path, double x, double y, double width,
+  WebCanvas& DrawImage(const std::string& path, double x, double y, double width,
                  double height);
 
   /**
    * @brief Set the stroke color used for lines and shape outlines.
    * @param rgb An (r, g, b) tuple with values in the range [0, 255].
    **/
-  void SetPenColor(RGB rgb);
+  WebCanvas& SetPenColor(RGB rgb);
 
   /**
    * @brief Set the fill color used for filled shapes and text.
@@ -211,7 +211,7 @@ class WebCanvas : public WebElement {
    * @brief Set the line width for stroke operations.
    * @param width The line width in pixels. Must be non-negative.
    **/
-  void SetLineWidth(double width);
+  WebCanvas& SetLineWidth(double width);
 
   /**
    * @brief Set the font used for text rendering.
@@ -224,39 +224,39 @@ class WebCanvas : public WebElement {
    * @param alpha A value in the range [0.0, 1.0] where 0.0 is fully
    *              transparent and 1.0 is fully opaque.
    **/
-  void SetAlpha(double alpha);
+  WebCanvas& SetAlpha(double alpha);
 
   /**
    * @brief Translate the canvas origin by the given offset.
    * @param point The (x, y) offset to translate by.
    **/
-  void Translate(std::pair<double, double> point);
+  WebCanvas& Translate(std::pair<double, double> point);
 
   /**
    * @brief Rotate the canvas around the current origin.
    * @param angle The rotation angle in radians.
    * @param clockwise If true, rotate clockwise; otherwise, counter-clockwise.
    **/
-  void Rotate(double angle, bool clockwise);
+  WebCanvas& Rotate(double angle, bool clockwise);
 
   /**
    * @brief Scale the canvas coordinate system.
    * @param x The horizontal scale factor.
    * @param y The vertical scale factor.
    **/
-  void Scale(double x, double y);
+  WebCanvas& Scale(double x, double y);
 
   /**
    * @brief Save the current canvas state (colors, alpha, line width, font,
    * location, and transform) onto the state stack.
    **/
-  void Save();
+  WebCanvas& Save();
 
   /**
    * @brief Restore the most recently saved canvas state from the state stack.
    * @pre Save() must have been called at least once prior.
    **/
-  void Restore();
+  WebCanvas& Restore();
 
   /**
    * @brief Get the current width of the canvas in pixels.

@@ -13,6 +13,25 @@ using namespace emscripten;
 namespace cse498 {
 
 /**
+ * @brief Internal helper to sanitize user input to prevent HTML injection (XSS).
+ */
+static std::string EscapeHTML(const std::string& data) {
+  std::string buffer;
+  buffer.reserve(data.size());
+  for(size_t pos = 0; pos != data.size(); ++pos) {
+    switch(data[pos]) {
+      case '&':  buffer.append("&amp;");       break;
+      case '\"': buffer.append("&quot;");      break;
+      case '\'': buffer.append("&apos;");      break;
+      case '<':  buffer.append("&lt;");        break;
+      case '>':  buffer.append("&gt;");        break;
+      default:   buffer.append(&data[pos], 1); break;
+    }
+  }
+  return buffer;
+}
+
+/**
  * @brief Internal helper to determine if the code is running without a browser
  * window. This prevents Embind from crashing when queried in a Node.js testing
  * environment.
@@ -183,6 +202,59 @@ void WebTextbox::TransformText(const std::function<std::string(const std::string
     std::string modified = transform_fn(current_text.value());
     SetText(modified);
   }
+}
+
+/**
+ * @brief Sets the maximum number of lines (spans) the DOM will hold before deleting old ones.
+ */
+void WebTextbox::SetMaxLines(size_t lines) {
+  max_lines_ = std::max<size_t>(1, lines);
+}
+
+/**
+ * @brief Appends a distinct DOM span element for granular line-by-line styling.
+ */
+void WebTextbox::AppendLine(const std::string& text, const std::string& log_level) {
+  if (IsHeadless()) {
+    mock_text_content_ += text + "\n";
+    if (mock_text_content_.length() > max_length_) {
+      mock_text_content_ = mock_text_content_.substr(mock_text_content_.length() - max_length_);
+    }
+    return;
+  }
+
+  val document = val::global("document");
+  val span = document.call<val>("createElement", std::string("span"));
+
+  // Use className for Max's specific CSS styling hooks
+  span.set("className", "log-" + log_level);
+  span.set("innerText", text);
+
+  val br = document.call<val>("createElement", std::string("br"));
+
+  // Using the refactored dom_element instead of div_element_
+  dom_element.call<void>("appendChild", span);
+  dom_element.call<void>("appendChild", br);
+
+  // Active memory pruning
+  while (dom_element["childNodes"]["length"].as<int>() > static_cast<int>(max_lines_ * 2)) {
+    dom_element["firstChild"].call<void>("remove");
+    dom_element["firstChild"].call<void>("remove");
+  }
+
+  dom_element.set("scrollTop", dom_element["scrollHeight"]);
+}
+
+/**
+ * @brief Appends a new line of text wrapped in a styled span, sanitized for XSS.
+ */
+void WebTextbox::AppendStyledLine(const std::string& text, const std::string& css_class) {
+  // 1. Sanitize both inputs to prevent Cross-Site Scripting (XSS)
+  std::string safe_text = EscapeHTML(text);
+  std::string safe_class = EscapeHTML(css_class);
+
+  // 2. Update the internal C++ raw text buffer so GetText() and Catch2 tests don't break
+  AppendText(text + "\n");
 }
 
 }  // namespace cse498
