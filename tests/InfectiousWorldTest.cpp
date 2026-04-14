@@ -1,9 +1,13 @@
 #include <catch2/catch_test_macros.hpp>
 
-#include "../source/Agents/PacingAgent.hpp"
+#include "../source/Agents/StepPacingAgent.hpp"
 #include "../source/Worlds/InfectiousWorld.hpp"
 
 using namespace cse498;
+
+static DiseaseData at(size_t x, size_t y) {
+  return DiseaseData{WorldPosition{x, y}};
+}
 
 TEST_CASE("InfectiousWorld: empty world counts", "[InfectiousWorld]") {
   InfectiousWorld world(8, 6);
@@ -15,10 +19,10 @@ TEST_CASE("InfectiousWorld: empty world counts", "[InfectiousWorld]") {
 
 TEST_CASE("InfectiousWorld: new agent is susceptible", "[InfectiousWorld]") {
   InfectiousWorld world(8, 6);
-  world.AddAgent<PacingAgent>("a0").SetLocation(WorldPosition{2, 2});
+  world.AddAgent<StepPacingAgent>(at(2, 2));
 
   CHECK(world.GetNumAgents() == 1);
-  CHECK(world.GetAgentHealth(0) == InfectiousWorld::HealthState::SUSCEPTIBLE);
+  CHECK(world.GetAgentHealth(0) == HealthState::SUSCEPTIBLE);
   CHECK(world.GetSusceptibleCount() == 1);
   CHECK(world.GetInfectedCount() == 0);
   CHECK(world.GetRecoveredCount() == 0);
@@ -26,10 +30,10 @@ TEST_CASE("InfectiousWorld: new agent is susceptible", "[InfectiousWorld]") {
 
 TEST_CASE("InfectiousWorld: InfectAgent updates state", "[InfectiousWorld]") {
   InfectiousWorld world(8, 6);
-  world.AddAgent<PacingAgent>("a0").SetLocation(WorldPosition{2, 2});
+  world.AddAgent<StepPacingAgent>(at(2, 2));
 
   world.InfectAgent(0);
-  CHECK(world.GetAgentHealth(0) == InfectiousWorld::HealthState::INFECTED);
+  CHECK(world.GetAgentHealth(0) == HealthState::INFECTED);
   CHECK(world.GetInfectedCount() == 1);
   CHECK(world.GetSusceptibleCount() == 0);
 }
@@ -48,13 +52,13 @@ TEST_CASE("InfectiousWorld: spread applies after timers for this tick",
   // still runs; with duration 1, patient zero would recover before spread.
   world.SetInfectionDuration(20);
 
-  world.AddAgent<PacingAgent>("a0").SetLocation(WorldPosition{2, 2});
-  world.AddAgent<PacingAgent>("a1").SetLocation(WorldPosition{3, 2});
+  world.AddAgent<StepPacingAgent>(at(2, 2));
+  world.AddAgent<StepPacingAgent>(at(3, 2));
   world.InfectAgent(0);
 
   world.UpdateWorld();
 
-  CHECK(world.GetAgentHealth(1) == InfectiousWorld::HealthState::INFECTED);
+  CHECK(world.GetAgentHealth(1) == HealthState::INFECTED);
   CHECK(world.GetInfectedCount() == 2);
 }
 
@@ -65,14 +69,14 @@ TEST_CASE("InfectiousWorld: new infection clock starts next UpdateWorld",
   world.SetInfectionRadius(5.0);
   world.SetInfectionDuration(20);
 
-  world.AddAgent<PacingAgent>("a0").SetLocation(WorldPosition{2, 2});
-  world.AddAgent<PacingAgent>("a1").SetLocation(WorldPosition{3, 2});
+  world.AddAgent<StepPacingAgent>(at(2, 2));
+  world.AddAgent<StepPacingAgent>(at(3, 2));
   world.InfectAgent(0);
 
   world.UpdateWorld();
-  REQUIRE(world.GetAgentHealth(1) == InfectiousWorld::HealthState::INFECTED);
+  REQUIRE(world.GetAgentHealth(1) == HealthState::INFECTED);
 
   world.SetInfectionDuration(1);
   world.UpdateWorld();
-  CHECK(world.GetAgentHealth(1) == InfectiousWorld::HealthState::RECOVERED);
+  CHECK(world.GetAgentHealth(1) == HealthState::RECOVERED);
 }

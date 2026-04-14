@@ -1,6 +1,6 @@
 /**
  * Group13_main.cpp
- * @brief Demo of InfectiousWorld — two agent types, quarantine zone, disease spread.
+ * @brief Demo of InfectiousWorld using the step-based agent system.
  *
  * compile (from demo/ directory):
  *   g++ -std=c++23 -DCSE498_INFECTIOUS_DEMO_STANDALONE -I../source \
@@ -28,12 +28,12 @@ using namespace cse498;
 // ---------------------------------------------------------------------------
 namespace demo {
 constexpr int    kFrameDelayMs  = 400;
-constexpr size_t kSimTicks      = 150;
+constexpr size_t kSimTicks      = 160;
 constexpr size_t kNumPacers     = 8;    // agent IDs 0..7 are pacers
 constexpr size_t kGridW         = 44;
 constexpr size_t kGridH         = 18;
 constexpr size_t kSpawnInterval = 15;   // spawn a new walker every N ticks
-constexpr size_t kMaxAgents     = 30;   // cap so the grid doesn't overflow
+constexpr size_t kMaxAgents     = 50;   // cap so the grid doesn't overflow
 
 // Entry point for new spawns — top-left door into the left room
 constexpr size_t kSpawnX = 2;
@@ -62,23 +62,10 @@ constexpr const char* BG_DARK   = "\033[100m";
 }  // namespace ansi
 
 // ---------------------------------------------------------------------------
-// Determine if a grid cell is inside any quarantine zone
-// ---------------------------------------------------------------------------
-bool InQuarantineZone(size_t x, size_t y,
-                      const std::vector<Box>& zones) {
-  Point cell_center(static_cast<double>(x) + 0.5,
-                    static_cast<double>(y) + 0.5);
-  for (const auto& z : zones)
-    if (z.Contains(cell_center)) return true;
-  return false;
-}
-
-// ---------------------------------------------------------------------------
 // Draw
 // ---------------------------------------------------------------------------
 void DrawWorld(const InfectiousWorld& world) {
   const WorldGrid& grid   = world.GetGrid();
-  const auto& zones       = world.GetQuarantineZones();
   size_t W = grid.GetWidth(), H = grid.GetHeight();
 
   // Build display layers
@@ -92,7 +79,7 @@ void DrawWorld(const InfectiousWorld& world) {
       char s = grid.GetSymbol(WorldPosition{x, y});
       if (s == '#') {
         display[y][x] = {'#', ansi::GREY, ""};
-      } else if (InQuarantineZone(x, y, zones)) {
+      } else if (world.IsInQuarantine(WorldPosition{x, y})) {
         display[y][x] = {'~', ansi::YELLOW, ansi::BG_YELLOW};
       } else {
         display[y][x] = {'.', ansi::GREY, ""};
@@ -100,7 +87,7 @@ void DrawWorld(const InfectiousWorld& world) {
     }
   }
 
-  // 2. Stamp agents — pacers use uppercase, random walkers use lowercase.
+  
   //    Colour encodes health: green=susceptible, red=infected, blue=recovered.
   for (size_t id = 0; id < world.GetNumAgents(); ++id) {
     DiseaseData st  = world.GetAgentState(id);

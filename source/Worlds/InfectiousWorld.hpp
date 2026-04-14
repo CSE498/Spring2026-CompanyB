@@ -12,6 +12,7 @@
 #include <random>
 #include <ranges>
 #include <stdexcept>
+#include <unordered_map>
 #include <unordered_set>
 #include <variant>
 #include <vector>
@@ -33,7 +34,12 @@ class InfectiousWorld : public SimWorldBase<DiseaseData> {
  private:
   // Geometry infrastructure
   Surface surface;
-  std::vector<Box> quarantine_zones;  // rectangular restricted areas.
+  std::vector<Box> quarantine_zones;
+  std::unordered_set<Surface::ShapeID> quarantine_surface_ids;
+
+  // Per-agent surface tracking: one ShapeID per agent, indexed to match agent_set
+  std::vector<Surface::ShapeID> agent_surface_ids;
+  std::unordered_map<Surface::ShapeID, size_t> surface_to_agent_idx;
 
   // Disease parameters
   double transmission_rate = 0.3;
@@ -51,22 +57,39 @@ class InfectiousWorld : public SimWorldBase<DiseaseData> {
     return Point(pos.X() + 0.5, pos.Y() + 0.5);
   }
 
-  /// Build the infection-radius Circle for a given position.
-  [[nodiscard]] Circle MakeInfectionZone(WorldPosition pos) const {
-    return Circle(PosToPoint(pos), infection_radius);
+  /// Called by AddAgent() before the agent is pushed into agent_set.
+  /// agent_surface_ids.size() == future index in agent_set at this point.
+  void ConfigAgent(StepAgentBase<DiseaseData>& agent) override {
+    size_t idx = agent_surface_ids.size();
+    Surface::ShapeID sid =
+        surface.AddCircle(Circle(PosToPoint(agent.GetState().position), 0.0));
+    agent_surface_ids.push_back(sid);
+    surface_to_agent_idx[sid] = idx;
   }
 
-  /// True if \p pos falls inside any quarantine zone.
+ public:
+  
   [[nodiscard]] bool IsInQuarantine(WorldPosition pos) const {
-    Point p = PosToPoint(pos);
-    return std::ranges::any_of(quarantine_zones,
-                               [&](const Box& z) { return z.Contains(p); });
+    auto hits = surface.QueryRadius(PosToPoint(pos), 0.0);
+    return std::ranges::any_of(hits, [&](Surface::ShapeID id) {
+      return quarantine_surface_ids.contains(id);
+    });
   }
 
-  /// Spread infection this tick: for every INFECTED agent, any SUSCEPTIBLE
-  /// agent within infection_radius has a transmission_rate chance of being
-  /// infected. Newly infected agents start with ticks_in_state == 0.
+ private:
+
+
+  ///  Sync all agent point-circles to their current positions (O(n)).
+  ///  Each infected agent calls QueryRadius — Surface sector partitioning
+  ///         means only nearby agents are examined, not the full set.
   void SpreadInfection() {
+    // Sync every agent's registered circle to its current position
+    for (size_t i = 0; i < agent_set.size(); ++i) {
+      surface.UpdateCircle(
+          agent_surface_ids[i],
+          Circle(PosToPoint(agent_set[i]->GetState().position), 0.0));
+    }
+
     std::uniform_real_distribution<double> roll(0.0, 1.0);
     std::unordered_set<size_t> newly_infected;
 
@@ -74,15 +97,21 @@ class InfectiousWorld : public SimWorldBase<DiseaseData> {
       DiseaseData src = agent_set[i]->GetState();
       if (src.health != HealthState::INFECTED) continue;
 
-      Circle zone = MakeInfectionZone(src.position);
+      // QueryRadius returns ShapeIDs of all shapes within infection_radius.
+      // This includes quarantine box IDs and other agents — filter both.
+      auto nearby = surface.QueryRadius(
+          PosToPoint(src.position), infection_radius);
 
-      for (size_t j = 0; j < agent_set.size(); ++j) {
-        if (i == j) continue;
+      for (Surface::ShapeID sid : nearby) {
+        if (quarantine_surface_ids.contains(sid)) continue;  // skip zone shapes
+        auto it = surface_to_agent_idx.find(sid);
+        if (it == surface_to_agent_idx.end()) continue;
+        size_t j = it->second;
+        if (j == i) continue;  // skip self
+
         DiseaseData tgt = agent_set[j]->GetState();
         if (tgt.health != HealthState::SUSCEPTIBLE) continue;
-
-        if (zone.Contains(PosToPoint(tgt.position)) &&
-            roll(rng) < transmission_rate) {
+        if (!newly_infected.contains(j) && roll(rng) < transmission_rate) {
           newly_infected.insert(j);
         }
       }
@@ -198,12 +227,16 @@ class InfectiousWorld : public SimWorldBase<DiseaseData> {
 
   // -- Quarantine zones (Box) --
 
-  void AddQuarantineZone(const Box& zone) { quarantine_zones.push_back(zone); }
+  void AddQuarantineZone(const Box& zone) {
+    quarantine_zones.push_back(zone);
+    quarantine_surface_ids.insert(surface.AddBox(zone));
+  }
 
-
-
-
-  void ClearQuarantineZones() { quarantine_zones.clear(); }
+  void ClearQuarantineZones() {
+    for (auto id : quarantine_surface_ids) surface.RemoveShape(id);
+    quarantine_surface_ids.clear();
+    quarantine_zones.clear();
+  }
 
   [[nodiscard]] const std::vector<Box>& GetQuarantineZones() const {
     return quarantine_zones;
