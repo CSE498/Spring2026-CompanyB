@@ -57,6 +57,71 @@ inline std::optional<Type> NameToType(const emplex::Token &type_tok) {
 }
 }; // namespace agentlang::Types
 
+namespace agentlang::Operators {
+struct OpInfo {
+  int m_Prec;
+  bool m_RecurseLeft;
+  bool m_RecurseRight;
+
+  /*
+  Precedences:
+   - 1 : member access (self.X)
+   - 2 : Unary ops (lnot, minus)
+   - 3 : Exp
+   - 4 : Mult, div, rem
+   - 5 : Add, sub
+   - 6 : Comparisons (all)
+   - 7 : Assignment
+  */
+
+  static std::expected<OpInfo, InterpErr> FromBinary(AgentLexer::Token token) {
+    using AgentLexer::IDs;
+    // Use fallthrough to evaluate as logical-or
+    switch (token.id) {
+    case IDs::ID_OP_DOT:
+      return OpInfo{1, true, false};
+    case IDs::ID_OP_EXP:
+      return OpInfo{3, false, true};
+    case IDs::ID_OP_MULT:
+    case IDs::ID_OP_DIVIDE:
+    case IDs::ID_OP_REM:
+      return OpInfo{4, true, false};
+    case IDs::ID_OP_MINUS:
+    case IDs::ID_OP_ADD:
+      return OpInfo{5, true, false};
+    case IDs::ID_CMP_EQ:
+    case IDs::ID_CMP_NEQ:
+    case IDs::ID_CMP_LT:
+    case IDs::ID_CMP_LEQ:
+    case IDs::ID_CMP_GT:
+    case IDs::ID_CMP_GEQ:
+      return OpInfo{6, false, false};
+    case IDs::ID_OP_ASSIGN:
+      return OpInfo{7, false, true};
+    default:
+      return std::unexpected(ParseErr(
+          ParseErr::INVALID_OP_TOKEN,
+          std::format("Given token '{}' is not a valid binary operator",
+                      AgentLexer::TokenName(token.id))));
+    };
+  }
+  static std::expected<OpInfo, InterpErr> FromUnary(AgentLexer::Token token) {
+    using AgentLexer::IDs;
+    // Use fallthrough to evaluate as logical-or
+    switch (token.id) {
+    case IDs::ID_OP_MINUS:
+    case IDs::ID_OP_LNOT:
+      return OpInfo{2, false, true};
+    default:
+      return std::unexpected(
+          ParseErr(ParseErr::INVALID_OP_TOKEN,
+                   std::format("Given token '{}' is not a valid unary operator",
+                               AgentLexer::TokenName(token.id))));
+    };
+  }
+};
+}; // namespace agentlang::Operators
+
 namespace agentlang::Symbols {
 
 using agentlang::Types::Type;

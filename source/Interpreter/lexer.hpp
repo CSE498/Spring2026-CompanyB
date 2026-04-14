@@ -14,6 +14,10 @@ namespace cse498::AgentLexer {
 using Token = emplex::Token;
 using IDs = emplex::Lexer;
 
+[[nodiscard]] std::string inline TokenName(int id) {
+  return emplex::Lexer::TokenName(id);
+}
+
 class Lexer {
   emplex::Lexer m_Lexer{};
 
