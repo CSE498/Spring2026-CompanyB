@@ -8,15 +8,16 @@ namespace cse498 {
 using Concepts::IsDataClass;
 using cse498::steps::StepContainer;
 
-template <IsDataClass DataClass> class StepAgentBase {
+template <IsDataClass DataClass>
+class StepAgentBase {
   /// Unique id of the agent
   const size_t mId;
 
-protected:
+ protected:
   /// Data class that holds agent data
   DataClass mData;
 
-public:
+ public:
   StepAgentBase(DataClass data, size_t id) : mData{data}, mId{id} {}
   virtual ~StepAgentBase() = default;
 
@@ -42,4 +43,4 @@ public:
   virtual void SetGoal(WorldPosition position) = 0;
 };
 
-}; // namespace cse498
+};  // namespace cse498
