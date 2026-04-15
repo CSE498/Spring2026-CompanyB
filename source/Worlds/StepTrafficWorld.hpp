@@ -276,32 +276,32 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
   }
   ~StepTrafficWorld() = default;
 
-  bool IsValid(const WorldPosition &pos) const {
+  [[nodiscard]] bool IsValid(const WorldPosition &pos) const {
     return main_grid.IsValid(pos);
   }
 
-  bool IsGrass(const WorldPosition &pos) const {
+  [[nodiscard]] bool IsGrass(const WorldPosition &pos) const {
     return main_grid.IsValid(pos) && main_grid[pos] == grass_id;
   }
 
-  bool HorizontalBlockedAt(const WorldPosition &pos) const {
+  [[nodiscard]] bool HorizontalBlockedAt(const WorldPosition &pos) const {
     return main_grid.IsValid(pos) &&
            main_grid[pos] == traffic_light_vertical_id;
   }
 
-  bool VerticalBlockedAt(const WorldPosition &pos) const {
+  [[nodiscard]] bool VerticalBlockedAt(const WorldPosition &pos) const {
     return main_grid.IsValid(pos) &&
            main_grid[pos] == traffic_light_horizontal_id;
   }
 
-  Direction GetOppositeDirection(const Direction dir) const {
+  [[nodiscard]] Direction GetOppositeDirection(const Direction dir) const {
     // (number) & 3 means bitwise and of the number with 00...011
     // which grabs the last 2 bits, which is the same as reducing mod 4.
     return static_cast<Direction>((static_cast<int>(dir) + 2) & 3);
   }
 
-  bool CanCollideWithAgentAt(const Agent &agent,
-                             const WorldPosition &pos) const {
+  [[nodiscard]] bool CanCollideWithAgentAt(const Agent &agent,
+                                           const WorldPosition &pos) const {
     Direction opposite = GetOppositeDirection(agent.GetState().direction);
     auto is_agent_at_position = [&](const AgentPtr &ptr) {
       return ptr->GetState().is_active && ptr->GetState().position == pos;
@@ -314,7 +314,7 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
                                std::views::filter(not_opposite_direction));
   }
 
-  TrafficData DoAction(AgentPtr agent) override {
+  [[nodiscard]] TrafficData DoAction(AgentPtr agent) override {
     if (!agent->GetState().is_active) {
       return agent->GetState();
     }
@@ -377,7 +377,7 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
     }
   }
 
-  bool AgentExistsAt(WorldPosition pos) const {
+  [[nodiscard]] bool AgentExistsAt(WorldPosition pos) const {
     auto agent_at = [&](const AgentPtr &ptr) {
       return ptr->GetState().position == pos;
     };
