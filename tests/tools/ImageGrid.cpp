@@ -10,7 +10,8 @@
 //     QGraphicsScene scene;
 //     int tileSize = 64;
 
-//     std::vector<QString> imagePaths = {"images/test1.png", "images/test2.png"};
+//     std::vector<QString> imagePaths = {"images/test1.png",
+//     "images/test2.png"};
 
 //     cse498::ImageGrid grid(world, scene, tileSize);
 

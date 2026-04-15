@@ -22,11 +22,11 @@
 #include <QSplitter>
 #include <QStatusBar>
 #include <QString>
-#include <QToolBar>
-#include <QWidget>
-#include <QTimer>
 #include <QTextEdit>
+#include <QTimer>
+#include <QToolBar>
 #include <QVBoxLayout>
+#include <QWidget>
 #include <memory>
 #include <vector>
 
@@ -37,79 +37,78 @@
 namespace cse498 {
 
 class MainWindow : public QMainWindow {
-    Q_OBJECT
+  Q_OBJECT
 
-   public:
-    MainWindow(WorldBase& world, const std::vector<QString>& imagePaths,
-               int tileSize = 32, const QString& agentImagePath = QString(), QWidget* parent = nullptr);
-    virtual ~MainWindow() = default;
-    void logCommand(const QString& message);
+ public:
+  MainWindow(WorldBase& world, const std::vector<QString>& imagePaths,
+             int tileSize = 32, const QString& agentImagePath = QString(),
+             QWidget* parent = nullptr);
+  virtual ~MainWindow() = default;
+  void logCommand(const QString& message);
 
+  // disable copy
+  MainWindow(const MainWindow&) = delete;
+  MainWindow& operator=(const MainWindow&) = delete;
 
-    // disable copy
-    MainWindow(const MainWindow &) = delete;
-    MainWindow &operator=(const MainWindow &) = delete;
+  // disable move
+  MainWindow(MainWindow&&) = delete;
+  MainWindow& operator=(MainWindow&&) = delete;
 
-    // disable move
-    MainWindow(MainWindow &&) = delete;
-    MainWindow &operator=(MainWindow &&) = delete;
+ private:
+  void setMenuBar();
+  void setStatusBar();
+  void setMainWidget();
+  void setImageGrid();
 
-   private:
-    void setMenuBar();
-    void setStatusBar();
-    void setMainWidget();
-    void setImageGrid();
+  void onFileNew();
+  void onFileOpen();
+  void onFileSave();
+  void onFileExit();
+  void onHelpAbout();
 
-    void onFileNew();
-    void onFileOpen();
-    void onFileSave();
-    void onFileExit();
-    void onHelpAbout();
+  void startSimulation();
+  void onTick();
 
-    void startSimulation();
-    void onTick();
+  // Timer
+  QTimer* mTimer = nullptr;
+  int mTickInterval = 300;
 
-    // Timer
-    QTimer* mTimer = nullptr;
-    int mTickInterval = 300;
+  // For ImageGrid construction
+  WorldBase& mWorld;
+  const std::vector<QString>& mImagePaths;
+  int mTileSize;
+  QString mAgentImagePath;
 
-    // For ImageGrid construction
-    WorldBase& mWorld;
-    const std::vector<QString>& mImagePaths;
-    int mTileSize;
-    QString mAgentImagePath;
+  // Menu bar
+  QMenu* mFileMenu;
+  QMenu* mHelpMenu;
 
+  // Actions
+  // Raw pointers intentional because of the QT paraent ownership for the menu
+  // They get destroyed automatically when the window gets destroyed.
+  QAction* mNewFileAction;
+  QAction* mOpenFileAction;
+  QAction* mSaveFileAction;
+  QAction* mExitAction;
+  QAction* mAboutAction;
 
-    // Menu bar
-    QMenu* mFileMenu;
-    QMenu* mHelpMenu;
+  // Toolbar
+  QToolBar* mToolBar;
 
-    // Actions
-    // Raw pointers intentional because of the QT paraent ownership for the menu
-    // They get destroyed automatically when the window gets destroyed.
-    QAction* mNewFileAction;
-    QAction* mOpenFileAction;
-    QAction* mSaveFileAction;
-    QAction* mExitAction;
-    QAction* mAboutAction;
+  // Main widget
+  QWidget* mSidePanel;
+  QGraphicsView* mGraphicsView;
+  QGraphicsScene* mGraphicsScene;
 
-    // Toolbar
-    QToolBar* mToolBar;
+  // ImageGrid
+  std::unique_ptr<ImageGrid> mImageGrid;
 
-    // Main widget
-    QWidget* mSidePanel;
-    QGraphicsView* mGraphicsView;
-    QGraphicsScene* mGraphicsScene;
+  // Graph
+  MainGraph* mMainGraph;
 
-    // ImageGrid
-    std::unique_ptr<ImageGrid> mImageGrid;
-
-    // Graph
-    MainGraph* mMainGraph;
-
-    // Command Log
-    QTextEdit* mCommandLog;
-    QVBoxLayout* mSidePanelLayout;
+  // Command Log
+  QTextEdit* mCommandLog;
+  QVBoxLayout* mSidePanelLayout;
 };
 
 }  // namespace cse498
