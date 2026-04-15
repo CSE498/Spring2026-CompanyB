@@ -340,8 +340,7 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
 
     if (new_position == new_state.destination) {
       new_state.is_active = false;
-      // TODO: IDs for StepAgentBase so this actually works
-      // despawned_agent_ids.push(agent->GetId());
+      despawned_agent_ids.push(agent->GetId());
       --num_spawned_agents;
     }
 
