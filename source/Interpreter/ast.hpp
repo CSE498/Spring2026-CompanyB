@@ -102,19 +102,6 @@ struct Assign : public TypedNode {
 };
 
 // -- Statements --
-// Function
-struct StmtFunc : public TypedNode {
-  // TODO : Not including in alpha
-  /*
-  std::unique_ptr<StmtBlock> m_Body;
-  std::vector<size_t> m_SignatureTypes;
-
-  StmtFunc(emplex::Token token, std::unique_ptr<StmtBlock> &&body,
-           std::vector<size_t> &&signature_types, Types::Type return_t)
-      : TypedNode(token, return_t), m_Body(std::move(body)),
-        m_SignatureTypes(std::move(signature_types)) {};
-  */
-};
 
 // Agent definition
 struct StmtAgentDef : public Node {

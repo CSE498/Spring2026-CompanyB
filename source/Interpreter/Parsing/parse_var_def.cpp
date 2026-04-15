@@ -1,7 +1,7 @@
+#include "Interpreter/Parser.hpp"
 #include "Interpreter/ast.hpp"
 #include "Interpreter/errors.hpp"
 #include "Interpreter/lexer.hpp"
-#include "Parser.hpp"
 
 namespace cse498 {
 

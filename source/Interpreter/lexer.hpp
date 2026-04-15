@@ -1,8 +1,8 @@
 #pragma once
 
 #include "Interpreter/errors.hpp"
+#include "Lexing/lexer-gen.hpp"
 #include "core.hpp"
-#include "lexer-gen.hpp"
 #include <expected>
 #include <format>
 #include <string>
