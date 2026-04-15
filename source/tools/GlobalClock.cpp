@@ -5,7 +5,7 @@
 namespace cse498 {
 
 // Define and initialize the static time counter to zero
-uint64_t GlobalClock::mGlobalTime = 0;
+uint64_t GlobalClock::mGlobalTime{0};
 
 uint64_t GlobalClock::GetTime() {
   // Returns the current value of the global time counter
