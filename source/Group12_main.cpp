@@ -8,6 +8,7 @@
 #include "Agents/SwarmingAgent.hpp"
 #include "Worlds/MazeWorld.hpp"
 #include "core/AgentData.hpp"
+#include "tools/StateGridPosition.hpp"
 
 using namespace cse498;
 
@@ -27,7 +28,7 @@ int main() {
     TrafficData test_data{
         cse498::WorldPosition{7, 5},  // destination (open floor, reachable)
         cse498::WorldPosition{3, 1},  // position    (open floor)
-        false,
+        cse498::Direction::North,
         true
     };
     
@@ -48,7 +49,7 @@ int main() {
 
 
 world.AddAgent<SwarmingAgent<TrafficData>>(test_data);
-world.Run();
+world.RunWithDisplay();
 // clang-format -i -style=Google simple_main.cpp
 
 // winget install -e --id LLVM.LLVM

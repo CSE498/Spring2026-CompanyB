@@ -86,7 +86,7 @@ namespace cse498 {
             return {};
           }
 
-          state.pos = step.loc;
+          state.position = step.loc;
           return {};
         }
         
@@ -190,8 +190,8 @@ namespace cse498 {
 
         for (const auto &agent_ptr : agent_set) {
           const TrafficData &state = agent_ptr->GetState();
-          const size_t ax = state.pos.CellX();
-          const size_t ay = state.pos.CellY();
+          const size_t ax = state.position.CellX();
+          const size_t ay = state.position.CellY();
           if (ax >= W || ay >= H) continue;
           symbol_grid[ay][ax] = state.symbol;
         }

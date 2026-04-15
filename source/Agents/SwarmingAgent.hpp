@@ -131,27 +131,21 @@ class SwarmingAgent : public StepAgentBase<SwarmData> {
 
     // Remember where we are this turn so future detours can avoid looping
     // back onto cells we've just visited.
-    record_position(this->mData.pos);
+    record_position(this->mData.position);
 
     // make a random turn and skip the world query entirely
     if (!this->mData.destination.has_value()) {
-      WorldPosition random_pos = get_random_neighbor(this->mData.pos);
+      WorldPosition random_pos = get_random_neighbor(this->mData.position);
       cse498::steps::MovementStep random_move{random_pos};
       container.add_step(std::move(random_move));
       return container;
     }
 
-    // wander randomly instead of approaching (maybe not have a swarm away
-    // mode?)
-    if (this->mData.swarm_away) {
-      cse498::steps::MovementStep away_move{
-          get_random_neighbor(this->mData.pos)};
-      container.add_step(std::move(away_move));
-      return container;
-    }
+    // wander randomly instead of approaching (maybe not have a swarm away) (I REMOVED SWARM AWAY)
+ 
 
     // if we are already at the destination stay there
-    WorldPosition const& pos = this->mData.pos;
+    WorldPosition const& pos = this->mData.position;
     WorldPosition const& dest = this->mData.destination.value();
     if (pos == dest) {
       return container;  // empty to stay in place
@@ -197,7 +191,7 @@ class SwarmingAgent : public StepAgentBase<SwarmData> {
     // No infection interaction behavior
 
     StepContainer container{};
-    WorldPosition random_pos = get_random_neighbor(this->mData.pos);
+    WorldPosition random_pos = get_random_neighbor(this->mData.position);
     cse498::steps::MovementStep random_move{random_pos};
     container.add_step(std::move(random_move));
     return container;
