@@ -4,8 +4,5 @@
     <mapping directory="" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/build/native/_deps/range-v3-src" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/build/native/_deps/range-v3-src/doc/gh-pages" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/build/tests/native/_deps/catch2-src" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/build/tests/native/_deps/range-v3-src" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/build/tests/native/_deps/range-v3-src/doc/gh-pages" vcs="Git" />
   </component>
 </project>

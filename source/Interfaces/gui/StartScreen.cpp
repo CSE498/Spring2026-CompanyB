@@ -11,11 +11,11 @@
 namespace cse498 {
 
 /// Constructor
-StartScreen::StartScreen(WorldBase& world,
-                         const std::vector<QString>& imagePaths,
+StartScreen::StartScreen(const std::vector<QString>& imagePaths,
                          int tileSize,
+                         const QString& agentImagePath,
                          QWidget* parent)
-    : QWidget(parent), mWorld(world), mImagePaths(imagePaths), mTileSize(tileSize)
+    : QWidget(parent), mImagePaths(imagePaths), mTileSize(tileSize), mAgentImagePath(agentImagePath)
 {
     setWindowTitle("Main Menu");
     setMinimumSize(640, 480);
@@ -93,15 +93,27 @@ StartScreen::StartScreen(WorldBase& world,
     setStyleSheet("QWidget { background-color: #1e1e1e; }");
 }
 
-void StartScreen::onTrafficClicked() { launchMainWindow("Traffic"); }
-void StartScreen::onVirusClicked()   { launchMainWindow("Infection");   }
+void StartScreen::onTrafficClicked() { launchMainWindow(1); }
+void StartScreen::onVirusClicked()   { launchMainWindow(2); }
 
-void StartScreen::launchMainWindow(const QString& mode) {
-    auto* win = new MainWindow(mWorld, mImagePaths, mTileSize);
-    win->setWindowTitle(QString("Group 21 Demo – %1").arg(mode));
+void StartScreen::launchMainWindow(int mode) {
+    if (mode == 1) {
+        mWorld = std::make_unique<cse498::MazeWorld>();
+    } else {
+        auto iw = std::make_unique<cse498::InfectiousWorld>(20, 15);
+        iw->SetTransmissionRate(0.4);
+        iw->SetInfectionRadius(1.5);
+        iw->SetInfectionDuration(8);
+        iw->SetImmunityDuration(15);
+        mWorld = std::move(iw);
+    }
+
+    auto* win = new MainWindow(*mWorld, mImagePaths, mTileSize, mAgentImagePath, nullptr, mode);
+    win->mOwnedWorld = std::move(mWorld);
+    win->setWindowTitle(mode == 1 ? "Group 21 Demo – Traffic"
+                                  : "Group 21 Demo – Virus");
     win->setAttribute(Qt::WA_DeleteOnClose);
     win->show();
-    close();  // close the start screen
+    close();
 }
-
 } // namespace cse498

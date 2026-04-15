@@ -30,6 +30,9 @@
 #include <memory>
 #include <vector>
 
+#include "../../Worlds/InfectiousWorld.hpp"
+#include "../../Worlds/MazeWorld.hpp"
+#include "../../Agents/PacingAgent.hpp"
 #include "../../core/WorldBase.hpp"
 #include "ImageGrid.hpp"
 #include "MainGraph.hpp"
@@ -41,9 +44,10 @@ class MainWindow : public QMainWindow {
 
    public:
     MainWindow(WorldBase& world, const std::vector<QString>& imagePaths,
-               int tileSize = 32, const QString& agentImagePath = QString(), QWidget* parent = nullptr);
+               int tileSize = 32, const QString& agentImagePath = QString(), QWidget* parent = nullptr,  int mode=1);
     virtual ~MainWindow() = default;
     void logCommand(const QString& message);
+    std::unique_ptr<WorldBase> mOwnedWorld{};
 
 
     // disable copy
@@ -54,11 +58,15 @@ class MainWindow : public QMainWindow {
     MainWindow(MainWindow &&) = delete;
     MainWindow &operator=(MainWindow &&) = delete;
 
+
    private:
     void setMenuBar();
     void setStatusBar();
     void setMainWidget();
     void setImageGrid();
+
+    int mMode = 1;
+    void setupAgents();
 
     void onFileNew();
     void onFileOpen();
