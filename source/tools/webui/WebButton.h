@@ -1,10 +1,10 @@
 #pragma once
 
 #include <emscripten/val.h>
+
 #include <functional>
 #include <string>
 #include <memory>
-#include "WebElement.hpp"
 
 #include "WebElement.hpp"
 
@@ -35,13 +35,15 @@ class WebButton : public WebElement {
   bool IsEnabled() const;
 
   WebButton& SetOnClick(std::function<void()> callback);
-  void Click();
+  void Click(emscripten::val arg);
 
  private:
   std::string label_;
   bool visible_{true};
   bool enabled_{true};
   std::function<void()> on_click_{};
+  /// @brief Allows us to remove event listeners on destruction. 
+  emscripten::val abort_controller_;
 };
 
-}
+}  // namespace cse498

@@ -9,13 +9,10 @@ struct SetupMockDOMWebImage {
   SetupMockDOMWebImage() {
     // clang-format off
     EM_ASM({
-      /// Creates a document if it doesn't exist
-      if (typeof document === 'undefined') {
-        const { JSDOM } = jsdom;
-        const dom = new JSDOM("<!DOCTYPE html> <html><head></head><body></body></html>");
-        globalThis.window = dom.window;
-        globalThis.document = dom.window.document;
-      }
+      const { JSDOM } = jsdom;
+      const dom = new JSDOM("<!DOCTYPE html> <html><head></head><body></body></html>");
+      globalThis.window = dom.window;
+      globalThis.document = dom.window.document;
     });
     // clang-format on
   }
@@ -23,6 +20,9 @@ struct SetupMockDOMWebImage {
   ~SetupMockDOMWebImage() {
     // clang-format off
       EM_ASM({
+        if (globalThis.window && globalThis.window.close) {
+          globalThis.window.close();
+        }
         delete globalThis.document;
         delete globalThis.window;
       });
@@ -259,7 +259,7 @@ TEST_CASE("WebImage SetSize supports fractional dimensions", "[WebImage]") {
 TEST_CASE("WebImage SetSize supports all SizeUnit values", "[WebImage]") {
   SetupMockDOMWebImage mock;
   cse498::WebImage img("test.png",
-                       "All units test image", { .id = "test-img-all-units" });
+                      "All units test image", { .id = "test-img-all-units" });
 
   img.SetSize(100, 50, cse498::SizeUnit::px);
   REQUIRE(img.GetWidth() == 100);
@@ -284,4 +284,36 @@ TEST_CASE("WebImage SetSize supports all SizeUnit values", "[WebImage]") {
   img.SetSize(40, 30, cse498::SizeUnit::vh);
   REQUIRE(img.GetWidth() == 40);
   REQUIRE(img.GetHeight() == 30);
+}
+
+TEST_CASE("WebImage IsLoaded returns true when complete and naturalWidth > 0",
+          "[WebImage]") {
+  SetupMockDOMWebImage mock;
+  cse498::WebImage img("test.png",
+                        "Loaded true test image", { .id = "test-img-loaded-true" });
+
+  emscripten::val document = emscripten::val::global("document");
+  emscripten::val elem = document.call<emscripten::val>(
+      "getElementById", std::string("test-img-loaded-true"));
+
+  patch_image_writable(elem);
+
+  elem.set("complete", true);
+  elem.set("naturalWidth", 100);
+
+  REQUIRE(img.IsLoaded() == true);
+}
+
+TEST_CASE(
+    "WebImage SetVisible updates visibility and GetVisible properly reflects "
+    "it",
+    "[WebImage]") {
+  SetupMockDOMWebImage mock;
+  cse498::WebImage img("test.png", "Visible test image", { .id = "test-img-loaded-true" });
+
+  img.SetVisible(false);
+  REQUIRE(img.GetVisible() == false);
+
+  img.SetVisible(true);
+  REQUIRE(img.GetVisible() == true);
 }

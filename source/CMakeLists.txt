@@ -90,6 +90,7 @@ if(BUILD_WASM_TESTS)
         -sNODERAWFS=1
         -sALLOW_MEMORY_GROWTH=1
         -lembind
+        # -fexceptions
         -sNO_DISABLE_EXCEPTION_CATCHING
         # Link JS libraries for Node
         --pre-js "${CMAKE_CURRENT_SOURCE_DIR}/../third-party/emscripten-test-libs/pre.js"
@@ -169,8 +170,17 @@ elseif(DEFINED EMSCRIPTEN)
     target_include_directories(index PRIVATE ${HEADER_DIRS})
     target_link_libraries(index PRIVATE range-v3)
 
+    # Emscripten compile options
+    target_compile_options(index PRIVATE
+        -O2
+        -Wall
+        # -g
+        # -fno-inline
+    )
+
     # Emscripten link options
     target_link_options(index PRIVATE
+        # -g
         -sALLOW_MEMORY_GROWTH=1
         -sMAXIMUM_MEMORY=1gb
         -sEXPORTED_RUNTIME_METHODS=ccall,cwrap

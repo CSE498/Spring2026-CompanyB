@@ -89,14 +89,14 @@ WebTextbox& WebTextbox::SetText(const std::string& text) {
  * @brief Appends text and automatically pushes the scrollbar to the bottom.
  * If the total string exceeds max_length_, the oldest characters are discarded.
  */
-void WebTextbox::AppendText(const std::string& text) {
+WebTextbox& WebTextbox::AppendText(const std::string &text) {
   if (IsHeadless()) {
     mock_text_content_ += text;
     if (mock_text_content_.length() > max_length_) {
       mock_text_content_ =
           mock_text_content_.substr(mock_text_content_.length() - max_length_);
     }
-    return;
+    return *this;
   }
 
   val innerText = dom_element["innerText"];
@@ -109,12 +109,13 @@ void WebTextbox::AppendText(const std::string& text) {
 
   dom_element.set("innerText", current);
   dom_element.set("scrollTop", dom_element["scrollHeight"]);  // Auto-scroll
+  return *this;
 }
 
 /**
  * @brief Utility function to quickly wipe the textbox clean.
  */
-void WebTextbox::Clear() { SetText(""); }
+WebTextbox& WebTextbox::Clear() { return SetText(""); }
 
 /**
  * @brief Reads the current text back from the DOM (or the mock buffer if
@@ -134,8 +135,8 @@ std::expected<std::string, std::string> WebTextbox::GetText() const {
  * @brief Translates the C++ TextStyle struct into direct CSS property
  * modifications.
  */
-void WebTextbox::SetStyle(const TextStyle& style) {
-  if (IsHeadless()) return;
+WebTextbox& WebTextbox::SetStyle(const TextStyle &style) {
+  if (IsHeadless()) return *this;
 
   val css = dom_element["style"];
   css.set("fontFamily", style.font_family);
@@ -143,71 +144,81 @@ void WebTextbox::SetStyle(const TextStyle& style) {
   css.set("color", style.color);
   css.set("backgroundColor", style.background_color);
   css.set("fontWeight", style.bold ? "bold" : "normal");
+  return *this;
 }
 
 /**
  * @brief Allows the UI team to apply a pre-defined CSS class to the element.
  */
-void WebTextbox::SetClass(const std::string& css_class) {
-  if (IsHeadless()) return;
+WebTextbox& WebTextbox::SetClass(const std::string &css_class) {
+  if (IsHeadless()) return *this;
   dom_element.set("className", css_class);
+  return *this;
 }
 
 /**
  * @brief Hides or shows the element without removing it from the DOM entirely.
  */
-void WebTextbox::SetVisible(bool visible) {
-  if (IsHeadless()) return;
+WebTextbox& WebTextbox::SetVisible(bool visible) {
+  if (IsHeadless()) return *this;
   dom_element["style"].set("display", visible ? "block" : "none");
+  return *this;
 }
 
 /**
  * @brief Updates the X and Y coordinates of the element relative to its
  * container.
  */
-void WebTextbox::SetPosition(int x, int y) {
-  if (IsHeadless()) return;
+WebTextbox& WebTextbox::SetPosition(int x, int y) {
+  if (IsHeadless()) return *this;
   val css = dom_element["style"];
   css.set("left", std::to_string(x) + "px");
   css.set("top", std::to_string(y) + "px");
+  return *this;
 }
 
 /**
  * @brief Hard-codes the bounding box dimensions of the text area.
  */
-void WebTextbox::SetSize(int width, int height) {
-  if (IsHeadless()) return;
+WebTextbox& WebTextbox::SetSize(int width, int height) {
+  if (IsHeadless()) return *this;
   val css = dom_element["style"];
   css.set("width", std::to_string(width) + "px");
   css.set("height", std::to_string(height) + "px");
+  return *this;
 }
 
 /**
  * @brief Updates the truncation limit. Clamps the input to prevent developers
  * from passing 0 or values large enough to crash the browser.
  */
-void WebTextbox::SetMaxLength(size_t length) {
+WebTextbox& WebTextbox::SetMaxLength(size_t length) {
   max_length_ = std::clamp(length, kMinAllowedLength, kMaxAllowedLength);
+  return *this;
 }
 
 /**
- * @brief Retrieves the text, runs it through the provided lambda, and sets the new text.
+ * @brief Retrieves the text, runs it through the provided lambda, and sets the
+ * new text.
  */
-void WebTextbox::TransformText(const std::function<std::string(const std::string&)>& transform_fn) {
+WebTextbox& WebTextbox::TransformText(
+    const std::function<std::string(const std::string &)> &transform_fn) {
   auto current_text = GetText();
 
-  // Check our value semantics to ensure we actually have text!
+  // Check our value semantics to ensure we actually have text
   if (current_text.has_value()) {
     std::string modified = transform_fn(current_text.value());
     SetText(modified);
   }
+  return *this;
 }
 
 /**
  * @brief Sets the maximum number of lines (spans) the DOM will hold before deleting old ones.
  */
-void WebTextbox::SetMaxLines(size_t lines) {
+WebTextbox& WebTextbox::SetMaxLines(size_t lines) {
   max_lines_ = std::max<size_t>(1, lines);
+  return *this;
 }
 
 /**
@@ -248,13 +259,14 @@ WebTextbox& WebTextbox::AppendLine(const std::string& text, const std::string& l
 /**
  * @brief Appends a new line of text wrapped in a styled span, sanitized for XSS.
  */
-void WebTextbox::AppendStyledLine(const std::string& text, const std::string& css_class) {
+WebTextbox& WebTextbox::AppendStyledLine(const std::string& text, const std::string& css_class) {
   // 1. Sanitize both inputs to prevent Cross-Site Scripting (XSS)
   std::string safe_text = EscapeHTML(text);
   std::string safe_class = EscapeHTML(css_class);
 
   // 2. Update the internal C++ raw text buffer so GetText() and Catch2 tests don't break
   AppendText(text + "\n");
+  return *this;
 }
 
 }  // namespace cse498

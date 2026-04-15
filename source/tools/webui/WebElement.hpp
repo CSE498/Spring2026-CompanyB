@@ -7,6 +7,7 @@
 #pragma once
 
 #include <string>
+// #include <stdexcept>
 
 #include <emscripten/val.h>
 #include "WebOptions.hpp"
@@ -49,6 +50,10 @@ class WebElement : public std::enable_shared_from_this<WebElement> {
     // Create the element in the DOM
     if (!id.empty()) {
       emscripten::val existing = document.call<emscripten::val>("getElementById", id);
+
+      // if (!existing.isNull() && !existing.isUndefined()) {
+      //   throw std::runtime_error("Element with ID '" + id + "' already exists in the DOM");
+      // }
 
       assert((existing.isNull() || existing.isUndefined()) &&
             "Element with this ID already exists in the DOM");

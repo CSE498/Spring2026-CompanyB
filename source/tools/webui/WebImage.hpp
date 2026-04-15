@@ -31,22 +31,25 @@ enum class SizeUnit { px, em, rem, percent, vw, vh };
 class WebImage : public WebElement {
  private:
   /// Image's source
-  std::string src{};
+  std::string src_{};
 
   /// Image's alt text
-  std::string alt{};
+  std::string alt_{};
 
   /// Image's Width
-  double width = 0;
+  double width_ = 0;
 
   /// Image's Height
-  double height = 0;
+  double height_ = 0;
 
   /// Image's X position
-  int x_pos = 0;
+  int x_pos_ = 0;
 
   /// Image's Y position
-  int y_pos = 0;
+  int y_pos_ = 0;
+
+  /// Current visibility state
+  bool visible_ = true;
 
  public:
   /**
@@ -85,18 +88,20 @@ class WebImage : public WebElement {
    * @brief Change the image source to a new file or URL.
    * @param source The new image source path or URL.
    **/
-  void SetSource(const std::string& source);
+  WebImage& SetSource(const std::string& source);
 
   /**
    * @brief Set the alt text for accessibility and screen readers.
    * @param alt_text The alternative text describing the image.
    **/
-  void SetAlt(const std::string& alt_text);
+  WebImage& SetAlt(const std::string& alt_text);
 
   /**
    * @brief Set the position of the image on the page.
    * @param x The x-coordinate in pixels from the left edge.
    * @param y The y-coordinate in pixels from the top edge.
+   * @note Negative values are supported and will position the element partially
+   *       or fully outside the visible viewport.
    **/
   WebImage& SetPosition(int x, int y);
 
@@ -107,11 +112,10 @@ class WebImage : public WebElement {
    * @param unit The CSS unit enum with defaults to SizeUnit::px.
    **/
   template <typename T>
-  void SetSize(T w, T h, SizeUnit unit = SizeUnit::px) {
-    static_assert(std::is_arithmetic_v<T>, "Dimensions must be numeric");
-
-    width = w;
-    height = h;
+    requires std::is_arithmetic_v<T> && (!std::is_same_v<T, bool>)
+  WebImage& SetSize(T w, T h, SizeUnit unit = SizeUnit::px) {
+    width_ = static_cast<double>(w);
+    height_ = static_cast<double>(h);
 
     std::string unit_str;
 
@@ -138,20 +142,21 @@ class WebImage : public WebElement {
 
     dom_element["style"].set("width", std::to_string(w) + unit_str);
     dom_element["style"].set("height", std::to_string(h) + unit_str);
+    return *this;
   }
 
   /**
    * @brief Show or hide the image element.
    * @param is_visible If true, display the image; if false, hide it.
    **/
-  void SetVisible(bool is_visible);
+  WebImage& SetVisible(bool is_visible);
 
   /**
    * @brief Get the current width and height of the image.
    * @return A pair containing (width, height) in pixels.
    **/
   [[nodiscard]] std::pair<double, double> GetSize() const {
-    return {width, height};
+    return {width_, height_};
   }
 
   /**
@@ -159,32 +164,38 @@ class WebImage : public WebElement {
    * @return A pair containing (x, y) coordinates in pixels.
    **/
   [[nodiscard]] std::pair<int, int> GetPosition() const {
-    return {x_pos, y_pos};
+    return {x_pos_, y_pos_};
   }
 
   /**
    * @brief Get the alt text of the image.
    * @return The alternative text string.
    **/
-  [[nodiscard]] std::string GetAlt() const { return alt; }
+  [[nodiscard]] std::string GetAlt() const { return alt_; }
 
   /**
    * @brief Get the current image source path or URL.
    * @return The source string.
    **/
-  [[nodiscard]] std::string GetSource() const { return src; }
+  [[nodiscard]] std::string GetSource() const { return src_; }
 
   /**
    * @brief Get the current width of the image in pixels.
    * @return The image width.
    **/
-  [[nodiscard]] double GetWidth() const { return width; }
+  [[nodiscard]] double GetWidth() const { return width_; }
 
   /**
    * @brief Get the current height of the image in pixels.
    * @return The image height.
    **/
-  [[nodiscard]] double GetHeight() const { return height; }
+  [[nodiscard]] double GetHeight() const { return height_; }
+
+  /**
+   * @brief Get the current visibility state of the image.
+   * @return True if the image is visible, false if hidden.
+   **/
+  [[nodiscard]] bool GetVisible() const { return visible_; }
 };
 
 }  // namespace cse498

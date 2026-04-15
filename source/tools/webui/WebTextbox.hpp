@@ -92,56 +92,56 @@ class WebTextbox : public WebElement {
    * @brief Appends text to the end of the box and auto-scrolls to the bottom.
    * @param text The text to append.
    */
-  void AppendText(const std::string& text);
+  WebTextbox& AppendText(const std::string& text);
 
   /**
    * @brief Clears all text from the box.
    */
-  void Clear();
+  WebTextbox& Clear();
 
   /**
    * @brief Applies CSS styles based on a TextStyle struct.
    * @param style The struct containing the desired visual parameters.
    */
-  void SetStyle(const TextStyle& style);
+  WebTextbox& SetStyle(const TextStyle& style);
 
   /**
    * @brief Assigns a CSS class for external stylesheet management.
    * @param css_class The name of the CSS class.
    */
-  void SetClass(const std::string& css_class);
+  WebTextbox& SetClass(const std::string& css_class);
 
   /**
    * @brief Toggles the visibility of the textbox on the screen.
    * @param visible True to show, false to hide (display: none).
    */
-  void SetVisible(bool visible);
+  WebTextbox& SetVisible(bool visible);
 
   /**
    * @brief Sets the absolute position of the textbox on the screen.
    * @param x The left offset in pixels.
    * @param y The top offset in pixels.
    */
-  void SetPosition(int x, int y);
+  WebTextbox& SetPosition(int x, int y);
 
   /**
    * @brief Sets the dimensions of the textbox.
    * @param width The width in pixels.
    * @param height The height in pixels.
    */
-  void SetSize(int width, int height);
+  WebTextbox& SetSize(int width, int height);
 
   /**
    * @brief Sets the maximum character limit to prevent memory bloat.
    * @param length The maximum number of characters (clamped to safe bounds).
    */
-  void SetMaxLength(size_t length);
+  WebTextbox& SetMaxLength(size_t length);
 
   /**
    * @brief Sets the maximum number of lines (spans) the DOM will hold before deleting old ones.
    * @param lines The maximum line count.
    */
-  void SetMaxLines(size_t lines);
+  WebTextbox& SetMaxLines(size_t lines);
 
   /**
    * @brief Retrieves the current text contained in the box.
@@ -157,16 +157,16 @@ class WebTextbox : public WebElement {
      */
   template <typename T>
   requires std::integral<T> || std::floating_point<T>
-  void AppendValue(const T& value) {
+  WebTextbox& AppendValue(const T& value) {
     // Uses type deduction to convert the raw value to a string
-    AppendText(std::to_string(value));
+    return AppendText(std::to_string(value));
   }
 
   /**
      * @brief Applies a custom lambda transformation to the current text.
      * @param transform_fn A lambda function that takes a string and returns a modified string.
      */
-  void TransformText(const std::function<std::string(const std::string&)>& transform_fn);
+  WebTextbox& TransformText(const std::function<std::string(const std::string&)>& transform_fn);
 
   /**
    * @brief Appends a distinct DOM span element for granular line-by-line styling.
@@ -180,7 +180,7 @@ class WebTextbox : public WebElement {
    * @param text The string to append.
    * @param css_class The CSS class name to apply to the span (e.g., "error-text").
    */
-  void AppendStyledLine(const std::string& text, const std::string& css_class);
+  WebTextbox& AppendStyledLine(const std::string& text, const std::string& css_class);
 };
 
 }  // namespace cse498

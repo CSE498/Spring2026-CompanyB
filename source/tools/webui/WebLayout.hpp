@@ -15,6 +15,8 @@
 
 #include "WebElement.hpp"
 
+// #define DEBUG_LOG_WEB_ELEMENTS
+
 namespace cse498 {
 
 /**
@@ -44,13 +46,22 @@ class WebLayout : public WebElement {
   /// Disable copy assignment operator
   WebLayout& operator=(const WebLayout&) = delete;
 
+  ~WebLayout() {
+    #ifdef DEBUG_LOG_WEB_ELEMENTS
+    if (!id.empty()) {
+      std::printf("WebLayout #%s destructed\n", id.c_str());
+    }
+    else std::printf("WebLayout destructed\n");
+    #endif
+  }
+
   /**
    * @brief Appends a child WebElement to this layout in the DOM.
    * @param elem The child element to add.
    * @return Reference to this layout for method chaining.
    */
   std::expected<void, WebLayout::Error> AddChild(
-      std::shared_ptr<WebElement> elem);
+      const std::shared_ptr<WebElement>& elem);
 
   /**
    * @brief Removes a child WebElement from this layout in the DOM.
@@ -58,7 +69,7 @@ class WebLayout : public WebElement {
    * @return Reference to this layout for method chaining.
    */
   std::expected<void, WebLayout::Error> RemoveChild(
-      std::shared_ptr<WebElement> elem);
+      const std::shared_ptr<WebElement>& elem);
 
   /**
    * @brief Get the number of children in the WebLayout
@@ -66,7 +77,7 @@ class WebLayout : public WebElement {
    */
   [[nodiscard]] size_t GetNumChildren() const;
 
-  bool ContainsChild(std::shared_ptr<WebElement> elem) const;
+  [[nodiscard]] bool ContainsChild(const std::shared_ptr<WebElement>& elem) const;
 
   /**
    * @brief Sets the flex-direction CSS property of the layout container.

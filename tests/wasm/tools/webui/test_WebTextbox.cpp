@@ -14,13 +14,10 @@ struct SetupMockDOMWebTextbox {
   SetupMockDOMWebTextbox() {
     // clang-format off
     EM_ASM({
-      /// Creates a document if it doesn't exist
-      if (typeof document === 'undefined') {
-        const { JSDOM } = jsdom;
-        const dom = new JSDOM("<!DOCTYPE html> <html><head></head><body></body></html>");
-        globalThis.window = dom.window;
-        globalThis.document = dom.window.document;
-      }
+      const { JSDOM } = jsdom;
+      const dom = new JSDOM("<!DOCTYPE html> <html><head></head><body></body></html>");
+      globalThis.window = dom.window;
+      globalThis.document = dom.window.document;
     });
     // clang-format on
   }
@@ -28,6 +25,9 @@ struct SetupMockDOMWebTextbox {
   ~SetupMockDOMWebTextbox() {
     // clang-format off
       EM_ASM({
+        if (globalThis.window && globalThis.window.close) {
+          globalThis.window.close();
+        }
         delete globalThis.document;
         delete globalThis.window;
       });
@@ -104,7 +104,7 @@ TEST_CASE("WebTextbox: The Naughty String List", "[edge_case]") {
                                               std::string("\0", 1),
                                               "USER\0NAME"};
 
-  for (const auto& nasty : naughty_strings) {
+  for (const auto &nasty : naughty_strings) {
     REQUIRE_NOTHROW(box.SetText(nasty));
     REQUIRE(box.GetText().value() == nasty);
 
@@ -120,7 +120,8 @@ TEST_CASE("WebTextbox: Numeric Extremes", "[limits]") {
   WebTextbox box(TextStyle(), { .id = "limit_box" });
   TextStyle style;
 
-  // Swapped from integer limits to their literal string px equivalents to avoid -Wconstant-conversion
+  // Swapped from integer limits to their literal string px equivalents to avoid
+  // -Wconstant-conversion
   style.font_size = "2147483647px";
   REQUIRE_NOTHROW(box.SetStyle(style));
 
@@ -156,13 +157,11 @@ TEST_CASE("WebTextbox: The Memory Stress Test", "[memory]") {
 
   std::string massive(massive_size, 'X');
   REQUIRE_NOTHROW(heavyBox.SetText(massive));
-  REQUIRE(heavyBox.GetText().value().size() ==
-          massive.size());  // Addition of .value()
+  REQUIRE(heavyBox.GetText().value().size() == massive.size());
 
   std::string more(1024 * 1024, 'Y');  // 1MB more
   REQUIRE_NOTHROW(heavyBox.AppendText(more));
-  REQUIRE(heavyBox.GetText().value().size() ==
-          massive_size + (1024 * 1024));  // .value() added here too
+  REQUIRE(heavyBox.GetText().value().size() == massive_size + (1024 * 1024));
 }
 
 TEST_CASE("WebTextbox: Templates and Lambdas", "[webui]") {
@@ -174,9 +173,7 @@ TEST_CASE("WebTextbox: Templates and Lambdas", "[webui]") {
   REQUIRE(box.GetText().value() == "404");
 
   // Testing the Lambda (Appending "Error" using a lambda transformation)
-  auto add_error_label = [](const std::string& str) {
-    return str + " Error";
-  };
+  auto add_error_label = [](const std::string &str) { return str + " Error"; };
 
   box.TransformText(add_error_label);
   REQUIRE(box.GetText().value() == "404 Error");

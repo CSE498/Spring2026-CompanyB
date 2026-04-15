@@ -1,5 +1,6 @@
 
 #include <emscripten.h>
+#include <emscripten/val.h>
 
 #include <catch2/catch_test_macros.hpp>
 
@@ -11,13 +12,12 @@ struct SetupMockDOMWebButton {
   SetupMockDOMWebButton() {
     // clang-format off
     EM_ASM({
-      /// Creates a document if it doesn't exist
-      if (typeof document === 'undefined') {
-        const { JSDOM } = jsdom;
-        const dom = new JSDOM("<!DOCTYPE html> <html><head></head><body></body></html>");
-        globalThis.window = dom.window;
-        globalThis.document = dom.window.document;
-      }
+      const { JSDOM } = jsdom;
+      const dom = new JSDOM("<!DOCTYPE html> <html><head></head><body></body></html>");
+      globalThis.window = dom.window;
+      globalThis.document = dom.window.document;
+      globalThis.AbortController = dom.window.AbortController;
+      globalThis.AbortSignal = dom.window.AbortSignal;
     });
     // clang-format on
   }
@@ -25,58 +25,64 @@ struct SetupMockDOMWebButton {
   ~SetupMockDOMWebButton() {
     // clang-format off
       EM_ASM({
+        if (globalThis.window && globalThis.window.close) {
+          globalThis.window.close();
+        }
         delete globalThis.document;
         delete globalThis.window;
+        delete globalThis.AbortController;
+        delete globalThis.AbortSignal;
       });
     // clang-format on
   }
 };
 
-
 TEST_CASE("WebButton basics") {
   SetupMockDOMWebButton mock;
-  cse498::WebButton b("Start", { .id = "startBtn" });
+  auto b = std::make_shared<cse498::WebButton>("Start", WebOptions{ .id = "startBtn" });
 
   SECTION("Label set/get works") {
-    REQUIRE(b.GetLabel() == "Start");
-    b.SetLabel("Pause");
-    REQUIRE(b.GetLabel() == "Pause");
+    REQUIRE(b->GetLabel() == "Start");
+    b->SetLabel("Pause");
+    REQUIRE(b->GetLabel() == "Pause");
   }
 
   SECTION("Visibility works") {
-    REQUIRE(b.IsVisible());
-    b.Hide();
-    REQUIRE_FALSE(b.IsVisible());
-    b.Show();
-    REQUIRE(b.IsVisible());
+    REQUIRE(b->IsVisible());
+    b->Hide();
+    REQUIRE_FALSE(b->IsVisible());
+    b->Show();
+    REQUIRE(b->IsVisible());
   }
 
   SECTION("Enable/Disable works") {
-    REQUIRE(b.IsEnabled());
-    b.Disable();
-    REQUIRE_FALSE(b.IsEnabled());
-    b.Enable();
-    REQUIRE(b.IsEnabled());
+    REQUIRE(b->IsEnabled());
+    b->Disable();
+    REQUIRE_FALSE(b->IsEnabled());
+    b->Enable();
+    REQUIRE(b->IsEnabled());
   }
 
   SECTION("Click runs callback only when enabled and visible") {
     int count = 0;
-    b.SetOnClick([&count]() { ++count; });
+    b->SetOnClick([&count]() { ++count; });
 
-    b.Click();
+    emscripten::val arg;
+
+    b->Click(arg);
     REQUIRE(count == 1);
 
-    b.Disable();
-    b.Click();
+    b->Disable();
+    b->Click(arg);
     REQUIRE(count == 1);
 
-    b.Enable();
-    b.Hide();
-    b.Click();
+    b->Enable();
+    b->Hide();
+    b->Click(arg);
     REQUIRE(count == 1);
 
-    b.Show();
-    b.Click();
+    b->Show();
+    b->Click(arg);
     REQUIRE(count == 2);
   }
 }
