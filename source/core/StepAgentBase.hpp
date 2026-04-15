@@ -2,27 +2,18 @@
 
 #include "Step.hpp"
 #include "WorldPosition.hpp"
-#include "core.hpp"
 
 namespace cse498 {
-using Concepts::IsDataClass;
 using cse498::steps::StepContainer;
 
-template <IsDataClass DataClass>
+template <typename DataClass>
 class StepAgentBase {
-  /// Unique id of the agent
-  const size_t mId;
-
  protected:
-  /// Data class that holds agent data
   DataClass mData;
 
  public:
-  StepAgentBase(DataClass data, size_t id) : mData{data}, mId{id} {}
+  StepAgentBase(DataClass data) : mData{data} {}
   virtual ~StepAgentBase() = default;
-
-  /// Get the ID of the agent
-  [[nodiscard]] size_t GetId() const noexcept { return mId; }
 
   // The main logic that separates the agents. When prompted for their turn,
   // this where the descisions are made

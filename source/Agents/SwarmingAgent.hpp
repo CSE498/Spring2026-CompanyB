@@ -8,19 +8,19 @@
 #include <optional>
 #include <random>
 
-#include "../core/StepAgentBase.hpp"
+#include "../core/AgentBase.hpp"
 #include "../core/AgentData.hpp"
 #include "../core/Step.hpp"
-#include "../core/StepWorldBase.hpp"
+#include "../core/WorldBase.hpp"
 #include "../tools/StateGridPosition.hpp"
 
 namespace cse498 {
 
 template <typename T>
-concept IsSwarm_Data = Concepts::IsOneOf<T, TrafficData, DiseaseData>;
+concept IsSwarm_Data = Concepts::IsOneOf<T, TrafficData, InfectionData>;
 
 template <IsSwarm_Data SwarmData>
-class SwarmingAgent : public StepAgentBase<SwarmData> {
+class SwarmingAgent : public AgentBase<SwarmData> {
  private:
   std::mt19937 rng{std::random_device{}()};
 
@@ -49,20 +49,17 @@ class SwarmingAgent : public StepAgentBase<SwarmData> {
 
   // Returns a random neighboring position (up/down/left/right)
   WorldPosition get_random_neighbor(WorldPosition& pos) {
-    std::array<WorldPosition, 4> neighbors {pos.Up(), pos.Down(), pos.Left(), pos.Right()};
-
-    std::vector<WorldPosition> candidates {};
-
-    for(auto const &n: neighbors){ //check if all possible neighbors are in recent positions
-      if(!in_recent(n)){candidates.push_back(n);} 
+    std::uniform_int_distribution<int> dist(1, 4);
+    switch (dist(rng)) {
+      case 1:
+        return pos.Up();  // up
+      case 2:
+        return pos.Down();  // down
+      case 3:
+        return pos.Left();  // left
+      default:
+        return pos.Right();  // right
     }
-
-    if(candidates.empty()){ //if all in recent then any option works
-      candidates.assign(neighbors.begin(), neighbors.end());
-    }
-
-    std::uniform_int_distribution<size_t> dist(0, candidates.size()-1); //pick random movement of avaliable
-    return candidates[dist(rng)];
   }
 
   // Picks the neighbor with the smallest Manhattan distance to `target`,
@@ -106,12 +103,12 @@ class SwarmingAgent : public StepAgentBase<SwarmData> {
   }
 
  public:
-  SwarmingAgent(SwarmData data, size_t id) : StepAgentBase<SwarmData>(data, id) {}
+  SwarmingAgent(SwarmData data) : AgentBase<SwarmData>(data) {}
 
   [[nodiscard]] StepContainer GetTurn() override {
     if constexpr (std::is_same_v<SwarmData, TrafficData>) {
       return TrafficGetTurn();
-    } else if constexpr (std::is_same_v<SwarmData, DiseaseData>) {
+    } else if constexpr (std::is_same_v<SwarmData, InfectionData>) {
       return InfectionGetTurn();
     }
   }
@@ -119,7 +116,7 @@ class SwarmingAgent : public StepAgentBase<SwarmData> {
   [[nodiscard]] StepContainer TrafficGetTurn() {
     StepContainer container{};
 
-    if (!this->mData.is_active) {
+    if (!this->m_Data.is_active) {
       return container;  // empty container means no steps remain still
     }
 
@@ -179,29 +176,15 @@ class SwarmingAgent : public StepAgentBase<SwarmData> {
   }
 
   [[nodiscard]] StepContainer InfectionGetTurn() {
-    // Behavior in each state:
-    // SUSCEPTIBLE:
-    // Move randomly
-    // Transition to INFECTED when near infected agents (handled by world logic)
-    // INFECTED:
-    // Move randomly
-    // Infect susceptible agents on contact/proximity (handled by world logic)
-    // RECOVERED:
-    // Move randomly
-    // No infection interaction behavior
-    
-    StepContainer container{};
-    WorldPosition random_pos = get_random_neighbor(this->mData.pos);
-    cse498::steps::MovementStep random_move{random_pos};
-    container.add_step(std::move(random_move));
-    return container;
+    // for now just return an empty container
+    return StepContainer{};
   }
 
   // Following 3 functions are helper functions to set aspects of the agent's
   // state
 
   // Helper function to set the agent's destination
-  void SetGoal(WorldPosition goal) override {
+  void SetGoal(WorldPosition goal) {
     auto state = this->GetState();
     state.destination = goal;
     this->SetState(state);

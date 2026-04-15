@@ -7,19 +7,15 @@
 #pragma once
 
 #include <cassert>
-#include <chrono>
-#include <iostream>
-#include <thread>
-#include <vector>
 
-#include "../core/StepWorldBase.hpp"
-#include "../core/Step.hpp"
-#include "../core/AgentData.hpp"
+#include "../core/WorldBase.hpp"
+#include "core/Step.hpp"
+#include "core/AgentData.hpp"
 
 // clang-format off
 namespace cse498 {
 
-  class MazeWorld : public StepWorldBase<cse498::TrafficData> {
+  class MazeWorld : public WorldBase<TrafficData> {
   protected:
     enum ActionType { REMAIN_STILL=0, MOVE_UP, MOVE_DOWN, MOVE_LEFT, MOVE_RIGHT };
 
@@ -27,7 +23,7 @@ namespace cse498 {
     size_t wall_id;  ///< Easy access to wall CellType ID.
 
     // /// Provide the agent with movement actions.
-    // void ConfigAgent(StepAgentBase<TrafficData> & agent) override {
+    // void ConfigAgent(AgentBase<TrafficData> & agent) override {
     //   agent.AddAction("up", MOVE_UP);
     //   agent.AddAction("down", MOVE_DOWN);
     //   agent.AddAction("left", MOVE_LEFT);
@@ -69,15 +65,21 @@ namespace cse498 {
         // We do want to represent failure, but don't need to represent
         // any output, so we'll define & alias our return as such:
         using VisitRet = std::expected<void, WorldErr>;
-
-        // Hold references to the world, the working state (which we mutate
-        // in place and the caller returns), and the container (for .inform()).
+        
+        // We'll want to modify the agent and the container, so we'll hold on to
+        // some references for them. You'll have to do the same for any other
+        // non-variant external context desired.
         MazeWorld &world;
-        TrafficData &state;
+        AgentBase<TrafficData> &agent;
         StepContainer &container;
-
+        
         // Now we'll need to have an operator() overload for each Step type.
         VisitRet operator()(steps::MovementStep step) {
+          // The simplest step -- the agent just wants to move to a space.
+          // FILL IN: Implement logic actually changing agent's position.
+          // agent.SetState(TrafficData{step.loc});
+          TrafficData state = agent.GetState();
+
           if (!world.main_grid.IsValid(step.loc)) {
             return {};
           }
@@ -87,6 +89,7 @@ namespace cse498 {
           }
 
           state.pos = step.loc;
+          agent.SetState(state);
           return {};
         }
         
@@ -140,93 +143,51 @@ namespace cse498 {
       };
       
       /// Allow the agents to move around the maze.
-      TrafficData DoAction(std::shared_ptr<StepAgentBase<TrafficData>> agent) override {
+      void DoAction(AgentBase<TrafficData>& agent) override {
+        // Determine where the agent is trying to move.
         using namespace cse498::steps;
-
-        // Start from the agent's current state and mutate a local copy; the
-        // base class will call SetState() with our return value.
-        TrafficData new_state = agent->GetState();
-        StepContainer agent_turn = agent->GetTurn();
-
-        StepVisitor step_visitor{*this, new_state, agent_turn};
+        
+        // Get the turn from the agent
+        StepContainer agent_turn = agent.GetTurn();
+        
+        // The functor we'll dispatch our step calls out to doesn't change with
+        // each step, so we can instantiate it here outside the loop. To be as
+        // clear as possible, this object is to act SOLELY as a collection of
+        // function calls, at times with additional context (here the agent and
+        // step container, so that the function calls can update agent state and
+        // update the stepcontainer for .inform() ).
+        StepVisitor step_visitor(*this, agent, agent_turn);
 
         while (!agent_turn.exhausted()) {
           std::expected<Step, StepErr> cur_step = agent_turn.get_next();
           if (!cur_step.has_value()) {
+            // Here we'll want to have a way to track and later inform the agent
+            // that an error occured. For the sake of this demo, we'll just
+            // assume that an unexpected halts an agent's turn.
             break;
           }
-
+          
+          // This call will dispatch a call out to our prior functor, calling the
+          // correct overload (   all w/o a vtable (;   ).
           StepVisitor::VisitRet step_res = std::visit(step_visitor, cur_step.value());
+          
           if (!step_res.has_value()) {
+            // Here we'll want to handle an error within the world. I don't know
+            // what that would look like for this demo so again we'll just halt.
             break;
           }
+          //break;
         }
-
-        return new_state;
+        
+        
+        
+        
+        // Don't let the agent move off the world or into a wall.
+        // if (!main_grid.IsValid(new_position)) { return TrafficData(cur_position); }
+        // if (main_grid[new_position] == wall_id) { return TrafficData(cur_position); }
+        
       }
-
-      // ==================================================================
-      //  Terminal display — adapted from Group 19's StepTrafficWorld.
-      //  StepWorldBase has no interface-agent concept, so the display is
-      //  integrated into the derived world's run loop instead.
-      // ==================================================================
-
-      using Clock = std::chrono::steady_clock;
-
-      std::chrono::milliseconds frame_delay{200};
-      Clock::time_point last_frame_time{};
-
-      void DrawGrid() {
-        const size_t W = main_grid.GetWidth();
-        const size_t H = main_grid.GetHeight();
-
-        std::vector<std::string> symbol_grid(H);
-        for (size_t y = 0; y < H; ++y) {
-          symbol_grid[y].resize(W);
-          for (size_t x = 0; x < W; ++x) {
-            symbol_grid[y][x] = main_grid.GetSymbol(WorldPosition{x, y});
-          }
-        }
-
-        for (const auto &agent_ptr : agent_set) {
-          const TrafficData &state = agent_ptr->GetState();
-          const size_t ax = state.pos.CellX();
-          const size_t ay = state.pos.CellY();
-          if (ax >= W || ay >= H) continue;
-          symbol_grid[ay][ax] = state.symbol;
-        }
-
-        std::cout << "\033[2J\033[H";
-        std::cout << '+' << std::string(W, '-') << "+\n";
-        for (const auto &row : symbol_grid) {
-          std::cout << '|' << row << "|\n";
-        }
-        std::cout << '+' << std::string(W, '-') << "+\n";
-        std::cout.flush();
-      }
-
-      MazeWorld &SetFrameDelay(std::chrono::milliseconds delay) {
-        frame_delay = delay;
-        return *this;
-      }
-
-      void RunWithDisplay() {
-        run_over = false;
-        last_frame_time = Clock::now();
-        while (!run_over) {
-          auto now = Clock::now();
-          auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(
-              now - last_frame_time);
-          if (elapsed < frame_delay) {
-            std::this_thread::sleep_for(frame_delay - elapsed);
-          }
-          last_frame_time = Clock::now();
-
-          DrawGrid();
-          RunAgents();
-          UpdateWorld();
-        }
-      }
+      
     };
     // clang-format on
   }  // End of namespace cse498

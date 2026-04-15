@@ -10,8 +10,8 @@
 #include <utility>
 #include <variant>
 
-#include "WorldPosition.hpp"
-#include "core.hpp"
+#include "core/WorldPosition.hpp"
+#include "core/core.hpp"
 #include "tools/FuncInfo.hpp"
 
 namespace cse498 {
