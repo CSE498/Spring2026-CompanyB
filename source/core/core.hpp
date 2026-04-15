@@ -27,6 +27,16 @@ constexpr bool all_unique() {
 template <typename... Ts>
 concept UniqueTypes = all_unique<Ts..., std::void_t>();
 
+/**
+ * @brief Determines a valid dataclass for the agents and world
+ * @note REPLACE THE INT WITH THE LIST OF DATACLASSES FOR BOTH WORLDS i.e
+ * IsOneOf<T, TrafficData, DiseaseData>
+ * @note Feel free to add other constraints on what a Dataclass should have
+ * after discussing with both world groups
+ */
+template <typename T>
+concept IsDataClass = IsOneOf<T, int>;
+
 }  // namespace Concepts
 
 namespace StaticUtil {

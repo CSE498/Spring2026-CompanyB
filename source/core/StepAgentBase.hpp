@@ -1,18 +1,28 @@
 #pragma once
 
 #include "Step.hpp"
+#include "WorldPosition.hpp"
+#include "core.hpp"
 
 namespace cse498 {
+using Concepts::IsDataClass;
 using cse498::steps::StepContainer;
 
-template <typename DataClass>
+template <IsDataClass DataClass>
 class StepAgentBase {
+  /// Unique id of the agent
+  const size_t mId;
+
  protected:
+  /// Data class that holds agent data
   DataClass mData;
 
  public:
-  StepAgentBase(DataClass data) : mData{data} {}
+  StepAgentBase(DataClass data, size_t id) : mData{data}, mId{id} {}
   virtual ~StepAgentBase() = default;
+
+  /// Get the ID of the agent
+  [[nodiscard]] size_t GetId() const noexcept { return mId; }
 
   // The main logic that separates the agents. When prompted for their turn,
   // this where the descisions are made
@@ -29,6 +39,8 @@ class StepAgentBase {
     mData = data;
     // Here handle logic to log for replay?
   }
+
+  virtual void SetGoal(WorldPosition position) = 0;
 };
 
 };  // namespace cse498

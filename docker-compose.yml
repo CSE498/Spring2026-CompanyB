@@ -5,6 +5,7 @@ services:
       context: .
     volumes:
       - ./source:/app/source:ro
+      - ./demo:/app/demo:ro
       - ./build:/app/build
       - ./logs:/app/logs
       - ./scripts/docker-entrypoint.sh:/app/docker-entrypoint.sh:ro
@@ -13,6 +14,7 @@ services:
       - HOST_GID=${HOST_GID}
       - CMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE:-}
       - CMAKE_EXTRA_FLAGS=${CMAKE_EXTRA_FLAGS:-}
+      - TARGET_MAIN=${TARGET_MAIN:-}
     command: build-emscripten
 
   # Build natively with Qt
@@ -21,6 +23,7 @@ services:
       context: .
     volumes:
       - ./source:/app/source:ro
+      - ./demo:/app/demo:ro
       - ./build:/app/build
       - ./logs:/app/logs
       - ./scripts/docker-entrypoint.sh:/app/docker-entrypoint.sh:ro
@@ -73,6 +76,7 @@ services:
       - "8080:8080"
     volumes:
       - ./source:/app/source:ro
+      - ./demo:/app/demo:ro
       - ./build:/app/build
       - ./logs:/app/logs
       - ./scripts/docker-entrypoint.sh:/app/docker-entrypoint.sh:ro
@@ -82,6 +86,7 @@ services:
       - HOST_GID=${HOST_GID}
       - CMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE:-}
       - CMAKE_EXTRA_FLAGS=${CMAKE_EXTRA_FLAGS:-}
+      - TARGET_MAIN=${TARGET_MAIN:-}
     command: serve
 
   # Interactive development shell
@@ -94,6 +99,7 @@ services:
       - "8080:8080"
     volumes:
       - ./source:/app/source
+      - ./demo:/app/demo
       - ./build:/app/build
       - ./logs:/app/logs
       - ./scripts/docker-entrypoint.sh:/app/docker-entrypoint.sh:ro
