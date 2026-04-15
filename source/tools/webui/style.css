@@ -1,4 +1,8 @@
+@import url('https://fonts.googleapis.com/css2?family=Gugi&display=swap');
+
 body {
+    margin: 0;
+    padding: 0;
     background: #85b790;
     background-image: url("assets/images/contour-map.svg");
 }
@@ -85,4 +89,51 @@ body {
 }
 .log-error {
     color: #f44336;
+}
+
+#traffic-btn, #virus-btn {
+  width: 300px;
+  height: 120px;
+  font-size: 40px;
+  border-radius: 24px;
+  background-color: #555;
+  color: white;
+  cursor: pointer;
+  border: 6px solid #4a7a50;
+}
+
+#traffic-btn:hover, #virus-btn:hover {
+  background-color: #6e6d6d;
+}
+
+#menu-title {
+  position: absolute;
+  top: 35vh;
+  left: 50%;
+  transform: translateX(-50%);
+  border: none !important;
+  text-shadow: 3px 3px 8px rgba(0, 0, 0, 0.6);
+}
+
+#world-buttons {
+  position: absolute;
+  top: 50vh;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+#menu-img-top {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: auto;
+}
+
+#menu-img-bottom {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: auto;
 }

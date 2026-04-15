@@ -72,7 +72,9 @@ std::shared_ptr<WebElement> GameInfoCanvas(WebOptions options) {
 // It takes a lambda as a parameter
 // This is a function we want to run when a button is clicked
 // We could take more lambdas if we want more types of button handlers
-std::shared_ptr<WebElement> SimulationLayout(std::function<void()> btn_lambda) {
+// btn_lambda: generic handler for start/pause/stop/upload/save which can be updated later
+// exit_lambda: always goes back to the main menu for reselection of world or exit
+std::shared_ptr<WebElement> SimulationLayout(std::function<void()> btn_lambda, std::function<void()> exit_lambda) {
   // Here we initialize our game info canvas with id, classes, and style properties.
   auto gameInfo = GameInfoCanvas(WebOptions{
       .id = "game-info",
@@ -98,7 +100,7 @@ std::shared_ptr<WebElement> SimulationLayout(std::function<void()> btn_lambda) {
           UIItem<WebButton>("", WebOptions{ .id = "stop-btn", .classes={"button"} })->SetOnClick(btn_lambda),
           UIItem<WebButton>("", WebOptions{ .id = "upload-btn", .classes={"button"} })->SetOnClick(btn_lambda),
           UIItem<WebButton>("", WebOptions{ .id = "save-btn", .classes={"button"} })->SetOnClick(btn_lambda),
-          UIItem<WebButton>("", WebOptions{ .id = "exit-btn", .classes={"button"} })->SetOnClick(btn_lambda)
+          UIItem<WebButton>("", WebOptions{ .id = "exit-btn", .classes={"button"} })->SetOnClick(exit_lambda)
         }
         // Notice that the fluent API style also lets us call WebLayout's methods
         // while including it as a parameter to the function call
@@ -143,17 +145,33 @@ std::shared_ptr<WebElement> SimulationLayout(std::function<void()> btn_lambda) {
 
 
 // We create another component for our menu screen layout
+// button_lambda is called when either world is selected.
+// When the seperate worlds are ready we can replace the lambdas.
 std::shared_ptr<WebElement> MenuLayout(std::function<void()> button_lambda) {
   return UIItem<WebLayout>(WebOptions{
     .id = "menu-screen",
     .style = {
       {"width", "100vw"},
       {"height", "100vh"},
+      {"position", "relative"},
     },
     .children = {
-      UIItem<WebButton>("Start Simulation")->SetOnClick(button_lambda),
+      UIItem<WebImage>("assets/images/TopBorder.png", "top decoration", WebOptions{ .id = "menu-img-top" }),
+      UIItem<WebTextbox>(TextStyle{ .font_family = "Gugi, sans-serif", .font_size = "75px", .color = "white" }, WebOptions{
+        .id = "menu-title",
+        .style = {{"border", "none"}, {"background", "transparent"}, {"white-space", "nowrap"}},
+      })->SetText("Simulation Tool"),
+      UIItem<WebLayout>(WebOptions{
+        .id = "world-buttons",
+        .style = {{"font-family", "Gugi, sans-serif"}},
+        .children = {
+          UIItem<WebButton>("Traffic", WebOptions{ .id = "traffic-btn" })->SetOnClick(button_lambda),
+          UIItem<WebButton>("Virus", WebOptions{ .id = "virus-btn" })->SetOnClick(button_lambda),
+        }
+      })->SetDirection("row").SetJustifyContent("center").SetAlignItems("center").SetGap("50px"),
+      UIItem<WebImage>("assets/images/BottomBorder.png", "bottom decoration", WebOptions{ .id = "menu-img-bottom" }),
     }
-  })->SetJustifyContent("center").SetAlignItems("center");
+  })->SetDirection("column").SetJustifyContent("flex-start").SetAlignItems("center").SetGap("100px");
 }
 
 // These are our two button click handlers
@@ -167,7 +185,7 @@ void load_menu_layout() {
 
 void load_simulation_layout() {
   std::println("Loading simulation layout");
-  set_active_layout(SimulationLayout(load_menu_layout));
+  set_active_layout(SimulationLayout(load_simulation_layout, load_menu_layout));
 };
 
 int main() {
