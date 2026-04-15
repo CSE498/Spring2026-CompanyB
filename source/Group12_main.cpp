@@ -14,7 +14,7 @@ using namespace cse498;
 
 // // Still needs more work, gotta figure out how we want SwarmingAgents to act in
 // // the infectiious world, but this is a start
-// struct InfectionData {
+// struct DiseaseData {
 //   double infection_probability;
 //   cse498::HealthState infection_state;
 //   std::optional<cse498::WorldPosition> destination;
