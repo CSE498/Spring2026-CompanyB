@@ -104,7 +104,7 @@ elseif(BUILD_TESTS)
     list(FILTER SOURCES EXCLUDE REGEX ".*/Interfaces/gui/.*")
   else()
     # Find Qt6 for native build
-    find_package(Qt6 REQUIRED COMPONENTS Core Gui Widgets)
+    find_package(Qt6 REQUIRED COMPONENTS Core Gui Widgets Charts)
     set(CMAKE_AUTOMOC ON) # Necessary for QT macro searches
   endif()
 
@@ -126,7 +126,7 @@ elseif(BUILD_TESTS)
     add_library(project_lib ${SOURCES})
     target_include_directories(project_lib PUBLIC ${HEADER_DIRS})
     if(NOT NO_QT)
-      target_link_libraries(project_lib PUBLIC Qt6::Core Qt6::Gui Qt6::Widgets)
+      target_link_libraries(project_lib PUBLIC Qt6::Core Qt6::Gui Qt6::Widgets Qt6::Charts)
     endif()
   endif()
 
@@ -193,7 +193,7 @@ elseif(DEFINED EMSCRIPTEN)
 else()
   # Native build
   list(FILTER SOURCES EXCLUDE REGEX ".*/tools/webui/.*")
-  # Exclude all entry points then add back the selected one
+  # Exclude all entry points then add back the selecte?d one
   list(FILTER SOURCES EXCLUDE REGEX ".*_main\\.cpp$")
   if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${TARGET_MAIN}")
     list(APPEND SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/${TARGET_MAIN}")
