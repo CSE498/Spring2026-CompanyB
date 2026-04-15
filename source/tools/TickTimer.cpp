@@ -62,24 +62,6 @@ uint64_t TickTimer::GetTotalTime() const {
   return mAccumulatedTime + (GlobalClock::GetTime() - mStartTime);
 }
 
-/*
-double TickTimer::GetTimeInSeconds() const {
-  // Assuming 1 tick = 1 millisecond
-  constexpr double millisecondsPerSecond = 1000.0;
-  return GetTotalTime() / millisecondsPerSecond;
-}
-
-double TickTimer::GetTimeInMinutes() const {
-  constexpr double secondsPerMinute = 60.0;
-  return GetTimeInSeconds() / secondsPerMinute;
-}
-
-double TickTimer::GetTimeInHours() const {
-  constexpr double minutesPerHour = 60.0;
-  return GetTimeInMinutes() / minutesPerHour;
-}
-*/
-
 const std::string& TickTimer::GetName() const { return mName; }
 
 }  // namespace cse498
