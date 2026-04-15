@@ -20,10 +20,15 @@ concept Numeric = Concepts::IsOneOf<int, double>;
 struct InfectionData {};
 struct TrafficData {};
 
-struct InterpreterWrapper;
+template <typename Dataclass> class Interpreter;
 
-template <typename Dataclass> class Interpreter {
-public:
+// Pull interpreter up into an any
+struct InterpreterWrapper {
+  enum class Env { TRAFFIC, INFECTION };
+
+  Env m_Env;
+  std::any m_InterpreterPtr;
+
   std::expected<void, InterpErr> Visit(AST::StmtBlock &);
   std::expected<void, InterpErr> Visit(AST::ExprUnary &);
   std::expected<void, InterpErr> Visit(AST::Assign &);
@@ -34,30 +39,6 @@ public:
   std::expected<void, InterpErr> Visit(AST::StmtIf &);
   std::expected<void, InterpErr> Visit(AST::ValLiteral &);
   std::expected<void, InterpErr> Visit(AST::ValVariable &);
-};
-
-// Pull interpreter up into an any
-struct InterpreterWrapper {
-  enum class Env { TRAFFIC, INFECTION };
-
-  Env m_Env;
-  std::any m_InterpreterPtr;
-
-  std::expected<void, InterpErr>
-  Visit(std::derived_from<AST::Node> auto &node) {
-    if (!m_InterpreterPtr.has_value())
-      return RuntimeErr(
-          RuntimeErr::EMPTY_INTERP_WRAPPER,
-          "InterpreterWrapper is missing a pointer to the interpreter");
-
-    if (m_Env == Env::TRAFFIC) {
-      return std::any_cast<Interpreter<TrafficData> *>(m_InterpreterPtr)
-          ->Visit(node);
-    } else {
-      return std::any_cast<Interpreter<InfectionData> *>(m_InterpreterPtr)
-          ->Visit(node);
-    }
-  }
 
   std::expected<void, InterpErr> Evaluate(std::unique_ptr<AST::Node> &node) {
     return node->Accept(*this);
@@ -71,6 +52,47 @@ struct InterpreterWrapper {
     }
 
     m_InterpreterPtr = std::make_any(i);
+  }
+};
+
+template <typename Dataclass> class Interpreter {
+  std::unique_ptr<InterpreterWrapper> m_InterpWrapper;
+
+public:
+  std::expected<void, InterpErr> Visit(AST::StmtBlock &node) {
+    std::expected<void, InterpErr> res;
+    for (auto &cur_node : node.m_Body) {
+      res = cur_node->Accept(*m_InterpWrapper);
+      if (!res.has_value())
+        return res;
+    }
+  }
+  std::expected<void, InterpErr> Visit(AST::ExprUnary &node) {
+    // TODO
+  }
+  std::expected<void, InterpErr> Visit(AST::Assign &node) {
+    // TODO
+  }
+  std::expected<void, InterpErr> Visit(AST::StmtAgentDef &node) {
+    // TODO
+  }
+  std::expected<void, InterpErr> Visit(AST::StmtAction &node) {
+    // TODO
+  }
+  std::expected<void, InterpErr> Visit(AST::StmtWhile &node) {
+    // TODO
+  }
+  std::expected<void, InterpErr> Visit(AST::StmtLoopCtl &node) {
+    // TODO
+  }
+  std::expected<void, InterpErr> Visit(AST::StmtIf &node) {
+    // TODO
+  }
+  std::expected<void, InterpErr> Visit(AST::ValLiteral &node) {
+    // TODO
+  }
+  std::expected<void, InterpErr> Visit(AST::ValVariable &node) {
+    // TODO
   }
 };
 
