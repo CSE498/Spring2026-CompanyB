@@ -49,17 +49,20 @@ class SwarmingAgent : public AgentBase<SwarmData> {
 
   // Returns a random neighboring position (up/down/left/right)
   WorldPosition get_random_neighbor(WorldPosition& pos) {
-    std::uniform_int_distribution<int> dist(1, 4);
-    switch (dist(rng)) {
-      case 1:
-        return pos.Up();  // up
-      case 2:
-        return pos.Down();  // down
-      case 3:
-        return pos.Left();  // left
-      default:
-        return pos.Right();  // right
+    std::array<WorldPosition, 4> neighbors {pos.Up(), pos.Down(), pos.Left(), pos.Right()};
+
+    std::vector<WorldPosition> candidates {};
+
+    for(auto const &n: neighbors){ //check if all possible neighbors are in recent positions
+      if(!in_recent(n)){candidates.push_back(n);} 
     }
+
+    if(candidates.empty()){ //if all in recent then any option works
+      candidates.assign(neighbors.begin(), neighbors.end());
+    }
+
+    std::uniform_int_distribution<size_t> dist(0, candidates.size()-1); //pick random movement of avaliable
+    return candidates[dist(rng)];
   }
 
   // Picks the neighbor with the smallest Manhattan distance to `target`,
