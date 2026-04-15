@@ -125,11 +125,11 @@ class SwarmingAgent : public StepAgentBase<SwarmData> {
 
     // Remember where we are this turn so future detours can avoid looping
     // back onto cells we've just visited.
-    record_position(this->m_Data.position);
+    record_position(this->m_Data.pos);
 
     // make a random turn and skip the world query entirely
     if (!this->m_Data.destination.has_value()) {
-      WorldPosition random_pos = get_random_neighbor(this->m_Data.position);
+      WorldPosition random_pos = get_random_neighbor(this->m_Data.pos);
       cse498::steps::MovementStep random_move{random_pos};
       container.add_step(std::move(random_move));
       return container;
@@ -137,15 +137,15 @@ class SwarmingAgent : public StepAgentBase<SwarmData> {
 
     // wander randomly instead of approaching (maybe not have a swarm away
     // mode?)
-    else {
+    if (this->m_Data.swarm_away) {
       cse498::steps::MovementStep away_move{
-          get_random_neighbor(this->m_Data.position)};
+          get_random_neighbor(this->m_Data.pos)};
       container.add_step(std::move(away_move));
       return container;
     }
 
     // if we are already at the destination stay there
-    WorldPosition const& pos = this->m_Data.position;
+    WorldPosition const& pos = this->m_Data.pos;
     WorldPosition const& dest = this->m_Data.destination.value();
     if (pos == dest) {
       return container;  // empty to stay in place
@@ -204,6 +204,14 @@ class SwarmingAgent : public StepAgentBase<SwarmData> {
   void SetGoal(WorldPosition goal) override {
     auto state = this->GetState();
     state.destination = goal;
+    this->SetState(state);
+  }
+
+  // Helper function to set whether the agent is swarming away or towards the
+  // goal
+  void SetSwarmAway(bool swarm_away) {
+    auto state = this->GetState();
+    state.swarm_away = swarm_away;
     this->SetState(state);
   }
 
