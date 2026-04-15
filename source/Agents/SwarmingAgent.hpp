@@ -8,19 +8,19 @@
 #include <optional>
 #include <random>
 
-#include "../core/AgentBase.hpp"
+#include "../core/StepAgentBase.hpp"
 #include "../core/AgentData.hpp"
 #include "../core/Step.hpp"
-#include "../core/WorldBase.hpp"
+#include "../core/StepWorldBase.hpp"
 #include "../tools/StateGridPosition.hpp"
 
 namespace cse498 {
 
 template <typename T>
-concept IsSwarm_Data = Concepts::IsOneOf<T, TrafficData, InfectionData>;
+concept IsSwarm_Data = Concepts::IsOneOf<T, TrafficData, DiseaseData>;
 
 template <IsSwarm_Data SwarmData>
-class SwarmingAgent : public AgentBase<SwarmData> {
+class SwarmingAgent : public StepAgentBase<SwarmData> {
  private:
   std::mt19937 rng{std::random_device{}()};
 
@@ -103,12 +103,12 @@ class SwarmingAgent : public AgentBase<SwarmData> {
   }
 
  public:
-  SwarmingAgent(SwarmData data) : AgentBase<SwarmData>(data) {}
+  SwarmingAgent(SwarmData data, size_t id) : StepAgentBase<SwarmData>(data, id) {}
 
   [[nodiscard]] StepContainer GetTurn() override {
     if constexpr (std::is_same_v<SwarmData, TrafficData>) {
       return TrafficGetTurn();
-    } else if constexpr (std::is_same_v<SwarmData, InfectionData>) {
+    } else if constexpr (std::is_same_v<SwarmData, DiseaseData>) {
       return InfectionGetTurn();
     }
   }
@@ -116,17 +116,17 @@ class SwarmingAgent : public AgentBase<SwarmData> {
   [[nodiscard]] StepContainer TrafficGetTurn() {
     StepContainer container{};
 
-    if (!this->m_Data.is_active) {
+    if (!this->mData.is_active) {
       return container;  // empty container means no steps remain still
     }
 
     // Remember where we are this turn so future detours can avoid looping
     // back onto cells we've just visited.
-    record_position(this->m_Data.pos);
+    record_position(this->mData.pos);
 
     // make a random turn and skip the world query entirely
-    if (!this->m_Data.destination.has_value()) {
-      WorldPosition random_pos = get_random_neighbor(this->m_Data.pos);
+    if (!this->mData.destination.has_value()) {
+      WorldPosition random_pos = get_random_neighbor(this->mData.pos);
       cse498::steps::MovementStep random_move{random_pos};
       container.add_step(std::move(random_move));
       return container;
@@ -134,16 +134,16 @@ class SwarmingAgent : public AgentBase<SwarmData> {
 
     // wander randomly instead of approaching (maybe not have a swarm away
     // mode?)
-    if (this->m_Data.swarm_away) {
+    if (this->mData.swarm_away) {
       cse498::steps::MovementStep away_move{
-          get_random_neighbor(this->m_Data.pos)};
+          get_random_neighbor(this->mData.pos)};
       container.add_step(std::move(away_move));
       return container;
     }
 
     // if we are already at the destination stay there
-    WorldPosition const& pos = this->m_Data.pos;
-    WorldPosition const& dest = this->m_Data.destination.value();
+    WorldPosition const& pos = this->mData.pos;
+    WorldPosition const& dest = this->mData.destination.value();
     if (pos == dest) {
       return container;  // empty to stay in place
     }
@@ -188,7 +188,7 @@ class SwarmingAgent : public AgentBase<SwarmData> {
     // No infection interaction behavior
     
     StepContainer container{};
-    WorldPosition random_pos = get_random_neighbor(this->m_Data.pos);
+    WorldPosition random_pos = get_random_neighbor(this->mData.pos);
     cse498::steps::MovementStep random_move{random_pos};
     container.add_step(std::move(random_move));
     return container;
@@ -198,7 +198,7 @@ class SwarmingAgent : public AgentBase<SwarmData> {
   // state
 
   // Helper function to set the agent's destination
-  void SetGoal(WorldPosition goal) {
+  void SetGoal(WorldPosition goal) override {
     auto state = this->GetState();
     state.destination = goal;
     this->SetState(state);
