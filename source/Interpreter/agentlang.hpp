@@ -59,9 +59,14 @@ inline std::optional<Type> NameToType(const emplex::Token &type_tok) {
 
 namespace agentlang::Operators {
 struct OpInfo {
+  enum class Assoc {
+    LEFT,
+    RIGHT,
+    NEITHER,
+  };
+
   int m_Prec;
-  bool m_RecurseLeft;
-  bool m_RecurseRight;
+  Assoc m_Assoc;
 
   /*
   Precedences:
@@ -79,25 +84,25 @@ struct OpInfo {
     // Use fallthrough to evaluate as logical-or
     switch (token.id) {
     case IDs::ID_OP_DOT:
-      return OpInfo{1, true, false};
+      return OpInfo{1, Assoc::LEFT};
     case IDs::ID_OP_EXP:
-      return OpInfo{3, false, true};
+      return OpInfo{3, Assoc::RIGHT};
     case IDs::ID_OP_MULT:
     case IDs::ID_OP_DIVIDE:
     case IDs::ID_OP_REM:
-      return OpInfo{4, true, false};
+      return OpInfo{4, Assoc::LEFT};
     case IDs::ID_OP_MINUS:
     case IDs::ID_OP_ADD:
-      return OpInfo{5, true, false};
+      return OpInfo{5, Assoc::LEFT};
     case IDs::ID_CMP_EQ:
     case IDs::ID_CMP_NEQ:
     case IDs::ID_CMP_LT:
     case IDs::ID_CMP_LEQ:
     case IDs::ID_CMP_GT:
     case IDs::ID_CMP_GEQ:
-      return OpInfo{6, false, false};
+      return OpInfo{6, Assoc::NEITHER};
     case IDs::ID_OP_ASSIGN:
-      return OpInfo{7, false, true};
+      return OpInfo{7, Assoc::RIGHT};
     default:
       return std::unexpected(ParseErr(
           ParseErr::INVALID_OP_TOKEN,
@@ -111,7 +116,7 @@ struct OpInfo {
     switch (token.id) {
     case IDs::ID_OP_MINUS:
     case IDs::ID_OP_LNOT:
-      return OpInfo{2, false, true};
+      return OpInfo{2, Assoc::RIGHT};
     default:
       return std::unexpected(
           ParseErr(ParseErr::INVALID_OP_TOKEN,
