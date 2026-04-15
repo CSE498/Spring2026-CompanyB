@@ -3,42 +3,40 @@
 #include <QWidget>
 #include <QPushButton>
 #include <QLabel>
-#include <memory>
 #include "MainWindow.hpp"
 #include "WorldBase.hpp"
-#include "../../Worlds/MazeWorld.hpp"
-#include "../../Worlds/InfectiousWorld.hpp"
-#include "../source/Agents/PacingAgent.hpp"
-#include "../../core/WorldBase.hpp"
+
 
 namespace cse498 {
 
-class StartScreen : public QWidget {
-    Q_OBJECT
+    class StartScreen : public QWidget {
+        Q_OBJECT
 
-public:
-    explicit StartScreen(const std::vector<QString>& imagePaths,
-                         int tileSize, const QString& agentImagePath,
-                         QWidget* parent = nullptr);
+    public:
 
+          /// Marking it explicit so that it prevents accidental implicit conversions
+          /// parent = nullptr is because it is the first window that pops up
+        explicit StartScreen(WorldBase& world,
+                             const std::vector<QString>& imagePaths,
+                             int tileSize,
+                             QWidget* parent = nullptr);
 
-private slots:
-    void onTrafficClicked();
-    void onVirusClicked();
+          /// Called when clicked, private bc will only be called by this class
+        private slots:
+            void onTrafficClicked();
+            void onVirusClicked();
 
-private:
-    QString mAgentImagePath{};
-    void launchMainWindow(int mode);
+    private:
+        void launchMainWindow(const QString& mode);
 
-    std::vector<QString> mImagePaths{};
-    int mTileSize{};
+           ///reference to world
+	WorldBase& mWorld;
+	std::vector<QString> mImagePaths{};
+	int mTileSize{};
 
-    // owned here so it outlives MainWindow
-    std::unique_ptr<WorldBase> mWorld{};
-
-    QPushButton* mTrafficBtn{};
-    QPushButton* mVirusBtn{};
-    QPushButton* mGearBtn{};
-};
+	QPushButton* mTrafficBtn{};
+	QPushButton* mVirusBtn{};
+	QPushButton* mGearBtn{};
+    };
 
 } // namespace cse498

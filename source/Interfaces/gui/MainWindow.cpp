@@ -11,7 +11,6 @@
 #include <fstream>
 #include <string>
 #include <vector>
-#include "../../Agents/PacingAgent.hpp"
 
 namespace cse498
 {
@@ -19,13 +18,12 @@ namespace cse498
 constexpr const int TIMEOUT = 4000;  // time until status bar messages timeout; 4 seconds
 
     MainWindow::MainWindow(WorldBase &world, const std::vector<QString> &imagePaths,
-                           int tileSize, const QString &agentImagePath, QWidget *parent,int mode)
+                           int tileSize, const QString &agentImagePath, QWidget *parent)
         : QMainWindow(parent),
           mWorld(world),
           mImagePaths(imagePaths),
           mAgentImagePath(agentImagePath),
-          mTileSize(tileSize),
-		  mMode(mode)
+          mTileSize(tileSize)
     {
 
         setWindowTitle("Group 21 Demo");
@@ -34,10 +32,8 @@ constexpr const int TIMEOUT = 4000;  // time until status bar messages timeout; 
 
         setMenuBar();
         setMainWidget();
-        setupAgents();
         setImageGrid();
         setStatusBar();
-
 
         startSimulation();
     }
@@ -59,28 +55,6 @@ constexpr const int TIMEOUT = 4000;  // time until status bar messages timeout; 
     
     logCommand("TEST Tick 1: [Agent 0] Move forward TEST");
     logCommand("TEST Tick 2: [Agent 1] Stop TEST");
-}
-
-	void MainWindow::setupAgents() {
-    if (mMode == 1) {
-        // MazeWorld agent setup
-        mWorld.AddAgent<cse498::PacingAgent>("Agent-1").SetLocation(cse498::WorldPosition{3, 2});
-        // ... etc
-    } else {
-        // InfectiousWorld agent setup
-        auto& iw = static_cast<cse498::InfectiousWorld&>(mWorld);
-        iw.AddAgent<cse498::PacingAgent>("Agent-1").SetLocation(cse498::WorldPosition{3, 2});
-        iw.AddAgent<cse498::PacingAgent>("Agent-2").SetLocation(cse498::WorldPosition{5, 4});
-        iw.AddAgent<cse498::PacingAgent>("Agent-3").SetLocation(cse498::WorldPosition{7, 3});
-        iw.AddAgent<cse498::PacingAgent>("Agent-4").SetLocation(cse498::WorldPosition{4, 6});
-        iw.AddAgent<cse498::PacingAgent>("Agent-5").SetLocation(cse498::WorldPosition{8, 7});
-        iw.AddAgent<cse498::PacingAgent>("Agent-6").SetLocation(cse498::WorldPosition{12, 3});
-        iw.AddAgent<cse498::PacingAgent>("Agent-7").SetLocation(cse498::WorldPosition{15, 5});
-        iw.AddAgent<cse498::PacingAgent>("Agent-8").SetLocation(cse498::WorldPosition{14, 2});
-        iw.AddAgent<cse498::PacingAgent>("Agent-9").SetLocation(cse498::WorldPosition{16, 7});
-        iw.AddAgent<cse498::PacingAgent>("Agent-10").SetLocation(cse498::WorldPosition{13, 7});
-        iw.InfectAgent(0);
-    }
 }
 
     void MainWindow::setMenuBar()
@@ -204,8 +178,6 @@ constexpr const int TIMEOUT = 4000;  // time until status bar messages timeout; 
         mImageGrid->SetSceneAndView(*mGraphicsView);
     }
 
-
-
     void MainWindow::setStatusBar()
     {
         // ignore the silly placeholder
@@ -237,27 +209,16 @@ constexpr const int TIMEOUT = 4000;  // time until status bar messages timeout; 
     }
     mWorld.GetGrid().Load(input);
 
-    std::string line, log;
-    bool inLog= false;
-    while (std::getline(input, line)) {
-        if (line == "--- AGENT LOG ---") { inLog = true; continue; }
-        if (inLog) log += line + "\n";
-    }
-
     mGraphicsScene->clear();
     setImageGrid();
 
-    if (!log.empty())
-        mCommandLog->setPlainText(QString::fromStdString(log));
-
     statusBar()->showMessage(QString("Opened: %1").arg(path), TIMEOUT);
-
 }
 
 void MainWindow::onFileSave() {
     // show message for 2 sec
     const QString path = QFileDialog::getSaveFileName(
-        this, "Save File", QString(), "Text Files (*.txt);;All Files (*.*)");
+        this, "Save File", QString(), "All Files (*.*)");
 
     if (path.isEmpty()) {
         return;
@@ -270,8 +231,6 @@ void MainWindow::onFileSave() {
 
     mWorld.GetGrid().Print(output);
 
-
-    output << mCommandLog->toPlainText().toStdString();
     statusBar()->showMessage(QString("File Saved: %1").arg(path), TIMEOUT);
 
 }
