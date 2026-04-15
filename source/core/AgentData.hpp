@@ -1,6 +1,7 @@
 #pragma once
 
 #include <optional>
+
 #include "WorldPosition.hpp"
 
 namespace cse498 {

@@ -8,9 +8,9 @@
 #include <optional>
 #include <random>
 
-#include "../core/StepAgentBase.hpp"
 #include "../core/AgentData.hpp"
 #include "../core/Step.hpp"
+#include "../core/StepAgentBase.hpp"
 #include "../core/StepWorldBase.hpp"
 #include "../tools/StateGridPosition.hpp"
 
@@ -49,19 +49,24 @@ class SwarmingAgent : public StepAgentBase<SwarmData> {
 
   // Returns a random neighboring position (up/down/left/right)
   WorldPosition get_random_neighbor(WorldPosition& pos) {
-    std::array<WorldPosition, 4> neighbors {pos.Up(), pos.Down(), pos.Left(), pos.Right()};
+    std::array<WorldPosition, 4> neighbors{pos.Up(), pos.Down(), pos.Left(),
+                                           pos.Right()};
 
-    std::vector<WorldPosition> candidates {};
+    std::vector<WorldPosition> candidates{};
 
-    for(auto const &n: neighbors){ //check if all possible neighbors are in recent positions
-      if(!in_recent(n)){candidates.push_back(n);} 
+    for (auto const& n : neighbors) {  // check if all possible neighbors are in
+                                       // recent positions
+      if (!in_recent(n)) {
+        candidates.push_back(n);
+      }
     }
 
-    if(candidates.empty()){ //if all in recent then any option works
+    if (candidates.empty()) {  // if all in recent then any option works
       candidates.assign(neighbors.begin(), neighbors.end());
     }
 
-    std::uniform_int_distribution<size_t> dist(0, candidates.size()-1); //pick random movement of avaliable
+    std::uniform_int_distribution<size_t> dist(
+        0, candidates.size() - 1);  // pick random movement of avaliable
     return candidates[dist(rng)];
   }
 
@@ -106,7 +111,8 @@ class SwarmingAgent : public StepAgentBase<SwarmData> {
   }
 
  public:
-  SwarmingAgent(SwarmData data, size_t id) : StepAgentBase<SwarmData>(data, id) {}
+  SwarmingAgent(SwarmData data, size_t id)
+      : StepAgentBase<SwarmData>(data, id) {}
 
   [[nodiscard]] StepContainer GetTurn() override {
     if constexpr (std::is_same_v<SwarmData, TrafficData>) {
@@ -189,7 +195,7 @@ class SwarmingAgent : public StepAgentBase<SwarmData> {
     // RECOVERED:
     // Move randomly
     // No infection interaction behavior
-    
+
     StepContainer container{};
     WorldPosition random_pos = get_random_neighbor(this->mData.pos);
     cse498::steps::MovementStep random_move{random_pos};

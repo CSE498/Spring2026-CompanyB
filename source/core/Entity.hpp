@@ -25,8 +25,7 @@ class Entity {
   //        in agents, items, or interfaces.
 
  public:
-  Entity(size_t id, const std::string& name)
-      : id(id), name(name) {}
+  Entity(size_t id, const std::string& name) : id(id), name(name) {}
   Entity(const Entity&) =
       delete;  // Entities must be unique and shouldn't be copied.
   Entity(Entity&&) = default;   // Entities CAN be moved.

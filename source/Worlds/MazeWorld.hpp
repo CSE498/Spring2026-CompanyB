@@ -12,9 +12,9 @@
 #include <thread>
 #include <vector>
 
-#include "../core/StepWorldBase.hpp"
-#include "../core/Step.hpp"
 #include "../core/AgentData.hpp"
+#include "../core/Step.hpp"
+#include "../core/StepWorldBase.hpp"
 
 // clang-format off
 namespace cse498 {
@@ -228,6 +228,5 @@ namespace cse498 {
         }
       }
     };
-    // clang-format on
-  }  // End of namespace cse498
-  
+// clang-format on
+}  // End of namespace cse498
