@@ -20,7 +20,7 @@ struct TrafficData {
 
 enum class HealthState { SUSCEPTIBLE, INFECTED, RECOVERED };
 
-struct InfectionData {
+struct DiseaseData {
   double infection_probability;
   cse498::HealthState infection_state;
   std::optional<cse498::WorldPosition> destination;

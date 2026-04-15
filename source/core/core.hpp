@@ -5,6 +5,8 @@
 #include <type_traits>
 #include <variant>
 
+#include "AgentData.hpp"
+
 namespace Concepts {
 template <typename T, typename... Ts>
 concept IsOneOf = (std::is_same_v<T, Ts> || ...);
@@ -26,6 +28,16 @@ constexpr bool all_unique() {
  */
 template <typename... Ts>
 concept UniqueTypes = all_unique<Ts...>();
+
+/**
+ * @brief Determines a valid dataclass for the agents and world
+ * @note REPLACE THE INT WITH THE LIST OF DATACLASSES FOR BOTH WORLDS i.e
+ * IsOneOf<T, TrafficData, DiseaseData>
+ * @note Feel free to add other constraints on what a Dataclass should have
+ * after discussing with both world groups
+ */
+template <typename T>
+concept IsDataClass = IsOneOf<T, cse498::TrafficData, cse498::DiseaseData>;
 
 }  // namespace Concepts
 
