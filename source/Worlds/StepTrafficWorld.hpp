@@ -15,6 +15,7 @@
 
 namespace cse498 {
 
+template <typename SpawnedAgent>
 class StepTrafficWorld : public StepWorldBase<TrafficData> {
   using Agent = StepAgentBase<TrafficData>;
   using AgentPtr = std::shared_ptr<Agent>;
@@ -35,7 +36,10 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
     size_t grass_id{};
 
     // Now we'll need to have an operator() overload for each Step type.
-    VisitRet operator()(steps::MovementStep step) {
+    // NOTE: all this "typename StepVisitor::VisitRet" stuff (instead of just
+    // "VisitRet") is for some reason required when adding "template <typename
+    // SpawnedAgent>".
+    typename StepVisitor::VisitRet operator()(steps::MovementStep step) {
       // The simplest step -- the agent just wants to move to a space.
       if (!world.IsValid(step.loc) || world.IsGrass(step.loc)) {
         // TODO: return an error here maybe?
@@ -87,7 +91,7 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
       return {};
     }
 
-    VisitRet operator()(steps::InfoStep step) {
+    typename StepVisitor::VisitRet operator()(steps::InfoStep step) {
       // When we get an info step, the agent would like to do something
       // conditionally (the container handles the branching internally).
       // It will provide us with the "aspect" about the world, and the
@@ -119,13 +123,15 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
     // ConditionalStep), we could either (a) extend the InfoHandler approach for
     // a defaulted visitor or apply CRTP and have it build in these overloads.
 
-    VisitRet operator()([[maybe_unused]] steps::ConditionalStep step) {
+    typename StepVisitor::VisitRet operator()(
+        [[maybe_unused]] steps::ConditionalStep step) {
       // The compiler needs this, but this should never be reached. A
       // better solution is forthcoming, for now just leave empty.
       return {};
     }
 
-    VisitRet operator()([[maybe_unused]] steps::ReconStep step) {
+    typename StepVisitor::VisitRet operator()(
+        [[maybe_unused]] steps::ReconStep step) {
       // The compiler needs this, but this should (for now) never be
       // reached. A better solution is forthcoming, for now just leave empty.
       return {};
@@ -327,7 +333,8 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
         // TODO: better error handling
         break;
       }
-      StepVisitor::VisitRet step_result = std::visit(visitor, step.value());
+      typename StepVisitor::VisitRet step_result =
+          std::visit(visitor, step.value());
 
       if (!step_result.has_value()) {
         // TODO: better error handling
@@ -404,9 +411,7 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
               TrafficData state = {
                   dest_pos, pos, Direction::East,
                   true,     '>', GetDestinationColour(dest_pos)};
-              // TODO: make this generic, remove explicit use of
-              // StepDrivingAgent
-              AddAgent<StepDrivingAgent>(state);
+              AddAgent<SpawnedAgent>(state);
             }
 
             ++num_spawned_agents;
