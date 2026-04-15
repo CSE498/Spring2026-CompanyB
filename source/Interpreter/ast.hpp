@@ -11,6 +11,10 @@
 #include "agentlang.hpp"
 #include "lexer.hpp"
 
+namespace cse498 {
+struct InterpreterWrapper;
+};
+
 namespace cse498::AST {
 // ----------------- Nodes -------------
 using namespace agentlang;
@@ -22,6 +26,9 @@ struct Node {
     // Nodes are by default untyped
     return ASTErr(ASTErr::UNTYPED_NODE, "Node is untyped");
   }
+
+  // Should evaluation return nothing?
+  virtual std::expected<void, InterpErr> Accept(InterpreterWrapper &) = 0;
 
   Node(emplex::Token token) : m_Token(token) {};
   virtual ~Node() = 0;
@@ -36,10 +43,18 @@ struct TypedNode : public Node {
 
   // Return the cached type if it exsits, otherwise resolve
   std::expected<size_t, InterpErr> GetType() override {
-    if (!m_Type.has_value())
-      return ResolveType();
-    else
-      return m_Type.value();
+    if (!m_Type.has_value()) {
+      // Resolve the derived class' type
+      auto type_res = ResolveType();
+      if (!type_res.has_value())
+        return type_res.error();
+
+      // Note it internally for later calls
+      m_Type = type_res.value();
+    }
+
+    // Either way now we've got it
+    return m_Type.value();
   }
 
   TypedNode(emplex::Token token) : Node(token) {};
@@ -53,6 +68,8 @@ struct StmtBlock : public Node {
   void add_node(std::unique_ptr<Node> &&node) {
     m_Body.emplace_back(std::move(node));
   }
+
+  std::expected<void, InterpErr> Accept(InterpreterWrapper &) override;
 
   StmtBlock(emplex::Token token) : Node(token), m_Body() {};
   StmtBlock(emplex::Token token, std::vector<std::unique_ptr<Node>> &&body)
@@ -71,6 +88,7 @@ struct ExprUnary : public TypedNode {
   std::unique_ptr<Node> m_Left;
 
   std::expected<size_t, InterpErr> ResolveType() override;
+  std::expected<void, InterpErr> Accept(InterpreterWrapper &) override;
 
   ExprUnary(emplex::Token token, std::unique_ptr<Node> &&left)
       : TypedNode(token), m_Left(std::move(left)) {};
@@ -82,6 +100,7 @@ struct ExprBinary : public TypedNode {
   std::unique_ptr<Node> m_Right;
 
   std::expected<size_t, InterpErr> ResolveType() override;
+  std::expected<void, InterpErr> Accept(InterpreterWrapper &) override;
 
   ExprBinary(emplex::Token token, std::unique_ptr<Node> &&left,
              std::unique_ptr<Node> &&right)
@@ -94,6 +113,7 @@ struct Assign : public TypedNode {
   std::unique_ptr<Node> m_Value;
 
   std::expected<size_t, InterpErr> ResolveType() { return m_Sym->type.index(); }
+  std::expected<void, InterpErr> Accept(InterpreterWrapper &) override;
 
   Assign(emplex::Token const &token, std::shared_ptr<Symbols::SymInfo> sym,
          std::unique_ptr<Node> &&value)
@@ -108,6 +128,8 @@ struct StmtAgentDef : public Node {
   std::unique_ptr<Node> m_Init;
   std::unique_ptr<Node> m_Turn;
 
+  std::expected<void, InterpErr> Accept(InterpreterWrapper &) override;
+
   StmtAgentDef(emplex::Token token, std::unique_ptr<Node> &&init,
                std::unique_ptr<Node> &&turn)
       : Node(token), m_Init(std::move(init)), m_Turn(std::move(turn)) {}
@@ -120,6 +142,8 @@ struct StmtAction : public Node {
   // So this node MUST resolve to a direction
   std::unique_ptr<Node> m_Direction;
 
+  std::expected<void, InterpErr> Accept(InterpreterWrapper &) override;
+
   StmtAction(emplex::Token token, std::unique_ptr<Node> &&direction)
       : Node(token), m_Direction(std::move(direction)) {}
   ~StmtAction() = default;
@@ -130,6 +154,8 @@ struct StmtWhile : public Node {
   // Must resolve to a bool-convertible type
   std::unique_ptr<Node> m_Condition;
   std::unique_ptr<Node> m_Body;
+
+  std::expected<void, InterpErr> Accept(InterpreterWrapper &) override;
 
   StmtWhile(emplex::Token token, std::unique_ptr<Node> &&condition,
             std::unique_ptr<Node> &&body)
@@ -147,6 +173,8 @@ struct StmtLoopCtl : public Node {
 
   Action m_Action;
 
+  std::expected<void, InterpErr> Accept(InterpreterWrapper &) override;
+
   StmtLoopCtl(emplex::Token token, Action action)
       : Node(token), m_Action(action) {}
 };
@@ -157,6 +185,8 @@ struct StmtIf : public Node {
   std::unique_ptr<Node> m_Condition;
   std::unique_ptr<Node> m_TBody;
   std::optional<std::unique_ptr<Node>> m_FBody;
+
+  std::expected<void, InterpErr> Accept(InterpreterWrapper &) override;
 
   StmtIf(emplex::Token token, std::unique_ptr<Node> &&condition,
          std::unique_ptr<Node> &&t_body, std::unique_ptr<Node> &&f_body)
@@ -176,6 +206,8 @@ struct ValLiteral : public TypedNode {
 
   std::expected<size_t, InterpErr> ResolveType() override;
 
+  std::expected<void, InterpErr> Accept(InterpreterWrapper &) override;
+
   // Construct from raw type value
   template <Types::TypeKind T>
   ValLiteral(emplex::Token token, T val)
@@ -192,6 +224,8 @@ struct ValVariable : public TypedNode {
   std::shared_ptr<Symbols::SymInfo> m_Symbol;
 
   std::expected<size_t, InterpErr> ResolveType() override;
+
+  std::expected<void, InterpErr> Accept(InterpreterWrapper &) override;
 
   ValVariable(emplex::Token token, std::shared_ptr<Symbols::SymInfo> symbol)
       : TypedNode(token, symbol->type.index()), m_Symbol(symbol) {}

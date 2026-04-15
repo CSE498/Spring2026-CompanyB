@@ -72,6 +72,7 @@ struct SymbolErr : public BaseErr {
 struct RuntimeErr : BaseErr {
   enum Kind {
     TYPE_MISMATCH,
+    EMPTY_INTERP_WRAPPER,
   };
 
   Kind m_Kind;
