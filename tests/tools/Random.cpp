@@ -7,33 +7,33 @@
 TEST_CASE("Random basic range behavior", "[random]") {
   cse498::Random rng(12345);
 
-  SECTION("nextDouble defaults to [0, 1)") {
+  SECTION("nextReal<double> defaults to [0, 1)") {
     for (int i = 0; i < 2000; ++i) {
-      double v = rng.nextDouble();
+      double v = rng.nextReal<double>();
       CHECK(v >= 0.0);
       CHECK(v < 1.0);
     }
   }
 
-  SECTION("nextDouble stays in [min, max)") {
+  SECTION("nextReal<double> stays in [min, max)") {
     for (int i = 0; i < 2000; ++i) {
-      double v = rng.nextDouble(-2.5, 7.5);
+      double v = rng.nextReal(-2.5, 7.5);
       CHECK(v >= -2.5);
       CHECK(v < 7.5);
     }
   }
 
-  SECTION("nextFloat defaults to [0, 1)") {
+  SECTION("nextReal<float> defaults to [0, 1)") {
     for (int i = 0; i < 2000; ++i) {
-      float v = rng.nextFloat();
+      float v = rng.nextReal<float>();
       CHECK(v >= 0.0f);
       CHECK(v < 1.0f);
     }
   }
 
-  SECTION("nextFloat stays in [min, max)") {
+  SECTION("nextReal<float> stays in [min, max)") {
     for (int i = 0; i < 2000; ++i) {
-      float v = rng.nextFloat(-3.0f, 2.0f);
+      float v = rng.nextReal(-3.0f, 2.0f);
       CHECK(v >= -3.0f);
       CHECK(v < 2.0f);
     }

@@ -4,18 +4,6 @@
 #include "../../source/tools/StateGrid/Tile.hpp"
 
 namespace cse498 {
-/***********************************************
- * Just to be used for testing
- ***********************************************/
-class Agent {
- public:
-  explicit Agent(int id) : id(id) {}
-  int getId() const { return id; }
-
- private:
-  int id;
-};
-
 // AI helped with conversting test case from using Agent* to shared pointers
 TEST_CASE("Test Tile") {
   // Setting new values
@@ -52,20 +40,25 @@ TEST_CASE("Test Tile") {
   CHECK(Tile1.hasAgent() == false);
 
   // Default innits
-  auto Agent1 = std::make_shared<Agent>(1);
-  auto Agent2 = std::make_shared<Agent>(2);
+  auto Agent1 = std::make_unique<Agent>(1);
+  auto Agent2 = std::make_unique<Agent>(2);
+
+  // Save raw pointer before moving ownership
+  Agent *Agent1_raw = Agent1.get();
 
   // Sets agent and ensure only one may exist
   CHECK(Tile1.addAgent(Agent1) == true);
   CHECK(Tile1.hasAgent() == true);
+  CHECK(Agent1 == nullptr);  // ownership was transferred
 
   CHECK(Tile1.addAgent(Agent2) == false);
+  CHECK(Agent2 != nullptr);  // caller retains ownership on failure
+  CHECK(Agent2->getId() == 2);
 
   // Ensure that the agent is the same
-  std::shared_ptr<Agent> found =
-      Tile1.getAgent();  // FIXED: Changed to shared_ptr
+  Agent *found = Tile1.getAgent();
   CHECK(found != nullptr);
-  CHECK(found.get() == Agent1.get());  // FIXED: Compare raw pointers
+  CHECK(found == Agent1_raw);
   CHECK(found->getId() == 1);
 
   // Removes agent and esure you can remove an agent if there isnt one
@@ -86,37 +79,22 @@ TEST_CASE("Test StateGrid") {
   std::vector<std::vector<char>> premadeMap = {{'P', 'P', 'W'},
                                                {'P', 'W', 'P'}};
 
-  StateGrid Stategrid1(3, 2, premadeMap);
+  StateGrid Stategrid1(premadeMap);
 
   CHECK(Stategrid1.getWidth() == 3);
   CHECK(Stategrid1.getHeight() == 2);
 
   // Out of bounds check also checks for wall collisions
-  CHECK(Stategrid1.inBounds(0, 0) == true);
-  CHECK(Stategrid1.inBounds(1, 2) == true);
-  CHECK(Stategrid1.inBounds(0, 2) == false);  // wall
-  CHECK(Stategrid1.inBounds(1, 1) == false);  // Wall
+  CHECK(Stategrid1.inBoundsAndTraversable(0, 0) == true);
+  CHECK(Stategrid1.inBoundsAndTraversable(1, 2) == true);
+  CHECK(Stategrid1.inBoundsAndTraversable(0, 2) == false);  // wall
+  CHECK(Stategrid1.inBoundsAndTraversable(1, 1) == false);  // Wall
 
   // All out of bounds, greater, less than height, width
-  CHECK(Stategrid1.inBounds(-1, 0) == false);
-  CHECK(Stategrid1.inBounds(0, -1) == false);
-  CHECK(Stategrid1.inBounds(2, 0) == false);
-  CHECK(Stategrid1.inBounds(0, 3) == false);
-}
-
-TEST_CASE("Test StateGrid Error Conditions") {
-  // Premade map and the height, width inputs dont match
-  std::vector<std::vector<char>> badHeight = {{'P', 'P', 'W'}};
-  CHECK_THROWS(StateGrid(3, 2, badHeight));
-
-  std::vector<std::vector<char>> badWidth = {{'P', 'P'}, {'P', 'W'}};
-  CHECK_THROWS(StateGrid(3, 2, badWidth));
-
-  std::vector<std::vector<char>> tiny = {{'P'}};
-  CHECK_THROWS(StateGrid(0, 1, tiny));
-  CHECK_THROWS(StateGrid(1, 0, tiny));
-  CHECK_THROWS(StateGrid(-1, 1, tiny));
-  CHECK_THROWS(StateGrid(1, -1, tiny));
+  CHECK(Stategrid1.inBoundsAndTraversable(-1, 0) == false);
+  CHECK(Stategrid1.inBoundsAndTraversable(0, -1) == false);
+  CHECK(Stategrid1.inBoundsAndTraversable(2, 0) == false);
+  CHECK(Stategrid1.inBoundsAndTraversable(0, 3) == false);
 }
 
 // AI helped with conversting test case from using Agent* to shared pointers
@@ -125,51 +103,46 @@ TEST_CASE("Test StateGrid, Tile Integration") {
   std::vector<std::vector<char>> premadeMap = {{'P', 'W', 'W'},
                                                {'P', 'W', 'P'}};
 
-  StateGrid Stategrid1(3, 2, premadeMap);
+  StateGrid Stategrid1(premadeMap);
 
-  // Checks the tiles were initialized correctly and we can pull them
-  auto& tiles = Stategrid1.getAllTiles();
-
+  // Checks the tiles were initialized correctly using StateGrid accessors
   // Checks a path
-  Tile& Tile_0_0 = tiles[0][0];
-  CHECK(Tile_0_0.getRow() == 0);
-  CHECK(Tile_0_0.getColumn() == 0);
-  CHECK(Tile_0_0.getSymbol() == 'P');
-  CHECK(Tile_0_0.getCanTraverse() == true);
-
-  CHECK(Tile_0_0.getMetaData().movementModifier == 0);
-  CHECK(Tile_0_0.getMetaData().condition == Condition::Perfect);
-
-  CHECK(Tile_0_0.hasAgent() == false);
-  CHECK(Tile_0_0.getAgent() == nullptr);
+  CHECK(Stategrid1.getSymbol(0, 0) == 'P');
+  CHECK(Stategrid1.getCanTraverse(0, 0) == true);
+  CHECK(Stategrid1.getMetaData(0, 0).movementModifier == 0);
+  CHECK(Stategrid1.getMetaData(0, 0).condition == Condition::Perfect);
+  CHECK(Stategrid1.hasAgent(0, 0) == false);
+  CHECK(Stategrid1.getAgent(0, 0) == nullptr);
 
   // Checks a wall
-  Tile& Tile_1_1 = tiles[1][1];
-  CHECK(Tile_1_1.getRow() == 1);
-  CHECK(Tile_1_1.getColumn() == 1);
-  CHECK(Tile_1_1.getSymbol() == 'W');
-  CHECK(Tile_1_1.getCanTraverse() == false);
+  CHECK(Stategrid1.getSymbol(1, 1) == 'W');
+  CHECK(Stategrid1.getCanTraverse(1, 1) == false);
+  CHECK(Stategrid1.getMetaData(1, 1).movementModifier == 0);
+  CHECK(Stategrid1.getMetaData(1, 1).condition == Condition::Perfect);
+  CHECK(Stategrid1.hasAgent(1, 1) == false);
+  CHECK(Stategrid1.getAgent(1, 1) == nullptr);
 
-  CHECK(Tile_1_1.getMetaData().movementModifier == 0);
-  CHECK(Tile_1_1.getMetaData().condition == Condition::Perfect);
+  // Also verify via const getAllTiles
+  const auto &tiles = Stategrid1.getAllTiles();
+  CHECK(tiles[0][0].getRow() == 0);
+  CHECK(tiles[0][0].getColumn() == 0);
+  CHECK(tiles[1][1].getRow() == 1);
+  CHECK(tiles[1][1].getColumn() == 1);
 
-  CHECK(Tile_1_1.hasAgent() == false);
-  CHECK(Tile_1_1.getAgent() == nullptr);
+  // Ensures mutability through StateGrid wrapper methods
+  auto agent = std::make_unique<Agent>(42);
+  Agent *agent_raw = agent.get();
+  CHECK(Stategrid1.addAgent(0, 0, agent) == true);
+  CHECK(Stategrid1.hasAgent(0, 0) == true);
+  CHECK(Stategrid1.getAgent(0, 0) == agent_raw);
 
-  // Ensures mutability of the tiles
-  auto agent = std::make_shared<Agent>(42);
-  CHECK(Tile_0_0.addAgent(agent) == true);
-  CHECK(Tile_0_0.hasAgent() == true);
-  CHECK(Tile_0_0.getAgent() == agent);  // FIXED: Compare shared_ptrs directly
-
-  // Checks pulling single tiles, getTile with coords
-  Tile* Tile_0_0_again = Stategrid1.getTile(0, 0);
+  // Checks pulling single tiles, getTile with coords (now const)
+  const Tile *Tile_0_0_again = Stategrid1.getTile(0, 0);
   CHECK(Tile_0_0_again->hasAgent() == true);
-  CHECK(Tile_0_0_again->getAgent() ==
-        agent);  // FIXED: Compare shared_ptrs directly
+  CHECK(Tile_0_0_again->getAgent() == agent_raw);
 
   // OOB tiles returns null ptr
-  Tile* Tile_OOB = Stategrid1.getTile(5, 3);
+  const Tile *Tile_OOB = Stategrid1.getTile(5, 3);
   CHECK(Tile_OOB == nullptr);
 }
 
@@ -177,26 +150,33 @@ TEST_CASE("Tests Moving agents") {
   std::vector<std::vector<char>> premadeMap = {{'P', 'W', 'P'},
                                                {'P', 'W', 'P'}};
 
-  StateGrid Stategrid1(3, 2, premadeMap);
+  StateGrid Stategrid1(premadeMap);
 
-  auto& tiles = Stategrid1.getAllTiles();
+  auto agent = std::make_unique<Agent>(42);
+  CHECK(Stategrid1.addAgent(0, 0, agent) == true);
+  CHECK(Stategrid1.hasAgent(0, 0) == true);
+  CHECK(Stategrid1.getAgent(0, 0)->getId() == 42);
 
-  auto agent = std::make_shared<Agent>(42);
-  CHECK(tiles[0][0].addAgent(agent) == true);
-  CHECK(tiles[0][0].hasAgent() == true);
-  CHECK(tiles[0][0].getAgent()->getId() == 42);
+  CHECK(Stategrid1.getCanTraverse(0, 1) == false);
 
-  // Get the shared_ptr before removing
-  std::shared_ptr<Agent> moveAgent = tiles[0][0].getAgent();
+  // Move agent from (0,0) to (0,2) using StateGrid moveAgent
+  CHECK(Stategrid1.moveAgent(0, 0, 0, 2) == true);
+  CHECK(Stategrid1.hasAgent(0, 0) == false);
+  CHECK(Stategrid1.getAgent(0, 0) == nullptr);
+  CHECK(Stategrid1.hasAgent(0, 2) == true);
+  CHECK(Stategrid1.getAgent(0, 2)->getId() == 42);
 
-  CHECK(tiles[0][0].removeAgent() == true);
-  CHECK(tiles[0][0].hasAgent() == false);
-  CHECK(tiles[0][0].getAgent() == nullptr);
+  // Try to move to an occupied tile (should fail)
+  auto agent2 = std::make_unique<Agent>(99);
+  CHECK(Stategrid1.addAgent(0, 0, agent2) == true);
+  CHECK(Stategrid1.moveAgent(0, 0, 0, 2) == false);
+  // Agent should still be on source tile after failed move
+  CHECK(Stategrid1.hasAgent(0, 0) == true);
+  CHECK(Stategrid1.getAgent(0, 0)->getId() == 99);
 
-  CHECK(tiles[0][1].getCanTraverse() == false);  // Fixed missing parentheses
-
-  CHECK(tiles[0][2].addAgent(moveAgent) == true);
-  CHECK(tiles[0][2].hasAgent() == true);
-  CHECK(tiles[0][2].getAgent()->getId() == 42);
+  // Remove agent
+  CHECK(Stategrid1.removeAgent(0, 2) == true);
+  CHECK(Stategrid1.hasAgent(0, 2) == false);
+  CHECK(Stategrid1.removeAgent(0, 2) == false);  // Already empty
 }
 }  // namespace cse498

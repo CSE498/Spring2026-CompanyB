@@ -11,6 +11,7 @@
 #include <concepts>  // For std::integral
 #include <cstddef>   // For size_t
 
+#include "../core/WorldPosition.hpp"
 #include "./StateGrid/StateGrid.hpp"
 
 namespace cse498 {
@@ -46,7 +47,14 @@ class StateGridPosition {
   StateGridPosition(const StateGridPosition&) = default;
   StateGridPosition& operator=(const StateGridPosition&) = default;
 
+  WorldPosition AsWorldPosition() const { return WorldPosition(col, row); }
+
   // -- Movement Functions --
+
+  void SetLocation(WorldPosition pos) {
+    col = pos.CellX();
+    row = pos.CellY();
+  }
 
   bool MoveForward(const StateGrid& grid) {
     if (!IsValidForwardMove(grid)) return false;
@@ -85,8 +93,8 @@ class StateGridPosition {
     if (direction_facing == Direction::North && row == 0) return false;
     if (direction_facing == Direction::West && col == 0) return false;
     StateGridPosition new_pos = GetForwardPosition();
-    return grid.inBounds(static_cast<int>(new_pos.row),
-                         static_cast<int>(new_pos.col));
+    return grid.inBoundsAndTraversable(static_cast<int>(new_pos.row),
+                                       static_cast<int>(new_pos.col));
   }
 
   /// @brief Check if a backward move is allowed without moving
@@ -98,8 +106,8 @@ class StateGridPosition {
     if (direction_facing == Direction::East && col == 0) return false;
     if (direction_facing == Direction::South && row == 0) return false;
     StateGridPosition new_pos = GetBackwardPosition();
-    return grid.inBounds(static_cast<int>(new_pos.row),
-                         static_cast<int>(new_pos.col));
+    return grid.inBoundsAndTraversable(static_cast<int>(new_pos.row),
+                                       static_cast<int>(new_pos.col));
   }
 
   // -- Distance Functions --
@@ -178,6 +186,34 @@ class StateGridPosition {
         assert(false && "Invalid direction in GetBackwardPosition");
         return *this;
     }
+  }
+
+  [[nodiscard]] StateGridPosition GetLeftwardPosition() const {
+    switch (direction_facing) {
+      case Direction::North:
+        return StateGridPosition(col - 1, row, direction_facing);
+      case Direction::East:
+        return StateGridPosition(col, row - 1, direction_facing);
+      case Direction::South:
+        return StateGridPosition(col + 1, row, direction_facing);
+      case Direction::West:
+        return StateGridPosition(col, row + 1, direction_facing);
+    }
+    return {};
+  }
+
+  [[nodiscard]] StateGridPosition GetRightwardPosition() const {
+    switch (direction_facing) {
+      case Direction::North:
+        return StateGridPosition(col + 1, row, direction_facing);
+      case Direction::East:
+        return StateGridPosition(col, row + 1, direction_facing);
+      case Direction::South:
+        return StateGridPosition(col - 1, row, direction_facing);
+      case Direction::West:
+        return StateGridPosition(col, row - 1, direction_facing);
+    }
+    return {};
   }
 
   // @brief Get position at requested offset
