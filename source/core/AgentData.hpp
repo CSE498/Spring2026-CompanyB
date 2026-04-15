@@ -2,6 +2,7 @@
 
 #include <optional>
 #include "WorldPosition.hpp"
+#include "../tools/StateGridPosition.hpp"
 
 namespace cse498 {
 

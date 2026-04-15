@@ -5,7 +5,7 @@
 
 #include "../core/WorldPosition.hpp"
 #include "../tools/StateGridPosition.hpp"
-
+/*
 namespace cse498 {
 struct TrafficData {
   std::optional<WorldPosition> destination;
@@ -16,3 +16,4 @@ struct TrafficData {
   std::string colour;  ///< ANSI escape code for display colour.
 };
 };  // namespace cse498
+*/

@@ -11,7 +11,7 @@
 
 #include "../core/StepWorldBase.hpp"
 #include "../tools/WeightedSet.hpp"
-#include "TrafficData.hpp"
+#include "../core/AgentData.hpp"
 
 namespace cse498 {
 
