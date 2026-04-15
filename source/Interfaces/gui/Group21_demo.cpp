@@ -1,10 +1,10 @@
 #include <QApplication>
-#include "MainWindow.hpp"
+#include "../source/Interfaces/gui/MainWindow.hpp"
 #include "../source/Worlds/MazeWorld.hpp"
 #include "../source/Worlds/InfectiousWorld.hpp"
 #include "../source/Agents/PacingAgent.hpp"
 
-#include "StartScreen.h"
+#include "../source/Interfaces/gui/StartScreen.h"
 
 int main(int argc, char *argv[])
 {
