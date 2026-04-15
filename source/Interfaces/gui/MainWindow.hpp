@@ -1,16 +1,3 @@
-/**
- * This file is part of the Fall 2026, CSE 498, section 2, course project.
- * @brief A class that renders the GUI
- *
- * references:
- * https://doc.qt.io/qt-6/qtwidgets-graphicsview-diagramscene-example.html
- * https://doc.qt.io/qt-6/qstatusbar.html
- * https://doc.qt.io/qt-6/qfiledialog.html#getOpenFileName
- * https://doc.qt.io/qt-6/qsplitter.html
- * https://doc.qt.io/qt-6/qkeysequence.html
- *
- **/
-
 #pragma once
 
 #include <QAction>
@@ -31,6 +18,9 @@
 #include <vector>
 
 #include "../../core/WorldBase.hpp"
+#include "../../Worlds/InfectiousWorld.hpp"
+#include "../../Worlds/MazeWorld.hpp"
+#include "../../Agents/PacingAgent.hpp"
 #include "ImageGrid.hpp"
 #include "MainGraph.hpp"
 
@@ -39,12 +29,14 @@ namespace cse498 {
 class MainWindow : public QMainWindow {
     Q_OBJECT
 
-   public:
+public:
     MainWindow(WorldBase& world, const std::vector<QString>& imagePaths,
-               int tileSize = 32, const QString& agentImagePath = QString(), QWidget* parent = nullptr);
+               int tileSize = 32, const QString& agentImagePath = QString(),
+               QWidget* parent = nullptr, int mode = 1);
     virtual ~MainWindow() = default;
     void logCommand(const QString& message);
 
+    std::unique_ptr<WorldBase> mOwnedWorld{};
 
     // disable copy
     MainWindow(const MainWindow &) = delete;
@@ -54,11 +46,12 @@ class MainWindow : public QMainWindow {
     MainWindow(MainWindow &&) = delete;
     MainWindow &operator=(MainWindow &&) = delete;
 
-   private:
+private:
     void setMenuBar();
     void setStatusBar();
     void setMainWidget();
     void setImageGrid();
+    void setupAgents();
 
     void onFileNew();
     void onFileOpen();
@@ -69,6 +62,8 @@ class MainWindow : public QMainWindow {
     void startSimulation();
     void onTick();
 
+
+
     // Timer
     QTimer* mTimer = nullptr;
     int mTickInterval = 300;
@@ -78,38 +73,30 @@ class MainWindow : public QMainWindow {
     const std::vector<QString>& mImagePaths;
     int mTileSize;
     QString mAgentImagePath;
-
+    int mMode = 1;
 
     // Menu bar
     QMenu* mFileMenu;
     QMenu* mHelpMenu;
 
-    // Actions
-    // Raw pointers intentional because of the QT paraent ownership for the menu
-    // They get destroyed automatically when the window gets destroyed.
     QAction* mNewFileAction;
     QAction* mOpenFileAction;
     QAction* mSaveFileAction;
     QAction* mExitAction;
     QAction* mAboutAction;
 
-    // Toolbar
     QToolBar* mToolBar;
 
-    // Main widget
     QWidget* mSidePanel;
     QGraphicsView* mGraphicsView;
     QGraphicsScene* mGraphicsScene;
 
-    // ImageGrid
     std::unique_ptr<ImageGrid> mImageGrid;
 
-    // Graph
     MainGraph* mMainGraph;
 
-    // Command Log
     QTextEdit* mCommandLog;
     QVBoxLayout* mSidePanelLayout;
 };
 
-}  // namespace cse498
+} // namespace cse498

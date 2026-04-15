@@ -12,130 +12,113 @@
 #include <string>
 #include <vector>
 
-namespace cse498
+namespace cse498 {
+
+constexpr const int TIMEOUT = 4000;
+
+MainWindow::MainWindow(WorldBase &world, const std::vector<QString> &imagePaths,
+                       int tileSize, const QString &agentImagePath, QWidget *parent, int mode)
+    : QMainWindow(parent),
+      mWorld(world),
+      mImagePaths(imagePaths),
+      mTileSize(tileSize),
+      mAgentImagePath(agentImagePath),
+      mMode(mode)
 {
+    setWindowTitle("Group 21 Demo");
+    setMinimumSize(640, 480);
+    resize(1280, 720);
 
-constexpr const int TIMEOUT = 4000;  // time until status bar messages timeout; 4 seconds
+    setMenuBar();
+    setMainWidget();
+    setupAgents();
+    setImageGrid();
+    setStatusBar();
+    startSimulation();
+}
 
-    MainWindow::MainWindow(WorldBase &world, const std::vector<QString> &imagePaths,
-                           int tileSize, const QString &agentImagePath, QWidget *parent)
-        : QMainWindow(parent),
-          mWorld(world),
-          mImagePaths(imagePaths),
-          mAgentImagePath(agentImagePath),
-          mTileSize(tileSize)
-    {
-
-        setWindowTitle("Group 21 Demo");
-        setMinimumSize(640, 480); // min size the window can be
-        resize(1280, 720);        // initial size of the window
-
-        setMenuBar();
-        setMainWidget();
-        setImageGrid();
-        setStatusBar();
-
-        startSimulation();
+void MainWindow::setupAgents() {
+    if (mMode == 1) {
+        mWorld.AddAgent<PacingAgent>("Agent-1").SetLocation(WorldPosition{3, 2});
+    } else {
+        auto& iw = static_cast<InfectiousWorld&>(mWorld);
+        iw.AddAgent<PacingAgent>("Agent-1").SetLocation(WorldPosition{3, 2});
+        iw.AddAgent<PacingAgent>("Agent-2").SetLocation(WorldPosition{5, 4});
+        iw.AddAgent<PacingAgent>("Agent-3").SetLocation(WorldPosition{7, 3});
+        iw.AddAgent<PacingAgent>("Agent-4").SetLocation(WorldPosition{4, 6});
+        iw.AddAgent<PacingAgent>("Agent-5").SetLocation(WorldPosition{8, 7});
+        iw.AddAgent<PacingAgent>("Agent-6").SetLocation(WorldPosition{12, 3});
+        iw.AddAgent<PacingAgent>("Agent-7").SetLocation(WorldPosition{15, 5});
+        iw.AddAgent<PacingAgent>("Agent-8").SetLocation(WorldPosition{14, 2});
+        iw.AddAgent<PacingAgent>("Agent-9").SetLocation(WorldPosition{16, 7});
+        iw.AddAgent<PacingAgent>("Agent-10").SetLocation(WorldPosition{13, 7});
+        iw.InfectAgent(0);
     }
+}
 
-    void MainWindow::startSimulation()
-    {
-        mTimer = new QTimer(this);
-        connect(mTimer, &QTimer::timeout, this, &MainWindow::onTick);
-        mTimer->start(mTickInterval);
-    }
+void MainWindow::startSimulation() {
+    mTimer = new QTimer(this);
+    connect(mTimer, &QTimer::timeout, this, &MainWindow::onTick);
+    mTimer->start(mTickInterval);
+}
 
-    void MainWindow::onTick()
-    {
-        mWorld.RunAgents();
-        mWorld.UpdateWorld();
-
-        mImageGrid->RenderGrid();
-        mImageGrid->RenderAgents();
-    
+void MainWindow::onTick() {
+    mWorld.RunAgents();
+    mWorld.UpdateWorld();
+    mImageGrid->RenderGrid();
+    mImageGrid->RenderAgents();
     logCommand("TEST Tick 1: [Agent 0] Move forward TEST");
     logCommand("TEST Tick 2: [Agent 1] Stop TEST");
 }
 
-    void MainWindow::setMenuBar()
-    {
-        // https://doc.qt.io/qt-6/qkeysequence.html
+void MainWindow::setMenuBar() {
+    mFileMenu = menuBar()->addMenu("&File");
 
-        // Add file menu
-        mFileMenu = menuBar()->addMenu("&File");
+    mNewFileAction = new QAction(QIcon::fromTheme("document-new"), ("&New File..."), this);
+    mNewFileAction->setShortcut(QKeySequence::New);
+    mNewFileAction->setStatusTip("Create a new file");
+    connect(mNewFileAction, &QAction::triggered, this, &MainWindow::onFileNew);
 
-        // File > New File
+    mOpenFileAction = new QAction(QIcon::fromTheme("document-open"), ("&Open File..."), this);
+    mOpenFileAction->setShortcut(QKeySequence::Open);
+    mOpenFileAction->setStatusTip("Open an existing file");
+    connect(mOpenFileAction, &QAction::triggered, this, &MainWindow::onFileOpen);
 
-        // create new action
-        mNewFileAction =
-            new QAction(QIcon::fromTheme("document-new"), ("&New File..."), this);
-        // bind keyboard shortcut
-        mNewFileAction->setShortcut(QKeySequence::New);
-        // set status text
-        mNewFileAction->setStatusTip("Create a new file");
-        // connect this action to onFileNew()
-        connect(mNewFileAction, &QAction::triggered, this, &MainWindow::onFileNew);
+    mSaveFileAction = new QAction(QIcon::fromTheme("document-save"), ("&Save"), this);
+    mSaveFileAction->setShortcut(QKeySequence::Save);
+    mSaveFileAction->setStatusTip("Save the current file");
+    connect(mSaveFileAction, &QAction::triggered, this, &MainWindow::onFileSave);
 
-        // File > Open File
-        mOpenFileAction =
-            new QAction(QIcon::fromTheme("document-open"), ("&Open File..."), this);
-        mOpenFileAction->setShortcut(QKeySequence::Open);
-        mOpenFileAction->setStatusTip("Open an existing file");
-        connect(mOpenFileAction, &QAction::triggered, this,
-                &MainWindow::onFileOpen);
+    mExitAction = new QAction(QIcon::fromTheme("application-exit"), ("E&xit"), this);
+    mExitAction->setShortcut(QKeySequence::Quit);
+    mExitAction->setStatusTip("Exit the application");
+    connect(mExitAction, &QAction::triggered, this, &MainWindow::onFileExit);
 
-        // File > Save
-        mSaveFileAction =
-            new QAction(QIcon::fromTheme("document-save"), ("&Save"), this);
-        mSaveFileAction->setShortcut(QKeySequence::Save);
-        mSaveFileAction->setStatusTip("Save the current file");
-        connect(mSaveFileAction, &QAction::triggered, this,
-                &MainWindow::onFileSave);
+    mFileMenu->addAction(mNewFileAction);
+    mFileMenu->addAction(mOpenFileAction);
+    mFileMenu->addAction(mSaveFileAction);
+    mFileMenu->addSeparator();
+    mFileMenu->addAction(mExitAction);
 
-        // File > Exit
-        mExitAction =
-            new QAction(QIcon::fromTheme("application-exit"), ("E&xit"), this);
-        mExitAction->setShortcut(QKeySequence::Quit);
-        mExitAction->setStatusTip("Exit the application");
-        connect(mExitAction, &QAction::triggered, this, &MainWindow::onFileExit);
+    mHelpMenu = menuBar()->addMenu("&Help");
+    mAboutAction = new QAction(QIcon::fromTheme("help-about"), ("&About"), this);
+    mAboutAction->setStatusTip("Show information about this application");
+    connect(mAboutAction, &QAction::triggered, this, &MainWindow::onHelpAbout);
+    mHelpMenu->addAction(mAboutAction);
+}
 
-        // add actions to the File menu
-        mFileMenu->addAction(mNewFileAction);
-        mFileMenu->addAction(mOpenFileAction);
-        mFileMenu->addAction(mSaveFileAction);
-        mFileMenu->addSeparator();
-        mFileMenu->addAction(mExitAction);
+void MainWindow::setMainWidget() {
+    mGraphicsScene = new QGraphicsScene(this);
+    mGraphicsView = new QGraphicsView(mGraphicsScene, this);
+    mGraphicsView->setDragMode(QGraphicsView::ScrollHandDrag);
 
-        // Help menu
-        mHelpMenu = menuBar()->addMenu("&Help");
-
-        mAboutAction =
-            new QAction(QIcon::fromTheme("help-about"), ("&About"), this);
-        mAboutAction->setStatusTip("Show information about this application");
-        connect(mAboutAction, &QAction::triggered, this, &MainWindow::onHelpAbout);
-
-        // add action to the Help Menu
-        mHelpMenu->addAction(mAboutAction);
-    }
-
-    void MainWindow::setMainWidget()
-    {
-        mGraphicsScene = new QGraphicsScene(this);
-
-        mGraphicsView = new QGraphicsView(mGraphicsScene, this);
-        mGraphicsView->setDragMode(QGraphicsView::ScrollHandDrag);
-
-    // blank panel (placeholder for graph and log)
     mSidePanel = new QWidget(this);
     mSidePanel->setMinimumWidth(200);
 
-    // graph display on panel
     mMainGraph = new MainGraph(mSidePanel);
-
     mSidePanelLayout = new QVBoxLayout(mSidePanel);
     mSidePanelLayout->addWidget(mMainGraph);
 
-    // Command log
     mCommandLog = new QTextEdit(this);
     mCommandLog->setReadOnly(true);
     mCommandLog->setStyleSheet(
@@ -150,57 +133,37 @@ constexpr const int TIMEOUT = 4000;  // time until status bar messages timeout; 
         "}");
     mCommandLog->setPlaceholderText("Commands will appear here...");
     mSidePanelLayout->addWidget(mCommandLog, 1);
-
     mSidePanel->setLayout(mSidePanelLayout);
 
-        // horizontal splitter w blank panel on the left, image grid on the right
-        auto *splitter = new QSplitter(Qt::Horizontal, this);
-        splitter->addWidget(mSidePanel);
-        splitter->addWidget(mGraphicsView);
+    auto *splitter = new QSplitter(Qt::Horizontal, this);
+    splitter->addWidget(mSidePanel);
+    splitter->addWidget(mGraphicsView);
+    splitter->setStretchFactor(0, 1);
+    splitter->setStretchFactor(1, 3);
+    setCentralWidget(splitter);
+}
 
-        // blank panel is pos 0, imagegrid is 1 and gets 3x space
-        // https://doc.qt.io/qt-6/qsplitter.html
-        splitter->setStretchFactor(0, 1);
-        splitter->setStretchFactor(1, 3);
+void MainWindow::setImageGrid() {
+    mImageGrid = std::make_unique<ImageGrid>(mWorld, *mGraphicsScene, mTileSize);
+    mImageGrid->MapImages(mImagePaths);
+    mImageGrid->LoadAgentImage(mAgentImagePath);
+    mImageGrid->RenderGrid();
+    mImageGrid->RenderAgents();
+    mImageGrid->SetSceneAndView(*mGraphicsView);
+}
 
-        setCentralWidget(splitter);
-    }
+void MainWindow::setStatusBar() {
+    statusBar()->showMessage("This is a status bar!", TIMEOUT);
+}
 
-    void MainWindow::setImageGrid()
-    {
-        mImageGrid =
-            std::make_unique<ImageGrid>(mWorld, *mGraphicsScene, mTileSize);
+void MainWindow::onFileNew() {
+    statusBar()->showMessage("New file created", TIMEOUT);
+}
 
-        mImageGrid->MapImages(mImagePaths);
-        mImageGrid->LoadAgentImage(mAgentImagePath);
-        mImageGrid->RenderGrid();
-        mImageGrid->RenderAgents();
-        mImageGrid->SetSceneAndView(*mGraphicsView);
-    }
-
-    void MainWindow::setStatusBar()
-    {
-        // ignore the silly placeholder
-        statusBar()->showMessage("This is a status bar!", TIMEOUT);
-    }
-
-    // File management
-
-    void MainWindow::onFileNew()
-    {
-        statusBar()->showMessage("New file created", TIMEOUT);
-
-        // TODO: implement new file logic
-    }
-
-    void MainWindow::onFileOpen()
-    {
-        const QString path = QFileDialog::getOpenFileName(
-            this, "Open File", QString(), ("All Files (*.*)"));
-
-    if (path.isEmpty()) {
-        return;
-    }
+void MainWindow::onFileOpen() {
+    const QString path = QFileDialog::getOpenFileName(
+        this, "Open File", QString(), ("All Files (*.*)"));
+    if (path.isEmpty()) return;
 
     std::ifstream input(path.toStdString());
     if (!input.is_open()) {
@@ -209,20 +172,27 @@ constexpr const int TIMEOUT = 4000;  // time until status bar messages timeout; 
     }
     mWorld.GetGrid().Load(input);
 
+    std::string line, log;
+    bool inLog = false;
+    while (std::getline(input, line)) {
+        if (line == "--- AGENT LOG ---") { inLog = true; continue; }
+        if (inLog) log += line + "\n";
+    }
+
     mGraphicsScene->clear();
     setImageGrid();
+
+    if (!log.empty())
+        mCommandLog->setPlainText(QString::fromStdString(log));
 
     statusBar()->showMessage(QString("Opened: %1").arg(path), TIMEOUT);
 }
 
 void MainWindow::onFileSave() {
-    // show message for 2 sec
     const QString path = QFileDialog::getSaveFileName(
-        this, "Save File", QString(), "All Files (*.*)");
+        this, "Save File", QString(), "Text Files (*.txt);;All Files (*.*)");
+    if (path.isEmpty()) return;
 
-    if (path.isEmpty()) {
-        return;
-    }
     std::ofstream output(path.toStdString());
     if (!output.is_open()) {
         QMessageBox::warning(this, "Save Failed", "Could not save file.");
@@ -230,12 +200,11 @@ void MainWindow::onFileSave() {
     }
 
     mWorld.GetGrid().Print(output);
-
+    output << mCommandLog->toPlainText().toStdString();
     statusBar()->showMessage(QString("File Saved: %1").arg(path), TIMEOUT);
-
 }
 
-    void MainWindow::onFileExit() { close(); }
+void MainWindow::onFileExit() { close(); }
 
 void MainWindow::onHelpAbout() {
     QMessageBox::about(this, "About", "<b>Group 21 Demo</b>");
