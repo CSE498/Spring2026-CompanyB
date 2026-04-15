@@ -20,7 +20,8 @@ private:
   bool m_InTurn = false;
 
   std::expected<std::unique_ptr<AST::Node>, InterpErr> parse_stmt();
-  std::expected<std::unique_ptr<AST::Node>, InterpErr> parse_expr();
+  std::expected<std::unique_ptr<AST::Node>, InterpErr> parse_expr(int prec = 0);
+  std::expected<std::unique_ptr<AST::Node>, InterpErr> parse_term();
   std::expected<std::unique_ptr<AST::Node>, InterpErr> parse_stmt_block();
 
   std::expected<std::unique_ptr<AST::Node>, InterpErr> parse_if();

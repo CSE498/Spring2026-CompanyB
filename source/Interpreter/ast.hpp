@@ -68,24 +68,24 @@ struct EmptyNode : public Node {
 
 // -- Expressions --
 struct ExprUnary : public TypedNode {
-  AgentLexer::Token m_OpToken;
   std::unique_ptr<Node> m_Left;
 
-  ExprUnary(emplex::Token token, emplex::Token op_token,
-            std::unique_ptr<Node> &&left)
-      : TypedNode(token), m_OpToken(op_token), m_Left(std::move(left)) {};
+  std::expected<size_t, InterpErr> ResolveType() override;
+
+  ExprUnary(emplex::Token token, std::unique_ptr<Node> &&left)
+      : TypedNode(token), m_Left(std::move(left)) {};
   ~ExprUnary() = default;
 };
 
 struct ExprBinary : public TypedNode {
-  AgentLexer::Token m_OpToken;
   std::unique_ptr<Node> m_Left;
   std::unique_ptr<Node> m_Right;
 
-  ExprBinary(emplex::Token token, emplex::Token op_token,
-             std::unique_ptr<Node> &&left, std::unique_ptr<Node> &&right)
-      : TypedNode(token), m_OpToken(op_token), m_Left(std::move(left)),
-        m_Right(std::move(right)) {};
+  std::expected<size_t, InterpErr> ResolveType() override;
+
+  ExprBinary(emplex::Token token, std::unique_ptr<Node> &&left,
+             std::unique_ptr<Node> &&right)
+      : TypedNode(token), m_Left(std::move(left)), m_Right(std::move(right)) {};
   ~ExprBinary() = default;
 };
 
@@ -187,6 +187,8 @@ struct StmtIf : public Node {
 struct ValLiteral : public TypedNode {
   Types::Type m_Val;
 
+  std::expected<size_t, InterpErr> ResolveType() override;
+
   // Construct from raw type value
   template <Types::TypeKind T>
   ValLiteral(emplex::Token token, T val)
@@ -201,6 +203,8 @@ struct ValLiteral : public TypedNode {
 // Variable reference
 struct ValVariable : public TypedNode {
   std::shared_ptr<Symbols::SymInfo> m_Symbol;
+
+  std::expected<size_t, InterpErr> ResolveType() override;
 
   ValVariable(emplex::Token token, std::shared_ptr<Symbols::SymInfo> symbol)
       : TypedNode(token, symbol->type.index()), m_Symbol(symbol) {}

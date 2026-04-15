@@ -35,6 +35,8 @@ struct ParseErr {
     OUT_OF_INIT,
     OUT_OF_LOOP,
     INVALID_OP_TOKEN,
+    INVALID_LITERAL,
+    INVALID_TERM,
     TODO,
   };
 

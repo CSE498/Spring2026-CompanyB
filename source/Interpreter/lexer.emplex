@@ -71,7 +71,8 @@ CMP_GEQ ">="
 LITERAL_DBL ([0-9]*\.[0-9]+)|([0-9]+\.)
 LITERAL_INT [0-9]*
 LITERAL_STR (\"([^"\n]|\\["nt])*\")|('([^'\n]|\\['nt])**')
-LITERAL_DIR ([uU][pP])|([dD][oO][wW][nN])|([lL][eE][fF][tT])|([rR][iI][gG][hH][tT])
+#LITERAL_DIR ([uU][pP])|([dD][oO][wW][nN])|([lL][eE][fF][tT])|([rR][iI][gG][hH][tT])
+LITERAL_DIR (left)|(right)|(up)|(down)
 ILLEGAL_STRING (\"([^"\n]|\\\")*$)|('([^'\n]|\\')*$)
 # Identifier
 IDENTIFIER [a-zA-Z][a-zA-Z0-9_]*

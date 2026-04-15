@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Interpreter/errors.hpp"
+#include "RobinHoodMap.hpp"
 #include "core.hpp"
 #include "core/WorldPosition.hpp"
 #include "lexer.hpp"
@@ -79,7 +80,8 @@ struct OpInfo {
    - 7 : Assignment
   */
 
-  static std::expected<OpInfo, InterpErr> FromBinary(AgentLexer::Token token) {
+  static std::expected<OpInfo, InterpErr>
+  FromBinary(AgentLexer::Token const &token) {
     using AgentLexer::IDs;
     // Use fallthrough to evaluate as logical-or
     switch (token.id) {
@@ -110,7 +112,8 @@ struct OpInfo {
                       AgentLexer::TokenName(token.id))));
     };
   }
-  static std::expected<OpInfo, InterpErr> FromUnary(AgentLexer::Token token) {
+  static std::expected<OpInfo, InterpErr>
+  FromUnary(AgentLexer::Token const &token) {
     using AgentLexer::IDs;
     // Use fallthrough to evaluate as logical-or
     switch (token.id) {
@@ -123,6 +126,15 @@ struct OpInfo {
                    std::format("Given token '{}' is not a valid unary operator",
                                AgentLexer::TokenName(token.id))));
     };
+  }
+
+  // The tokens are ints and the operators are tightly grouped
+  // so we can just check a range
+  static constexpr int MIN_OP = AgentLexer::IDs::ID_CMP_GEQ;
+  static constexpr int MAX_OP = AgentLexer::IDs::ID_OP_DOT;
+
+  static bool IsOpToken(AgentLexer::Token const &token) {
+    return ((token.id < MIN_OP) && (token.id > MAX_OP));
   }
 };
 }; // namespace agentlang::Operators
