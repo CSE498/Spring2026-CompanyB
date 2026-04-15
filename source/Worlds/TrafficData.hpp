@@ -1,5 +1,6 @@
 #pragma once
 
+#include <optional>
 #include <string>
 
 #include "../core/WorldPosition.hpp"
@@ -7,7 +8,7 @@
 
 namespace cse498 {
 struct TrafficData {
-  WorldPosition destination;
+  std::optional<WorldPosition> destination;
   WorldPosition position;
   Direction direction;
   bool is_active;

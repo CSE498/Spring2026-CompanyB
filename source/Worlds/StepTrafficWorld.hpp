@@ -345,7 +345,8 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
     TrafficData new_state = agent->GetState();
     WorldPosition new_position = new_state.position;
 
-    if (new_position == new_state.destination) {
+    if (new_state.destination.has_value() &&
+        new_position == *new_state.destination) {
       new_state.is_active = false;
       despawned_agent_ids.push(agent->GetId());
       --num_spawned_agents;
