@@ -17,12 +17,12 @@ std::expected<std::unique_ptr<AST::Node>, InterpErr> Parser::parse_var_def() {
   // Expect: KW_LET
   std::expected<Token, InterpErr> res = m_Lexer.UseIf(IDs::ID_KW_LET);
   if (!res)
-    return std::unexpected(res.error());
+    return res.error();
 
   // Expect: ID
   res = m_Lexer.UseIf(IDs::ID_IDENTIFIER);
   if (!res)
-    return std::unexpected(res.error());
+    return res.error();
 
   // Imp: Symbol table interaction
   Token id_token = res.value();
@@ -30,22 +30,22 @@ std::expected<std::unique_ptr<AST::Node>, InterpErr> Parser::parse_var_def() {
   // Expect: DELIM_CLN
   res = m_Lexer.UseIf(IDs::ID_DELIM_CLN);
   if (!res)
-    return std::unexpected(res.error());
+    return res.error();
 
   // Expect: One of the types
   res = parse_type();
   if (!res)
-    return std::unexpected(res.error());
+    return res.error();
 
   // Imp: Symbol table interaction
   Token type_token = res.value();
   auto sym_add_res = m_Syms.AddSym(id_token, type_token);
   if (!res)
-    return std::unexpected(res.error());
+    return res.error();
 
   auto sym_retrieve_res = m_Syms.GetSym(sym_add_res.value());
   if (!res)
-    return std::unexpected(res.error());
+    return res.error();
 
   // Can be done here if we see a semicolon, otherwise we should see OP_ASSIGN
   if (m_Lexer.Is(IDs::ID_DELIM_SEMICLN))
@@ -56,12 +56,12 @@ std::expected<std::unique_ptr<AST::Node>, InterpErr> Parser::parse_var_def() {
   if (m_Lexer.Is(IDs::ID_OP_ASSIGN)) {
     res = m_Lexer.UseIf(IDs::ID_OP_ASSIGN);
     if (!res)
-      return std::unexpected(res.error());
+      return res.error();
 
     Token assign_token = res.value();
     auto expr = parse_expr();
     if (!expr.has_value()) {
-      return std::unexpected(expr.error());
+      return expr.error();
     }
 
     return std::make_unique<AST::Assign>(assign_token, sym_retrieve_res.value(),
@@ -69,7 +69,7 @@ std::expected<std::unique_ptr<AST::Node>, InterpErr> Parser::parse_var_def() {
   } else {
     auto expr = parse_agent_def();
     if (!expr.has_value()) {
-      return std::unexpected(expr.error());
+      return expr.error();
     }
 
     return std::make_unique<AST::Assign>(type_token, sym_retrieve_res.value(),

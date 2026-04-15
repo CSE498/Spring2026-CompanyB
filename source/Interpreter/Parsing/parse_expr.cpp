@@ -19,7 +19,7 @@ Parser::parse_expr(int prec) {
 
   auto left = parse_expr(prec - 1);
   if (!left.has_value())
-    return std::unexpected(left.error());
+    return left.error();
 
   auto cur_opinfo = OpInfo::FromBinary(m_Lexer.Peek());
   while (cur_opinfo.has_value() && (cur_opinfo.value().m_Prec == prec)) {
@@ -30,7 +30,7 @@ Parser::parse_expr(int prec) {
 
     auto right = parse_expr(right_prec);
     if (!right.has_value())
-      return std::unexpected(right.error());
+      return right.error();
 
     std::unique_ptr<AST::ExprBinary> node = std::make_unique<AST::ExprBinary>(
         cur_token, std::move(left.value()), std::move(right.value()));
@@ -41,7 +41,7 @@ Parser::parse_expr(int prec) {
       return node;
   }
   if (!cur_opinfo.has_value())
-    return std::unexpected(cur_opinfo.error());
+    return cur_opinfo.error();
 
   return left;
 }
@@ -54,7 +54,7 @@ std::expected<std::unique_ptr<AST::Node>, InterpErr> Parser::parse_term() {
 
   auto token_res = m_Lexer.Use();
   if (!token_res.has_value())
-    return std::unexpected(token_res.error());
+    return token_res.error();
 
   Token const &next_token = token_res.value();
 
@@ -62,7 +62,7 @@ std::expected<std::unique_ptr<AST::Node>, InterpErr> Parser::parse_term() {
   case IDs::ID_IDENTIFIER: {
     auto sym = m_Syms.GetSym(next_token.lexeme);
     if (!sym.has_value())
-      return std::unexpected(sym.error());
+      return sym.error();
     return std::make_unique<AST::ValVariable>(next_token, sym.value());
   }
   case IDs::ID_LITERAL_DIR: {
@@ -76,7 +76,7 @@ std::expected<std::unique_ptr<AST::Node>, InterpErr> Parser::parse_term() {
     else if (next_token.lexeme == "down")
       dir = Direction::DOWN;
     else
-      return std::unexpected(ParseErr(ParseErr::INVALID_LITERAL));
+      return ParseErr(ParseErr::INVALID_LITERAL);
 
     return std::make_unique<AST::ValLiteral>(next_token, dir);
   }
@@ -92,7 +92,7 @@ std::expected<std::unique_ptr<AST::Node>, InterpErr> Parser::parse_term() {
     return std::make_unique<AST::ValLiteral>(next_token, next_token.lexeme);
   }
   default:
-    return std::unexpected(ParseErr(ParseErr::INVALID_TERM));
+    return ParseErr(ParseErr::INVALID_TERM);
   }
 }
 

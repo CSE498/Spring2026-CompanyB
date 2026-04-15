@@ -45,10 +45,10 @@ public:
   }
   std::expected<Token, InterpErr> UseIf(std::convertible_to<int> auto... id) {
     if (!Is(id...)) {
-      return std::unexpected(LexerErr(
-          LexerErr::UNEXP_TOKEN,
-          std::format("Expected one of [{}] but got {}",
-                      m_Lexer.TokenName(id)..., m_Lexer.TokenName(Peek().id))));
+      return LexerErr(LexerErr::UNEXP_TOKEN,
+                      std::format("Expected one of [{}] but got {}",
+                                  m_Lexer.TokenName(id)...,
+                                  m_Lexer.TokenName(Peek().id)));
     }
     return Use();
   }

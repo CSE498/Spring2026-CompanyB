@@ -17,24 +17,24 @@ std::expected<std::unique_ptr<AST::Node>, InterpErr> Parser::parse_while() {
   // Expect: KW_WHILE
   auto res = m_Lexer.UseIf(IDs::ID_KW_WHILE);
   if (!res.has_value())
-    return std::unexpected(res.error());
+    return res.error();
 
   Token while_token = res.value();
 
   // Expect: DELIM_PAREN_OPEN
   res = m_Lexer.UseIf(IDs::ID_DELIM_PAREN_OPEN);
   if (!res.has_value())
-    return std::unexpected(res.error());
+    return res.error();
 
   // Extract expr
   auto expr = parse_expr();
   if (!expr.has_value())
-    return std::unexpected(expr.error());
+    return expr.error();
 
   // Expect: DELIM_PAREN_CLOSE
   res = m_Lexer.UseIf(IDs::ID_DELIM_PAREN_CLOSE);
   if (!res.has_value())
-    return std::unexpected(res.error());
+    return res.error();
 
   ++m_InLoop;
 
@@ -45,7 +45,7 @@ std::expected<std::unique_ptr<AST::Node>, InterpErr> Parser::parse_while() {
   assert(m_InLoop >= 0);
 
   if (!body.has_value())
-    return std::unexpected(body.error());
+    return body.error();
 
   return std::make_unique<AST::StmtWhile>(while_token, std::move(expr.value()),
                                           std::move(body.value()));
@@ -57,11 +57,11 @@ std::expected<std::unique_ptr<AST::Node>, InterpErr> Parser::parse_loop_ctl() {
 
   assert(m_InLoop >= 0);
   if (m_InLoop == 0)
-    return std::unexpected(ParseErr(ParseErr::OUT_OF_LOOP));
+    return ParseErr(ParseErr::OUT_OF_LOOP);
 
   auto res = m_Lexer.UseIf(IDs::ID_KW_BREAK, IDs::ID_KW_CONTINUE);
   if (!res.has_value())
-    return std::unexpected(res.error());
+    return res.error();
 
   return std::make_unique<AST::StmtLoopCtl>(res.value(),
                                             (res.value().id == IDs::ID_KW_BREAK)

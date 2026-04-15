@@ -14,12 +14,13 @@ std::expected<void, InterpErr> Parser::parse(std::istream &in) {
 
   auto tokenize_res = m_Lexer.Tokenize(in);
   if (!tokenize_res.has_value())
-    return std::unexpected(tokenize_res.error());
+    return tokenize_res.error();
+  // return std::unexpected(tokenize_res.error());
 
   while (m_Lexer.Any()) {
     auto stmt_res = parse_stmt();
     if (!stmt_res.has_value())
-      return std::unexpected(stmt_res.error());
+      stmt_res.error();
 
     m_Nodes.emplace_back(std::move(stmt_res.value()));
   }

@@ -20,7 +20,7 @@ struct Node {
   // External-facing call
   virtual std::expected<size_t, InterpErr> GetType() {
     // Nodes are by default untyped
-    return std::unexpected(ASTErr(ASTErr::UNTYPED_NODE, "Node is untyped"));
+    return ASTErr(ASTErr::UNTYPED_NODE, "Node is untyped");
   }
 
   Node(emplex::Token token) : m_Token(token) {};

@@ -1,22 +1,20 @@
 #pragma once
 
-#include "agentlang.hpp"
-#include "errors.hpp"
-#include "lexer-gen.hpp"
-#include "lexer.hpp"
+#include "Interpreter/agentlang.hpp"
+#include "Interpreter/errors.hpp"
+#include "Interpreter/lexer.hpp"
 #include "tools/RobinHoodMap.hpp"
 
 #include <expected>
 #include <memory>
 #include <string>
-#include <string_view>
 #include <vector>
 
 namespace cse498 {
 
 using agentlang::Symbols::SymInfo;
 using agentlang::Types::Type;
-using namespace emplex;
+using AgentLexer::Token;
 
 class SymbolTable {
 public:

@@ -17,31 +17,31 @@ std::expected<std::unique_ptr<AST::Node>, InterpErr> Parser::parse_if() {
   // Expect: KW_IF | KW_ELSE_IF
   auto res = m_Lexer.UseIf(IDs::ID_KW_IF, IDs::ID_KW_ELSE_IF);
   if (!res.has_value())
-    return std::unexpected(res.error());
+    return res.error();
 
   Token if_token = res.value();
 
   // Expect: DELIM_PAREN_OPEN
   res = m_Lexer.UseIf(IDs::ID_DELIM_PAREN_OPEN);
   if (!res.has_value())
-    return std::unexpected(res.error());
+    return res.error();
 
   // Extract expr
   auto cond = parse_expr();
   if (!cond.has_value())
-    return std::unexpected(cond.error());
+    return cond.error();
 
   // Expect: DELIM_PAREN_CLOSE
   res = m_Lexer.UseIf(IDs::ID_DELIM_PAREN_CLOSE);
   if (!res.has_value())
-    return std::unexpected(res.error());
+    return res.error();
 
   // Extract stmt_block
   auto t_body =
       (m_Lexer.Is(IDs::ID_DELIM_CLY_OPEN)) ? parse_stmt_block() : parse_stmt();
 
   if (!t_body.has_value())
-    return std::unexpected(t_body.error());
+    return t_body.error();
 
   // Construct the node up to now
   std::unique_ptr<AST::StmtIf> node = std::make_unique<AST::StmtIf>(
@@ -53,14 +53,14 @@ std::expected<std::unique_ptr<AST::Node>, InterpErr> Parser::parse_if() {
                                                        : parse_stmt();
 
     if (!f_body.has_value())
-      return std::unexpected(f_body.error());
+      return f_body.error();
 
     node->m_FBody = std::move(f_body.value());
   } else if (m_Lexer.Is(IDs::ID_KW_ELSE_IF)) {
     auto f_body = parse_if();
 
     if (!f_body.has_value())
-      return std::unexpected(f_body.error());
+      return f_body.error();
 
     node->m_FBody = std::move(f_body.value());
   }

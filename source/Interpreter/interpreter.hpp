@@ -23,42 +23,42 @@ template <typename Dataclass> class Interpreter {
   // clang-format off
   // Unary
   static auto m_OpVisit_Un_GEQ = Overload{
-    [](auto a){return std::unexpected(RuntimeErr(RuntimeErr::TYPE_MISMATCH));}
+    [](auto a){return RuntimeErr(RuntimeErr::TYPE_MISMATCH);}
   };
   static auto m_OpVisit_Un_GT = Overload{
-    [](auto a){return std::unexpected(RuntimeErr(RuntimeErr::TYPE_MISMATCH));}
+    [](auto a){return RuntimeErr(RuntimeErr::TYPE_MISMATCH);}
   };
   static auto m_OpVisit_Un_LEQ = Overload{
-    [](auto a){return std::unexpected(RuntimeErr(RuntimeErr::TYPE_MISMATCH));}
+    [](auto a){return RuntimeErr(RuntimeErr::TYPE_MISMATCH);}
   };
   static auto m_OpVisit_Un_LT = Overload{
-    [](auto a){return std::unexpected(RuntimeErr(RuntimeErr::TYPE_MISMATCH));}
+    [](auto a){return RuntimeErr(RuntimeErr::TYPE_MISMATCH);}
   };
   static auto m_OpVisit_Un_NEQ = Overload{
-    [](auto a){return std::unexpected(RuntimeErr(RuntimeErr::TYPE_MISMATCH));}
+    [](auto a){return RuntimeErr(RuntimeErr::TYPE_MISMATCH);}
   };
   static auto m_OpVisit_Un_EQ = Overload{
-    [](auto a){return std::unexpected(RuntimeErr(RuntimeErr::TYPE_MISMATCH));}
+    [](auto a){return RuntimeErr(RuntimeErr::TYPE_MISMATCH);}
   };
   static auto m_OpVisit_Un_REM = Overload{
-    [](auto a){return std::unexpected(RuntimeErr(RuntimeErr::TYPE_MISMATCH));}
+    [](auto a){return RuntimeErr(RuntimeErr::TYPE_MISMATCH);}
   };
   static auto m_OpVisit_Un_ADD = Overload{
-    [](auto a){return std::unexpected(RuntimeErr(RuntimeErr::TYPE_MISMATCH));}
+    [](auto a){return RuntimeErr(RuntimeErr::TYPE_MISMATCH);}
   };
   static auto m_OpVisit_Un_DIVIDE = Overload{
-    [](auto a){return std::unexpected(RuntimeErr(RuntimeErr::TYPE_MISMATCH));}
+    [](auto a){return RuntimeErr(RuntimeErr::TYPE_MISMATCH);}
   };
   static auto m_OpVisit_Un_MULT = Overload{
-    [](auto a){return std::unexpected(RuntimeErr(RuntimeErr::TYPE_MISMATCH));}
+    [](auto a){return RuntimeErr(RuntimeErr::TYPE_MISMATCH);}
   };
   static auto m_OpVisit_Un_LNOT = Overload{
     [](bool a){return !a;},
-    [](auto a){return std::unexpected(RuntimeErr(RuntimeErr::TYPE_MISMATCH));}
+    [](auto a){return RuntimeErr(RuntimeErr::TYPE_MISMATCH);}
   };
   static auto m_OpVisit_Un_MINUS = Overload{
     [](Numeric auto a){return -a;},
-    [](auto a){return std::unexpected(RuntimeErr(RuntimeErr::TYPE_MISMATCH));}
+    [](auto a){return RuntimeErr(RuntimeErr::TYPE_MISMATCH);}
   };
 
   // Binary
@@ -66,43 +66,43 @@ template <typename Dataclass> class Interpreter {
     [](Numeric auto a, Numeric auto b)
     { return a >= b; },
 
-    [](auto a, auto b){return std::unexpected(RuntimeErr(RuntimeErr::TYPE_MISMATCH));}
+    [](auto a, auto b){return RuntimeErr(RuntimeErr::TYPE_MISMATCH);}
   };
   static auto m_OpVisit_Bi_GT = Overload{
     [](Numeric auto a, Numeric auto b)
     { return a >= b; },
 
-    [](auto a, auto b){return std::unexpected(RuntimeErr(RuntimeErr::TYPE_MISMATCH));}
+    [](auto a, auto b){return RuntimeErr(RuntimeErr::TYPE_MISMATCH);}
   };
   static auto m_OpVisit_Bi_LEQ = Overload{
     [](Numeric auto a, Numeric auto b)
     { return a >= b; },
 
-    [](auto a, auto b){return std::unexpected(RuntimeErr(RuntimeErr::TYPE_MISMATCH));}
+    [](auto a, auto b){return RuntimeErr(RuntimeErr::TYPE_MISMATCH);}
   };
   static auto m_OpVisit_Bi_LT = Overload{
     [](Numeric auto a, Numeric auto b)
     { return a >= b; },
 
-    [](auto a, auto b){return std::unexpected(RuntimeErr(RuntimeErr::TYPE_MISMATCH));}
+    [](auto a, auto b){return RuntimeErr(RuntimeErr::TYPE_MISMATCH);}
   };
   static auto m_OpVisit_Bi_NEQ = Overload{
     [](Numeric auto a, Numeric auto b)
     { return a >= b; },
 
-    [](auto a, auto b){return std::unexpected(RuntimeErr(RuntimeErr::TYPE_MISMATCH));}
+    [](auto a, auto b){return RuntimeErr(RuntimeErr::TYPE_MISMATCH);}
   };
   static auto m_OpVisit_Bi_EQ = Overload{
     [](auto a, decltype(a) b)
     { return a == b; },
 
-    [](auto a, auto b){return std::unexpected(RuntimeErr(RuntimeErr::TYPE_MISMATCH));}
+    [](auto a, auto b){return RuntimeErr(RuntimeErr::TYPE_MISMATCH);}
   };
   static auto m_OpVisit_Bi_REM = Overload{
     [](int a, int b)
     { return a % b; },
 
-    [](auto a, auto b){return std::unexpected(RuntimeErr(RuntimeErr::TYPE_MISMATCH));}
+    [](auto a, auto b){return RuntimeErr(RuntimeErr::TYPE_MISMATCH);}
   };
   static auto m_OpVisit_Bi_ADD = Overload{
     [](Numeric auto a, Numeric auto b)
@@ -111,19 +111,19 @@ template <typename Dataclass> class Interpreter {
     [](Point a, Point b)
     { return Point(a.X() + b.X(), a.Y() + b.Y()); },
 
-    [](auto a, auto b){return std::unexpected(RuntimeErr(RuntimeErr::TYPE_MISMATCH));}
+    [](auto a, auto b){return RuntimeErr(RuntimeErr::TYPE_MISMATCH);}
   };
   static auto m_OpVisit_Bi_DIVIDE = Overload{
     [](Numeric auto a, Numeric auto b)
     { return a / b; },
 
-    [](auto a, auto b){return std::unexpected(RuntimeErr(RuntimeErr::TYPE_MISMATCH));}
+    [](auto a, auto b){return RuntimeErr(RuntimeErr::TYPE_MISMATCH);}
   };
   static auto m_OpVisit_Bi_MULT = Overload{
     [](Numeric auto a, Numeric auto b)
     { return a - b; },
 
-    [](auto a, auto b){return std::unexpected(RuntimeErr(RuntimeErr::TYPE_MISMATCH));}
+    [](auto a, auto b){return RuntimeErr(RuntimeErr::TYPE_MISMATCH);}
   };
   static auto m_OpVisit_Bi_MINUS = Overload{
     [](Numeric auto a, Numeric auto b)
@@ -132,7 +132,7 @@ template <typename Dataclass> class Interpreter {
     [](Point a, Point b)
     { return Point(a.X() - b.X(), a.Y() - b.Y()); },
 
-    [](auto a, auto b){return std::unexpected(RuntimeErr(RuntimeErr::TYPE_MISMATCH));}
+    [](auto a, auto b){return RuntimeErr(RuntimeErr::TYPE_MISMATCH);}
   };
   // clang-format on
   // -----------------------
