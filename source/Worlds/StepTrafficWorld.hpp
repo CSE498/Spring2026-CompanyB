@@ -86,6 +86,7 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
       }
       auto curr_state = agent.GetState();
       curr_state.position = step.loc;
+      curr_state.direction = new_dir;
       agent.SetState(curr_state);
 
       return {};
@@ -352,8 +353,7 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
       --num_spawned_agents;
     }
 
-    // TODO: if position changed: update direction
-    // and update symbol too
+    new_state.symbol = DirectionSymbol(new_state.direction);
 
     return new_state;
   }
