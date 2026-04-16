@@ -7,6 +7,7 @@
 #include <variant>
 
 #include "Worlds/Group11DummyData.hpp"
+#include "Worlds/TrafficData.hpp"
 
 namespace Concepts {
 /** @brief Require that the type `T` is equivalent to any of the types `...Ts`
@@ -16,8 +17,7 @@ concept IsOneOf = (std::is_same_v<T, Ts> || ...);
 
 /** @brief Helper compile-time call to check if all types in a list of types are
  * unique. */
-template <typename Head, typename... Tail>
-constexpr bool all_unique() {
+template <typename Head, typename... Tail> constexpr bool all_unique() {
   // On final element, must be unique
   if constexpr (sizeof...(Tail) == 1) {
     return true;
@@ -42,7 +42,7 @@ concept UniqueTypes = all_unique<Ts..., std::void_t>();
  * after discussing with both world groups
  */
 template <typename T>
-concept IsDataClass = IsOneOf<T, cse498::Group11DummyData>;
+concept IsDataClass = IsOneOf<T, cse498::Group11DummyData, cse498::TrafficData>;
 
 /** @brief Requires given type to have operator<<(std::stringstream&) defined.
  */
