@@ -47,11 +47,6 @@ std::expected<std::unique_ptr<AST::Node>, InterpErr> Parser::parse_var_def() {
   if (!res)
     return res.error();
 
-  // Can be done here if we see a semicolon, otherwise we should see OP_ASSIGN
-  if (m_Lexer.Is(IDs::ID_DELIM_SEMICLN))
-    return std::make_unique<AST::EmptyNode>(m_Lexer.Use().value());
-
-  // Otherwise we need an assign node
   // Expect: OP_ASSIGN
   if (m_Lexer.Is(IDs::ID_OP_ASSIGN)) {
     res = m_Lexer.UseIf(IDs::ID_OP_ASSIGN);
