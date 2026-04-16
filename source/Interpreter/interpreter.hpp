@@ -95,6 +95,8 @@ public:
       if (!res.has_value())
         return res;
     }
+
+    return NullType{};
   }
   std::expected<Type, InterpErr> Visit(AST::ExprUnary &node) {
     auto res = node.Accept(*m_InterpWrapper);
@@ -108,28 +110,44 @@ public:
     return std::visit(func.value(), res.value());
   }
   std::expected<Type, InterpErr> Visit(AST::Assign &node) {
-    // TODO
+    return TempErr(
+        TempErr::NOT_IMPLEMENTED,
+        "Don't yet know where and how Daniel intends to do evaluation");
   }
   std::expected<Type, InterpErr> Visit(AST::StmtAgentDef &node) {
-    // TODO
+    return TempErr(
+        TempErr::NOT_IMPLEMENTED,
+        "Don't yet know where and how Daniel intends to do evaluation");
   }
   std::expected<Type, InterpErr> Visit(AST::StmtAction &node) {
-    // TODO
+    return TempErr(
+        TempErr::NOT_IMPLEMENTED,
+        "Don't yet know where and how Daniel intends to do evaluation");
   }
   std::expected<Type, InterpErr> Visit(AST::StmtWhile &node) {
-    // TODO
+    return TempErr(
+        TempErr::NOT_IMPLEMENTED,
+        "Don't yet know where and how Daniel intends to do evaluation");
   }
   std::expected<Type, InterpErr> Visit(AST::StmtLoopCtl &node) {
-    // TODO
+    return TempErr(
+        TempErr::NOT_IMPLEMENTED,
+        "Don't yet know where and how Daniel intends to do evaluation");
   }
   std::expected<Type, InterpErr> Visit(AST::StmtIf &node) {
-    // TODO
+    return TempErr(
+        TempErr::NOT_IMPLEMENTED,
+        "Don't yet know where and how Daniel intends to do evaluation");
   }
   std::expected<Type, InterpErr> Visit(AST::ValLiteral &node) {
-    // TODO
+    return TempErr(
+        TempErr::NOT_IMPLEMENTED,
+        "Don't yet know where and how Daniel intends to do evaluation");
   }
   std::expected<Type, InterpErr> Visit(AST::ValVariable &node) {
-    // TODO
+    return TempErr(
+        TempErr::NOT_IMPLEMENTED,
+        "Don't yet know where and how Daniel intends to do evaluation");
   }
 };
 

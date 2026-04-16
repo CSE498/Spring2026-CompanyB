@@ -214,7 +214,7 @@ struct ValLiteral : public TypedNode {
   // Construct from raw type value
   template <Types::TypeKind T>
   ValLiteral(emplex::Token token, T val)
-      : TypedNode(token, StaticUtil::variant_index<Types::Type, T>()),
+      : TypedNode(token, Types::Type{std::in_place_type<T>, val}.index()),
         m_Val(Types::Type{std::in_place_type<T>, val}) {}
   // Construct from already constructed variant
   ValLiteral(emplex::Token token, Types::Type val)
