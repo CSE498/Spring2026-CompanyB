@@ -35,8 +35,6 @@ struct Car {};
 struct Student {};
 using Type =
     std::variant<bool, int, double, str, Point, Direction, Car, Student>;
-using TypeTuple =
-    std::tuple<bool, int, double, str, Point, Direction, Car, Student>;
 
 // Concept satisfied if T is a valid agentlang type
 template <typename T>
