@@ -1,12 +1,13 @@
 /**
  * @file SwarmingAgentsTest.cpp
- * @brief Test suite for SwarmingAgent<TrafficData> and SwarmingAgent<DiseaseData>
+ * @brief Test suite for SwarmingAgent<TrafficData> and
+ * SwarmingAgent<DiseaseData>
  */
 
-// Used ClaudeCode and Codex to assist in editing our test suite to be up to date.
+// Used ClaudeCode and Codex to assist in editing our test suite to be up to
+// date.
 
 #include <catch2/catch_test_macros.hpp>
-
 #include <optional>
 #include <set>
 #include <variant>
@@ -122,8 +123,9 @@ TEST_CASE("Inactive traffic agent returns empty StepContainer",
 
 // Traffic agent with no destination — random movement
 
-TEST_CASE("Active traffic agent with no destination moves to a cardinal neighbor",
-          "[SwarmingAgent]") {
+TEST_CASE(
+    "Active traffic agent with no destination moves to a cardinal neighbor",
+    "[SwarmingAgent]") {
   WorldPosition pos{5, 5};
   auto data = MakeTrafficData(pos, std::nullopt);
   SwarmingAgent<TrafficData> agent(data, 0);
@@ -251,13 +253,13 @@ TEST_CASE("inform(false) yields MovementStep to backup neighbor",
 
   // Next should be the backup neighbor — best_neighbor with primary excluded.
   // dest is (8,5), pos is (5,5). Primary is Right (6,5).
-  // Excluding Right, neighbors considered in array order: Up(5,4), Down(5,6), Left(4,5).
-  // Manhattan distances to (8,5): Up=|8-5|+|5-4|=4, Down=|8-5|+|5-6|=4, Left=|8-4|+|5-5|=4
-  // All tied at 4 — first in array order wins: Up(5,4).
-  // But recent_positions may affect this; best_neighbor prefers "fresh" cells.
-  // On a fresh agent with no history other than pos and primary recorded,
-  // pos=(5,5) and primary=(6,5) are in recent. Up/Down/Left are all fresh and tied.
-  // First fresh in array order (Up) wins.
+  // Excluding Right, neighbors considered in array order: Up(5,4), Down(5,6),
+  // Left(4,5). Manhattan distances to (8,5): Up=|8-5|+|5-4|=4,
+  // Down=|8-5|+|5-6|=4, Left=|8-4|+|5-5|=4 All tied at 4 — first in array order
+  // wins: Up(5,4). But recent_positions may affect this; best_neighbor prefers
+  // "fresh" cells. On a fresh agent with no history other than pos and primary
+  // recorded, pos=(5,5) and primary=(6,5) are in recent. Up/Down/Left are all
+  // fresh and tied. First fresh in array order (Up) wins.
   MovementStep ms = NextMovement(turn);
   REQUIRE(ms.loc == pos.Up());
 }
@@ -282,9 +284,7 @@ TEST_CASE("ConditionalStep without inform returns NOT_INFORMED error",
   REQUIRE(result.error().kind == StepErr::Kind::NOT_INFORMED);
 }
 
-
 // Disease agent behavior
-
 
 TEST_CASE("DiseaseAgent SUSCEPTIBLE moves to cardinal neighbor",
           "[SwarmingAgent]") {
@@ -328,12 +328,12 @@ TEST_CASE("DiseaseAgent RECOVERED moves to cardinal neighbor",
   }
 }
 
-
 // Anti-looping / recent-history behavior
 
-
-TEST_CASE("Traffic agent avoids recently visited positions when fresh neighbors exist",
-          "[SwarmingAgent]") {
+TEST_CASE(
+    "Traffic agent avoids recently visited positions when fresh neighbors "
+    "exist",
+    "[SwarmingAgent]") {
   // Agent with no destination wanders randomly but avoids recent positions.
   // Over many turns from a fixed position, it should visit more than one
   // distinct neighbor (demonstrating it doesn't just repeat one cell).
