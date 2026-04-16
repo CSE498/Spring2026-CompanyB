@@ -5,13 +5,13 @@
 #pragma once
 
 #include <algorithm>
+#include <exception>
 #include <expected>
 #include <functional>
 #include <initializer_list>
 #include <ranges>
 #include <type_traits>
 #include <vector>
-#include <exception>
 
 namespace cse498 {
 
