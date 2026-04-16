@@ -4,22 +4,24 @@
 
 #pragma once
 
-#include <cassert>
-
 #include "core/Step.hpp"
 #include "core/StepAgentBase.hpp"
 #include "core/WorldPosition.hpp"
 #include "core/core.hpp"
 
+#include <memory>
+
 namespace cse498 {
 
+using AST::StmtBlock;
 using Concepts::IsDataClass;
-using cse498::steps::MovementStep;
 
 template <IsDataClass DataClass>
 class ScriptedAgent : public StepAgentBase<DataClass> {
-protected:
-  size_t step_index = 0;
+
+  // TODO: Actuall fill these out
+  std::unique_ptr<StmtBlock> mInit;
+  std::unique_ptr<StmtBlock> mTurn;
 
 public:
   ScriptedAgent(DataClass initial_state, size_t id)
@@ -27,28 +29,7 @@ public:
   ~ScriptedAgent() = default;
 
   /// Choose the action to take a step in the appropriate direction.
-  StepContainer GetTurn() override {
-    WorldPosition pos = this->GetState().pos;
-    StepContainer container{};
-
-    switch (step_index % 4) {
-    case 0:
-      container.add_step(MovementStep{pos.Down()});
-      break;
-    case 1:
-      container.add_step(MovementStep{pos.Right()});
-      break;
-    case 2:
-      container.add_step(MovementStep{pos.Up()});
-      break;
-    case 3:
-      container.add_step(MovementStep{pos.Left()});
-      break;
-    }
-
-    step_index++;
-    return container;
-  }
+  StepContainer GetTurn() override {}
 
   void SetGoal([[maybe_unused]] WorldPosition pos) override {}
 };
