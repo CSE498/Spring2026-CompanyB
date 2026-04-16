@@ -58,6 +58,13 @@ class Node {
 
   virtual ~Node() = default;
 
+  // Check implementations on CompositeNode and DecoratorNode since it's only
+  // meaningful for parent nodes
+  virtual void addNode(std::unique_ptr<Node> node) = 0;
+  virtual void deleteNode(Node* node) = 0;
+
+  // ATTRIBUTIONS: Used ChatGPT to get ASCII implementation
+
   /**
    * @brief Prints a formatted representation of the node.
    *
@@ -67,7 +74,8 @@ class Node {
    *
    * @param depth The current depth within the tree.
    */
-  virtual void print(int depth) const = 0;
+  virtual void print(const std::string& prefix = "", bool isLast = true,
+                     bool isRoot = false) const = 0;
 
   /**
    * @brief Returns the active execution path from this node downward.
@@ -78,7 +86,7 @@ class Node {
    *
    * @return A string describing the active path.
    */
-  virtual std::string getActivePath() = 0;
+  virtual std::string getActivePath() const = 0;
 
   /**
    * @brief Executes one tick of this node.
@@ -88,12 +96,18 @@ class Node {
    * decorators modify child behavior, and leaf nodes
    * perform concrete actions.
    *
+   * @param blackboard Shared data store used for reading and writing state.
    * @return An integer status code (e.g., Success (1), Failure (0), or Running
    * (-1)).
    */
   virtual Status tick(Blackboard& blackboard) = 0;
 
+  int tickCount() const { return m_tickCount; }
+
  protected:
   /// Stores the current execution status of the node.
   Status m_status = Status::Running;
+
+  /// Tracks the total number of tick() calls made on this node.
+  int m_tickCount{};
 };

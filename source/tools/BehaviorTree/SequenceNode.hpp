@@ -36,7 +36,7 @@ class SequenceNode : public CompositeNode {
 
     // Check status of active child (Pick last child if m_index is out of
     // bounds)
-    auto& child = (*(children.begin() + m_index))
+    auto& child = (m_index < children.size() && *(children.begin() + m_index))
                       ? *(children.begin() + m_index)
                       : *(children.end() - 1);
     Status status = child->tick(blackboard);
@@ -73,24 +73,19 @@ class SequenceNode : public CompositeNode {
     return m_status;
   };
 
-  int tickCount() const { return m_tickCount; }
-
-  std::string getActivePath() override {
+  std::string getActivePath() const override {
     auto& children = this->getChildren();
 
     if (children.empty()) return m_name;
 
     // Check if child is empty
-    auto& child = (*(children.begin() + m_index))
+    auto& child = (m_index < children.size() && *(children.begin() + m_index))
                       ? *(children.begin() + m_index)
                       : *(children.end() - 1);
     return m_name + " - " + child->getActivePath();
   };
 
  private:
-  /// Tracks the total number of tick() calls made on this node.
-  int m_tickCount{};
-
   /// Index of the currently active child node.
   unsigned int m_index{};
 };

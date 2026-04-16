@@ -18,7 +18,6 @@ namespace cse498 {
 namespace steps {
 
 using InfoType = std::variant<int, double, bool>;
-using _InfoTuple = std::variant<int, double, bool>;
 
 template <typename T>
 concept IsInfoType = Concepts::IsOneOf<T, int, double, bool>;
@@ -34,6 +33,11 @@ struct StepErr {
 
   Kind kind;
   std::string msg;
+
+  StepErr() = delete;
+  StepErr(Kind in_kind) : kind(in_kind), msg("") {};
+  StepErr(Kind in_kind, std::string const &in_msg)
+      : kind(in_kind), msg(in_msg) {};
 };
 
 template <IsInfoType I>
@@ -48,8 +52,8 @@ template <typename... Ts> struct _InfoHandler {
   template <IsInfoType T> static InfoFunc<T> defaulted_handler() {
     return [](T) {
       return std::unexpected(
-          StepErr{StepErr::Kind::WRONG_TYPE,
-                  "InfoStep passed invalidly typed InfoType into InfoHandler"});
+          StepErr(StepErr::Kind::WRONG_TYPE,
+                  "InfoStep passed invalidly typed InfoType into InfoHandler"));
     };
   }
 
@@ -82,14 +86,6 @@ template <typename... Ts> struct _InfoHandler {
 // Now set our desired InfoHandler type and let the compiler handle the rest
 using InfoHandler = _InfoHandler<int, double, bool>;
 
-template <IsInfoType I>
-std::function<std::expected<bool, StepErr>(I)> default_call() {
-  return [](I) {
-    std::unexpected(StepErr{StepErr::Kind::WRONG_TYPE,
-                            "InfoStep invalid type InfoType into InfoHandler"});
-  };
-}
-
 // Forward decl.
 struct StepContainer;
 
@@ -109,6 +105,10 @@ struct InfoStep {
   Aspect aspect;
   WorldPosition target;
 
+  InfoStep() = delete;
+  InfoStep(Aspect in_aspect, WorldPosition in_pos)
+      : aspect(in_aspect), target(in_pos) {};
+
   bool operator==(InfoStep const &other) const {
     return (other.aspect == aspect) && (other.target == target);
   }
@@ -118,7 +118,7 @@ struct ConditionalStep {
   InfoHandler condition;
 
   bool operator==([[maybe_unused]] ConditionalStep const &other) const {
-    // Figure out how to compare functors...
+    // TODO: Decide how to compare functors
     return true;
   }
 };
@@ -148,6 +148,12 @@ struct StepContainer {
     std::unique_ptr<Node> next;
     std::unique_ptr<Node> left;
     std::unique_ptr<Node> right;
+
+    Node() : step({}), next(nullptr), left(nullptr), right(nullptr) {}
+
+    template <StepKind S>
+    Node(S &&s)
+        : step(std::move(s)), next(nullptr), left(nullptr), right(nullptr) {}
   };
 
   // Root is an "empty" node so that "last" can always be bound
@@ -226,7 +232,7 @@ struct StepContainer {
       last->right = std::move(f_body.root);
       f_body.last = nullptr;
     } else {
-      // T is just a step, so put it on last's left
+      // F is just a step, so put it on last's right
       last->right = std::make_unique<Node>();
       last->right->next = std::make_unique<Node>(std::move(f_body));
     }
@@ -250,7 +256,7 @@ struct StepContainer {
         return get_next();
       } else
         return std::unexpected(
-            StepErr{StepErr::Kind::STEPS_EXHAUSTED, "No remaining steps"});
+            StepErr(StepErr::Kind::STEPS_EXHAUSTED, "No remaining steps"));
     }
 
     // Skip empty step(s)
@@ -269,8 +275,8 @@ struct StepContainer {
       // Our world_info object must have information
       if (!world_info.has_value())
         return std::unexpected(
-            StepErr{StepErr::Kind::NOT_INFORMED,
-                    "StepContainer was not informed for ConditionalStep"});
+            StepErr(StepErr::Kind::NOT_INFORMED,
+                    "StepContainer was not informed for ConditionalStep"));
 
       ConditionalStep cur_step =
           std::get<ConditionalStep>(cur_node->step.value());
@@ -291,9 +297,9 @@ struct StepContainer {
         // Likely don't need this check, it *should* be impossible to have a
         // conditional step w/o a true branch
         if (cur_node->left == nullptr)
-          return std::unexpected(StepErr{StepErr::Kind::MISSING_BRANCH,
+          return std::unexpected(StepErr(StepErr::Kind::MISSING_BRANCH,
                                          "ConditionalStep which evaluated true "
-                                         "does not have a true branch"});
+                                         "does not have a true branch"));
 
         // Push the return point onto the stack, then return the first step in
         // the true branch

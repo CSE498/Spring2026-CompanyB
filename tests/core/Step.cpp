@@ -55,7 +55,7 @@ TEST_CASE("StepContainer basic functionality", "[StepContainer]") {
 
     MovementStep target_move{target};
     MovementStep fallback_move{fallback};
-    InfoStep can_move_info{InfoStep::Aspect::LOC_AVAIL, target};
+    InfoStep can_move_info(InfoStep::Aspect::LOC_AVAIL, target);
     ConditionalStep can_move_cond{[](bool b) { return b; }};
 
     SECTION("construction by stepcontainer-consumption") {

@@ -112,7 +112,8 @@ class PathGenerator {
   // ========== Configuration ==========
 
   /**
-   * @brief Set the traversability predicate used by all path generation methods.
+   * @brief Set the traversability predicate used by all path generation
+   * methods.
    * @param f Returns true if a point is passable. Defaults to always-true.
    */
   void SetCanMove(WorldQueryFunc f);
@@ -139,8 +140,9 @@ class PathGenerator {
   /// Traversability predicate; returns true if a point can be visited.
   /// Defaults to always-true (open world with no obstacles).
   WorldQueryFunc canMove_{[](const Point&) { return true; }};
-  HeuristicFunc heuristic_{EuclideanDistance};  ///< Distance estimation function
-  double step_size_{1.0};                       ///< Granularity for continuous worlds
+  HeuristicFunc heuristic_{
+      EuclideanDistance};  ///< Distance estimation function
+  double step_size_{1.0};  ///< Granularity for continuous worlds
 
   // ========== Helper Functions ==========
 

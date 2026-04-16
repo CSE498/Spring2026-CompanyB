@@ -20,7 +20,7 @@ namespace cse498 {
 // ========== Core Path Generation ==========
 
 std::optional<WorldPath> PathGenerator::ShortestPath(const Point& start,
-                                                      const Point& goal) const {
+                                                     const Point& goal) const {
   return ShortestPathImpl(start, goal, canMove_);
 }
 
@@ -28,10 +28,13 @@ std::optional<WorldPath> PathGenerator::ShortestPathImpl(
     const Point& start, const Point& goal,
     const WorldQueryFunc& canMove) const {
   // Handle degenerate case: start == goal
-  if (std::abs(start.getX() - goal.getX()) <
-          step_size_ * kCoincidentEps &&
-      std::abs(start.getY() - goal.getY()) <
-          step_size_ * kCoincidentEps) {
+  // If start and goal are within one epsilon-scaled step of each other,
+  // treat them as coincident and skip planning.
+  const bool is_coincident =
+      std::abs(start.getX() - goal.getX()) < step_size_ * kCoincidentEps &&
+      std::abs(start.getY() - goal.getY()) < step_size_ * kCoincidentEps;
+
+  if (is_coincident) {
     WorldPath path;
     path.addPoint(start);
     return path;
@@ -164,9 +167,9 @@ std::optional<WorldPath> PathGenerator::PatrolPath(
 }
 
 std::optional<WorldPath> PathGenerator::AvoidancePath(const Point& start,
-                                                       const Point& goal,
-                                                       const Point& avoid,
-                                                       double radius) const {
+                                                      const Point& goal,
+                                                      const Point& avoid,
+                                                      double radius) const {
   assert(radius >= 0.0 && "Avoidance radius cannot be negative");
 
   // Combine canMove_ with the avoidance radius check.

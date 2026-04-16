@@ -6,13 +6,20 @@
 #include <type_traits>
 #include <variant>
 
+#include "Worlds/Group11DummyData.hpp"
+
 namespace Concepts {
+/** @brief Require that the type `T` is equivalent to any of the types `...Ts`
+ */
 template <typename T, typename... Ts>
 concept IsOneOf = (std::is_same_v<T, Ts> || ...);
 
-template <typename Head, typename... Tail> constexpr bool all_unique() {
+/** @brief Helper compile-time call to check if all types in a list of types are
+ * unique. */
+template <typename Head, typename... Tail>
+constexpr bool all_unique() {
   // On final element, must be unique
-  if constexpr (std::is_void_v<std::tuple<Tail...>>()) {
+  if constexpr (sizeof...(Tail) == 1) {
     return true;
   } else if constexpr (IsOneOf<Head, Tail...>) {
     return false;
@@ -26,6 +33,16 @@ template <typename Head, typename... Tail> constexpr bool all_unique() {
  */
 template <typename... Ts>
 concept UniqueTypes = all_unique<Ts..., std::void_t>();
+
+/**
+ * @brief Determines a valid dataclass for the agents and world
+ * @note REPLACE THE INT WITH THE LIST OF DATACLASSES FOR BOTH WORLDS i.e
+ * IsOneOf<T, TrafficData, DiseaseData>
+ * @note Feel free to add other constraints on what a Dataclass should have
+ * after discussing with both world groups
+ */
+template <typename T>
+concept IsDataClass = IsOneOf<T, cse498::Group11DummyData>;
 
 /** @brief Requires given type to have operator<<(std::stringstream&) defined.
  */

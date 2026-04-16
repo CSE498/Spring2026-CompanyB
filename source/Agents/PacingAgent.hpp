@@ -8,13 +8,12 @@
 
 #include <cassert>
 
-#include "../core/WorldBase.hpp"
 #include "../core/AgentBase.hpp"
 
 // clang-format off
 namespace cse498 {
 
-  class PacingAgent : public AgentBase<cse498::DummyAgentData> {
+  class PacingAgent : public AgentBase {
   protected:
     bool vertical=true; ///< Is this agent moving down&up?  False = right&left.
     bool reverse=false;  ///< Is this agent on their way back? (up/left?)
@@ -28,7 +27,11 @@ namespace cse498 {
     PacingAgent & SetVertical() { vertical = true; return *this; }
     PacingAgent & ToggleDirection() { reverse = !reverse; return *this; }
 
-
+    /// @brief This agent needs a specific set of actions to function.
+    /// @return Success: are required actions available?
+    bool Initialize() override {
+      return HasAction("up") && HasAction("down") && HasAction("left") && HasAction("right");
+    }
 
     /// Choose the action to take a step in the appropriate direction.
     size_t SelectAction(const WorldGrid & /* grid*/) override

@@ -95,29 +95,6 @@ class WorldPath {
     return points_[i];
   }
 
-  /**
-   * @brief Bounds-checked access to the i-th point.
-   * @param i Index of the point.
-   * @return Reference to the point at index i.
-   * @throws std::out_of_range if i >= size().
-   */
-  [[deprecated(
-      "Exceptions are disallowed. Use get() for checked access or [] for "
-      "unchecked access.")]] Point&
-  at(std::size_t i) {
-    if (i >= points_.size()) throw std::out_of_range("WorldPath::at");
-    return points_[i];
-  }
-
-  /** @copydoc at(std::size_t) */
-  [[deprecated(
-      "Exceptions are disallowed. Use get() for checked access or [] for "
-      "unchecked access.")]] const Point&
-  at(std::size_t i) const {
-    if (i >= points_.size()) throw std::out_of_range("WorldPath::at");
-    return points_[i];
-  }
-
   [[nodiscard]] constexpr Point* get(std::size_t i) noexcept {
     return i < points_.size() ? &points_[i] : nullptr;
   }
