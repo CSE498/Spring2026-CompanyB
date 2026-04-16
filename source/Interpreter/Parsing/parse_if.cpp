@@ -36,9 +36,12 @@ std::expected<std::unique_ptr<AST::Node>, InterpErr> Parser::parse_if() {
   if (!res.has_value())
     return res.error();
 
+  m_Syms.PushSymbolScope();
   // Extract stmt_block
   auto t_body =
       (m_Lexer.Is(IDs::ID_DELIM_CLY_OPEN)) ? parse_stmt_block() : parse_stmt();
+
+  m_Syms.PopSymbolScope();
 
   if (!t_body.has_value())
     return t_body.error();
@@ -49,11 +52,13 @@ std::expected<std::unique_ptr<AST::Node>, InterpErr> Parser::parse_if() {
 
   // Optionally handle an else, else-if, or nothing
   if (m_Lexer.Is(IDs::ID_KW_ELSE)) {
+    m_Syms.PushSymbolScope();
     auto f_body = (m_Lexer.Is(IDs::ID_DELIM_CLY_OPEN)) ? parse_stmt_block()
                                                        : parse_stmt();
 
     if (!f_body.has_value())
       return f_body.error();
+    m_Syms.PopSymbolScope();
 
     node->m_FBody = std::move(f_body.value());
   } else if (m_Lexer.Is(IDs::ID_KW_ELSE_IF)) {

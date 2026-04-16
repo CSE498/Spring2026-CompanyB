@@ -32,6 +32,7 @@ std::expected<std::unique_ptr<AST::Node>, InterpErr> Parser::parse_agent_def() {
     return res.error();
 
   m_InInit = true;
+  m_Syms.PushSymbolScope();
   // Expect: <STMT_BLOCK|STMT>
   auto init =
       (m_Lexer.Is(IDs::ID_DELIM_CLY_OPEN)) ? parse_stmt_block() : parse_stmt();
@@ -59,6 +60,7 @@ std::expected<std::unique_ptr<AST::Node>, InterpErr> Parser::parse_agent_def() {
   auto turn =
       (m_Lexer.Is(IDs::ID_DELIM_CLY_OPEN)) ? parse_stmt_block() : parse_stmt();
   m_InTurn = false;
+  m_Syms.PopSymbolScope();
   if (!turn.has_value())
     return turn.error();
 
