@@ -1,7 +1,9 @@
 #pragma once
 
+#include <algorithm>
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/matchers/catch_matchers_templated.hpp>
+#include <concepts>
 #include <expected>
 #include <optional>
 #include <sstream>
@@ -13,8 +15,7 @@
 
 namespace cse498 {
 namespace matchers {
-template <typename T>
-struct OptNotNull : Catch::Matchers::MatcherGenericBase {
+template <typename T> struct OptNotNull : Catch::Matchers::MatcherGenericBase {
   bool match(std::optional<T> const &other) const { return other.has_value(); }
 
   std::string describe() const override { return "Has value (is not empty)"; }
@@ -27,6 +28,17 @@ struct ExpNotErr : Catch::Matchers::MatcherGenericBase {
   }
 
   std::string describe() const override { return "Has value (is not err)"; }
+};
+
+struct ExpIsErr : Catch::Matchers::MatcherGenericBase {
+  template <typename T, typename E>
+  bool match(std::expected<T, E> const &other) const {
+    return !other.has_value();
+  }
+
+  std::string describe() const override {
+    return "Has error (does not have value)";
+  }
 };
 
 template <typename State>
@@ -52,5 +64,5 @@ struct VariantState : Catch::Matchers::MatcherGenericBase {
   }
 };
 
-};  // namespace matchers
-};  // namespace cse498
+}; // namespace matchers
+}; // namespace cse498
