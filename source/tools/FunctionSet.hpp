@@ -11,6 +11,7 @@
 #include <ranges>
 #include <type_traits>
 #include <vector>
+#include <exception>
 
 namespace cse498 {
 

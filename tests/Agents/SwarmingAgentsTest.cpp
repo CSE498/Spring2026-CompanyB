@@ -1,479 +1,353 @@
 /**
  * @file SwarmingAgentsTest.cpp
- * @brief test suite for SwarmingAgent
+ * @brief Test suite for SwarmingAgent<TrafficData> and SwarmingAgent<DiseaseData>
  */
 
-// #include "../../../third-party/Catch/single_include/catch2/catch.hpp"
-#include <catch2/catch_test_macros.hpp>
-#include <catch2/matchers/catch_matchers_floating_point.hpp>
+// Used ClaudeCode and Codex to assist in editing our test suite to be up to date.
 
-#include "../../source/Agents/PacingAgent.hpp"
+#include <catch2/catch_test_macros.hpp>
+
+#include <optional>
+#include <set>
+#include <variant>
+
 #include "../../source/Agents/SwarmingAgent.hpp"
-#include "../../source/Worlds/MazeWorld.hpp"
+#include "../../source/core/AgentData.hpp"
+#include "../../source/core/Step.hpp"
 
 using namespace cse498;
+using namespace cse498::steps;
 
-// MazeWorld action IDs (matches MazeWorld::ActionType)
-static constexpr size_t REMAIN_STILL = 0;
-static constexpr size_t MOVE_UP = 1;
-static constexpr size_t MOVE_DOWN = 2;
-static constexpr size_t MOVE_LEFT = 3;
-static constexpr size_t MOVE_RIGHT = 4;
+// Helpers
 
-// Construction & Initialization
+static TrafficData MakeTrafficData(WorldPosition pos,
+                                   std::optional<WorldPosition> dest,
+                                   bool active = true) {
+  return TrafficData{
+      .destination = dest,
+      .position = pos,
+      .direction = Direction::North,
+      .is_active = active,
+  };
+}
 
-TEST_CASE("SwarmingAgent initializes with actions from MazeWorld",
+static DiseaseData MakeDiseaseData(WorldPosition pos, HealthState state) {
+  return DiseaseData{
+      .infection_probability = 0.0,
+      .infection_state = state,
+      .destination = std::nullopt,
+      .position = pos,
+  };
+}
+
+static bool IsCardinalNeighbor(WorldPosition from, WorldPosition to) {
+  return to == from.Up() || to == from.Down() || to == from.Left() ||
+         to == from.Right();
+}
+
+/// Extract the next step and return it, requiring success.
+static Step NextStep(StepContainer& c) {
+  auto result = c.get_next();
+  REQUIRE(result.has_value());
+  return result.value();
+}
+
+/// Extract a MovementStep from the container.
+static MovementStep NextMovement(StepContainer& c) {
+  Step s = NextStep(c);
+  REQUIRE(std::holds_alternative<MovementStep>(s));
+  return std::get<MovementStep>(s);
+}
+
+/// Extract an InfoStep from the container.
+static InfoStep NextInfo(StepContainer& c) {
+  Step s = NextStep(c);
+  REQUIRE(std::holds_alternative<InfoStep>(s));
+  return std::get<InfoStep>(s);
+}
+
+// Construction and state
+
+TEST_CASE("TrafficAgent construction and GetId", "[SwarmingAgent]") {
+  auto data = MakeTrafficData({3, 4}, std::nullopt);
+  SwarmingAgent<TrafficData> agent(data, 42);
+
+  REQUIRE(agent.GetId() == 42);
+}
+
+TEST_CASE("TrafficAgent GetState returns initial state", "[SwarmingAgent]") {
+  WorldPosition pos{7, 8};
+  auto data = MakeTrafficData(pos, std::nullopt, false);
+  SwarmingAgent<TrafficData> agent(data, 0);
+
+  auto state = agent.GetState();
+  REQUIRE(state.position == pos);
+  REQUIRE(state.is_active == false);
+  REQUIRE_FALSE(state.destination.has_value());
+}
+
+TEST_CASE("SetGoal updates destination", "[SwarmingAgent]") {
+  auto data = MakeTrafficData({1, 1}, std::nullopt);
+  SwarmingAgent<TrafficData> agent(data, 0);
+
+  WorldPosition goal{9, 9};
+  agent.SetGoal(goal);
+
+  auto state = agent.GetState();
+  REQUIRE(state.destination.has_value());
+  REQUIRE(state.destination.value() == goal);
+}
+
+TEST_CASE("SetActive updates is_active", "[SwarmingAgent]") {
+  auto data = MakeTrafficData({1, 1}, std::nullopt, true);
+  SwarmingAgent<TrafficData> agent(data, 0);
+
+  agent.SetActive(false);
+  REQUIRE(agent.GetState().is_active == false);
+
+  agent.SetActive(true);
+  REQUIRE(agent.GetState().is_active == true);
+}
+
+// Traffic agent inactive behavior
+
+TEST_CASE("Inactive traffic agent returns empty StepContainer",
           "[SwarmingAgent]") {
-  MazeWorld world;
-  auto& agent = world.AddAgent<SwarmingAgent>("TestAgent");
-  agent.SetLocation(WorldPosition{1, 1});
+  auto data = MakeTrafficData({5, 5}, WorldPosition{8, 8}, false);
+  SwarmingAgent<TrafficData> agent(data, 0);
 
-  // Initialize is called by AddAgent; verify the agent exists and has actions
-  REQUIRE(agent.GetName() == "TestAgent");
-  REQUIRE(agent.GetID() == 0);
-
-  // With no target set, known_locations is empty
-  REQUIRE(agent.GetKnownLocations().empty());
+  auto turn = agent.GetTurn();
+  REQUIRE(turn.empty());
 }
 
-// SetTarget & AddKnownLocation
+// Traffic agent with no destination — random movement
 
-TEST_CASE("SetTarget returns reference for chaining", "[SwarmingAgent]") {
-  MazeWorld world;
-  auto& agent = world.AddAgent<SwarmingAgent>("Agent");
-  agent.SetLocation(WorldPosition{1, 1});
-
-  // Should be chainable
-  auto& ref = agent.SetTarget(42);
-  REQUIRE(&ref == &agent);
-}
-
-TEST_CASE("AddKnownLocation stores and retrieves locations",
+TEST_CASE("Active traffic agent with no destination moves to a cardinal neighbor",
           "[SwarmingAgent]") {
-  MazeWorld world;
-  auto& agent = world.AddAgent<SwarmingAgent>("Agent");
-  agent.SetLocation(WorldPosition{1, 1});
-
-  agent.AddKnownLocation(10, WorldPosition{5, 5});
-  agent.AddKnownLocation(20, WorldPosition{8, 3});
-
-  const auto& locs = agent.GetKnownLocations();
-  REQUIRE(locs.size() == 2);
-  REQUIRE(locs.contains(10));
-  REQUIRE(locs.contains(20));
-
-  auto r1 = locs.at(10);
-  REQUIRE(r1.has_value());
-  REQUIRE(r1.value().CellX() == 5);
-  REQUIRE(r1.value().CellY() == 5);
-
-  auto r2 = locs.at(20);
-  REQUIRE(r2.has_value());
-  REQUIRE(r2.value().CellX() == 8);
-  REQUIRE(r2.value().CellY() == 3);
-}
-
-TEST_CASE("AddKnownLocation is chainable", "[SwarmingAgent]") {
-  MazeWorld world;
-  auto& agent = world.AddAgent<SwarmingAgent>("Agent");
-  agent.SetLocation(WorldPosition{1, 1});
-
-  auto& ref = agent.AddKnownLocation(1, WorldPosition{2, 2});
-  REQUIRE(&ref == &agent);
-}
-
-// SelectAction — movement toward target
-
-TEST_CASE("Agent moves right when target is to the right", "[SwarmingAgent]") {
-  MazeWorld world;
-  auto& agent = world.AddAgent<SwarmingAgent>("Agent");
-  // Place agent at (1,1), target at (5,1) — target is to the right
-  agent.SetLocation(WorldPosition{1, 1});
-  agent.SetTarget(99);
-  agent.AddKnownLocation(99, WorldPosition{5, 1});
-
-  size_t action = agent.SelectAction(world.GetGrid());
-  REQUIRE(action == MOVE_RIGHT);
-}
-
-TEST_CASE("Agent moves left when target is to the left", "[SwarmingAgent]") {
-  MazeWorld world;
-  auto& agent = world.AddAgent<SwarmingAgent>("Agent");
-  // Place agent at (5,1), target at (1,1)
-  agent.SetLocation(WorldPosition{5, 1});
-  agent.SetTarget(99);
-  agent.AddKnownLocation(99, WorldPosition{1, 1});
-
-  size_t action = agent.SelectAction(world.GetGrid());
-  REQUIRE(action == MOVE_LEFT);
-}
-
-TEST_CASE("Agent moves down when target is below", "[SwarmingAgent]") {
-  MazeWorld world;
-  auto& agent = world.AddAgent<SwarmingAgent>("Agent");
-  // Place agent at (1,1), target at (1,5) — y increases downward
-  agent.SetLocation(WorldPosition{1, 1});
-  agent.SetTarget(99);
-  agent.AddKnownLocation(99, WorldPosition{1, 5});
-
-  size_t action = agent.SelectAction(world.GetGrid());
-  REQUIRE(action == MOVE_DOWN);
-}
-
-TEST_CASE("Agent moves up when target is above", "[SwarmingAgent]") {
-  MazeWorld world;
-  auto& agent = world.AddAgent<SwarmingAgent>("Agent");
-  // Place agent at (1,5), target at (1,1)
-  agent.SetLocation(WorldPosition{1, 5});
-  agent.SetTarget(99);
-  agent.AddKnownLocation(99, WorldPosition{1, 1});
-
-  size_t action = agent.SelectAction(world.GetGrid());
-  REQUIRE(action == MOVE_UP);
-}
-
-TEST_CASE("Agent stays still when already at target", "[SwarmingAgent]") {
-  MazeWorld world;
-  auto& agent = world.AddAgent<SwarmingAgent>("Agent");
-  agent.SetLocation(WorldPosition{3, 3});
-  agent.SetTarget(99);
-  agent.AddKnownLocation(99, WorldPosition{3, 3});
-
-  size_t action = agent.SelectAction(world.GetGrid());
-  REQUIRE(action == REMAIN_STILL);
-}
-
-TEST_CASE("Agent prefers horizontal movement when dx >= dy",
-          "[SwarmingAgent]") {
-  MazeWorld world;
-  auto& agent = world.AddAgent<SwarmingAgent>("Agent");
-  // dx = 3, dy = 1 — should move horizontally (right)
-  agent.SetLocation(WorldPosition{1, 1});
-  agent.SetTarget(99);
-  agent.AddKnownLocation(99, WorldPosition{4, 2});
-
-  size_t action = agent.SelectAction(world.GetGrid());
-  REQUIRE(action == MOVE_RIGHT);
-}
-
-TEST_CASE("Agent prefers vertical movement when dy > dx", "[SwarmingAgent]") {
-  MazeWorld world;
-  auto& agent = world.AddAgent<SwarmingAgent>("Agent");
-  // dx = 1, dy = 3 — should move vertically (down)
-  agent.SetLocation(WorldPosition{1, 1});
-  agent.SetTarget(99);
-  agent.AddKnownLocation(99, WorldPosition{2, 4});
-
-  size_t action = agent.SelectAction(world.GetGrid());
-  REQUIRE(action == MOVE_DOWN);
-}
-
-TEST_CASE("Agent moves horizontally when dx equals dy", "[SwarmingAgent]") {
-  MazeWorld world;
-  auto& agent = world.AddAgent<SwarmingAgent>("Agent");
-  // dx = 2, dy = 2 — abs(dx) >= abs(dy) is true, so horizontal (right) wins
-  agent.SetLocation(WorldPosition{1, 1});
-  agent.SetTarget(99);
-  agent.AddKnownLocation(99, WorldPosition{3, 3});
-
-  size_t action = agent.SelectAction(world.GetGrid());
-  REQUIRE(action == MOVE_RIGHT);
-}
-
-// SelectAction — wandering (no target knowledge)
-
-TEST_CASE("Agent wanders when it has no target set", "[SwarmingAgent]") {
-  MazeWorld world;
-  auto& agent = world.AddAgent<SwarmingAgent>("Wanderer");
-  agent.SetLocation(WorldPosition{5, 5});
-
-  // No target set — should return a movement action (1-4) each time
-  for (int i = 0; i < 20; ++i) {
-    size_t action = agent.SelectAction(world.GetGrid());
-    REQUIRE(action >= MOVE_UP);
-    REQUIRE(action <= MOVE_RIGHT);
-  }
-}
-
-TEST_CASE("Agent wanders when target is set but location unknown",
-          "[SwarmingAgent]") {
-  MazeWorld world;
-  auto& agent = world.AddAgent<SwarmingAgent>("Seeker");
-  agent.SetLocation(WorldPosition{5, 5});
-  agent.SetTarget(42);  // target set, but no known_location for id 42
+  WorldPosition pos{5, 5};
+  auto data = MakeTrafficData(pos, std::nullopt);
+  SwarmingAgent<TrafficData> agent(data, 0);
 
   for (int i = 0; i < 20; ++i) {
-    size_t action = agent.SelectAction(world.GetGrid());
-    REQUIRE(action >= MOVE_UP);
-    REQUIRE(action <= MOVE_RIGHT);
+    auto turn = agent.GetTurn();
+    REQUIRE_FALSE(turn.empty());
+
+    MovementStep ms = NextMovement(turn);
+    REQUIRE(IsCardinalNeighbor(pos, ms.loc));
+
+    // No additional steps
+    auto extra = turn.get_next();
+    REQUIRE_FALSE(extra.has_value());
+    REQUIRE(extra.error().kind == StepErr::Kind::STEPS_EXHAUSTED);
   }
 }
 
-// Knowledge sharing between agents
+// Traffic agent already at destination
 
-TEST_CASE("Agent learns target location from another SwarmingAgent",
+TEST_CASE("Traffic agent at destination returns empty container",
           "[SwarmingAgent]") {
-  MazeWorld world;
+  WorldPosition pos{5, 5};
+  auto data = MakeTrafficData(pos, pos);
+  SwarmingAgent<TrafficData> agent(data, 0);
 
-  // Agent A knows where target 99 is
-  auto& knower = world.AddAgent<SwarmingAgent>("Knower");
-  knower.SetLocation(WorldPosition{1, 1});
-  knower.AddKnownLocation(99, WorldPosition{9, 1});
-
-  // Agent B is seeking target 99 but doesn't know where it is
-  auto& seeker = world.AddAgent<SwarmingAgent>("Seeker");
-  seeker.SetLocation(WorldPosition{3, 1});
-  seeker.SetTarget(99);
-
-  // Verify seeker doesn't know the location yet
-  REQUIRE_FALSE(seeker.GetKnownLocations().contains(99));
-
-  // After one SelectAction call, seeker should have merged knower's knowledge
-  // (GetKnownAgents returns ALL agents by default in WorldBase)
-  seeker.SelectAction(world.GetGrid());
-
-  REQUIRE(seeker.GetKnownLocations().contains(99));
-  auto result = seeker.GetKnownLocations().at(99);
-  REQUIRE(result.has_value());
-  REQUIRE_THAT(result.value().X(), Catch::Matchers::WithinRel(9.0));
-  REQUIRE_THAT(result.value().Y(), Catch::Matchers::WithinRel(1.0));
+  auto turn = agent.GetTurn();
+  REQUIRE(turn.empty());
 }
 
-TEST_CASE("Agent with knowledge moves toward target after learning",
+// Traffic agent with destination — InfoStep emission
+
+TEST_CASE("Traffic agent heading right emits InfoStep for Right neighbor",
           "[SwarmingAgent]") {
-  MazeWorld world;
+  WorldPosition pos{5, 5};
+  WorldPosition dest{8, 5};
+  auto data = MakeTrafficData(pos, dest);
+  SwarmingAgent<TrafficData> agent(data, 0);
 
-  // Knower knows where target 50 is (far to the right)
-  auto& knower = world.AddAgent<SwarmingAgent>("Knower");
-  knower.SetLocation(WorldPosition{1, 1});
-  knower.AddKnownLocation(50, WorldPosition{10, 1});
+  auto turn = agent.GetTurn();
+  InfoStep info = NextInfo(turn);
 
-  // Seeker wants target 50 but doesn't know where it is
-  auto& seeker = world.AddAgent<SwarmingAgent>("Seeker");
-  seeker.SetLocation(WorldPosition{3, 1});
-  seeker.SetTarget(50);
-
-  // First call: seeker learns from knower, then decides action
-  // After learning, target is to the right (x=10 vs x=3), so should move right
-  size_t action = seeker.SelectAction(world.GetGrid());
-  REQUIRE(action == MOVE_RIGHT);
+  REQUIRE(info.aspect == InfoStep::Aspect::LOC_AVAIL);
+  REQUIRE(info.target == pos.Right());
 }
 
-TEST_CASE("Knowledge spreads to other agents", "[SwarmingAgent]") {
-  MazeWorld world;
-
-  // Agent A knows location 1
-  auto& a = world.AddAgent<SwarmingAgent>("A");
-  a.SetLocation(WorldPosition{1, 1});
-  a.AddKnownLocation(1, WorldPosition{9, 9});
-
-  // Agent B knows location 2
-  auto& b = world.AddAgent<SwarmingAgent>("B");
-  b.SetLocation(WorldPosition{2, 1});
-  b.AddKnownLocation(2, WorldPosition{1, 9});
-
-  // Agent C knows nothing
-  auto& c = world.AddAgent<SwarmingAgent>("C");
-  c.SetLocation(WorldPosition{3, 1});
-  c.SetTarget(1);
-
-  // After C runs SelectAction, it should learn both locations from A and B
-  c.SelectAction(world.GetGrid());
-
-  REQUIRE(c.GetKnownLocations().contains(1));
-  REQUIRE(c.GetKnownLocations().contains(2));
-}
-
-TEST_CASE("Agent does not overwrite existing knowledge", "[SwarmingAgent]") {
-  MazeWorld world;
-
-  // Agent A thinks target 1 is at (9,9)
-  auto& a = world.AddAgent<SwarmingAgent>("A");
-  a.SetLocation(WorldPosition{1, 1});
-  a.AddKnownLocation(1, WorldPosition{9, 9});
-
-  // Agent B already knows target 1 is at (5,5) — this should NOT be overwritten
-  auto& b = world.AddAgent<SwarmingAgent>("B");
-  b.SetLocation(WorldPosition{2, 1});
-  b.AddKnownLocation(1, WorldPosition{5, 5});
-  b.SetTarget(1);
-
-  b.SelectAction(world.GetGrid());
-
-  // B should still have its original knowledge
-  auto result = b.GetKnownLocations().at(1);
-  REQUIRE(result.has_value());
-  REQUIRE_THAT(result.value().X(), Catch::Matchers::WithinRel(5.0));
-  REQUIRE_THAT(result.value().Y(), Catch::Matchers::WithinRel(5.0));
-}
-
-// Multiple agents with full RunAgents cycle
-
-// ==================
-// ADDITIONAL TESTS
-// ==================
-
-// 1. Non-SwarmingAgent neighbor — exercises the dynamic_cast → continue branch
-
-TEST_CASE("Agent skips non-SwarmingAgent neighbors during knowledge merge",
+TEST_CASE("Traffic agent heading left emits InfoStep for Left neighbor",
           "[SwarmingAgent]") {
-  MazeWorld world;
+  WorldPosition pos{5, 5};
+  WorldPosition dest{2, 5};
+  auto data = MakeTrafficData(pos, dest);
+  SwarmingAgent<TrafficData> agent(data, 0);
 
-  // Add a PacingAgent — this is NOT a SwarmingAgent
-  auto& pacer = world.AddAgent<PacingAgent>("Pacer");
-  pacer.SetLocation(WorldPosition{1, 1});
+  auto turn = agent.GetTurn();
+  InfoStep info = NextInfo(turn);
 
-  // Add a SwarmingAgent seeking a target it doesn't know about
-  auto& seeker = world.AddAgent<SwarmingAgent>("Seeker");
-  seeker.SetLocation(WorldPosition{2, 1});
-  seeker.SetTarget(99);
-  seeker.SetTarget(99);
-
-  // Should not crash and should not learn anything from the PacingAgent
-  size_t action = seeker.SelectAction(world.GetGrid());
-  REQUIRE(seeker.GetKnownLocations().empty());
-  REQUIRE(action >= MOVE_UP);
-  REQUIRE(action <= MOVE_RIGHT);
+  REQUIRE(info.aspect == InfoStep::Aspect::LOC_AVAIL);
+  REQUIRE(info.target == pos.Left());
 }
 
-// 2. Initialize() return value
-
-TEST_CASE("Initialize returns true when world provides required actions",
+TEST_CASE("Traffic agent heading up emits InfoStep for Up neighbor",
           "[SwarmingAgent]") {
-  MazeWorld world;
-  auto& agent = world.AddAgent<SwarmingAgent>("Agent");
-  agent.SetLocation(WorldPosition{1, 1});
+  WorldPosition pos{5, 5};
+  WorldPosition dest{5, 2};  // Up means decreasing Y
+  auto data = MakeTrafficData(pos, dest);
+  SwarmingAgent<TrafficData> agent(data, 0);
 
-  // Initialize is called inside AddAgent; call it again to verify the return
-  // value
-  REQUIRE(agent.Initialize() == true);
+  auto turn = agent.GetTurn();
+  InfoStep info = NextInfo(turn);
+
+  REQUIRE(info.aspect == InfoStep::Aspect::LOC_AVAIL);
+  REQUIRE(info.target == pos.Up());
 }
 
-// 3. Multiple agents with overlapping partial knowledge
-
-TEST_CASE("Knowledge merge only adds new keys, does not duplicate shared keys",
+TEST_CASE("Traffic agent heading down emits InfoStep for Down neighbor",
           "[SwarmingAgent]") {
-  MazeWorld world;
+  WorldPosition pos{5, 5};
+  WorldPosition dest{5, 8};  // Down means increasing Y
+  auto data = MakeTrafficData(pos, dest);
+  SwarmingAgent<TrafficData> agent(data, 0);
 
-  // Agent A knows locations 1 and 2
-  auto& a = world.AddAgent<SwarmingAgent>("A");
-  a.SetLocation(WorldPosition{1, 1});
-  a.AddKnownLocation(1, WorldPosition{9, 9});
-  a.AddKnownLocation(2, WorldPosition{5, 5});
+  auto turn = agent.GetTurn();
+  InfoStep info = NextInfo(turn);
 
-  // Agent B knows locations 2 and 3
-  auto& b = world.AddAgent<SwarmingAgent>("B");
-  b.SetLocation(WorldPosition{2, 1});
-  b.AddKnownLocation(2, WorldPosition{5, 5});
-  b.AddKnownLocation(3, WorldPosition{1, 9});
-
-  // Agent C knows nothing, targets location 1
-  auto& c = world.AddAgent<SwarmingAgent>("C");
-  c.SetLocation(WorldPosition{3, 1});
-  c.SetTarget(1);
-
-  (void)c.SelectAction(world.GetGrid());
-
-  const auto& locs = c.GetKnownLocations();
-  REQUIRE(locs.size() == 3);
-  REQUIRE(locs.contains(1));
-  REQUIRE(locs.contains(2));
-  REQUIRE(locs.contains(3));
+  REQUIRE(info.aspect == InfoStep::Aspect::LOC_AVAIL);
+  REQUIRE(info.target == pos.Down());
 }
 
-// 4. Duplicate key via AddKnownLocation — insert semantics
+// Conditional movement after InfoStep
 
-TEST_CASE("AddKnownLocation with duplicate key overwrites the previous value",
+TEST_CASE("inform(true) yields MovementStep to primary neighbor",
           "[SwarmingAgent]") {
-  MazeWorld world;
-  auto& agent = world.AddAgent<SwarmingAgent>("Agent");
-  agent.SetLocation(WorldPosition{1, 1});
+  WorldPosition pos{5, 5};
+  WorldPosition dest{8, 5};
+  auto data = MakeTrafficData(pos, dest);
+  SwarmingAgent<TrafficData> agent(data, 0);
 
-  agent.AddKnownLocation(10, WorldPosition{5, 5});
-  agent.AddKnownLocation(10, WorldPosition{9, 9});
+  auto turn = agent.GetTurn();
 
-  auto result = agent.GetKnownLocations().at(10);
-  REQUIRE(result.has_value());
-  // RobinHoodMap::insert overwrites on duplicate key
-  REQUIRE_THAT(result.value().X(), Catch::Matchers::WithinRel(9.0));
-  REQUIRE_THAT(result.value().Y(), Catch::Matchers::WithinRel(9.0));
+  // Consume InfoStep
+  NextInfo(turn);
+
+  // Inform the container that the location is available
+  turn.inform(true);
+
+  // Next should be a ConditionalStep handled internally, resolving to primary
+  MovementStep ms = NextMovement(turn);
+  REQUIRE(ms.loc == pos.Right());
 }
 
-// 5. Deterministic wandering — same ID produces same sequence
-
-TEST_CASE("Wandering is deterministic given the same agent ID seed",
+TEST_CASE("inform(false) yields MovementStep to backup neighbor",
           "[SwarmingAgent]") {
-  // Create two separate worlds so agent IDs are both 0
-  MazeWorld world1;
-  auto& a1 = world1.AddAgent<SwarmingAgent>("A");
-  a1.SetLocation(WorldPosition{5, 5});
+  WorldPosition pos{5, 5};
+  WorldPosition dest{8, 5};
+  auto data = MakeTrafficData(pos, dest);
+  SwarmingAgent<TrafficData> agent(data, 0);
 
-  MazeWorld world2;
-  auto& a2 = world2.AddAgent<SwarmingAgent>("A");
-  a2.SetLocation(WorldPosition{5, 5});
+  auto turn = agent.GetTurn();
 
-  // Both agents have ID 0 and same seed — wander sequences should match
-  for (int i = 0; i < 20; ++i) {
-    REQUIRE(a1.SelectAction(world1.GetGrid()) ==
-            a2.SelectAction(world2.GetGrid()));
+  // Consume InfoStep
+  NextInfo(turn);
+
+  // Inform the container that the location is NOT available
+  turn.inform(false);
+
+  // Next should be the backup neighbor — best_neighbor with primary excluded.
+  // dest is (8,5), pos is (5,5). Primary is Right (6,5).
+  // Excluding Right, neighbors considered in array order: Up(5,4), Down(5,6), Left(4,5).
+  // Manhattan distances to (8,5): Up=|8-5|+|5-4|=4, Down=|8-5|+|5-6|=4, Left=|8-4|+|5-5|=4
+  // All tied at 4 — first in array order wins: Up(5,4).
+  // But recent_positions may affect this; best_neighbor prefers "fresh" cells.
+  // On a fresh agent with no history other than pos and primary recorded,
+  // pos=(5,5) and primary=(6,5) are in recent. Up/Down/Left are all fresh and tied.
+  // First fresh in array order (Up) wins.
+  MovementStep ms = NextMovement(turn);
+  REQUIRE(ms.loc == pos.Up());
+}
+
+TEST_CASE("ConditionalStep without inform returns NOT_INFORMED error",
+          "[SwarmingAgent]") {
+  WorldPosition pos{5, 5};
+  WorldPosition dest{8, 5};
+  auto data = MakeTrafficData(pos, dest);
+  SwarmingAgent<TrafficData> agent(data, 0);
+
+  auto turn = agent.GetTurn();
+
+  // Consume InfoStep
+  NextInfo(turn);
+
+  // Do NOT call inform — the next get_next should error
+  auto result = turn.get_next();
+  // The ConditionalStep is next; without inform it should fail
+  // Actually get_next returns the ConditionalStep node which checks world_info
+  REQUIRE_FALSE(result.has_value());
+  REQUIRE(result.error().kind == StepErr::Kind::NOT_INFORMED);
+}
+
+
+// Disease agent behavior
+
+
+TEST_CASE("DiseaseAgent SUSCEPTIBLE moves to cardinal neighbor",
+          "[SwarmingAgent]") {
+  WorldPosition pos{5, 5};
+  auto data = MakeDiseaseData(pos, HealthState::SUSCEPTIBLE);
+  SwarmingAgent<DiseaseData> agent(data, 0);
+
+  for (int i = 0; i < 10; ++i) {
+    auto turn = agent.GetTurn();
+    REQUIRE_FALSE(turn.empty());
+    MovementStep ms = NextMovement(turn);
+    REQUIRE(IsCardinalNeighbor(pos, ms.loc));
   }
 }
 
-// 7. Many agents sharing knowledge — light stress test
+TEST_CASE("DiseaseAgent INFECTED moves to cardinal neighbor",
+          "[SwarmingAgent]") {
+  WorldPosition pos{5, 5};
+  auto data = MakeDiseaseData(pos, HealthState::INFECTED);
+  SwarmingAgent<DiseaseData> agent(data, 0);
 
-TEST_CASE("Knowledge spreads correctly among many agents", "[SwarmingAgent]") {
-  MazeWorld world;
-
-  // First agent knows the target location
-  auto& knower = world.AddAgent<SwarmingAgent>("Knower");
-  knower.SetLocation(WorldPosition{1, 1});
-  knower.AddKnownLocation(42, WorldPosition{9, 9});
-
-  // Add 15 seekers that all want target 42
-  std::vector<std::reference_wrapper<SwarmingAgent>> seekers;
-  for (int i = 0; i < 15; ++i) {
-    auto& s = world.AddAgent<SwarmingAgent>("Seeker" + std::to_string(i));
-    s.SetLocation(WorldPosition{static_cast<double>(1 + (i % 8)),
-                                static_cast<double>(2 + (i / 8))});
-    s.SetTarget(42);
-    seekers.push_back(s);
-  }
-
-  // Run one round — every seeker should learn where target 42 is
-  for (auto& ref : seekers) {
-    (void)ref.get().SelectAction(world.GetGrid());
-  }
-
-  for (auto& ref : seekers) {
-    REQUIRE(ref.get().GetKnownLocations().contains(42));
-    auto result = ref.get().GetKnownLocations().at(42);
-    REQUIRE(result.has_value());
-
-    REQUIRE_THAT(result.value().X(), Catch::Matchers::WithinRel(9.0));
-    REQUIRE_THAT(result.value().Y(), Catch::Matchers::WithinRel(9.0));
+  for (int i = 0; i < 10; ++i) {
+    auto turn = agent.GetTurn();
+    REQUIRE_FALSE(turn.empty());
+    MovementStep ms = NextMovement(turn);
+    REQUIRE(IsCardinalNeighbor(pos, ms.loc));
   }
 }
 
-// Full RunAgents integration
+TEST_CASE("DiseaseAgent RECOVERED moves to cardinal neighbor",
+          "[SwarmingAgent]") {
+  WorldPosition pos{5, 5};
+  auto data = MakeDiseaseData(pos, HealthState::RECOVERED);
+  SwarmingAgent<DiseaseData> agent(data, 0);
 
-TEST_CASE("Full RunAgents cycle moves agent toward target", "[SwarmingAgent]") {
-  MazeWorld world;
+  for (int i = 0; i < 10; ++i) {
+    auto turn = agent.GetTurn();
+    REQUIRE_FALSE(turn.empty());
+    MovementStep ms = NextMovement(turn);
+    REQUIRE(IsCardinalNeighbor(pos, ms.loc));
+  }
+}
 
-  // Knower at (1,1) knows target at (1,5)
-  auto& knower = world.AddAgent<SwarmingAgent>("Knower");
-  knower.SetLocation(WorldPosition{1, 1});
-  knower.AddKnownLocation(99, WorldPosition{1, 5});
 
-  // Seeker at (1,3) wants to reach target 99
-  auto& seeker = world.AddAgent<SwarmingAgent>("Seeker");
-  seeker.SetLocation(WorldPosition{1, 3});
-  seeker.SetTarget(99);
+// Anti-looping / recent-history behavior
 
-  // Run one full world step (all agents take actions through the world)
-  world.RunAgents();
 
-  // Seeker should have learned target and moved down (toward y=5)
-  WorldPosition seeker_pos = seeker.GetLocation().AsWorldPosition();
-  REQUIRE_THAT(seeker_pos.Y(), Catch::Matchers::WithinRel(4.0));
-  REQUIRE_THAT(seeker_pos.X(), Catch::Matchers::WithinRel(1.0));
+TEST_CASE("Traffic agent avoids recently visited positions when fresh neighbors exist",
+          "[SwarmingAgent]") {
+  // Agent with no destination wanders randomly but avoids recent positions.
+  // Over many turns from a fixed position, it should visit more than one
+  // distinct neighbor (demonstrating it doesn't just repeat one cell).
+  WorldPosition pos{5, 5};
+  auto data = MakeTrafficData(pos, std::nullopt);
+  SwarmingAgent<TrafficData> agent(data, 0);
+
+  std::set<std::pair<double, double>> visited;
+  for (int i = 0; i < 30; ++i) {
+    auto turn = agent.GetTurn();
+    MovementStep ms = NextMovement(turn);
+    visited.insert({ms.loc.X(), ms.loc.Y()});
+  }
+
+  // With anti-looping, the agent should visit more than 1 distinct neighbor
+  REQUIRE(visited.size() > 1);
 }
