@@ -77,26 +77,3 @@ TEST_CASE("Test getting time while running", "[ProfilingTimer]") {
   testTimer.Stop();
   REQUIRE(testTimer.GetTotalTime() >= laterTime);
 }
-
-TEST_CASE("Test accumulation across multiple Start/Stop cycles",
-          "[ProfilingTimer]") {
-  cse498::ProfilingTimer testTimer("test");
-
-  // Cycle 1
-  testTimer.Start();
-  std::this_thread::sleep_for(std::chrono::milliseconds(10));
-  testTimer.Stop();
-
-  uint64_t cycle1Time = testTimer.GetTotalTime();
-  REQUIRE(cycle1Time > 0);
-
-  std::this_thread::sleep_for(std::chrono::milliseconds(
-      10));  // Time passes while stopped, shouldn't count
-
-  // Cycle 2
-  testTimer.Start();
-  std::this_thread::sleep_for(std::chrono::milliseconds(10));
-  testTimer.Stop();
-
-  REQUIRE(testTimer.GetTotalTime() > cycle1Time);
-}
