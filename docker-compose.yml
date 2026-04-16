@@ -7,6 +7,7 @@ services:
       - ./source:/app/source:ro
       - ./demo:/app/demo:ro
       - ./build:/app/build
+      - ./logs:/app/logs
       - ./scripts/docker-entrypoint.sh:/app/docker-entrypoint.sh:ro
     environment:
       - HOST_UID=${HOST_UID}
@@ -24,6 +25,7 @@ services:
       - ./source:/app/source:ro
       - ./demo:/app/demo:ro
       - ./build:/app/build
+      - ./logs:/app/logs
       - ./scripts/docker-entrypoint.sh:/app/docker-entrypoint.sh:ro
     environment:
       - HOST_UID=${HOST_UID}
@@ -42,6 +44,7 @@ services:
       - ./source:/app/source:ro
       - ./third-party:/app/third-party:ro
       - ./build:/app/build
+      - ./logs:/app/logs
       - ./tests:/app/tests:ro
       - ./scripts/docker-entrypoint.sh:/app/docker-entrypoint.sh:ro
     environment:
@@ -56,6 +59,7 @@ services:
     volumes:
       - ./source:/app/source:ro
       - ./build:/app/build
+      - ./logs:/app/logs
       - ./tests:/app/tests:ro
       - ./scripts/docker-entrypoint.sh:/app/docker-entrypoint.sh:ro
     environment:
@@ -74,6 +78,7 @@ services:
       - ./source:/app/source:ro
       - ./demo:/app/demo:ro
       - ./build:/app/build
+      - ./logs:/app/logs
       - ./scripts/docker-entrypoint.sh:/app/docker-entrypoint.sh:ro
     environment:
       - SERVE_PORT=8080
@@ -96,6 +101,7 @@ services:
       - ./source:/app/source
       - ./demo:/app/demo
       - ./build:/app/build
+      - ./logs:/app/logs
       - ./scripts/docker-entrypoint.sh:/app/docker-entrypoint.sh:ro
     environment:
       - HOST_UID=${HOST_UID}

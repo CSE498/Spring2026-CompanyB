@@ -5,6 +5,8 @@
 /output/
 /build/
 
+*.env
+
 # Prerequisites
 *.d
 
@@ -54,3 +56,12 @@
 
 # Generated docs from Doxygen
 /docs
+
+
+# Simulation logs
+/logs/
+
+# Build
+/build/
+**/build/
+**/simple
