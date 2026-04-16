@@ -5,16 +5,25 @@
  **/
 
 // Include the modules that we will be using.
-#include "Agents/ScriptedAgent.hpp"
-#include "Worlds/Group11DummyData.hpp"
-#include "Worlds/Group11TestWorld.hpp"
+#include "Agents/PacingAgent.hpp"
+#include "Interfaces/TrashInterface.hpp"
+#include "Worlds/MazeWorld.hpp"
 
 using namespace cse498;
 
 int main() {
-  Group11TestWorld world;
-  world.AddAgent<ScriptedAgent<Group11DummyData>>(
-      Group11DummyData(WorldPosition{3, 7}));
+  MazeWorld world;
+  world.AddAgent<PacingAgent>("Pacer 1").SetLocation(WorldPosition{3, 1});
+  world.AddAgent<PacingAgent>("Pacer 2").SetLocation(WorldPosition{6, 1});
+  world.AddAgent<PacingAgent>("Guard 1").SetHorizontal().SetLocation(
+      WorldPosition{7, 7});
+  world.AddAgent<PacingAgent>("Guard 2")
+      .SetHorizontal()
+      .ToggleDirection()
+      .SetLocation(WorldPosition{8, 8});
+  world.AddAgent<TrashInterface>("Interface")
+      .SetSymbol('@')
+      .SetLocation(WorldPosition{1, 1});
 
   world.Run();
 }

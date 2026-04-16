@@ -7,24 +7,20 @@
 #pragma once
 
 #include <cassert>
-#include <chrono>
 #include <memory>
 #include <string>
-#include <thread>
 #include <vector>
 
 #include "AgentBase.hpp"
 #include "ItemBase.hpp"
-#include "Step.hpp"
 #include "WorldGrid.hpp"
 
 namespace cse498 {
 
 using item_ptr_t = std::unique_ptr<ItemBase>;
 using item_set_t = std::vector<item_ptr_t>;
-using agent_ptr_t = std::unique_ptr<AgentBase<DummyAgentData>>;
+using agent_ptr_t = std::unique_ptr<AgentBase>;
 using agent_set_t = std::vector<agent_ptr_t>;
-using cse498::steps::StepContainer;
 
 class WorldBase {
  protected:
@@ -90,7 +86,8 @@ class WorldBase {
   // -- Agent Management --
 
   /// @brief Build a new agent of the specified type
-  /// @param DummyAgentData The data of this agent
+  /// @tparam AGENT_T The type of agent to build
+  /// @param agent_name The name of this agent
   /// @return A reference to the newly created agent
   template <typename AGENT_T>
   AGENT_T &AddAgent(std::string agent_name = "None") {
@@ -98,10 +95,10 @@ class WorldBase {
         std::make_unique<AGENT_T>(agent_set.size(), agent_name, *this);
     AGENT_T &agent_ref = *agent_ptr;
     ConfigAgent(*agent_ptr);
-    // if (agent_ptr->Initialize() == false) {
-    //   std::cerr << "Failed to initialize agent '" << agent_name << "'."
-    //             << std::endl;
-    // }
+    if (agent_ptr->Initialize() == false) {
+      std::cerr << "Failed to initialize agent '" << agent_name << "'."
+                << std::endl;
+    }
     agent_set.emplace_back(
         std::move(agent_ptr));  // Move unique ptr for agent into set.
     return agent_ref;
@@ -138,51 +135,7 @@ class WorldBase {
     while (!run_over) {
       RunAgents();
       UpdateWorld();
-
-      /**
-       * Since we only do simulation, and no user input, i moved the interface
-       * display stuff here This more closely mimicks the compy design
-       */
-      DrawGrid(main_grid);
-      std::this_thread::sleep_for(
-          std::chrono::milliseconds(750));  // Simulate a SLOW tick
     }
-  }
-
-  /// @brief Draws the 2D world grid
-  /// @param grid The grid to draw
-  void DrawGrid(const WorldGrid &grid) {
-    std::vector<std::string> symbol_grid(grid.GetHeight());
-
-    // Load the world into the symbol_grid;
-    for (size_t y = 0; y < grid.GetHeight(); ++y) {
-      symbol_grid[y].resize(grid.GetWidth());
-      for (size_t x = 0; x < grid.GetWidth(); ++x) {
-        symbol_grid[y][x] = grid.GetSymbol(WorldPosition{x, y});
-      }
-    }
-
-    // Substitute in items.
-    for (auto &item : item_set) {
-      WorldPosition pos = item->GetLocation().AsWorldPosition();
-      symbol_grid[pos.CellY()][pos.CellX()] = '+';
-    }
-
-    // Substitute in agents.
-    for (auto &agent : agent_set) {
-      WorldPosition pos = agent->GetState().pos;
-      symbol_grid[pos.CellY()][pos.CellX()] = agent->GetState().symbol;
-    }
-
-    // Print out the symbol_grid with a box around it.
-    std::cout << '+' << std::string(grid.GetWidth(), '-') << "+\n";
-    for (const auto &row : symbol_grid) {
-      std::cout << "|";
-      for (char cell : row) std::cout << cell;
-      std::cout << "|\n";
-    }
-    std::cout << '+' << std::string(grid.GetWidth(), '-') << "+\n";
-    std::cout.flush();
   }
 
   //////////////////////////////////////////////////////////////////////////
