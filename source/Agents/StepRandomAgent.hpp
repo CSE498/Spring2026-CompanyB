@@ -23,8 +23,8 @@ class StepRandomAgent : public StepAgentBase<DiseaseData> {
   std::uniform_int_distribution<int> dir_dist{0, 3};
 
  public:
-  explicit StepRandomAgent(DiseaseData data)
-      : StepAgentBase<DiseaseData>(data),
+  StepRandomAgent(DiseaseData data, size_t id)
+      : StepAgentBase<DiseaseData>(data, id),
         // Seed from starting position for reproducibility while keeping
         // different agents out of sync with each other.
         rng(static_cast<unsigned>(data.position.CellX() * 2654435761u ^

@@ -62,12 +62,15 @@ class InfectiousWorld : public SimWorldBase<DiseaseData> {
   }
 
   /// Called by AddAgent() before the agent is pushed into agent_set.
-  /// agent_surface_ids.size() == future index in agent_set at this point.
+ 
   void ConfigAgent(StepAgentBase<DiseaseData>& agent) override {
-    size_t idx = agent_surface_ids.size();
+    size_t idx = agent.GetId();
     Surface::ShapeID sid =
         surface.AddCircle(Circle(PosToPoint(agent.GetState().position), 0.0));
-    agent_surface_ids.push_back(sid);
+   
+    if (idx >= agent_surface_ids.size())
+      agent_surface_ids.resize(idx + 1);
+    agent_surface_ids[idx] = sid;
     surface_to_agent_idx[sid] = idx;
   }
 

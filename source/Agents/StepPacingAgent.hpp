@@ -26,8 +26,8 @@ class StepPacingAgent : public StepAgentBase<DiseaseData> {
   std::optional<WorldPosition> last_target{};
 
  public:
-  explicit StepPacingAgent(DiseaseData data)
-      : StepAgentBase<DiseaseData>(data) {}
+  StepPacingAgent(DiseaseData data, size_t id)
+      : StepAgentBase<DiseaseData>(data, id) {}
   ~StepPacingAgent() override = default;
 
   StepPacingAgent& SetHorizontal() {
