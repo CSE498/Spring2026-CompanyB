@@ -93,25 +93,25 @@ class ActionMap {
    * to moves, minimizing copies.
    */
   struct FuncEntry {
-    std::function<TypeVariant(std::vector<TypeVariant> &&)> wrapped_func;
+    std::function<TypeVariant(std::vector<TypeVariant>&&)> wrapped_func;
     size_t ret_t_idx;
     std::vector<size_t> arg_t_idxs;
 
     FuncEntry() = delete;
     FuncEntry(
-        std::function<TypeVariant(std::vector<TypeVariant> &&)> wrapped_func,
-        size_t ret_t_idx, std::vector<size_t> &&arg_t_idxs)
+        std::function<TypeVariant(std::vector<TypeVariant>&&)> wrapped_func,
+        size_t ret_t_idx, std::vector<size_t>&& arg_t_idxs)
         : wrapped_func(std::move(wrapped_func)),
           ret_t_idx(ret_t_idx),
           arg_t_idxs(std::move(arg_t_idxs)) {};
 
     // Delete copy ctors
-    FuncEntry(const FuncEntry &) = delete;
-    FuncEntry &operator=(const FuncEntry &) = delete;
+    FuncEntry(const FuncEntry&) = delete;
+    FuncEntry& operator=(const FuncEntry&) = delete;
 
     // Permit moving
-    FuncEntry &operator=(FuncEntry &&) = default;
-    FuncEntry(FuncEntry &&) = default;
+    FuncEntry& operator=(FuncEntry&&) = default;
+    FuncEntry(FuncEntry&&) = default;
   };
 
   std::unordered_map<std::string, FuncEntry> funcs{};
@@ -120,7 +120,7 @@ class ActionMap {
   // https://stackoverflow.com/questions/28410697/c-convert-vector-to-tuple See
   // arg_tuple doc comment
   template <typename V, typename AsTuple, size_t... Is>
-  static AsTuple gen_arg_tuple(std::vector<V> &&args,
+  static AsTuple gen_arg_tuple(std::vector<V>&& args,
                                std::index_sequence<Is...>) {
     return std::make_tuple(
         std::get<typename std::tuple_element<Is, AsTuple>::type>(args[Is])...);
@@ -142,7 +142,7 @@ class ActionMap {
    * @return std::tuple<Ts...>
    */
   template <size_t L, typename V, typename... Ts>
-  static std::tuple<Ts...> arg_tuple(std::vector<V> &&args) {
+  static std::tuple<Ts...> arg_tuple(std::vector<V>&& args) {
     return gen_arg_tuple<V, std::tuple<Ts...>>(std::move(args),
                                                std::make_index_sequence<L>{});
   }
@@ -214,7 +214,7 @@ class ActionMap {
    * @param name Name to check for within map
    * @return bool
    */
-  [[nodiscard]] bool exists(const std::string &name) const noexcept {
+  [[nodiscard]] bool exists(const std::string& name) const noexcept {
     return funcs.contains(name);
   }
 
@@ -237,7 +237,7 @@ class ActionMap {
    * @return std::expected<std::string, ActionMapErr>
    */
   [[nodiscard]] std::expected<std::string, ActionMapErr> deregister_callable(
-      const std::string &name) {
+      const std::string& name) {
     auto it = funcs.find(name);
 
     if (it == funcs.end())
@@ -265,14 +265,14 @@ class ActionMap {
    */
   template <TemplTools::IsOneOf<Types...> Ret,
             TemplTools::IsOneOf<Types...>... Args>
-  [[nodiscard]] std::expected<Ret, ActionMapErr> invoke(const std::string &name,
+  [[nodiscard]] std::expected<Ret, ActionMapErr> invoke(const std::string& name,
                                                         Args... args) const {
     const auto it = funcs.find(name);
 
     if (it == funcs.cend())
       return std::unexpected(ActionMapErr::CALLABLE_NOT_FOUND);
 
-    const FuncEntry &target_func = it->second;
+    const FuncEntry& target_func = it->second;
 
     // Lift all supplied args into the TypeVariant and collect into a vec
     std::vector<TypeVariant> arg_list{args...};
@@ -319,12 +319,12 @@ class ActionMap {
   template <TemplTools::IsOneOf<Types...> Ret,
             TemplTools::IsOneOf<Types...>... Args>
   [[nodiscard]] std::expected<void, ActionMapErr> register_callable(
-      const std::string &name, std::function<Ret(Args...)> &&func) {
+      const std::string& name, std::function<Ret(Args...)>&& func) {
     if (exists(name)) return std::unexpected(ActionMapErr::NAME_EXISTS);
 
     // Create function object w/ a lambda wrapping the original function
-    std::function<TypeVariant(std::vector<TypeVariant> &&)> wrapped_func =
-        [func = std::move(func)](std::vector<TypeVariant> &&args) {
+    std::function<TypeVariant(std::vector<TypeVariant>&&)> wrapped_func =
+        [func = std::move(func)](std::vector<TypeVariant>&& args) {
           // Convert given vector of variants to a tuple of args matching
           // ...Args
           std::tuple<Args...> arg_tuple_vars =
