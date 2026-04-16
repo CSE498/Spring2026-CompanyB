@@ -113,7 +113,9 @@ struct Assign : public TypedNode {
   std::shared_ptr<Symbols::SymInfo> m_Sym;
   std::unique_ptr<Node> m_Value;
 
-  std::expected<size_t, InterpErr> ResolveType() { return m_Sym->type.index(); }
+  std::expected<size_t, InterpErr> ResolveType() override {
+    return m_Sym->type.index();
+  }
   std::expected<Types::Type, InterpErr> Accept(InterpreterWrapper &) override;
 
   Assign(emplex::Token const &token, std::shared_ptr<Symbols::SymInfo> sym,

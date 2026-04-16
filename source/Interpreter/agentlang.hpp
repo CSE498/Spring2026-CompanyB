@@ -85,10 +85,6 @@ struct OpInfo {
     using AgentLexer::IDs;
     // Use fallthrough to evaluate as logical-or
     switch (token.id) {
-    case IDs::ID_OP_DOT:
-      return OpInfo{1, Assoc::LEFT};
-    case IDs::ID_OP_EXP:
-      return OpInfo{3, Assoc::RIGHT};
     case IDs::ID_OP_MULT:
     case IDs::ID_OP_DIVIDE:
     case IDs::ID_OP_REM:
@@ -130,8 +126,8 @@ struct OpInfo {
 
   // The tokens are ints and the operators are tightly grouped
   // so we can just check a range
-  static constexpr int MIN_OP = AgentLexer::IDs::ID_CMP_GEQ;
-  static constexpr int MAX_OP = AgentLexer::IDs::ID_OP_DOT;
+  static constexpr int MIN_OP = AgentLexer::IDs::ID_OP_ADD;
+  static constexpr int MAX_OP = AgentLexer::IDs::ID_OP_MINUS;
 
   static bool IsOpToken(AgentLexer::Token const &token) {
     return ((token.id < MIN_OP) && (token.id > MAX_OP));

@@ -29,6 +29,7 @@ struct InterpreterWrapper {
 
   std::expected<Type, InterpErr> Visit(AST::StmtBlock &);
   std::expected<Type, InterpErr> Visit(AST::ExprUnary &);
+  std::expected<Type, InterpErr> Visit(AST::ExprBinary &);
   std::expected<Type, InterpErr> Visit(AST::Assign &);
   std::expected<Type, InterpErr> Visit(AST::StmtAgentDef &);
   std::expected<Type, InterpErr> Visit(AST::StmtAction &);

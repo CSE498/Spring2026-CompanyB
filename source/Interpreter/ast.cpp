@@ -5,34 +5,39 @@
 namespace cse498::AST {
 Node::~Node() {};
 
-std::expected<void, InterpErr> StmtBlock::Accept(InterpreterWrapper &i) {
+std::expected<Types::Type, InterpErr> StmtBlock::Accept(InterpreterWrapper &i) {
   return i.Visit(*this);
 }
-std::expected<void, InterpErr> ExprUnary::Accept(InterpreterWrapper &i) {
+std::expected<Types::Type, InterpErr> ExprUnary::Accept(InterpreterWrapper &i) {
   return i.Visit(*this);
 }
-std::expected<void, InterpErr> ExprBinary::Accept(InterpreterWrapper &i) {
+std::expected<Types::Type, InterpErr>
+ExprBinary::Accept(InterpreterWrapper &i) {
   return i.Visit(*this);
 }
-std::expected<void, InterpErr> Assign::Accept(InterpreterWrapper &i) {
+std::expected<Types::Type, InterpErr> Assign::Accept(InterpreterWrapper &i) {
   return i.Visit(*this);
 }
-std::expected<void, InterpErr> StmtAgentDef::Accept(InterpreterWrapper &i) {
+std::expected<Types::Type, InterpErr>
+StmtAgentDef::Accept(InterpreterWrapper &i) {
   return i.Visit(*this);
 }
-std::expected<void, InterpErr> StmtAction::Accept(InterpreterWrapper &i) {
+std::expected<Types::Type, InterpErr>
+StmtAction::Accept(InterpreterWrapper &i) {
   return i.Visit(*this);
 }
-std::expected<void, InterpErr> StmtWhile::Accept(InterpreterWrapper &i) {
+std::expected<Types::Type, InterpErr> StmtWhile::Accept(InterpreterWrapper &i) {
   return i.Visit(*this);
 }
-std::expected<void, InterpErr> StmtLoopCtl::Accept(InterpreterWrapper &i) {
+std::expected<Types::Type, InterpErr>
+StmtLoopCtl::Accept(InterpreterWrapper &i) {
   return i.Visit(*this);
 }
-std::expected<void, InterpErr> StmtIf::Accept(InterpreterWrapper &i) {
+std::expected<Types::Type, InterpErr> StmtIf::Accept(InterpreterWrapper &i) {
   return i.Visit(*this);
 }
-std::expected<void, InterpErr> ValLiteral::Accept(InterpreterWrapper &i) {
+std::expected<Types::Type, InterpErr>
+ValLiteral::Accept(InterpreterWrapper &i) {
   return i.Visit(*this);
 }
 

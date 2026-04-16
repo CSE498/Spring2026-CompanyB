@@ -47,8 +47,8 @@ Parser::parse_expr(int prec) {
 }
 
 std::expected<std::unique_ptr<AST::Node>, InterpErr> Parser::parse_term() {
-  using namespace agentlang::Types;
   using agentlang::Operators::OpInfo;
+  using agentlang::Types::Direction;
   using AgentLexer::IDs;
   using AgentLexer::Token;
 
