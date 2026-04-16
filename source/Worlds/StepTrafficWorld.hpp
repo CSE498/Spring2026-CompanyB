@@ -73,6 +73,10 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
         return std::unexpected<WorldErr>("invalid move");
       }
 
+      if (new_dir == world.GetOppositeDirection(agent.GetState().direction)) {
+        return {};
+      }
+
       if (world.HorizontalBlockedAt(step.loc) &&
           (new_dir == Direction::East || new_dir == Direction::West)) {
         return {};
