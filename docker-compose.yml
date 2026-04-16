@@ -5,11 +5,15 @@ services:
       context: .
     volumes:
       - ./source:/app/source:ro
+      - ./demo:/app/demo:ro
       - ./build:/app/build
       - ./scripts/docker-entrypoint.sh:/app/docker-entrypoint.sh:ro
     environment:
       - HOST_UID=${HOST_UID}
       - HOST_GID=${HOST_GID}
+      - CMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE:-}
+      - CMAKE_EXTRA_FLAGS=${CMAKE_EXTRA_FLAGS:-}
+      - TARGET_MAIN=${TARGET_MAIN:-}
     command: build-emscripten
 
   # Build natively with Qt
@@ -18,11 +22,16 @@ services:
       context: .
     volumes:
       - ./source:/app/source:ro
+      - ./demo:/app/demo:ro
       - ./build:/app/build
       - ./scripts/docker-entrypoint.sh:/app/docker-entrypoint.sh:ro
     environment:
       - HOST_UID=${HOST_UID}
       - HOST_GID=${HOST_GID}
+      - CMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE:-}
+      - CMAKE_EXTRA_FLAGS=${CMAKE_EXTRA_FLAGS:-}
+      - NO_QT=${NO_QT:-0}
+      - TARGET_MAIN=${TARGET_MAIN:-}
     command: build-native
 
   # Build and run emscripten tests
@@ -52,6 +61,7 @@ services:
     environment:
       - HOST_UID=${HOST_UID}
       - HOST_GID=${HOST_GID}
+      - NO_QT=${NO_QT:-0}
     command: test-native
 
   # Build and serve with emrun web server
@@ -62,12 +72,16 @@ services:
       - "8080:8080"
     volumes:
       - ./source:/app/source:ro
+      - ./demo:/app/demo:ro
       - ./build:/app/build
       - ./scripts/docker-entrypoint.sh:/app/docker-entrypoint.sh:ro
     environment:
       - SERVE_PORT=8080
       - HOST_UID=${HOST_UID}
       - HOST_GID=${HOST_GID}
+      - CMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE:-}
+      - CMAKE_EXTRA_FLAGS=${CMAKE_EXTRA_FLAGS:-}
+      - TARGET_MAIN=${TARGET_MAIN:-}
     command: serve
 
   # Interactive development shell
@@ -80,10 +94,15 @@ services:
       - "8080:8080"
     volumes:
       - ./source:/app/source
+      - ./demo:/app/demo
       - ./build:/app/build
       - ./scripts/docker-entrypoint.sh:/app/docker-entrypoint.sh:ro
     environment:
       - HOST_UID=${HOST_UID}
       - HOST_GID=${HOST_GID}
+      - CMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE:-}
+      - CMAKE_EXTRA_FLAGS=${CMAKE_EXTRA_FLAGS:-}
+      - NO_QT=${NO_QT:-0}
+      - TARGET_MAIN=${TARGET_MAIN:-}
     working_dir: /app
     command: shell
