@@ -5,6 +5,8 @@
 #include <type_traits>
 #include <variant>
 
+#include "Worlds/Group11DummyData.hpp"
+
 namespace Concepts {
 /** @brief Require that the type `T` is equivalent to any of the types `...Ts`
  */
@@ -39,7 +41,7 @@ concept UniqueTypes = all_unique<Ts..., std::void_t>();
  * after discussing with both world groups
  */
 template <typename T>
-concept IsDataClass = IsOneOf<T, int>;
+concept IsDataClass = IsOneOf<T, cse498::Group11DummyData>;
 
 }  // namespace Concepts
 

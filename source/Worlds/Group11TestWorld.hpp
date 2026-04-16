@@ -7,14 +7,18 @@
 #pragma once
 
 #include <cassert>
+#include <chrono>
+#include <memory>
+#include <thread>
 
-#include "../core/WorldBase.hpp"
+#include "Group11DummyData.hpp"
 #include "Step.hpp"
+#include "core/StepWorldBase.hpp"
 
 // clang-format off
 namespace cse498 {
 
-  class MazeWorld : public WorldBase {
+  class Group11TestWorld : public StepWorldBase<Group11DummyData> {
   protected:
     enum ActionType { REMAIN_STILL=0, MOVE_UP, MOVE_DOWN, MOVE_LEFT, MOVE_RIGHT };
 
@@ -30,7 +34,7 @@ namespace cse498 {
     // }
 
   public:
-    MazeWorld() {
+    Group11TestWorld() {
       floor_id = main_grid.AddCellType("floor", "Floor that agents can walk on.", ' ');
       wall_id  = main_grid.AddCellType("wall",  "Impenetrable wall.",             '#');
       
@@ -46,7 +50,7 @@ namespace cse498 {
         "#  ####################",
         "#######################"} );
       }
-      ~MazeWorld() = default;
+      ~Group11TestWorld() = default;
       
       // We'll want to be able to represent success/failure when executing the
       // steps, so we define an error object for std::expected
@@ -68,14 +72,14 @@ namespace cse498 {
         // We'll want to modify the agent and the container, so we'll hold on to
         // some references for them. You'll have to do the same for any other
         // non-variant external context desired.
-        AgentBase<DummyAgentData> &agent;
+        Group11DummyData &data;
         StepContainer &container;
         
         // Now we'll need to have an operator() overload for each Step type.
         VisitRet operator()(steps::MovementStep step) {
           // The simplest step -- the agent just wants to move to a space.
           // FILL IN: Implement logic actually changing agent's position.
-          agent.SetState(DummyAgentData{step.loc});
+          data = Group11DummyData{step.loc};
           return {};
         }
         
@@ -124,20 +128,21 @@ namespace cse498 {
       };
       
       /// Allow the agents to move around the maze.
-      void DoAction(AgentBase<DummyAgentData>& agent) override {
+      Group11DummyData DoAction(std::shared_ptr<StepAgentBase<Group11DummyData>> agent) override {
         // Determine where the agent is trying to move.
         using namespace cse498::steps;
         
         // Get the turn from the agent
-        StepContainer agent_turn = agent.GetTurn();
-        
+        StepContainer agent_turn = agent->GetTurn();
+        Group11DummyData data = agent->GetState();
+
         // The functor we'll dispatch our step calls out to doesn't change with
         // each step, so we can instantiate it here outside the loop. To be as
         // clear as possible, this object is to act SOLELY as a collection of
         // function calls, at times with additional context (here the agent and
         // step container, so that the function calls can update agent state and
         // update the stepcontainer for .inform() ).
-        StepVisitor step_visitor(agent, agent_turn);
+        StepVisitor step_visitor(data, agent_turn);
 
         while (!agent_turn.exhausted()) {
           std::expected<Step, StepErr> cur_step = agent_turn.get_next();
@@ -160,7 +165,7 @@ namespace cse498 {
           break;
         }
         
-        
+       return data;
         
         
         // Don't let the agent move off the world or into a wall.
@@ -169,6 +174,42 @@ namespace cse498 {
         
       }
       
+
+    void UpdateWorld() override {
+        DrawGrid(main_grid);
+        std::this_thread::sleep_for(
+          std::chrono::milliseconds(750));  // Simulate a SLOW tick
+    }
+         
+    /// @brief Draws the 2D world grid
+    /// @param grid The grid to draw
+    void DrawGrid(const WorldGrid &grid) {
+        std::vector<std::string> symbol_grid(grid.GetHeight());
+
+        // Load the world into the symbol_grid;
+        for (size_t y = 0; y < grid.GetHeight(); ++y) {
+        symbol_grid[y].resize(grid.GetWidth());
+        for (size_t x = 0; x < grid.GetWidth(); ++x) {
+            symbol_grid[y][x] = grid.GetSymbol(WorldPosition{x, y});
+        }
+        }
+
+        // Substitute in agents.
+        for (auto &agent : agent_set) {
+        WorldPosition pos = agent->GetState().pos;
+        symbol_grid[pos.CellY()][pos.CellX()] = agent->GetState().symbol;
+        }
+
+        // Print out the symbol_grid with a box around it.
+        std::cout << '+' << std::string(grid.GetWidth(), '-') << "+\n";
+        for (const auto &row : symbol_grid) {
+        std::cout << "|";
+        for (char cell : row) std::cout << cell;
+        std::cout << "|\n";
+        }
+        std::cout << '+' << std::string(grid.GetWidth(), '-') << "+\n";
+        std::cout.flush();
+    }
     };
 // clang-format on
-}  // End of namespace cse498
+} // End of namespace cse498

@@ -20,11 +20,6 @@
 
 namespace cse498 {
 
-struct DummyAgentData {
-  WorldPosition pos;
-  char symbol = '@';
-};
-
 using item_ptr_t = std::unique_ptr<ItemBase>;
 using item_set_t = std::vector<item_ptr_t>;
 using agent_ptr_t = std::unique_ptr<AgentBase<DummyAgentData>>;
@@ -156,7 +151,7 @@ class WorldBase {
 
   /// @brief Draws the 2D world grid
   /// @param grid The grid to draw
-  void DrawGrid(const WorldGrid& grid) {
+  void DrawGrid(const WorldGrid &grid) {
     std::vector<std::string> symbol_grid(grid.GetHeight());
 
     // Load the world into the symbol_grid;
@@ -168,20 +163,20 @@ class WorldBase {
     }
 
     // Substitute in items.
-    for (auto& item : item_set) {
+    for (auto &item : item_set) {
       WorldPosition pos = item->GetLocation().AsWorldPosition();
       symbol_grid[pos.CellY()][pos.CellX()] = '+';
     }
 
     // Substitute in agents.
-    for (auto& agent : agent_set) {
+    for (auto &agent : agent_set) {
       WorldPosition pos = agent->GetState().pos;
       symbol_grid[pos.CellY()][pos.CellX()] = agent->GetState().symbol;
     }
 
     // Print out the symbol_grid with a box around it.
     std::cout << '+' << std::string(grid.GetWidth(), '-') << "+\n";
-    for (const auto& row : symbol_grid) {
+    for (const auto &row : symbol_grid) {
       std::cout << "|";
       for (char cell : row) std::cout << cell;
       std::cout << "|\n";

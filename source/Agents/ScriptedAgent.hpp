@@ -6,26 +6,30 @@
 
 #include <cassert>
 
-#include "../core/AgentBase.hpp"
-#include "../core/WorldBase.hpp"
-#include "WorldPosition.hpp"
+#include "Worlds/Group11DummyData.hpp"
+#include "core/Step.hpp"
+#include "core/StepAgentBase.hpp"
+#include "core/WorldPosition.hpp"
+#include "core/core.hpp"
 
 namespace cse498 {
 
-using cse498::DummyAgentData;
+using Concepts::IsDataClass;
 using cse498::steps::MovementStep;
 
-class ScriptedAgent : public AgentBase<DummyAgentData> {
+template <IsDataClass DataClass>
+class ScriptedAgent : public StepAgentBase<DataClass> {
  protected:
   size_t step_index = 0;
 
  public:
-  ScriptedAgent(DummyAgentData initial_state) : AgentBase(initial_state) {}
+  ScriptedAgent(DataClass initial_state, size_t id)
+      : StepAgentBase<DataClass>(initial_state, id) {}
   ~ScriptedAgent() = default;
 
   /// Choose the action to take a step in the appropriate direction.
   StepContainer GetTurn() override {
-    WorldPosition pos = GetState().pos;
+    WorldPosition pos = this->GetState().pos;
     StepContainer container{};
 
     switch (step_index % 4) {
@@ -46,6 +50,8 @@ class ScriptedAgent : public AgentBase<DummyAgentData> {
     step_index++;
     return container;
   }
+
+  void SetGoal([[maybe_unused]] WorldPosition pos) override {}
 };
 // clang-format on
 }  // End of namespace cse498
