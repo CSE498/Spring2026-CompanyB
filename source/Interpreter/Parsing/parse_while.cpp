@@ -37,11 +37,13 @@ std::expected<std::unique_ptr<AST::Node>, InterpErr> Parser::parse_while() {
     return res.error();
 
   ++m_InLoop;
+  m_Syms.PushSymbolScope();
 
   auto body =
       (m_Lexer.Is(IDs::ID_DELIM_CLY_OPEN)) ? parse_stmt_block() : parse_stmt();
 
   --m_InLoop;
+  m_Syms.PushSymbolScope();
   assert(m_InLoop >= 0);
 
   if (!body.has_value())
