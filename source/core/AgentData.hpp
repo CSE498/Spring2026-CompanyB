@@ -2,8 +2,8 @@
 
 #include <optional>
 
-#include "WorldPosition.hpp"
 #include "../tools/StateGridPosition.hpp"
+#include "WorldPosition.hpp"
 
 namespace cse498 {
 
@@ -11,7 +11,7 @@ struct TrafficData {
   std::optional<cse498::WorldPosition> destination;
   cse498::WorldPosition position;
   cse498::Direction direction;
-  //bool swarm_away;  // true = flee, false = approach
+  // bool swarm_away;  // true = flee, false = approach
   bool is_active;
   char symbol = '@';
   std::string colour = "blue";

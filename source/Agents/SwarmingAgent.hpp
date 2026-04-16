@@ -141,8 +141,8 @@ class SwarmingAgent : public StepAgentBase<SwarmData> {
       return container;
     }
 
-    // wander randomly instead of approaching (maybe not have a swarm away) (I REMOVED SWARM AWAY)
- 
+    // wander randomly instead of approaching (maybe not have a swarm away) (I
+    // REMOVED SWARM AWAY)
 
     // if we are already at the destination stay there
     WorldPosition const& pos = this->mData.position;
