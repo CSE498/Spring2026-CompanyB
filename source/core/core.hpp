@@ -5,7 +5,7 @@
 #include <type_traits>
 #include <variant>
 
-#include "../Worlds/TrafficData.hpp"
+#include "AgentData.hpp"
 
 namespace Concepts {
 template <typename T, typename... Ts>

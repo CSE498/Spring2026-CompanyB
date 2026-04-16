@@ -9,9 +9,9 @@
 #include <thread>
 #include <vector>
 
+#include "../core/AgentData.hpp"
 #include "../core/StepWorldBase.hpp"
 #include "../tools/WeightedSet.hpp"
-#include "TrafficData.hpp"
 
 namespace cse498 {
 

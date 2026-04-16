@@ -27,7 +27,7 @@
 #include <random>
 #include <utility>
 
-#include "../Worlds/TrafficData.hpp"
+#include "../core/AgentData.hpp"
 #include "../core/Step.hpp"
 #include "../core/StepAgentBase.hpp"
 #include "../core/WorldPosition.hpp"
