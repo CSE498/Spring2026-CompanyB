@@ -1,8 +1,9 @@
+#include "Interpreter/agentlang.hpp"
 #include "Interpreter/interpreter.hpp"
 
 namespace cse498 {
 
-std::expected<void, InterpErr>
+std::expected<Type, InterpErr>
 templ_visit(InterpreterWrapper &i, std::derived_from<AST::Node> auto &node) {
   if (!i.m_InterpreterPtr.has_value())
     return RuntimeErr(
@@ -18,52 +19,52 @@ templ_visit(InterpreterWrapper &i, std::derived_from<AST::Node> auto &node) {
   }
 }
 
-std::expected<void, InterpErr> InterpreterWrapper::Visit(AST::StmtBlock &node) {
+std::expected<Type, InterpErr> InterpreterWrapper::Visit(AST::StmtBlock &node) {
   return templ_visit(*this, node);
 }
 
-std::expected<void, InterpErr> InterpreterWrapper::Visit(AST::ExprUnary &node) {
+std::expected<Type, InterpErr> InterpreterWrapper::Visit(AST::ExprUnary &node) {
   return templ_visit(*this, node);
 }
 
-std::expected<void, InterpErr> InterpreterWrapper::Visit(AST::Assign &node) {
+std::expected<Type, InterpErr> InterpreterWrapper::Visit(AST::Assign &node) {
   return templ_visit(*this, node);
 }
 
-std::expected<void, InterpErr>
+std::expected<Type, InterpErr>
 InterpreterWrapper::Visit(AST::StmtAgentDef &node) {
 
   return templ_visit(*this, node);
 }
 
-std::expected<void, InterpErr>
+std::expected<Type, InterpErr>
 InterpreterWrapper::Visit(AST::StmtAction &node) {
 
   return templ_visit(*this, node);
 }
 
-std::expected<void, InterpErr> InterpreterWrapper::Visit(AST::StmtWhile &node) {
+std::expected<Type, InterpErr> InterpreterWrapper::Visit(AST::StmtWhile &node) {
   return templ_visit(*this, node);
 }
 
-std::expected<void, InterpErr>
+std::expected<Type, InterpErr>
 InterpreterWrapper::Visit(AST::StmtLoopCtl &node) {
 
   return templ_visit(*this, node);
 }
 
-std::expected<void, InterpErr> InterpreterWrapper::Visit(AST::StmtIf &node) {
+std::expected<Type, InterpErr> InterpreterWrapper::Visit(AST::StmtIf &node) {
 
   return templ_visit(*this, node);
 }
 
-std::expected<void, InterpErr>
+std::expected<Type, InterpErr>
 InterpreterWrapper::Visit(AST::ValLiteral &node) {
 
   return templ_visit(*this, node);
 }
 
-std::expected<void, InterpErr>
+std::expected<Type, InterpErr>
 InterpreterWrapper::Visit(AST::ValVariable &node) {
   return templ_visit(*this, node);
 }
