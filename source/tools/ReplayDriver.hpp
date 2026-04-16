@@ -6,6 +6,8 @@
 #pragma once
 
 #include <algorithm>
+#include <unordered_map>
+#include <iostream>
 #include <concepts>
 #include <expected>
 #include <fstream>
@@ -35,6 +37,44 @@ class ReplayDriver : public IReplayDriver<AgentT> {
  public:
   ReplayDriver() = default;
   ~ReplayDriver() override = default;
+
+  std::expected<std::unordered_map<int, std::string>, std::string> AgentMap(
+      const std::string& filePath) {
+    std::ifstream inFile(filePath);
+    if (!inFile.is_open()) {
+      return std::unexpected("Failed to open file");
+    }
+    std::unordered_map<int, std::string> agentMap;
+    nlohmann::json eventData;
+    try {
+      inFile >> eventData;
+      if (eventData.is_array()) {
+        agentMap.reserve(eventData.size());
+        for (const auto& event : eventData) {
+          if (event.contains("agentId") && event.contains("agentType")) {
+            int agentId = std::stoi(event["agentId"].get<std::string>());
+            std::string agentType = event["agentType"].get<std::string>();
+            std::cout << "Parsed agentId: " << agentId << ", agentType: " << agentType << std::endl;
+            agentMap.emplace(agentId, agentType);
+          }
+        }
+      } else if (eventData.is_object()) {
+        if (eventData.contains("agentId") && eventData["agentId"].is_number_integer()
+            && eventData.contains("agentType") && eventData["agentType"].is_string()) {
+          int agentId = eventData["agentId"].get<int>();
+          std::string agentType = eventData["agentType"].get<std::string>();
+          agentMap.emplace(agentId, agentType);
+        }
+      }
+      for (const auto& [id, type] : agentMap) {
+        std::cout << "Parsed agentId: " << id << ", agentType: " << type << std::endl;
+      }
+      return agentMap;
+    } catch (const nlohmann::json::parse_error& e) {
+      (void)e;  // Suppress unused variable warning
+      return std::unexpected("Failed to parse JSON");
+    }
+  }
 
   /// @brief Method to replay logged events from a JSON file.
   /// @param filePath Path to the JSON file containing logged events.

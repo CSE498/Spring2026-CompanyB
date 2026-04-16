@@ -8,6 +8,7 @@ namespace cse498 {
 class MockAgent {
  public:
   std::string id = "5";
+  std::string type = "MockAgent";
   std::vector<int> position = {1, 2};
   std::string etc = "test value";
 
@@ -17,11 +18,14 @@ class MockAgent {
   void getLoggable() {
     nlohmann::json eventData;
     eventData["agentId"] = id;
+    eventData["agentType"] = type;
     eventData["position"] = position;
     eventData["etc"] = etc;
     std::ofstream outFile("test_events.json");
     if (outFile.is_open()) {
-      outFile << eventData.dump();
+      nlohmann::json arr = nlohmann::json::array();
+      arr.push_back(eventData);
+      outFile << arr.dump();
       outFile.close();
     }
 
@@ -37,6 +41,9 @@ class MockAgent {
     }
     if (eventData.contains("etc")) {
       etc = eventData.at("etc").get<std::string>();
+    }
+    if (eventData.contains("agentType")) {
+      type = eventData.at("agentType").get<std::string>();
     }
   }
   std::string getId() const { return id; }

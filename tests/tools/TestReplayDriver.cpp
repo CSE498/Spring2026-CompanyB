@@ -15,7 +15,16 @@ TEST_CASE("ReplayDriver can read and replay events from a JSON file",
 
   mockAgent->getLoggable();
 
+  
   cse498::ReplayDriver<cse498::MockAgent> replayDriver;
+
+  replayDriver.AgentMap("test_events.json");
+
+  auto map = replayDriver.AgentMap("test_events.json");
+  std::unordered_map<int, std::string> expectedMap = {{5, "MockAgent"}};
+
+  REQUIRE(map.value() == expectedMap);
+
   auto& agents = mockWorld.getReplayAgents();
   auto result = replayDriver.ReplayFromFile("test_events.json", agents);
 
