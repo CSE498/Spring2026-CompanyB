@@ -25,12 +25,12 @@ class LoggerTestAgent {
 
   void loadFromJson(const nlohmann::json& /*eventData*/) {}
 
-  const std::vector<ActionEventBase>& GetActions() const { return actions; }
+  const std::vector<nlohmann::json>& GetStates() const { return actions; }
 
   std::string_view getId() const { return id; }
 
  private:
-  std::vector<ActionEventBase> actions;
+  std::vector<nlohmann::json> actions;
 };
 
 }  // namespace cse498
@@ -42,11 +42,11 @@ namespace cse498 {
 // here
 class MockActionLog : public IActionLog<LoggerTestAgent> {
  public:
-  std::vector<ActionEventBase> mEventsToReturn;
+  std::vector<nlohmann::json> mEventsToReturn;
   std::vector<LogEventFailure> mFailuresToReturn;
 
-  std::pair<std::vector<ActionEventBase>, std::vector<LogEventFailure>>
-  LogAgentActions(const std::vector<LoggerTestAgent>& /*agents*/) override {
+  std::pair<std::vector<nlohmann::json>, std::vector<LogEventFailure>>
+  LogAgentStates(const std::vector<LoggerTestAgent>& /*agents*/) override {
     return {mEventsToReturn, mFailuresToReturn};
   }
 };
@@ -57,12 +57,12 @@ class MockActionLog : public IActionLog<LoggerTestAgent> {
 class MockOutputManager : public IOutputManager {
  public:
   mutable bool mWriteCalled = false;
-  mutable std::vector<ActionEventBase> mReceivedEvents;
+  mutable std::vector<nlohmann::json> mReceivedEvents;
   mutable std::string mLastSetFile;
   mutable std::vector<std::string> mLoggedMessages;
   bool mFlushResult = true;
 
-  void WriteActionEvents(const std::vector<ActionEventBase>& events) override {
+  void WriteActionEvents(const std::vector<nlohmann::json>& events) override {
     mWriteCalled = true;
     mReceivedEvents = events;
   }
@@ -176,7 +176,7 @@ TEST_CASE("Logger - SaveAgentActions Operations", "[Logger]") {
   }
 
   SECTION("Logs validation failures when ActionLog returns errors") {
-    ActionEventBase dummyEvent{"dummyId", "dummyType", LogLevel::Normal, 0};
+    nlohmann::json dummyEvent = {{"agentId", "dummyId"}, {"actionType", "dummyType"}, {"logLevel", static_cast<int>(LogLevel::Normal)}, {"timestamp", 0}};
     LogEventFailure failure{dummyEvent, "Test validation error"};
     actionLogPtr->mFailuresToReturn.push_back(failure);
 

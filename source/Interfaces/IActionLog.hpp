@@ -12,6 +12,8 @@
 #include <string_view>
 #include <vector>
 
+#include "nlohmann/json.hpp"
+
 namespace cse498 {
 
 /// @brief Severity of log messages
@@ -40,14 +42,14 @@ struct ActionEvent : ActionEventBase {
 /// @brief Status of a failed log event
 struct LogEventFailure {
   /// @brief Reference to the failed event to provide context for debugging.
-  const ActionEventBase& event;
+  const nlohmann::json& state;
   /// @brief Message explaining the reason for the failure.
   std::string message = "";
 };
 
 template <typename AgentType>
 concept AgentConcept = requires(AgentType a) {
-  { a.GetActions() };
+  { a.GetStates() };
 };
 
 /**
@@ -63,8 +65,8 @@ class IActionLog {
   /// @param agents List of agents in the world
   /// @return Pair of vectors: first contains events that passed validation
   /// checks, second contains details of events that failed validation
-  virtual std::pair<std::vector<ActionEventBase>, std::vector<LogEventFailure>>
-  LogAgentActions(const std::vector<AgentType>& agents) = 0;
+  virtual std::pair<std::vector<nlohmann::json>, std::vector<LogEventFailure>>
+  LogAgentStates(const std::vector<AgentType>& agents) = 0;
 };
 
 }  // namespace cse498

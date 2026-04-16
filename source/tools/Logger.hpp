@@ -93,16 +93,12 @@ class Logger : public ILogger<AgentType> {
   /// failed stage.
   std::expected<void, SaveAgentActionsError> SaveAgentActions(
       const std::vector<AgentType>& agents) override {
-    auto [events, eventFailures] = mActionLog->LogAgentActions(agents);
+    auto [events, eventFailures] = mActionLog->LogAgentStates(agents);
     for (const auto& failure : eventFailures) {
       mOutputManager->LogMessage(
           LogLevel::Verbose,
-          "Validation failed for event: agentId=" +
-              std::string(failure.event.agentId) + ", actionType=" +
-              std::string(failure.event.actionType) + ", logLevel=" +
-              std::to_string(static_cast<int>(failure.event.logLevel)) +
-              ", timestamp=" + std::to_string(failure.event.timestamp) +
-              ". Reason: " + failure.message);
+          std::string("Validation failed for event: ") +
+              failure.state.dump() + ". Reason: " + failure.message);
     }
     mOutputManager->WriteActionEvents(events);
     if (!mOutputManager->Flush()) {

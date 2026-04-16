@@ -121,12 +121,7 @@ bool OutputManager::SetOutputFile(const std::string& path) {
 void OutputManager::RebuildActionEventsJson() {
   mBufferedLog[kActionEventsKey] = nlohmann::json::array();
   for (const auto& r : mPendingActionEvents) {
-    mBufferedLog[kActionEventsKey].push_back({
-        {"agentId", r.agentId},
-        {"actionType", r.actionType},
-        {"logLevel", static_cast<int>(r.logLevel)},
-        {"timestamp", r.timestamp},
-    });
+    mBufferedLog[kActionEventsKey].push_back(r);
   }
 }
 
@@ -185,11 +180,9 @@ const nlohmann::json& OutputManager::GetBufferedLog() noexcept {
 }
 
 void OutputManager::WriteActionEvents(
-    const std::vector<ActionEventBase>& events) {
+    const std::vector<nlohmann::json>& events) {
   for (const auto& e : events) {
-    mPendingActionEvents.push_back(ActionEventRecord{std::string(e.agentId),
-                                                     std::string(e.actionType),
-                                                     e.logLevel, e.timestamp});
+    mPendingActionEvents.push_back(e);
   }
 }
 

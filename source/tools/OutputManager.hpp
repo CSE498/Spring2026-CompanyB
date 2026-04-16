@@ -37,7 +37,7 @@ class OutputManager : public IOutputManager {
       nlohmann::json::object();  ///< Serialized on Flush.
   /// @brief Queued action events; serialized to JSON on Flush() /
   /// GetBufferedLog().
-  std::vector<ActionEventRecord> mPendingActionEvents;
+  std::vector<nlohmann::json> mPendingActionEvents;
 
   /// @brief Creates parent directories if needed and opens the output file for
   /// writing.
@@ -109,7 +109,7 @@ class OutputManager : public IOutputManager {
 
   /// @brief Appends events to the pending vector; no file I/O until Flush().
   /// @param events Events to queue for serialization on the next flush.
-  void WriteActionEvents(const std::vector<ActionEventBase>& events) override;
+  void WriteActionEvents(const std::vector<nlohmann::json>& events) override;
 };
 
 }  // namespace cse498

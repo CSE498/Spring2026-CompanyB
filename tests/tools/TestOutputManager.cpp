@@ -292,10 +292,15 @@ TEST_CASE("WriteActionEvents buffers in memory; file written only on Flush",
   REQUIRE(manager.SetOutputFile(path));
   REQUIRE_FALSE(fs::exists(path));
 
-  std::vector<ActionEventBase> events;
-  events.push_back(ActionEventBase{"agent_a", "move", LogLevel::Normal, 42ULL});
-  events.push_back(
-      ActionEventBase{"agent_b", "turn", LogLevel::Verbose, 99ULL});
+  std::vector<nlohmann::json> events;
+  events.push_back({{"agentId", "agent_a"},
+                    {"actionType", "move"},
+                    {"logLevel", static_cast<int>(LogLevel::Normal)},
+                    {"timestamp", 42ULL}});
+  events.push_back({{"agentId", "agent_b"},
+                    {"actionType", "turn"},
+                    {"logLevel", static_cast<int>(LogLevel::Verbose)},
+                    {"timestamp", 99ULL}});
   manager.WriteActionEvents(events);
 
   const auto& buf = manager.GetBufferedLog();
@@ -332,9 +337,15 @@ TEST_CASE(
 TEST_CASE("WriteActionEvents accumulates across calls", "[OutputManager]") {
   OutputManager manager(LogLevel::Normal);
   manager.WriteActionEvents(
-      {ActionEventBase{"a", "m", LogLevel::Normal, 1ULL}});
+      {{{"agentId", "a"},
+        {"actionType", "m"},
+        {"logLevel", static_cast<int>(LogLevel::Normal)},
+        {"timestamp", 1ULL}}});
   manager.WriteActionEvents(
-      {ActionEventBase{"b", "t", LogLevel::Normal, 2ULL}});
+      {{{"agentId", "b"},
+        {"actionType", "t"},
+        {"logLevel", static_cast<int>(LogLevel::Normal)},
+        {"timestamp", 2ULL}}});
   const auto& buf = manager.GetBufferedLog();
   REQUIRE(buf["action_events"].size() == 2);
 }
@@ -351,7 +362,10 @@ TEST_CASE("Buffered action events survive failed Flush", "[OutputManager]") {
   OutputManager manager(LogLevel::Normal);
   REQUIRE(manager.SetOutputFile(badPath));
   manager.WriteActionEvents(
-      {ActionEventBase{"a", "b", LogLevel::Normal, 1ULL}});
+      {{{"agentId", "a"},
+        {"actionType", "b"},
+        {"logLevel", static_cast<int>(LogLevel::Normal)},
+        {"timestamp", 1ULL}}});
   REQUIRE_FALSE(manager.Flush());
   const auto& buf = manager.GetBufferedLog();
   REQUIRE(buf["action_events"].size() == 1);
