@@ -36,9 +36,15 @@ public:
     mTurn = std::move(init);
   }
 
-
   /// Choose the action to take a step in the appropriate direction.
-  StepContainer GetTurn() override {}
+  StepContainer GetTurn() override {
+    auto turn = EvaluateTurn();
+    return turn;
+  }
+
+  StepContainer EvaluateTurn() {
+    return StepContainer{};
+  }
 
   void SetGoal([[maybe_unused]] WorldPosition pos) override {}
 };

@@ -8,6 +8,9 @@
 #include "WorldGrid.hpp"
 #include "core.hpp"
 
+#include "Interpreter/Parser.hpp"
+#include "Interpreter/interpreter.hpp"
+
 namespace cse498 {
 
 using namespace cse498::steps;
@@ -21,6 +24,13 @@ class StepWorldBase {
   /// Id of the next created agent
   size_t next_id = 0;
 
+  /// Parser for scripted agent
+  Parser parser{};
+
+  /// interpreter for scripted agents
+  Interpreter interpreter{};
+
+
  protected:
   /// Whether the simulation is running
   bool run_over = false;
@@ -33,6 +43,10 @@ class StepWorldBase {
   /// @note Override this function to provide agents with actions or other
   /// setup.
   virtual void ConfigAgent([[maybe_unused]] Agent &agent) {}
+
+  void SetupScriptedAgents() {
+
+  }
 
  public:
   StepWorldBase() = default;
@@ -76,6 +90,7 @@ class StepWorldBase {
 
   /// @brief Run all agents repeatedly until an end condition is met.
   virtual void Run() {
+    SetupScriptedAgents();
     run_over = false;
     while (!run_over) {
       RunAgents();
