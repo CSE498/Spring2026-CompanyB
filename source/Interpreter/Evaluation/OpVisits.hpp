@@ -3,6 +3,7 @@
 #include "Interpreter/errors.hpp"
 #include "RobinHoodMap.hpp"
 #include "core.hpp"
+#include <concepts>
 #include <functional>
 #include <type_traits>
 
@@ -30,6 +31,20 @@ std::expected<Type, InterpErr> evaluate_binary(AgentLexer::Token const &, Type,
                                                Type);
 std::expected<Type, InterpErr> evaluate_unary(int id, Type);
 std::expected<Type, InterpErr> evaluate_binary(int id, Type, Type);
+
+std::expected<Type, InterpErr> evaluate_bool(Type);
+
+struct BoolConvVisitor {
+  template <TypeKind T>
+    requires std::is_convertible_v<T, bool>
+  std::expected<Type, InterpErr> operator()(T t) {
+    return static_cast<bool>(t);
+  }
+
+  template <TypeKind T> std::expected<Type, InterpErr> operator()(T) {
+    return RuntimeErr(RuntimeErr::NOT_BOOL_CONV);
+  }
+};
 
 struct OpVisitor {
   int token_id;

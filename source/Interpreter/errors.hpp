@@ -74,6 +74,7 @@ struct RuntimeErr : BaseErr {
     TYPE_MISMATCH,
     EMPTY_INTERP_WRAPPER,
     UNSUPPORTED_OP,
+    NOT_BOOL_CONV,
   };
 
   Kind m_Kind;
