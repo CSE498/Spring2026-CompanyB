@@ -7,6 +7,8 @@
 
 #include "DiseaseData.hpp"
 
+#include "../Worlds/TrafficData.hpp"
+
 namespace Concepts {
 template <typename T, typename... Ts>
 concept IsOneOf = (std::is_same_v<T, Ts> || ...);
@@ -37,7 +39,7 @@ concept UniqueTypes = all_unique<Ts..., std::void_t>();
  * after discussing with both world groups
  */
 template <typename T>
-concept IsDataClass = IsOneOf<T, int, cse498::DiseaseData>;
+concept IsDataClass = IsOneOf<T, cse498::TrafficData, cse498::DiseaseData>;
 
 }  // namespace Concepts
 
