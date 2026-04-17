@@ -11,6 +11,7 @@
 #include <limits>
 #include <optional>
 #include <string>
+#include <string_view>
 #include <tuple>
 #include <unordered_map>
 #include <variant>
@@ -40,7 +41,14 @@ using Type = std::variant<bool, int, double, str, Point, Direction, Car,
 // Concept satisfied if T is a valid agentlang type
 template <typename T>
 concept TypeKind = Concepts::IsOneOf<T, bool, int, double, str, Point,
-                                     Direction, Car, Student>;
+                                     Direction, Car, Student, NullType>;
+static const std::array<std::string_view, 9> TYPE_NAMES = {
+    "bool",      "int", "double",  "str", "point",
+    "direction", "car", "student", "null"};
+
+template <TypeKind T> inline std::string_view TypeToName() {
+  return TYPE_NAMES.at(StaticUtil::variant_index<Type, T>());
+}
 
 inline std::optional<Type> NameToType(const emplex::Token &type_tok) {
   static const std::unordered_map<std::string, Type> type_map = {
