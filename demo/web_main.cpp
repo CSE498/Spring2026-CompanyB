@@ -98,7 +98,13 @@ std::shared_ptr<WebElement> SimulationLayout(std::function<void()> btn_lambda, s
           UIItem<WebButton>("", WebOptions{ .id = "start-btn", .classes={"button"} })->SetOnClick(btn_lambda),
           UIItem<WebButton>("", WebOptions{ .id = "pause-btn", .classes={"button"} })->SetOnClick(btn_lambda),
           UIItem<WebButton>("", WebOptions{ .id = "stop-btn", .classes={"button"} })->SetOnClick(btn_lambda),
-          UIItem<WebButton>("", WebOptions{ .id = "upload-btn", .classes={"button"} })->SetOnClick(btn_lambda),
+
+          // Using SetOnFileUpload with a custom lambda
+          UIItem<WebButton>("", WebOptions{ .id = "upload-btn", .classes={"button"} })->SetOnFileUpload([](const std::string& file_content) {
+              std::println("SUCCESS! File uploaded to C++ backend. Length: {} characters.", file_content.length());
+              // TODO: When the World object is available, do: world_ptr->LoadScript(file_content);
+          }),
+
           UIItem<WebButton>("", WebOptions{ .id = "save-btn", .classes={"button"} })->SetOnClick(btn_lambda),
           UIItem<WebButton>("", WebOptions{ .id = "exit-btn", .classes={"button"} })->SetOnClick(exit_lambda)
         }
