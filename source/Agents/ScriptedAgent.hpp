@@ -9,6 +9,12 @@
   if (!_result_##var.has_value()) { return _result_##var.error(); } \
   auto var = _result_##var.value();
 
+#define TRY(expr) \
+  { \
+    auto _result = (expr); \
+    if (!_result.has_value()) { return _result.error(); } \
+  }
+
 #include "Interpreter/Evaluation/OpVisits.hpp"
 #include "Interpreter/agentlang.hpp"
 #include "Interpreter/ast.hpp"
@@ -91,19 +97,15 @@ public:
   std::expected<Type, InterpErr> Visit(AST::StmtBlock &node) {
     std::expected<Type, InterpErr> res;
     for (auto &cur_node : node.m_Body) {
-      res = cur_node->Accept(*mAgentWrapper);
-      if (!res.has_value())
-        return res;
+      TRY(cur_node->Accept(*mAgentWrapper))
     }
 
     return NullType{};
   }
   std::expected<Type, InterpErr> Visit(AST::ExprUnary &node) {
-    auto res = node.m_Left->Accept(*mAgentWrapper);
-    if (!res.has_value())
-      return res.error();
+    TRY_DECL(res, node.m_Left->Accept(*mAgentWrapper))
 
-    return evaluate_unary(node.m_Token, res.value());
+    return evaluate_unary(node.m_Token, res);
   }
   std::expected<Type, InterpErr> Visit(AST::ExprBinary &node) {
     TRY_DECL(lhs, node.m_Left->Accept(*mAgentWrapper))
@@ -137,22 +139,16 @@ public:
         "Don't yet know where and how Daniel intends to do evaluation");
   }
   std::expected<Type, InterpErr> Visit(AST::StmtIf &node) {
-    // auto cond = node.m_Condition->Accept(*mAgentWrapper);
-    // if (!cond.has_value()) {
-    //   return cond.error();
-    // }
+    TRY_DECL(cond, node.m_Condition->Accept(*mAgentWrapper))
+    TRY_DECL(cond_truthy, evaluate_bool(cond))
 
-    // auto truthy = evaluate_bool(cond.value());
-    // if (!truthy.has_value()) {
-    //   return truthy.error();
-    // }
-
+    if (cond_truthy) {
+      TRY(node.m_TBody->Accept(*mAgentWrapper))
+    }
     // if (truthy.value()) {
     //   auto do_if = node.m_TBody->Accept(*mAgentWrapper);
     // }
-        return TempErr(
-        TempErr::NOT_IMPLEMENTED,
-        "Don't yet know where and how Daniel intends to do evaluation");
+    return NullType{};
   }
   std::expected<Type, InterpErr> Visit(AST::ValLiteral &node) {
     return node.m_Val;
