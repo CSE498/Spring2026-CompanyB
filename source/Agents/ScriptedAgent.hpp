@@ -119,9 +119,10 @@ public:
         "Don't yet know where and how Daniel intends to do evaluation");
   }
   std::expected<Type, InterpErr> Visit(AST::StmtAgentDef &node) {
-    return TempErr(
-        TempErr::NOT_IMPLEMENTED,
-        "Don't yet know where and how Daniel intends to do evaluation");
+    TRY(node.m_Init->Accept(*mAgentWrapper))
+    TRY(node.m_Turn->Accept(*mAgentWrapper))
+    
+    return NullType{};
   }
   std::expected<Type, InterpErr> Visit(AST::StmtAction &node) {
     return TempErr(
