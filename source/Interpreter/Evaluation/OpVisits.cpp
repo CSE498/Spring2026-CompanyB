@@ -23,7 +23,7 @@ std::expected<Type, InterpErr> evaluate_binary(AgentLexer::Token const &token,
   return std::visit(OpVisitor{token.id}, left, right);
 }
 
-std::expected<Type, InterpErr> evaluate_bool(Type t) {
+std::expected<bool, InterpErr> evaluate_bool(Type t) {
   return std::visit(BoolConvVisitor{}, t);
 }
 

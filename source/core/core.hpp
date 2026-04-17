@@ -8,6 +8,7 @@
 
 #include "Worlds/Group11DummyData.hpp"
 #include "Worlds/TrafficData.hpp"
+#include "core/DiseaseData.hpp"
 
 namespace Concepts {
 /** @brief Require that the type `T` is equivalent to any of the types `...Ts`
@@ -42,7 +43,7 @@ concept UniqueTypes = all_unique<Ts..., std::void_t>();
  * after discussing with both world groups
  */
 template <typename T>
-concept IsDataClass = IsOneOf<T, cse498::Group11DummyData, cse498::TrafficData>;
+concept IsDataClass = IsOneOf<T, cse498::Group11DummyData, cse498::TrafficData, cse498::DiseaseData>;
 
 /** @brief Requires given type to have operator<<(std::stringstream&) defined.
  */

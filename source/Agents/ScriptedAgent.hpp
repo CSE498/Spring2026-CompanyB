@@ -4,6 +4,11 @@
 
 #pragma once
 
+#define TRY_DECL(var, expr) \
+  auto _result_##var = (expr); \
+  if (!_result_##var.has_value()) { return _result_##var.error(); } \
+  auto var = _result_##var.value();
+
 #include "Interpreter/Evaluation/OpVisits.hpp"
 #include "Interpreter/agentlang.hpp"
 #include "Interpreter/ast.hpp"
@@ -101,15 +106,10 @@ public:
     return evaluate_unary(node.m_Token, res.value());
   }
   std::expected<Type, InterpErr> Visit(AST::ExprBinary &node) {
-    auto lhs = node.m_Left->Accept(*mAgentWrapper);
-    if (!lhs.has_value())
-      return lhs.error();
+    TRY_DECL(lhs, node.m_Left->Accept(*mAgentWrapper))
+    TRY_DECL(rhs, node.m_Right->Accept(*mAgentWrapper))
 
-    auto rhs = node.m_Right->Accept(*mAgentWrapper);
-    if (!rhs.has_value())
-      return rhs.error();
-
-    return evaluate_binary(node.m_Token, lhs.value(), rhs.value());
+    return evaluate_binary(node.m_Token, lhs, rhs);
   }
   std::expected<Type, InterpErr> Visit(AST::Assign &node) {
     return TempErr(
@@ -137,7 +137,20 @@ public:
         "Don't yet know where and how Daniel intends to do evaluation");
   }
   std::expected<Type, InterpErr> Visit(AST::StmtIf &node) {
-    return TempErr(
+    // auto cond = node.m_Condition->Accept(*mAgentWrapper);
+    // if (!cond.has_value()) {
+    //   return cond.error();
+    // }
+
+    // auto truthy = evaluate_bool(cond.value());
+    // if (!truthy.has_value()) {
+    //   return truthy.error();
+    // }
+
+    // if (truthy.value()) {
+    //   auto do_if = node.m_TBody->Accept(*mAgentWrapper);
+    // }
+        return TempErr(
         TempErr::NOT_IMPLEMENTED,
         "Don't yet know where and how Daniel intends to do evaluation");
   }

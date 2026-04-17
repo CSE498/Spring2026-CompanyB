@@ -32,16 +32,16 @@ std::expected<Type, InterpErr> evaluate_binary(AgentLexer::Token const &, Type,
 std::expected<Type, InterpErr> evaluate_unary(int id, Type);
 std::expected<Type, InterpErr> evaluate_binary(int id, Type, Type);
 
-std::expected<Type, InterpErr> evaluate_bool(Type);
+std::expected<bool, InterpErr> evaluate_bool(Type);
 
 struct BoolConvVisitor {
   template <TypeKind T>
     requires std::is_convertible_v<T, bool>
-  std::expected<Type, InterpErr> operator()(T t) {
+  std::expected<bool, InterpErr> operator()(T t) {
     return static_cast<bool>(t);
   }
 
-  template <TypeKind T> std::expected<Type, InterpErr> operator()(T) {
+  template <TypeKind T> std::expected<bool, InterpErr> operator()(T) {
     return RuntimeErr(RuntimeErr::NOT_BOOL_CONV);
   }
 };
