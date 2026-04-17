@@ -1,3 +1,4 @@
+#pragma once
 #include "Interpreter/agentlang.hpp"
 #include "Interpreter/errors.hpp"
 #include "RobinHoodMap.hpp"
@@ -11,162 +12,93 @@ template <typename... Ts> struct Overload : Ts... {
 
 using namespace cse498::agentlang::Types;
 
+/** @brief Wrap expression in an if-constexpr which checks if that
+expression is well-formed, returning it if so. If not, execution continues
+without alteration, permitting fallthrough when used in a switch.*/
+#define STATIC_CHECKED_OP(expression)                                          \
+  {                                                                            \
+    if constexpr (requires { expression; }) {                                  \
+      return (expression);                                                     \
+    }                                                                          \
+  }
+// I'm sorry it's just gonna make it so much more readable
+
 namespace cse498 {
 
-template <typename Dataclass> class OpVisits {
-  // clang-format off
-  static constexpr auto m_OpVisit_Un_GEQ = Overload{
-    [](auto a) -> std::expected<Type, InterpErr>
-    {return RuntimeErr(RuntimeErr::TYPE_MISMATCH);}
-  };
-  static constexpr auto m_OpVisit_Un_GT = Overload{
-    [](auto a) -> std::expected<Type, InterpErr>
-    {return RuntimeErr(RuntimeErr::TYPE_MISMATCH);}
-  };
-  static constexpr auto m_OpVisit_Un_LEQ = Overload{
-    [](auto a) -> std::expected<Type, InterpErr>
-    {return RuntimeErr(RuntimeErr::TYPE_MISMATCH);}
-  };
-  static constexpr auto m_OpVisit_Un_LT = Overload{
-    [](auto a) -> std::expected<Type, InterpErr>
-    {return RuntimeErr(RuntimeErr::TYPE_MISMATCH);}
-  };
-  static constexpr auto m_OpVisit_Un_NEQ = Overload{
-    [](auto a) -> std::expected<Type, InterpErr>
-    {return RuntimeErr(RuntimeErr::TYPE_MISMATCH);}
-  };
-  static constexpr auto m_OpVisit_Un_EQ = Overload{
-    [](auto a) -> std::expected<Type, InterpErr>
-    {return RuntimeErr(RuntimeErr::TYPE_MISMATCH);}
-  };
-  static constexpr auto m_OpVisit_Un_REM = Overload{
-    [](auto a) -> std::expected<Type, InterpErr>
-    {return RuntimeErr(RuntimeErr::TYPE_MISMATCH);}
-  };
-  static constexpr auto m_OpVisit_Un_ADD = Overload{
-    [](auto a) -> std::expected<Type, InterpErr>
-    {return RuntimeErr(RuntimeErr::TYPE_MISMATCH);}
-  };
-  static constexpr auto m_OpVisit_Un_DIVIDE = Overload{
-    [](auto a) -> std::expected<Type, InterpErr>
-    {return RuntimeErr(RuntimeErr::TYPE_MISMATCH);}
-  };
-  static constexpr auto m_OpVisit_Un_MULT = Overload{
-    [](auto a) -> std::expected<Type, InterpErr>
-    {return RuntimeErr(RuntimeErr::TYPE_MISMATCH);}
-  };
-  static constexpr auto m_OpVisit_Un_LNOT = Overload{
-    [](bool a) -> std::expected<Type, InterpErr>
-    {return !a;},
-    [](auto a) -> std::expected<Type, InterpErr>
-    {return RuntimeErr(RuntimeErr::TYPE_MISMATCH);}
-  };
-  static constexpr auto m_OpVisit_Un_MINUS = Overload{
-    [](Concepts::IsOneOf<int, double> auto a) -> std::expected<Type, InterpErr>
-    {return -a;},
-    [](auto a) -> std::expected<Type, InterpErr>
-    {return RuntimeErr(RuntimeErr::TYPE_MISMATCH);}
-  };
+std::expected<Type, InterpErr> evaluate_unary(AgentLexer::Token const &, Type);
+std::expected<Type, InterpErr> evaluate_binary(AgentLexer::Token const &, Type,
+                                               Type);
+std::expected<Type, InterpErr> evaluate_unary(int id, Type);
+std::expected<Type, InterpErr> evaluate_binary(int id, Type, Type);
 
-  // Binary
-  // :<=|
-  static constexpr auto m_OpVisit_Bi_GEQ = Overload{
-    [](auto a, auto b) -> std::expected<Type, InterpErr>
-    requires requires(decltype(a) a, decltype(b) b){a >= b; }
-    { return a >= b; },
+struct OpVisitor {
+  int token_id;
 
-    [](auto a, auto b) -> std::expected<Type, InterpErr>
-    {return RuntimeErr(RuntimeErr::TYPE_MISMATCH);}
-  };
-  static constexpr auto m_OpVisit_Bi_GT = Overload{
-    [](auto a, auto b) -> std::expected<Type, InterpErr>
-    requires requires(decltype(a) a, decltype(b) b){a > b; }
-    { return a > b; },
+  template <TypeKind Left> std::expected<Type, InterpErr> operator()(Left l) {
+    using AgentLexer::IDs;
+    switch (token_id) {
+    case IDs::ID_OP_LNOT: {
+      STATIC_CHECKED_OP(!l);
+    }
+    case IDs::ID_OP_MINUS: {
+      STATIC_CHECKED_OP(-l);
+    }
+    };
+    // If we leave the switch, there is no valid operation in this context
+    return RuntimeErr(
+        RuntimeErr::UNSUPPORTED_OP,
+        std::format("No operation defined for '{}' w/ operand type '{}'",
+                    AgentLexer::TokenName(token_id), TypeToName<Left>()));
+  }
 
-    [](auto a, auto b) -> std::expected<Type, InterpErr>
-    {return RuntimeErr(RuntimeErr::TYPE_MISMATCH);}
-  };
-  static constexpr auto m_OpVisit_Bi_LEQ = Overload{
-    [](auto a, auto b) -> std::expected<Type, InterpErr>
-    requires requires(decltype(a) a, decltype(b) b){a <= b; }
-    { return a <= b; },
-
-    [](auto a, auto b) -> std::expected<Type, InterpErr>
-    {return RuntimeErr(RuntimeErr::TYPE_MISMATCH);}
-  };
-  static constexpr auto m_OpVisit_Bi_LT = Overload{
-    [](auto a, auto b) -> std::expected<Type, InterpErr>
-    requires requires(decltype(a) a, decltype(b) b){a < b; }
-    { return a < b; },
-
-    [](auto a, auto b) -> std::expected<Type, InterpErr>
-    {return RuntimeErr(RuntimeErr::TYPE_MISMATCH);}
-  };
-  static constexpr auto m_OpVisit_Bi_NEQ = Overload{
-    [](auto a, auto b) -> std::expected<Type, InterpErr>
-    requires requires(decltype(a) a, decltype(b) b){a != b; }
-    { return a != b; },
-
-    [](auto a, auto b){return RuntimeErr(RuntimeErr::TYPE_MISMATCH);}
-  };
-  static constexpr auto m_OpVisit_Bi_EQ = Overload{
-    [](auto a, auto b) -> std::expected<Type, InterpErr>
-    requires requires(decltype(a) a, decltype(b) b){a == b; }
-    { return a == b; },
-
-    [](auto a, auto b) -> std::expected<Type, InterpErr>
-    {return RuntimeErr(RuntimeErr::TYPE_MISMATCH);}
-  };
-  static constexpr auto m_OpVisit_Bi_REM = Overload{
-    [](auto a, auto b) -> std::expected<Type, InterpErr>
-    requires requires(decltype(a) a, decltype(b) b){a % b; }
-    { return a % b; },
-
-    [](auto a, auto b) -> std::expected<Type, InterpErr>
-    {return RuntimeErr(RuntimeErr::TYPE_MISMATCH);}
-  };
-  static constexpr auto m_OpVisit_Bi_ADD = Overload{
-    [](auto a, auto b) -> std::expected<Type, InterpErr>
-    requires requires(decltype(a) a, decltype(b) b){a + b; }
-    { return a >= b; },
-
-    [](Point a, Point b) -> std::expected<Type, InterpErr>
-    { return Point(a.X() + b.X(), a.Y() + b.Y()); },
-
-    [](auto a, auto b) -> std::expected<Type, InterpErr>
-    {return RuntimeErr(RuntimeErr::TYPE_MISMATCH);}
-  };
-  static constexpr auto m_OpVisit_Bi_DIVIDE = Overload{
-    [](auto a, auto b) -> std::expected<Type, InterpErr>
-    requires requires(decltype(a) a, decltype(b) b){a / b; }
-    { return a / b; },
-
-    [](auto a, auto b){return RuntimeErr(RuntimeErr::TYPE_MISMATCH);}
-  };
-  static constexpr auto m_OpVisit_Bi_MULT = Overload{
-    [](auto a, auto b) -> std::expected<Type, InterpErr>
-    requires requires(decltype(a) a, decltype(b) b){a * b; }
-    { return a * b; },
-
-    [](auto a, auto b) -> std::expected<Type, InterpErr>
-    {return RuntimeErr(RuntimeErr::TYPE_MISMATCH);}
-  };
-  static constexpr auto m_OpVisit_Bi_MINUS = Overload{
-    [](auto a, auto b) -> std::expected<Type, InterpErr>
-    requires requires(decltype(a) a, decltype(b) b){a - b; }
-    { return a - b; },
-
-    [](Point a, Point b) -> std::expected<Type, InterpErr>
-    { return Point(a.X() - b.X(), a.Y() - b.Y()); },
-
-    [](auto a, auto b) -> std::expected<Type, InterpErr>
-    {return RuntimeErr(RuntimeErr::TYPE_MISMATCH);}
-  };
-  // clang-format on
-
-  using OpFuncUnary = std::function<std::expected<Type, InterpErr>(Type)>;
-  using OpFuncBinary =
-      std::function<std::expected<Type, InterpErr>(Type, Type)>;
+  template <TypeKind Left, TypeKind Right>
+  std::expected<Type, InterpErr> operator()(Left l, Right r) {
+    using AgentLexer::IDs;
+    switch (token_id) {
+    case IDs::ID_CMP_GEQ: {
+      STATIC_CHECKED_OP(l >= r);
+    }
+    case IDs::ID_CMP_GT: {
+      STATIC_CHECKED_OP(l > r);
+    }
+    case IDs::ID_CMP_LEQ: {
+      STATIC_CHECKED_OP(l <= r);
+    }
+    case IDs::ID_CMP_LT: {
+      STATIC_CHECKED_OP(l < r);
+    }
+    case IDs::ID_CMP_NEQ: {
+      STATIC_CHECKED_OP(l != r);
+    }
+    case IDs::ID_CMP_EQ: {
+      STATIC_CHECKED_OP(l == r);
+    }
+    case IDs::ID_OP_REM: {
+      STATIC_CHECKED_OP(l % r);
+    }
+    case IDs::ID_OP_ADD: {
+      STATIC_CHECKED_OP(l + r);
+      STATIC_CHECKED_OP(Point(l.X() + r.X(), l.Y() + r.Y()));
+    }
+    case IDs::ID_OP_MINUS: {
+      STATIC_CHECKED_OP(l - r);
+      STATIC_CHECKED_OP(Point(l.X() - r.X(), l.Y() - r.Y()));
+    }
+    case IDs::ID_OP_DIVIDE: {
+      STATIC_CHECKED_OP(l / r);
+    }
+    case IDs::ID_OP_MULT: {
+      STATIC_CHECKED_OP(l * r);
+    }
+    };
+    // If we leave the switch, there is no valid operation in this context
+    return RuntimeErr(
+        RuntimeErr::UNSUPPORTED_OP,
+        std::format(
+            "No operation defined for '{}' w/ operand types '{}' and '{}'",
+            AgentLexer::TokenName(token_id), TypeToName<Left>(),
+            TypeToName<Right>()));
+  }
 };
 
 }; // namespace cse498

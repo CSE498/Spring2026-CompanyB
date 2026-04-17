@@ -66,12 +66,11 @@ namespace StaticUtil {
  * @return size_t
  */
 
-template <typename... VariantTypes, std::variant<VariantTypes...> Variant,
-          typename TargetType, size_t idx = 0>
-  requires Concepts::UniqueTypes<VariantTypes...>
+template <typename Variant, typename TargetType, size_t idx = 0>
+  requires requires(Variant v) { std::variant_size_v<Variant>; }
 constexpr size_t variant_index() {
-  if constexpr (std::is_same_v<TargetType, std::variant_alternative_t<
-                                               idx, decltype(Variant)>>) {
+  if constexpr (std::is_same_v<TargetType,
+                               std::variant_alternative_t<idx, Variant>>) {
     return idx;
   } else {
     return variant_index<Variant, TargetType, idx + 1>();
