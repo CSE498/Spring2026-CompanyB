@@ -114,9 +114,21 @@ public:
     return evaluate_binary(node.m_Token, lhs, rhs);
   }
   std::expected<Type, InterpErr> Visit(AST::Assign &node) {
-    return TempErr(
-        TempErr::NOT_IMPLEMENTED,
-        "Don't yet know where and how Daniel intends to do evaluation");
+    TRY_DECL(expr, node.m_Value->Accept(*mAgentWrapper));
+
+    // If expr is not same type as variable. TODO Perhpas add casting later?
+    if (node.m_Sym->type.index() != expr.index()) {
+      return RuntimeErr(
+        RuntimeErr::TYPE_MISMATCH, 
+        std::format("Attempted to assign expression of type {} to variable of type {}",
+          TypeVariantToName(expr),
+          TypeVariantToName(node.m_Sym->type)
+        )
+      );
+    }
+    
+    node.m_Sym->type = expr;
+    return expr;
   }
   std::expected<Type, InterpErr> Visit(AST::StmtAgentDef &node) {
     TRY(node.m_Init->Accept(*mAgentWrapper))

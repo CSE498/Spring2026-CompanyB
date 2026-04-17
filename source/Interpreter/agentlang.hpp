@@ -50,6 +50,10 @@ template <TypeKind T> inline std::string_view TypeToName() {
   return TYPE_NAMES.at(StaticUtil::variant_index<Type, T>());
 }
 
+inline std::string_view TypeVariantToName(const Type& t) {
+  return std::visit([](auto&& v) { return TypeToName<std::decay_t<decltype(v)>>(); }, t);
+}
+
 inline std::optional<Type> NameToType(const emplex::Token &type_tok) {
   static const std::unordered_map<std::string, Type> type_map = {
       {"bool", bool{}}, {"int", int{}},         {"double", double{}},
