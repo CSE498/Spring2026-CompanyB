@@ -1,9 +1,11 @@
 #pragma once
 
+#include <string>
+
 #include "Step.hpp"
 #include "WorldPosition.hpp"
 #include "core.hpp"
-#include "../tools/Logger.hpp"
+#include "../Interfaces/IActionLog.hpp"
 
 namespace cse498 {
 using Concepts::IsDataClass;
@@ -26,11 +28,11 @@ private:
 
   Direction DeserializeDirection(const nlohmann::json& dir) {
     std::string direction = dir.get<std::string>();
-    if (direction == "up") return Direction::Up;
-    if (direction == "down") return Direction::Down;
-    if (direction == "left") return Direction::Left;
-    if (direction == "right") return Direction::Right;
-    return Direction::Up;  // Default direction if deserialization fails
+    if (direction == "North") return Direction::North;
+    if (direction == "South") return Direction::South;
+    if (direction == "West") return Direction::West;
+    if (direction == "East") return Direction::East;
+    return Direction::North;  // Default direction if deserialization fails
   }
 
   HealthState DeserializeHealthState(const nlohmann::json& state) {
@@ -99,7 +101,14 @@ private:
 
  public:
   StepAgentBase(DataClass data, size_t id)
-      : mData{data}, mId{id}, mCachedAgentIdStr{std::to_string(id)} {}
+      : mData{data}, mId{id}, mCachedAgentIdStr{std::to_string(id)} {
+    // Log the initial state of the agent for replay purposes (not sure if this is needed but seems useful to have the initial state in the log)
+    mActions.push_back(ActionEvent<DataClass>{.agentId = std::string_view(mCachedAgentIdStr),
+                                              .actionType = "initial_state",
+                                              .logLevel = LogLevel::Normal,
+                                              .timestamp = 0,
+                                              .details = data});
+      }
   virtual ~StepAgentBase() = default;
 
   /// Get the ID of the agent
@@ -162,10 +171,10 @@ private:
 
   // Think: Should this also take in the log level and tick for replay purposes?
   // In regular usage, the world will need to pass the tick and log level for logging purposes.
-  void SetState(DataClass data, LogLevel logLevel = LogLevel::Normal, uint64_t tick) {
+  void SetState(DataClass data, LogLevel logLevel = LogLevel::Normal, uint64_t tick = 0) {
     mData = data;
     // Here handle logic to log for replay?
-    mActions.push_back(ActionEvent<DataClass>{.agentId = mCachedAgentIdStr,
+    mActions.push_back(ActionEvent<DataClass>{.agentId = std::string_view(mCachedAgentIdStr),
                                               .actionType = "movement",
                                               .logLevel = logLevel,
                                               .timestamp = tick,
