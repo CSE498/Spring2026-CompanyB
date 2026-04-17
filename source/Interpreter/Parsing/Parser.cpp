@@ -46,6 +46,11 @@ std::expected<void, InterpErr> Parser::parse(std::istream &in) {
                                 AgentLexer::TokenName(token_res.value())));
   }
 
+  // Expect: <;>
+  token_res = m_Lexer.UseIf(IDs::ID_DELIM_SEMICLN);
+  if (!token_res.has_value())
+    return token_res.error();
+
   // Now we parse every remaining statement
   m_Syms.PushSymbolScope();
   while (m_Lexer.Any()) {
