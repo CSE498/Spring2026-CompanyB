@@ -39,9 +39,9 @@ Parser::parse_expr(int prec) {
       left = std::move(node);
     else
       return node;
+
+    cur_opinfo = OpInfo::FromBinary(m_Lexer.Peek());
   }
-  if (!cur_opinfo.has_value())
-    return cur_opinfo.error();
 
   return left;
 }

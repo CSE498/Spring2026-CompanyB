@@ -17,6 +17,8 @@ std::expected<std::unique_ptr<AST::Node>, InterpErr> Parser::parse_stmt() {
     return parse_if();
   case IDs::ID_KW_MOVE:
     return parse_move();
+  case IDs::ID_KW_LET:
+    return parse_var_def();
   case IDs::ID_IDENTIFIER:
     return parse_expr();
   case IDs::ID_DELIM_SEMICLN: {

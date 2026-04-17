@@ -47,13 +47,15 @@ std::expected<void, InterpErr> Parser::parse(std::istream &in) {
   }
 
   // Now we parse every remaining statement
+  m_Syms.PushSymbolScope();
   while (m_Lexer.Any()) {
     auto stmt_res = parse_stmt();
     if (!stmt_res.has_value())
-      stmt_res.error();
+      return stmt_res.error();
 
     m_Nodes.emplace_back(std::move(stmt_res.value()));
   }
+  m_Syms.PopSymbolScope();
 
   // Interpreter will steal m_Nodes and m_Syms rather than returning them
 

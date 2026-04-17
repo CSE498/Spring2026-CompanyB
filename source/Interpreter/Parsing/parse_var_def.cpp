@@ -40,12 +40,12 @@ std::expected<std::unique_ptr<AST::Node>, InterpErr> Parser::parse_var_def() {
   // Imp: Symbol table interaction
   Token type_token = res.value();
   auto sym_add_res = m_Syms.AddSym(id_token, type_token);
-  if (!res)
-    return res.error();
+  if (!sym_add_res)
+    return sym_add_res.error();
 
   auto sym_retrieve_res = m_Syms.GetSym(sym_add_res.value());
-  if (!res)
-    return res.error();
+  if (!sym_retrieve_res)
+    return sym_retrieve_res.error();
 
   // Expect: OP_ASSIGN
   if (m_Lexer.Is(IDs::ID_OP_ASSIGN)) {
@@ -54,10 +54,15 @@ std::expected<std::unique_ptr<AST::Node>, InterpErr> Parser::parse_var_def() {
       return res.error();
 
     Token assign_token = res.value();
-    auto expr = parse_expr();
+    auto expr = parse_expr(6);
     if (!expr.has_value()) {
       return expr.error();
     }
+
+    // Expect: <;>
+    res = m_Lexer.UseIf(IDs::ID_DELIM_SEMICLN);
+    if (!res)
+      return res.error();
 
     return std::make_unique<AST::Assign>(assign_token, sym_retrieve_res.value(),
                                          std::move(expr.value()));
