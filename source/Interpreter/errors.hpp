@@ -49,10 +49,10 @@ struct ParseErr : BaseErr {
     INVALID_OP_TOKEN,
     INVALID_LITERAL,
     INVALID_TERM,
+    INVALID_WORLD,
   };
 
   Kind m_Kind;
-  std::string m_Msg;
   ParseErr(Kind kind) : BaseErr(), m_Kind(kind) {}
   ParseErr(Kind kind, std::string const &msg) : BaseErr(msg), m_Kind(kind) {}
 };
@@ -80,11 +80,22 @@ struct RuntimeErr : BaseErr {
   RuntimeErr(Kind kind, std::string const &msg) : BaseErr(msg), m_Kind(kind) {}
 };
 
+// For internal errors as we implement the rest of the interpreter
+struct TempErr : BaseErr {
+  enum Kind {
+    NOT_IMPLEMENTED,
+  };
+
+  Kind m_Kind;
+  TempErr(Kind kind) : BaseErr(), m_Kind(kind) {}
+  TempErr(Kind kind, std::string const &msg) : BaseErr(msg), m_Kind(kind) {}
+};
+
 // using InterpErr = std::variant<LexerErr, ParseErr, SymbolErr, ASTErr>;
 struct InterpErr
-    : std::variant<LexerErr, ParseErr, SymbolErr, ASTErr, RuntimeErr> {
-  using std::variant<LexerErr, ParseErr, SymbolErr, ASTErr,
-                     RuntimeErr>::variant;
+    : std::variant<LexerErr, ParseErr, SymbolErr, ASTErr, RuntimeErr, TempErr> {
+  using std::variant<LexerErr, ParseErr, SymbolErr, ASTErr, RuntimeErr,
+                     TempErr>::variant;
 
   template <typename T> operator std::expected<T, InterpErr>() {
     return std::unexpected(*this);

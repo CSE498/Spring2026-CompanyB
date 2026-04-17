@@ -4,6 +4,7 @@
 #include "Interpreter/ast.hpp"
 #include "Interpreter/errors.hpp"
 #include "agentlang.hpp"
+#include "core/DiseaseData.hpp"
 #include "tools/RobinHoodMap.hpp"
 #include <any>
 #include <string>
@@ -13,10 +14,6 @@ using namespace cse498::agentlang::Types;
 
 template <typename T>
 concept Numeric = Concepts::IsOneOf<int, double>;
-
-// GET DATACLASSES IN THIS BRANCH SO ASAP, FOR NOW JUST DOING THIS TO DEMO
-struct InfectionData {};
-struct TrafficData {};
 
 template <typename Dataclass> class Interpreter;
 
@@ -44,7 +41,7 @@ struct InterpreterWrapper {
   }
 
   template <typename Dataclass> InterpreterWrapper(Interpreter<Dataclass> *i) {
-    if constexpr (std::is_same_v<Dataclass, InfectionData>) {
+    if constexpr (std::is_same_v<Dataclass, DiseaseData>) {
       m_Env = Env::INFECTION;
     } else {
       m_Env = Env::TRAFFIC;
@@ -62,7 +59,6 @@ template <typename Dataclass> class Interpreter {
       std::function<std::expected<Type, InterpErr>(Type, Type)>;
 
   OpVisits<Dataclass> m_OpVisits{};
-
   RobinHoodMap<int, OpFuncUnary> m_OpDispUnary{
       {emplex::Lexer::ID_CMP_GEQ, OpVisits<Dataclass>::m_OpVisit_Un_GEQ},
       {emplex::Lexer::ID_CMP_GT, OpVisits<Dataclass>::m_OpVisit_Un_GT},
@@ -99,6 +95,8 @@ public:
       if (!res.has_value())
         return res;
     }
+
+    return NullType{};
   }
   std::expected<Type, InterpErr> Visit(AST::ExprUnary &node) {
     auto res = node.Accept(*m_InterpWrapper);
@@ -112,28 +110,44 @@ public:
     return std::visit(func.value(), res.value());
   }
   std::expected<Type, InterpErr> Visit(AST::Assign &node) {
-    // TODO
+    return TempErr(
+        TempErr::NOT_IMPLEMENTED,
+        "Don't yet know where and how Daniel intends to do evaluation");
   }
   std::expected<Type, InterpErr> Visit(AST::StmtAgentDef &node) {
-    // TODO
+    return TempErr(
+        TempErr::NOT_IMPLEMENTED,
+        "Don't yet know where and how Daniel intends to do evaluation");
   }
   std::expected<Type, InterpErr> Visit(AST::StmtAction &node) {
-    // TODO
+    return TempErr(
+        TempErr::NOT_IMPLEMENTED,
+        "Don't yet know where and how Daniel intends to do evaluation");
   }
   std::expected<Type, InterpErr> Visit(AST::StmtWhile &node) {
-    // TODO
+    return TempErr(
+        TempErr::NOT_IMPLEMENTED,
+        "Don't yet know where and how Daniel intends to do evaluation");
   }
   std::expected<Type, InterpErr> Visit(AST::StmtLoopCtl &node) {
-    // TODO
+    return TempErr(
+        TempErr::NOT_IMPLEMENTED,
+        "Don't yet know where and how Daniel intends to do evaluation");
   }
   std::expected<Type, InterpErr> Visit(AST::StmtIf &node) {
-    // TODO
+    return TempErr(
+        TempErr::NOT_IMPLEMENTED,
+        "Don't yet know where and how Daniel intends to do evaluation");
   }
   std::expected<Type, InterpErr> Visit(AST::ValLiteral &node) {
-    // TODO
+    return TempErr(
+        TempErr::NOT_IMPLEMENTED,
+        "Don't yet know where and how Daniel intends to do evaluation");
   }
   std::expected<Type, InterpErr> Visit(AST::ValVariable &node) {
-    // TODO
+    return TempErr(
+        TempErr::NOT_IMPLEMENTED,
+        "Don't yet know where and how Daniel intends to do evaluation");
   }
 };
 

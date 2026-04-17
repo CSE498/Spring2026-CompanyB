@@ -10,13 +10,43 @@
 namespace cse498 {
 
 std::expected<void, InterpErr> Parser::parse(std::istream &in) {
+  using AgentLexer::IDs;
   m_Nodes.clear();
 
   auto tokenize_res = m_Lexer.Tokenize(in);
   if (!tokenize_res.has_value())
     return tokenize_res.error();
-  // return std::unexpected(tokenize_res.error());
 
+  /*
+  We first need to check that the first statement configures the world
+  ---
+  <KW_WORLD> <KW_TRAFFIC|KW_INFECTION>;
+  ---
+  */
+  // Expect: <KW_WORLD>
+  auto token_res = m_Lexer.UseIf(IDs::ID_KW_WORLD);
+  if (!token_res.has_value())
+    return token_res.error();
+
+  // Expect: <KW_TRAFFIC|KW_INFECTION>
+  token_res = m_Lexer.UseIf(IDs::ID_KW_INFECTION, IDs::ID_KW_TRAFFIC);
+  if (!token_res.has_value())
+    return token_res.error();
+
+  switch (token_res.value()) {
+  case IDs::ID_KW_TRAFFIC:
+    m_Env = Env::TRAFFIC;
+    break;
+  case IDs::ID_KW_INFECTION:
+    m_Env = Env::INFECTION;
+    break;
+  default:
+    return ParseErr(ParseErr::INVALID_WORLD,
+                    std::format("Token '{}' is not a valid world configuration",
+                                AgentLexer::TokenName(token_res.value())));
+  }
+
+  // Now we parse every remaining statement
   while (m_Lexer.Any()) {
     auto stmt_res = parse_stmt();
     if (!stmt_res.has_value())

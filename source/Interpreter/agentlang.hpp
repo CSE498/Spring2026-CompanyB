@@ -33,10 +33,9 @@ enum class Direction {
 // TODO : How are agents represented internally?
 struct Car {};
 struct Student {};
-using Type =
-    std::variant<bool, int, double, str, Point, Direction, Car, Student>;
-using TypeTuple =
-    std::tuple<bool, int, double, str, Point, Direction, Car, Student>;
+struct NullType {};
+using Type = std::variant<bool, int, double, str, Point, Direction, Car,
+                          Student, NullType>;
 
 // Concept satisfied if T is a valid agentlang type
 template <typename T>

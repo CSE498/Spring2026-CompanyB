@@ -1,5 +1,7 @@
+#include "DiseaseData.hpp"
 #include "Interpreter/agentlang.hpp"
 #include "Interpreter/interpreter.hpp"
+#include "Worlds/TrafficData.hpp"
 
 namespace cse498 {
 
@@ -14,7 +16,7 @@ templ_visit(InterpreterWrapper &i, std::derived_from<AST::Node> auto &node) {
     return std::any_cast<Interpreter<TrafficData> *>(i.m_InterpreterPtr)
         ->Visit(node);
   } else {
-    return std::any_cast<Interpreter<InfectionData> *>(i.m_InterpreterPtr)
+    return std::any_cast<Interpreter<DiseaseData> *>(i.m_InterpreterPtr)
         ->Visit(node);
   }
 }
