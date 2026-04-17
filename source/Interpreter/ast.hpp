@@ -172,10 +172,7 @@ struct StmtWhile : public Node {
 
 // Loop control
 struct StmtLoopCtl : public Node {
-  enum Action {
-    BREAK,
-    CONTINUE,
-  };
+
 
   Action m_Action;
 

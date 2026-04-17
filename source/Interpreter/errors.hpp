@@ -75,6 +75,7 @@ struct RuntimeErr : BaseErr {
     EMPTY_INTERP_WRAPPER,
     UNSUPPORTED_OP,
     NOT_BOOL_CONV,
+    ENCOUNTERED_AGENT_DEF
   };
 
   Kind m_Kind;

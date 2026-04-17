@@ -126,15 +126,15 @@ public:
         )
       );
     }
-    
+
     node.m_Sym->type = expr;
     return expr;
   }
   std::expected<Type, InterpErr> Visit(AST::StmtAgentDef &node) {
-    TRY(node.m_Init->Accept(*mAgentWrapper))
-    TRY(node.m_Turn->Accept(*mAgentWrapper))
-    
-    return NullType{};
+    return RuntimeErr{
+      RuntimeErr::ENCOUNTERED_AGENT_DEF,
+      "Encountered an agent definition when evaluation agent turn."
+    };
   }
   std::expected<Type, InterpErr> Visit(AST::StmtAction &node) {
     return TempErr(
