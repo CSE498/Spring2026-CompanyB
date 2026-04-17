@@ -114,14 +114,10 @@ public:
         "Don't yet know where and how Daniel intends to do evaluation");
   }
   std::expected<Type, InterpErr> Visit(AST::ValLiteral &node) {
-    return TempErr(
-        TempErr::NOT_IMPLEMENTED,
-        "Don't yet know where and how Daniel intends to do evaluation");
+    return node.m_Val;
   }
   std::expected<Type, InterpErr> Visit(AST::ValVariable &node) {
-    return TempErr(
-        TempErr::NOT_IMPLEMENTED,
-        "Don't yet know where and how Daniel intends to do evaluation");
+    return node.m_Symbol->type;
   }
 };
 
