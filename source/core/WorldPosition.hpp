@@ -12,6 +12,8 @@
 #include <cstddef>   // For size_t
 #include <functional>
 
+#include "nlohmann/json.hpp"
+
 namespace cse498 {
 
 /// @class WorldPosition
@@ -25,6 +27,10 @@ class WorldPosition {
  public:
   WorldPosition() = default;
   WorldPosition(double x, double y) : x(x), y(y) {}
+  WorldPosition(const nlohmann::json& j) {
+    x = j.at("x").get<double>();
+    y = j.at("y").get<double>();
+  }
   template <std::integral T, std::integral U>
   WorldPosition(T x, U y)
       : WorldPosition(static_cast<double>(x), static_cast<double>(y)) {}
@@ -67,6 +73,12 @@ class WorldPosition {
   [[nodiscard]] WorldPosition Down() const { return {x, y + 1.0}; }
   [[nodiscard]] WorldPosition Left() const { return {x - 1.0, y}; }
   [[nodiscard]] WorldPosition Right() const { return {x + 1.0, y}; }
+
+  // -- JSON Serialization --
+  nlohmann::json ToJson() const {
+    return nlohmann::json{{"x", x}, {"y", y}};
+  }
+
 };
 
 }  // End of namespace cse498

@@ -9,6 +9,7 @@
 #pragma once
 
 #include "WorldPosition.hpp"
+#include "nlohmann/json.hpp"
 
 namespace cse498 {
 
@@ -23,6 +24,21 @@ struct DiseaseData {
   WorldPosition position{};
   HealthState health{HealthState::SUSCEPTIBLE};
   size_t ticks_in_state{0};
+
+  nlohmann::json ToJson() const {
+    return nlohmann::json{
+        {"position", position.ToJson()},
+        {"health", health},
+        {"ticks_in_state", ticks_in_state},
+    };
+  }
+
+  DiseaseData(const nlohmann::json& j) {
+    position = WorldPosition(j.at("position"));
+    health = j.at("health").get<HealthState>();
+    ticks_in_state = j.at("ticks_in_state").get<size_t>();
+  }
+  
 };
 
 }  // namespace cse498

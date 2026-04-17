@@ -15,6 +15,8 @@
 #include "Location.hpp"
 #include "WorldGrid.hpp"
 
+#include "nlohmann/json.hpp"
+
 namespace cse498 {
 
 class AgentBase : public Entity {
@@ -27,6 +29,9 @@ class AgentBase : public Entity {
   int action_result = 1;
 
   char symbol = '*';
+
+  /// A history of the agent's state after each turn, for logging/replay
+  std::vector<nlohmann::json> mStateHistory;
 
  public:
   AgentBase(size_t id, const std::string &name, const WorldBase &world)
@@ -106,6 +111,9 @@ class AgentBase : public Entity {
   /// notifications.
   virtual void Notify(const std::string & /*message*/,
                       const std::string & /*msg_type*/ = "none") {}
+
+  /// @brief Get a JSON representation of the agent's history of states, for logging
+  virtual std::vector<nlohmann::json> GetStates() const { return mStateHistory; }
 };
 
 }  // End of namespace cse498
