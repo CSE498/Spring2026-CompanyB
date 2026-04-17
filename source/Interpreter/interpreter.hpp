@@ -99,7 +99,7 @@ public:
     return NullType{};
   }
   std::expected<Type, InterpErr> Visit(AST::ExprUnary &node) {
-    auto res = node.Accept(*m_InterpWrapper);
+    auto res = node.m_Left->Accept(*m_InterpWrapper);
     if (!res.has_value())
       return res.error();
 
@@ -110,9 +110,19 @@ public:
     return std::visit(func.value(), res.value());
   }
   std::expected<Type, InterpErr> Visit(AST::ExprBinary &node) {
-    return TempErr(
-        TempErr::NOT_IMPLEMENTED,
-        "Don't yet know where and how Daniel intends to do evaluation");
+    auto lhs = node.m_Left->Accept(*m_InterpWrapper);
+    if (!lhs.has_value())
+      return lhs.error();
+
+    auto rhs = node.m_Right->Accept(*m_InterpWrapper);
+    if (!rhs.has_value())
+      return rhs.error();
+
+    auto func = m_OpDispBinary.at(node.m_Token.id);
+    if (!func.has_value())
+      return func.error();
+
+    return std::visit(func.value(), lhs.value(), rhs.value());
   }
   std::expected<Type, InterpErr> Visit(AST::Assign &node) {
     return TempErr(
