@@ -19,8 +19,15 @@ std::expected<std::unique_ptr<AST::Node>, InterpErr> Parser::parse_stmt() {
     return parse_move();
   case IDs::ID_KW_LET:
     return parse_var_def();
-  case IDs::ID_IDENTIFIER:
-    return parse_expr();
+  case IDs::ID_IDENTIFIER: {
+    auto node = parse_expr();
+    if (!node.has_value())
+      return node.error();
+    auto semi = m_Lexer.UseIf(IDs::ID_DELIM_SEMICLN);
+    if (!semi.has_value())
+      return semi.error();
+    return node;
+  }
   case IDs::ID_DELIM_SEMICLN: {
     auto res = m_Lexer.Use();
     return (!res.has_value()) ? res.error() : parse_stmt();
@@ -48,7 +55,7 @@ Parser::parse_stmt_block() {
       std::make_unique<AST::StmtBlock>(res.value());
 
   while (!m_Lexer.Is(IDs::ID_DELIM_CLY_CLOSE)) {
-    auto stmt = parse_expr();
+    auto stmt = parse_stmt();
     if (!stmt.has_value())
       return stmt.error();
 
