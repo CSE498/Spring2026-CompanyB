@@ -128,15 +128,23 @@ public:
         TempErr::NOT_IMPLEMENTED,
         "Don't yet know where and how Daniel intends to do evaluation");
   }
-  std::expected<Type, InterpErr> Visit(AST::StmtWhile &node) {
-    return TempErr(
-        TempErr::NOT_IMPLEMENTED,
-        "Don't yet know where and how Daniel intends to do evaluation");
-  }
   std::expected<Type, InterpErr> Visit(AST::StmtLoopCtl &node) {
     return TempErr(
         TempErr::NOT_IMPLEMENTED,
         "Don't yet know where and how Daniel intends to do evaluation");
+  }
+  std::expected<Type, InterpErr> Visit(AST::StmtWhile &node) {
+    TRY_DECL(cond, node.m_Condition->Accept(*mAgentWrapper))
+    TRY_DECL(cond_truthy, evaluate_bool(cond))
+    
+    while (cond_truthy) {
+      TRY(node.m_Body->Accept(*mAgentWrapper))
+
+      TRY_DECL(new_cond, node.m_Condition->Accept(*mAgentWrapper))
+      TRY_DECL(new_cond_truthy, evaluate_bool(new_cond))
+      cond_truthy = new_cond_truthy;
+    }
+    return NullType{};
   }
   std::expected<Type, InterpErr> Visit(AST::StmtIf &node) {
     TRY_DECL(cond, node.m_Condition->Accept(*mAgentWrapper))
@@ -144,10 +152,10 @@ public:
 
     if (cond_truthy) {
       TRY(node.m_TBody->Accept(*mAgentWrapper))
+    } else if (node.m_FBody.has_value()) {
+      TRY(node.m_FBody.value()->Accept(*mAgentWrapper))
     }
-    // if (truthy.value()) {
-    //   auto do_if = node.m_TBody->Accept(*mAgentWrapper);
-    // }
+
     return NullType{};
   }
   std::expected<Type, InterpErr> Visit(AST::ValLiteral &node) {
