@@ -5,23 +5,79 @@
 
 #include <emscripten.h>
 
-#include <memory>
-#include <unordered_map>
 #include <functional>
-#include <print>
 
 #include "WebButton.h"
 #include "WebCanvas.hpp"
 #include "WebImage.hpp"
 #include "WebLayout.hpp"
 #include "WebTextbox.hpp"
+#include "Interfaces/AutoInterface.hpp"
+#include "Worlds/TrafficWorld.hpp"
+#include "core/ItemBase.hpp"
+#include "Agents/DrivingAgent.hpp"
 
 using namespace cse498;
 
 // Globals kept alive for the duration of the page
 static std::shared_ptr<WebCanvas> canvas;
 
+std::shared_ptr<WebCanvas> GameCanvas;
+static std::unique_ptr<TrafficWorld> world = std::make_unique<TrafficWorld>("assets/grids/DemoWorld.grid");
+
 static std::unordered_map<std::string, std::shared_ptr<WebElement>> elements{};
+
+
+void DrawTrafficSim(){
+    GameCanvas->Clear();
+    const WorldGrid& grid = world->GetGrid();
+
+    const size_t W = grid.GetWidth();
+    const size_t H = grid.GetHeight();
+
+    const double cell_w = static_cast<double>(GameCanvas->GetWidth())  / W;
+    const double cell_h = static_cast<double>(GameCanvas->GetHeight()) / H;
+
+    for (size_t y = 0; y < H; ++y) {
+      for (size_t x = 0; x < W; ++x) {
+          double cx = x * cell_w;
+          double cy = y * cell_h;
+          char sym = grid.GetSymbol(WorldPosition{x, y});
+          switch(sym) {
+              case '.':
+                  GameCanvas->SetFillColor({40, 40, 40}).DrawRect(cx, cy, cell_w, cell_h, true);
+                  break;
+              case '|':
+                  GameCanvas->SetFillColor({0, 100, 100}).DrawRect(cx, cy, cell_w, cell_h, true);
+                  break;
+              case '-':
+                  GameCanvas->SetFillColor({100, 0, 100}).DrawRect(cx, cy, cell_w, cell_h, true);
+                  break;
+              case 'S':
+                  GameCanvas->SetFillColor({100, 100, 100}).DrawRect(cx, cy, cell_w, cell_h, true);
+                  break;
+              case 'D':
+                  GameCanvas->SetFillColor({200, 200, 200}).DrawRect(cx, cy, cell_w, cell_h, true);
+                  break;
+              default:
+                  break;
+          }
+      }
+    }
+
+    // Draw agents
+    const double radius = std::max(std::min(cell_w, cell_h) * 0.4, 8.0);
+    for (size_t id = 0; id < world->GetNumAgents(); ++id) {
+        const AgentBase& agent = world->GetAgent(id);
+        WorldPosition pos = agent.GetLocation().AsWorldPosition();
+        double cx = pos.CellX() * cell_w + cell_w / 2.0;
+        double cy = pos.CellY() * cell_h + cell_h / 2.0;
+        GameCanvas->SetFillColor({255, 80, 80}).DrawCircle(cx, cy, radius, true);
+    }
+
+    world->RunAgents();
+    world->UpdateWorld();
+}
 
 // We switch screens by holding a shared pointer to the active screen's
 // WebElement in a static map
@@ -114,7 +170,7 @@ std::shared_ptr<WebElement> SimulationLayout(std::function<void()> btn_lambda, s
           UIItem<WebLayout>(WebOptions{
             .id = "left-column",
             .style = {
-              {"flex", "3"},
+              {"flex", "1"},
             },
 
             .children = {
@@ -132,8 +188,12 @@ std::shared_ptr<WebElement> SimulationLayout(std::function<void()> btn_lambda, s
           UIItem<WebLayout>(WebOptions{
             .id = "game-area",
             .children = {
-              UIItem<WebImage>("assets/images/map2.svg", "Game map", WebOptions{ .id = "map-image" })->SetPosition(0, 0),
-              UIItem<WebCanvas>(1000, 500, WebOptions{ .id = "game-canvas" })->SetFillColor({255, 255, 255}).SetFont("48px arial")
+              UIItem<WebImage>("assets/images/full_map.svg", "Game map", WebOptions{
+                .id = "map-image",
+              }),
+              (GameCanvas = UIItem<WebCanvas>(1000, 1000, WebOptions{
+                .id = "game-canvas",
+              }))->SetFont("48px arial")
             }
           })
         }
@@ -188,9 +248,15 @@ void load_simulation_layout() {
   set_active_layout(SimulationLayout(load_simulation_layout, load_menu_layout));
 };
 
-int main() {
-  // We start the application by loading the menu layout.
-  load_menu_layout();
+// Needed for the emscripten set main loop
+void MainLoop() {
+  if (GameCanvas) {
+    DrawTrafficSim();
+  }
+}
 
+int main() {
+  load_menu_layout();
+  emscripten_set_main_loop(MainLoop, 0, 1);
   return 0;
 }

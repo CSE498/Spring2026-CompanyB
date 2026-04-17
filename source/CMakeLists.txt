@@ -185,6 +185,9 @@ elseif(DEFINED EMSCRIPTEN)
         -sMAXIMUM_MEMORY=1gb
         -sEXPORTED_RUNTIME_METHODS=ccall,cwrap
         -lembind
+        # Embed grid files into the WASM virtual filesystem so C++ ifstream can open them.
+        # SHELL: prefix prevents CMake from splitting the @ separator into two arguments.
+        "SHELL:--preload-file /app/assets/grids/DemoWorld.grid@assets/grids/DemoWorld.grid"
     )
 
     # Copy custom HTML into build output
