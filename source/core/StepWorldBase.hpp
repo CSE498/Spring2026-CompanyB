@@ -2,6 +2,7 @@
 
 #include <memory>
 #include <vector>
+#include <sstream>
 
 #include "Step.hpp"
 #include "StepAgentBase.hpp"
@@ -28,7 +29,7 @@ class StepWorldBase {
   Parser parser{};
 
   /// interpreter for scripted agents
-  Interpreter interpreter{};
+  Interpreter<DataClass> interpreter{};
 
 
  protected:
@@ -44,8 +45,12 @@ class StepWorldBase {
   /// setup.
   virtual void ConfigAgent([[maybe_unused]] Agent &agent) {}
 
-  void SetupScriptedAgents() {
+  std::string GetAgentFileContents() { return "ADD GET FILE CONTENTS FROM GUI"; }
 
+  void SetupScriptedAgents() {
+    std::string contents = GetAgentFileContents();
+    std::stringstream ss{contents};
+    parser.parse(ss);
   }
 
  public:

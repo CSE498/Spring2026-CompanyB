@@ -9,6 +9,10 @@
 #include "Interfaces/TrashInterface.hpp"
 #include "Worlds/MazeWorld.hpp"
 
+// Files to include to test build
+#include "Agents/ScriptedAgent.hpp"
+#include "core/StepWorldBase.hpp"
+
 using namespace cse498;
 
 int main() {

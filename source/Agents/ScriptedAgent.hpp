@@ -8,6 +8,7 @@
 #include "core/StepAgentBase.hpp"
 #include "core/WorldPosition.hpp"
 #include "core/core.hpp"
+#include "Interpreter/ast.hpp"
 
 #include <memory>
 
@@ -33,7 +34,7 @@ public:
   }
 
   void SetTurn(std::unique_ptr<StmtBlock> turn) {
-    mTurn = std::move(init);
+    mTurn = std::move(turn);
   }
 
   /// Choose the action to take a step in the appropriate direction.
