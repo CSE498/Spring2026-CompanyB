@@ -1,7 +1,7 @@
-#include "../source/Agents/StepDrivingAgent.hpp"
 #include "../source/Worlds/StepTrafficWorld.hpp"
+#include "../source/Agents/SwarmingAgent.hpp"
 using namespace cse498;
 int main() {
-  StepTrafficWorld<StepDrivingAgent> world("DemoWorld.grid");
+  StepTrafficWorld<SwarmingAgent<TrafficData>> world("DemoWorld.grid");
   world.RunWithDisplay();
 }
