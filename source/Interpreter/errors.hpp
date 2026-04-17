@@ -49,6 +49,7 @@ struct ParseErr : BaseErr {
     INVALID_OP_TOKEN,
     INVALID_LITERAL,
     INVALID_TERM,
+    INVALID_WORLD,
   };
 
   Kind m_Kind;
