@@ -6,29 +6,38 @@
 namespace cse498 {
 
 struct BaseErr {
-  std::string why_;
+  std::string m_Why;
 
   BaseErr() = default;
-  BaseErr(std::string const &why) : why_(why) {}
+  BaseErr(std::string const &why) : m_Why(why) {}
 
   template <typename T, typename E, typename Self>
   operator std::expected<T, E>(this Self &&self) {
     return std::unexpected(std::forward<Self>(self));
   }
+
+  bool operator==(const BaseErr &) const = default;
+
+  // template <typename Self>
+  // bool operator==(this Self const &self, Self const &other) {
+  //   return ((self.why_ == other.why_) && (self.m_Kind == other.m_Kind));
+  // }
 };
 
 struct ASTErr : BaseErr {
+  bool operator==(const ASTErr &) const = default;
   enum Kind {
     UNTYPED_NODE,
   };
 
-  Kind kind_;
+  Kind m_Kind;
 
-  ASTErr(Kind kind) : BaseErr(), kind_(kind) {};
-  ASTErr(Kind kind, std::string const &why) : BaseErr(why), kind_(kind) {};
+  ASTErr(Kind kind) : BaseErr(), m_Kind(kind) {};
+  ASTErr(Kind kind, std::string const &why) : BaseErr(why), m_Kind(kind) {};
 };
 
 struct LexerErr : BaseErr {
+  bool operator==(const LexerErr &) const = default;
   enum Kind {
     UNEXP_TOKEN,
   };
@@ -40,6 +49,7 @@ struct LexerErr : BaseErr {
 };
 
 struct ParseErr : BaseErr {
+  bool operator==(const ParseErr &) const = default;
   enum Kind {
     MISSING_TOKEN,
     EXPECTED_STMT,
@@ -58,6 +68,7 @@ struct ParseErr : BaseErr {
 };
 
 struct SymbolErr : public BaseErr {
+  bool operator==(const SymbolErr &) const = default;
   enum Kind {
     UNDEFINED_SYMBOL,
     REDEFINITION,
@@ -70,6 +81,7 @@ struct SymbolErr : public BaseErr {
 };
 
 struct RuntimeErr : BaseErr {
+  bool operator==(const RuntimeErr &) const = default;
   enum Kind {
     TYPE_MISMATCH,
     EMPTY_INTERP_WRAPPER,
@@ -85,6 +97,7 @@ struct RuntimeErr : BaseErr {
 
 // For internal errors as we implement the rest of the interpreter
 struct TempErr : BaseErr {
+  bool operator==(const TempErr &) const = default;
   enum Kind {
     NOT_IMPLEMENTED,
   };
@@ -94,11 +107,10 @@ struct TempErr : BaseErr {
   TempErr(Kind kind, std::string const &msg) : BaseErr(msg), m_Kind(kind) {}
 };
 
-// using InterpErr = std::variant<LexerErr, ParseErr, SymbolErr, ASTErr>;
-struct InterpErr
-    : std::variant<LexerErr, ParseErr, SymbolErr, ASTErr, RuntimeErr, TempErr> {
-  using std::variant<LexerErr, ParseErr, SymbolErr, ASTErr, RuntimeErr,
-                     TempErr>::variant;
+using InterpErr_T =
+    std::variant<LexerErr, ParseErr, SymbolErr, ASTErr, RuntimeErr, TempErr>;
+struct InterpErr : public InterpErr_T {
+  using InterpErr_T::variant;
 
   template <typename T> operator std::expected<T, InterpErr>() {
     return std::unexpected(*this);

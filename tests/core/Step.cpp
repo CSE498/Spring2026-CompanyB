@@ -13,6 +13,8 @@
 using namespace cse498::steps;
 using cse498::WorldPosition;
 using namespace cse498::matchers;
+using cse498::matchers::CheckExp;
+using cse498::matchers::CheckOpt;
 
 TEST_CASE("StepContainer basic functionality", "[StepContainer]") {
   StepContainer steps{};
@@ -34,7 +36,8 @@ TEST_CASE("StepContainer basic functionality", "[StepContainer]") {
       REQUIRE_FALSE(steps.exhausted());
       // First and only step should be the movement step
       std::expected<Step, StepErr> cur_step = steps.get_next();
-      REQUIRE_THAT(cur_step, ExpNotErr() && VariantState<MovementStep>());
+      REQUIRE_THAT(cur_step, (ExpNotErr() &&
+                              VariantState<MovementStep, CheckExp::SUCCESS>()));
       REQUIRE(std::get<MovementStep>(cur_step.value()).loc ==
               WorldPosition{0.5, 0.5});
 
@@ -85,8 +88,8 @@ TEST_CASE("StepContainer basic functionality", "[StepContainer]") {
         // Should see InfoStep
         REQUIRE(checking_node->step.has_value());
         REQUIRE_THAT(checking_node->step,
-                     cse498::matchers::OptNotNull<Step>() &&
-                         cse498::matchers::VariantState<InfoStep>());
+                     (cse498::matchers::OptNotNull<Step>() &&
+                      cse498::matchers::VariantState<InfoStep>()));
 
         InfoStep info_step = std::get<InfoStep>(checking_node->step.value());
         REQUIRE(info_step.target == cse498::WorldPosition{1.5, 1.5});
@@ -98,8 +101,8 @@ TEST_CASE("StepContainer basic functionality", "[StepContainer]") {
 
         // Should see ConditionalStep
         REQUIRE_THAT(checking_node->step,
-                     cse498::matchers::OptNotNull<Step>() &&
-                         cse498::matchers::VariantState<ConditionalStep>());
+                     (cse498::matchers::OptNotNull<Step>() &&
+                      cse498::matchers::VariantState<ConditionalStep>()));
 
         // Note - leave testing InfoHandler correctness to the InfoHandler tests
 
@@ -119,8 +122,9 @@ TEST_CASE("StepContainer basic functionality", "[StepContainer]") {
 
         // Check right branch correctness
         REQUIRE_THAT(checking_node->right->next->step,
-                     cse498::matchers::OptNotNull<Step>() &&
-                         cse498::matchers::VariantState<MovementStep>());
+                     (cse498::matchers::OptNotNull<Step>() &&
+                      cse498::matchers::VariantState<MovementStep,
+                                                     CheckExp::SUCCESS>()));
 
         REQUIRE(std::get<MovementStep>(checking_node->right->next->step.value())
                     .loc == fallback);
@@ -133,20 +137,25 @@ TEST_CASE("StepContainer basic functionality", "[StepContainer]") {
       SECTION("evaluation") {
         REQUIRE_FALSE(steps.exhausted());
         std::expected<Step, StepErr> cur_step = steps.get_next();
-        REQUIRE_THAT(cur_step, ExpNotErr() && VariantState<InfoStep>());
+        REQUIRE_THAT(cur_step, (ExpNotErr() &&
+                                VariantState<InfoStep, CheckExp::SUCCESS>()));
         REQUIRE(std::get<InfoStep>(cur_step.value()) ==
                 InfoStep{InfoStep::Aspect::LOC_AVAIL, target});
 
         SECTION("True branch") {
           steps.inform(true);
           cur_step = steps.get_next();
-          REQUIRE_THAT(cur_step, ExpNotErr() && VariantState<MovementStep>());
+          REQUIRE_THAT(
+              cur_step,
+              (ExpNotErr() && VariantState<MovementStep, CheckExp::SUCCESS>()));
           REQUIRE(std::get<MovementStep>(cur_step.value()).loc == target);
         }
         SECTION("False branch") {
           steps.inform(false);
           cur_step = steps.get_next();
-          REQUIRE_THAT(cur_step, ExpNotErr() && VariantState<MovementStep>());
+          REQUIRE_THAT(
+              cur_step,
+              (ExpNotErr() && VariantState<MovementStep, CheckExp::SUCCESS>()));
           REQUIRE(std::get<MovementStep>(cur_step.value()).loc == fallback);
         }
 
@@ -224,20 +233,25 @@ TEST_CASE("StepContainer basic functionality", "[StepContainer]") {
       SECTION("evaluation") {
         REQUIRE_FALSE(steps.exhausted());
         std::expected<Step, StepErr> cur_step = steps.get_next();
-        REQUIRE_THAT(cur_step, ExpNotErr() && VariantState<InfoStep>());
+        REQUIRE_THAT(cur_step, (ExpNotErr() &&
+                                VariantState<InfoStep, CheckExp::SUCCESS>()));
         REQUIRE(std::get<InfoStep>(cur_step.value()) ==
                 InfoStep{InfoStep::Aspect::LOC_AVAIL, target});
 
         SECTION("True branch") {
           steps.inform(true);
           cur_step = steps.get_next();
-          REQUIRE_THAT(cur_step, ExpNotErr() && VariantState<MovementStep>());
+          REQUIRE_THAT(
+              cur_step,
+              (ExpNotErr() && VariantState<MovementStep, CheckExp::SUCCESS>()));
           REQUIRE(std::get<MovementStep>(cur_step.value()).loc == target);
         }
         SECTION("False branch") {
           steps.inform(false);
           cur_step = steps.get_next();
-          REQUIRE_THAT(cur_step, ExpNotErr() && VariantState<MovementStep>());
+          REQUIRE_THAT(
+              cur_step,
+              (ExpNotErr() && VariantState<MovementStep, CheckExp::SUCCESS>()));
           REQUIRE(std::get<MovementStep>(cur_step.value()).loc == fallback);
         }
 

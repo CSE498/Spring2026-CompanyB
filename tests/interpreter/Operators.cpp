@@ -20,15 +20,14 @@ using DirectionType = agentlang::Types::Direction;
 using TypeTuple = std::tuple<bool, int, double, str, Point, DirectionType>;
 
 using EvalRet = std::expected<Type, InterpErr>;
+using namespace matchers;
 
 TEST_CASE("Unary operators", "[Interpreter]") {
   using AgentLexer::IDs;
   SECTION("minus, success") {
     EvalRet res = evaluate_unary(IDs::ID_OP_MINUS, Type{5});
 
-    REQUIRE(res.has_value());
-    REQUIRE(std::holds_alternative<int>(res.value()));
-    REQUIRE(std::get<int>(res.value()) == -5);
+    REQUIRE_THAT(res, (ExpNotErr() && VariantHas<int, CheckExp::SUCCESS>(-5)));
   }
 
   SECTION("minus, failure") {
@@ -40,8 +39,15 @@ TEST_CASE("Unary operators", "[Interpreter]") {
             RuntimeErr::UNSUPPORTED_OP);
 
     // Just this once we'll make sure the msg is correct
-    REQUIRE(std::get<RuntimeErr>(res.error()).why_ ==
+    REQUIRE(std::get<RuntimeErr>(res.error()).m_Why ==
             "No operation defined for 'OP_MINUS' w/ operand type 'str'");
+
+    REQUIRE_THAT(
+        res,
+        (ExpIsErr() &&
+         VariantHas<RuntimeErr, CheckExp::ERROR>(RuntimeErr(
+             RuntimeErr::UNSUPPORTED_OP,
+             "No operation defined for 'OP_MINUS' w/ operand type 'str'"))));
   }
   SECTION("logical not, success") {
     EvalRet res = evaluate_unary(IDs::ID_OP_LNOT, Type{false});
