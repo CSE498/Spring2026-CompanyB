@@ -8,6 +8,7 @@
 #include <utility>
 #include <vector>
 
+#include "Interpreter/errors.hpp"
 #include "agentlang.hpp"
 #include "lexer.hpp"
 
@@ -40,22 +41,25 @@ struct TypedNode : public Node {
   std::optional<size_t> m_Type;
 
   // Internal-facing call to force the child node to resolve type
-  virtual std::expected<size_t, InterpErr> ResolveType() = 0;
+  // virtual std::expected<size_t, InterpErr> ResolveType() = 0;
 
   // Return the cached type if it exsits, otherwise resolve
   std::expected<size_t, InterpErr> GetType() override {
-    if (!m_Type.has_value()) {
-      // Resolve the derived class' type
-      auto type_res = ResolveType();
-      if (!type_res.has_value())
-        return type_res.error();
+    return TempErr(TempErr::NOT_IMPLEMENTED,
+                   "Not sure we're actually doing semantic analysis, so not "
+                   "implementing this yet");
+    // if (!m_Type.has_value()) {
+    //   // Resolve the derived class' type
+    //   auto type_res = ResolveType();
+    //   if (!type_res.has_value())
+    //     return type_res.error();
 
-      // Note it internally for later calls
-      m_Type = type_res.value();
-    }
+    //   // Note it internally for later calls
+    //   m_Type = type_res.value();
+    // }
 
-    // Either way now we've got it
-    return m_Type.value();
+    // // Either way now we've got it
+    // return m_Type.value();
   }
 
   TypedNode(emplex::Token token) : Node(token) {};
@@ -88,7 +92,7 @@ struct EmptyNode : public Node {
 struct ExprUnary : public TypedNode {
   std::unique_ptr<Node> m_Left;
 
-  std::expected<size_t, InterpErr> ResolveType() override;
+  // std::expected<size_t, InterpErr> ResolveType() override;
   std::expected<Types::Type, InterpErr> Accept(InterpreterWrapper &) override;
 
   ExprUnary(emplex::Token token, std::unique_ptr<Node> &&left)
@@ -100,7 +104,7 @@ struct ExprBinary : public TypedNode {
   std::unique_ptr<Node> m_Left;
   std::unique_ptr<Node> m_Right;
 
-  std::expected<size_t, InterpErr> ResolveType() override;
+  // std::expected<size_t, InterpErr> ResolveType() override;
   std::expected<Types::Type, InterpErr> Accept(InterpreterWrapper &) override;
 
   ExprBinary(emplex::Token token, std::unique_ptr<Node> &&left,
@@ -113,9 +117,9 @@ struct Assign : public TypedNode {
   std::shared_ptr<Symbols::SymInfo> m_Sym;
   std::unique_ptr<Node> m_Value;
 
-  std::expected<size_t, InterpErr> ResolveType() override {
-    return m_Sym->type.index();
-  }
+  // std::expected<size_t, InterpErr> ResolveType() override {
+  //   return m_Sym->type.index();
+  // }
   std::expected<Types::Type, InterpErr> Accept(InterpreterWrapper &) override;
 
   Assign(emplex::Token const &token, std::shared_ptr<Symbols::SymInfo> sym,
@@ -207,7 +211,7 @@ struct StmtIf : public Node {
 struct ValLiteral : public TypedNode {
   Types::Type m_Val;
 
-  std::expected<size_t, InterpErr> ResolveType() override;
+  // std::expected<size_t, InterpErr> ResolveType() override;
 
   std::expected<Types::Type, InterpErr> Accept(InterpreterWrapper &) override;
 
@@ -226,7 +230,7 @@ struct ValLiteral : public TypedNode {
 struct ValVariable : public TypedNode {
   std::shared_ptr<Symbols::SymInfo> m_Symbol;
 
-  std::expected<size_t, InterpErr> ResolveType() override;
+  // std::expected<size_t, InterpErr> ResolveType() override;
 
   std::expected<Types::Type, InterpErr> Accept(InterpreterWrapper &) override;
 
@@ -234,5 +238,4 @@ struct ValVariable : public TypedNode {
       : TypedNode(token, symbol->type.index()), m_Symbol(symbol) {}
   ~ValVariable() = default;
 };
-
 }; // namespace cse498::AST

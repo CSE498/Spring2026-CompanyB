@@ -109,6 +109,11 @@ public:
 
     return std::visit(func.value(), res.value());
   }
+  std::expected<Type, InterpErr> Visit(AST::ExprBinary &node) {
+    return TempErr(
+        TempErr::NOT_IMPLEMENTED,
+        "Don't yet know where and how Daniel intends to do evaluation");
+  }
   std::expected<Type, InterpErr> Visit(AST::Assign &node) {
     return TempErr(
         TempErr::NOT_IMPLEMENTED,

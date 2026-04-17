@@ -28,6 +28,10 @@ std::expected<Type, InterpErr> InterpreterWrapper::Visit(AST::StmtBlock &node) {
 std::expected<Type, InterpErr> InterpreterWrapper::Visit(AST::ExprUnary &node) {
   return templ_visit(*this, node);
 }
+std::expected<Type, InterpErr>
+InterpreterWrapper::Visit(AST::ExprBinary &node) {
+  return templ_visit(*this, node);
+}
 
 std::expected<Type, InterpErr> InterpreterWrapper::Visit(AST::Assign &node) {
   return templ_visit(*this, node);
