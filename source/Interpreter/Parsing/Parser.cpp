@@ -55,8 +55,12 @@ std::expected<void, InterpErr> Parser::parse(std::istream &in) {
   m_Syms.PushSymbolScope();
   while (m_Lexer.Any()) {
     auto stmt_res = parse_stmt();
-    if (!stmt_res.has_value())
+    if (!stmt_res.has_value()) {
+      // Just break if we're done, not a fatal error
+      if (stmt_res.error().Is<ParseErr>(ParseErr::AT_EOF))
+        break;
       return stmt_res.error();
+    }
 
     m_Nodes.emplace_back(std::move(stmt_res.value()));
   }
