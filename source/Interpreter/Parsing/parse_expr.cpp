@@ -65,6 +65,16 @@ std::expected<std::unique_ptr<AST::Node>, InterpErr> Parser::parse_term() {
 
   Token const &next_token = token_res.value();
 
+  // Check and try unary op
+  if (OpInfo::IsOpToken(next_token)) {
+    auto expr = parse_expr();
+    if (!expr.has_value())
+      return expr.error();
+
+    return std::make_unique<AST::ExprUnary>(next_token,
+                                            std::move(expr.value()));
+  }
+
   switch (next_token.id) {
   case IDs::ID_IDENTIFIER: {
     auto sym = m_Syms.GetSym(next_token.lexeme);

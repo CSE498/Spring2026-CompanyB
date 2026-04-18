@@ -1,5 +1,6 @@
 #pragma once
 #include "Interpreter/SymbolTable.hpp"
+#include "Interpreter/agentlang.hpp"
 #include "Interpreter/ast.hpp"
 #include "Interpreter/errors.hpp"
 #include "Interpreter/lexer.hpp"
@@ -20,7 +21,8 @@ private:
   bool m_InTurn = false;
 
   std::expected<std::unique_ptr<AST::Node>, InterpErr> parse_stmt();
-  std::expected<std::unique_ptr<AST::Node>, InterpErr> parse_expr(int prec = 0);
+  std::expected<std::unique_ptr<AST::Node>, InterpErr>
+  parse_expr(int prec = agentlang::Operators::MAX_PREC);
   std::expected<std::unique_ptr<AST::Node>, InterpErr> parse_term();
   std::expected<std::unique_ptr<AST::Node>, InterpErr> parse_stmt_block();
 

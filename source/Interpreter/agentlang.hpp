@@ -70,6 +70,9 @@ inline std::optional<Type> NameToType(const emplex::Token &type_tok) {
 }; // namespace agentlang::Types
 
 namespace agentlang::Operators {
+
+constexpr int MAX_PREC = 7;
+
 struct OpInfo {
   enum class Assoc {
     LEFT,
@@ -141,7 +144,7 @@ struct OpInfo {
   static constexpr int MAX_OP = AgentLexer::IDs::ID_OP_MINUS;
 
   static bool IsOpToken(AgentLexer::Token const &token) {
-    return ((token.id < MIN_OP) && (token.id > MAX_OP));
+    return ((token.id <= MAX_OP) && (token.id >= MIN_OP));
   }
 };
 }; // namespace agentlang::Operators
