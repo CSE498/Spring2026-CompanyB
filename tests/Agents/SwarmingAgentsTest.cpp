@@ -73,7 +73,7 @@ TEST_CASE("TrafficAgent construction and GetId", "[SwarmingAgent]") {
   auto data = MakeTrafficData({3, 4}, std::nullopt);
   SwarmingAgent<TrafficData> agent(data, 42);
 
-  REQUIRE(agent.GetId() == 42);
+  REQUIRE(agent.getId() == 42);
 }
 
 TEST_CASE("TrafficAgent GetState returns initial state", "[SwarmingAgent]") {

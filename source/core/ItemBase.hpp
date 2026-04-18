@@ -21,7 +21,8 @@ class ItemBase : public Entity {
   // their world.)
 
  public:
-  ItemBase(size_t id, const std::string& name) : Entity(id, name) {}
+  ItemBase(size_t id, const std::string& name, const WorldBase& world)
+      : Entity(id, name, world) {}
   ~ItemBase() override = default;  // Already virtual from Entity
 
   // -- Entity Overrides --

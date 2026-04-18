@@ -100,15 +100,17 @@ private:
   std::string mCachedAgentIdStr;
 
  public:
-  StepAgentBase(DataClass data, size_t id)
+  StepAgentBase(DataClass data, size_t id, LogLevel logLevel = LogLevel::Normal, uint64_t tick = 0)
       : mData{data}, mId{id}, mCachedAgentIdStr{std::to_string(id)} {
     // Log the initial state of the agent for replay purposes (not sure if this is needed but seems useful to have the initial state in the log)
-    mActions.push_back(ActionEvent<DataClass>{.agentId = std::string_view(mCachedAgentIdStr),
-                                              .actionType = "initial_state",
-                                              .logLevel = LogLevel::Normal,
-                                              .timestamp = 0,
-                                              .details = data});
-      }
+    mActions.push_back(ActionEvent<DataClass>({
+      std::string_view(mCachedAgentIdStr),
+      "initial_state",
+      logLevel,
+      tick,
+      data
+    }));
+  }
   virtual ~StepAgentBase() = default;
 
   /// Get the ID of the agent
@@ -123,7 +125,8 @@ private:
         !eventData.at("actionType").is_string()) {
       return;
     }
-    if (eventData.at("actionType").get<std::string>() != "movement") {
+    if (eventData.at("actionType").get<std::string>() != "movement" &&
+        eventData.at("actionType").get<std::string>() != "initial_state") {
       return;
     }
     if (!eventData.contains("timestamp") ||
@@ -174,11 +177,11 @@ private:
   void SetState(DataClass data, LogLevel logLevel = LogLevel::Normal, uint64_t tick = 0) {
     mData = data;
     // Here handle logic to log for replay?
-    mActions.push_back(ActionEvent<DataClass>{.agentId = std::string_view(mCachedAgentIdStr),
-                                              .actionType = "movement",
-                                              .logLevel = logLevel,
-                                              .timestamp = tick,
-                                              .details = data});
+    mActions.push_back(ActionEvent<DataClass>{std::string_view(mCachedAgentIdStr),
+                                               "movement",
+                                               logLevel,
+                                               tick,
+                                               data});
   }
 
   virtual void SetGoal(WorldPosition position) = 0;

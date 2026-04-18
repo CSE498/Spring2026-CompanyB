@@ -14,8 +14,8 @@ namespace cse498 {
 // Test agent using TrafficData
 class TestTrafficAgent : public StepAgentBase<TrafficData> {
  public:
-  TestTrafficAgent(TrafficData data, size_t id)
-      : StepAgentBase(data, id) {}
+  TestTrafficAgent(TrafficData data, size_t id, LogLevel logLevel = LogLevel::Normal, uint64_t tick = 0)
+      : StepAgentBase(data, id, logLevel, tick) {}
 
   [[nodiscard]] steps::StepContainer GetTurn() override {
     return steps::StepContainer();
@@ -36,10 +36,16 @@ TEST_CASE("StepAgentBase - Single Action Logging", "[StepAgentBase]") {
       .colour = "red"
   };
 
-  TestTrafficAgent agent(initialData, 42);
+  TestTrafficAgent agent(initialData, 42, LogLevel::Normal, 0);
 
   SECTION("No actions initially") {
-    REQUIRE(agent.GetStates().empty());
+    REQUIRE(agent.GetStates().size() == 1);  // Initial state is logged in constructor
+    const auto& initialAction = agent.GetStates()[0];
+    REQUIRE(initialAction.agentId == "42");
+    REQUIRE(initialAction.actionType == "initial_state");
+    REQUIRE(initialAction.logLevel == LogLevel::Normal);
+    REQUIRE(initialAction.timestamp == 0);
+    REQUIRE(initialAction.details.position == initialData.position);
   }
 
   SECTION("SetState logs one action") {
@@ -54,8 +60,8 @@ TEST_CASE("StepAgentBase - Single Action Logging", "[StepAgentBase]") {
 
     agent.SetState(newData, LogLevel::Normal, 100);
 
-    REQUIRE(agent.GetStates().size() == 1);
-    const auto& action = agent.GetStates()[0];
+    REQUIRE(agent.GetStates().size() == 2);  // 1 initial state + 1 movement
+    const auto& action = agent.GetStates()[1];
     REQUIRE(action.timestamp == 100);
     REQUIRE(action.logLevel == LogLevel::Normal);
     REQUIRE(action.actionType == "movement");
@@ -73,21 +79,20 @@ TEST_CASE("StepAgentBase - Agent ID Caching", "[StepAgentBase]") {
   };
 
   SECTION("Numeric agent ID is stringified and cached") {
-    TestTrafficAgent agent(data, 123);
+    TestTrafficAgent agent(data, 123, LogLevel::Normal, 0);
 
     TrafficData newData = data;
     newData.position = WorldPosition{1, 1};
     agent.SetState(newData, LogLevel::Normal, 50);
 
-    REQUIRE(agent.GetStates().size() == 1);
+    REQUIRE(agent.GetStates().size() == 2);  // 1 initial state + 1 movement
     const auto& action = agent.GetStates()[0];
     REQUIRE(action.agentId == "123");
   }
 
   SECTION("Different agent IDs produce different strings") {
-    TestTrafficAgent agent1(data, 1);
-    TestTrafficAgent agent2(data, 2);
-
+    TestTrafficAgent agent1(data, 1, LogLevel::Normal, 0);
+    TestTrafficAgent agent2(data, 2, LogLevel::Normal, 0);
     agent1.SetState(data, LogLevel::Normal, 10);
     agent2.SetState(data, LogLevel::Normal, 10);
 
@@ -106,7 +111,7 @@ TEST_CASE("StepAgentBase - Multiple Actions", "[StepAgentBase]") {
       .colour = "green"
   };
 
-  TestTrafficAgent agent(data, 99);
+  TestTrafficAgent agent(data, 99, LogLevel::Normal, 0);
 
   SECTION("Multiple SetState calls accumulate") {
     for (int i = 0; i < 5; ++i) {
@@ -115,7 +120,7 @@ TEST_CASE("StepAgentBase - Multiple Actions", "[StepAgentBase]") {
       agent.SetState(newData, LogLevel::Normal, 100 + i);
     }
 
-    REQUIRE(agent.GetStates().size() == 5);
+    REQUIRE(agent.GetStates().size() == 6);  // 1 initial state + 5 movements
   }
 
   SECTION("Log levels are preserved") {
@@ -123,9 +128,10 @@ TEST_CASE("StepAgentBase - Multiple Actions", "[StepAgentBase]") {
     agent.SetState(data, LogLevel::Verbose, 2);
     agent.SetState(data, LogLevel::Debug, 3);
 
-    REQUIRE(agent.GetStates()[0].logLevel == LogLevel::Normal);
-    REQUIRE(agent.GetStates()[1].logLevel == LogLevel::Verbose);
-    REQUIRE(agent.GetStates()[2].logLevel == LogLevel::Debug);
+    REQUIRE(agent.GetStates()[0].logLevel == LogLevel::Normal); // Initial state log level
+    REQUIRE(agent.GetStates()[1].logLevel == LogLevel::Normal);
+    REQUIRE(agent.GetStates()[2].logLevel == LogLevel::Verbose);
+    REQUIRE(agent.GetStates()[3].logLevel == LogLevel::Debug);
   }
 
   SECTION("Timestamps are preserved") {
@@ -133,9 +139,10 @@ TEST_CASE("StepAgentBase - Multiple Actions", "[StepAgentBase]") {
     agent.SetState(data, LogLevel::Normal, 2000);
     agent.SetState(data, LogLevel::Normal, 3000);
 
-    REQUIRE(agent.GetStates()[0].timestamp == 1000);
-    REQUIRE(agent.GetStates()[1].timestamp == 2000);
-    REQUIRE(agent.GetStates()[2].timestamp == 3000);
+    REQUIRE(agent.GetStates()[0].timestamp == 0); // Initial state timestamp
+    REQUIRE(agent.GetStates()[1].timestamp == 1000);
+    REQUIRE(agent.GetStates()[2].timestamp == 2000);
+    REQUIRE(agent.GetStates()[3].timestamp == 3000);
   }
 }
 
@@ -149,19 +156,28 @@ TEST_CASE("StepAgentBase - JSON Serialization", "[StepAgentBase]") {
       .colour = "yellow"
   };
 
-  TestTrafficAgent agent(data, 77);
+  TestTrafficAgent agent(data, 77, LogLevel::Normal, 0);
   agent.SetState(data, LogLevel::Verbose, 500);
 
   const auto& actions = agent.GetStates();
-  REQUIRE(actions.size() == 1);
+  REQUIRE(actions.size() == 2);  // 1 initial state + 1 movement
 
   SECTION("Action can be serialized to JSON") {
-    const auto& action = actions[0];
     nlohmann::json j;
-    j["agentId"] = action.agentId;
-    j["actionType"] = action.actionType;
-    j["logLevel"] = static_cast<int>(action.logLevel);
-    j["timestamp"] = action.timestamp;
+    j["agentId"] = actions[0].agentId;
+    j["actionType"] = actions[0].actionType;
+    j["logLevel"] = static_cast<int>(actions[0].logLevel);
+    j["timestamp"] = actions[0].timestamp;
+
+    REQUIRE(j["agentId"] == "77");
+    REQUIRE(j["actionType"] == "initial_state");
+    REQUIRE(j["logLevel"] == static_cast<int>(LogLevel::Normal));
+    REQUIRE(j["timestamp"] == 0);
+
+    j["agentId"] = actions[1].agentId;
+    j["actionType"] = actions[1].actionType;
+    j["logLevel"] = static_cast<int>(actions[1].logLevel);
+    j["timestamp"] = actions[1].timestamp;
 
     REQUIRE(j["agentId"] == "77");
     REQUIRE(j["actionType"] == "movement");
@@ -181,7 +197,7 @@ TEST_CASE("StepAgentBase - Cached Agent ID Lifetime", "[StepAgentBase]") {
   };
 
   SECTION("Agent ID remains valid after construction") {
-    TestTrafficAgent agent(data, 555);
+    TestTrafficAgent agent(data, 555, LogLevel::Normal, 0);
     agent.SetState(data, LogLevel::Normal, 100);
 
     const auto& action = agent.GetStates()[0];
@@ -204,7 +220,7 @@ TEST_CASE("StepAgentBase - Data Preservation", "[StepAgentBase]") {
       .colour = "magenta"
   };
 
-  TestTrafficAgent agent(initialData, 88);
+  TestTrafficAgent agent(initialData, 88, LogLevel::Normal, 0);
 
   TrafficData newData{
       .destination = WorldPosition{10, 20},
@@ -228,10 +244,14 @@ TEST_CASE("StepAgentBase - Data Preservation", "[StepAgentBase]") {
   }
 
   SECTION("Action stores the data details") {
-    const auto& action = agent.GetStates()[0];
-    REQUIRE(action.details.position.X() == 5);
-    REQUIRE(action.details.position.Y() == 5);
-    REQUIRE(action.details.direction == cse498::Direction::West);
+    const auto action = agent.GetStates();
+    REQUIRE(action[0].details.position.X() == 0);
+    REQUIRE(action[0].details.position.Y() == 0);
+    REQUIRE(action[0].details.direction == cse498::Direction::North);
+
+    REQUIRE(action[1].details.position.X() == 5);
+    REQUIRE(action[1].details.position.Y() == 5);
+    REQUIRE(action[1].details.direction == cse498::Direction::West);
   }
 }
 
@@ -245,20 +265,27 @@ TEST_CASE("StepAgentBase - ActionLog Concept Compliance", "[StepAgentBase]") {
       .colour = "white"
   };
 
-  TestTrafficAgent agent(data, 11);
+  TestTrafficAgent agent(data, 11, LogLevel::Normal, 0);
   agent.SetState(data, LogLevel::Normal, 100);
   agent.SetState(data, LogLevel::Normal, 200);
 
   const auto& states = agent.GetStates();
-  REQUIRE(states.size() == 2);
+  REQUIRE(states.size() == 3);  // 1 initial state + 2 movements
 
-  for (const auto& state : states) {
-    REQUIRE(!state.agentId.empty());
-    REQUIRE(state.actionType == "movement");
-    REQUIRE(static_cast<int>(state.logLevel) >= static_cast<int>(LogLevel::Normal));
-    REQUIRE(static_cast<int>(state.logLevel) <= static_cast<int>(LogLevel::Silent));
-    REQUIRE(state.timestamp > 0);
-  }
+  REQUIRE(states[0].agentId == "11");
+  REQUIRE(states[0].actionType == "initial_state");
+  REQUIRE(states[0].logLevel == LogLevel::Normal);
+  REQUIRE(states[0].timestamp == 0);
+
+  REQUIRE(states[1].agentId == "11");
+  REQUIRE(states[1].actionType == "movement");
+  REQUIRE(states[1].logLevel == LogLevel::Normal);
+  REQUIRE(states[1].timestamp == 100);
+
+  REQUIRE(states[2].agentId == "11");
+  REQUIRE(states[2].actionType == "movement");
+  REQUIRE(states[2].logLevel == LogLevel::Normal);
+  REQUIRE(states[2].timestamp == 200);
 }
 
 }  // namespace cse498
