@@ -54,7 +54,8 @@ public:
        ...);
 
       return LexerErr(LexerErr::UNEXP_TOKEN,
-                      std::format("Expected one of [{}] but got {}", expected,
+                      std::format("[at {}:{}] Expected one of [{}] but got {}",
+                                  Peek().line_id, Peek().col_id, expected,
                                   m_Lexer.TokenName(Peek().id)));
     }
     return Use();
