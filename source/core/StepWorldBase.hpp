@@ -50,7 +50,18 @@ class StepWorldBase {
   void SetupScriptedAgents() {
     std::string contents = GetAgentFileContents();
     std::stringstream ss{contents};
-    parser.parse(ss);
+    auto parse_res = parser.parse(ss);
+    if (!parse_res.has_value()) {
+      // TODO LOG?
+      return;
+    }
+
+    for (auto agent_def : parse_res.value()) {
+      DataClass data;
+      AddAgent<ScriptedAgent>(data)
+        .SetInit(std::move(agent_def->m_Init))
+        .SetTurn(std::move(agent_def->m_Turn));
+    }
   }
 
  public:

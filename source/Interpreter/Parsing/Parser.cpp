@@ -9,7 +9,7 @@
 
 namespace cse498 {
 
-std::expected<void, InterpErr> Parser::parse(std::istream &in) {
+std::expected<std::vector<std::unique_ptr<AST::StmtAgentDef>>, InterpErr> Parser::parse(std::istream &in) {
   using AgentLexer::IDs;
   m_AgentDefs.clear();
 
@@ -68,7 +68,7 @@ std::expected<void, InterpErr> Parser::parse(std::istream &in) {
 
   // Interpreter will steal m_Nodes and m_Syms rather than returning them
 
-  return {};
+  return std::move(m_AgentDefs);
 }
 
 std::expected<AgentLexer::Token, InterpErr> Parser::parse_type() {

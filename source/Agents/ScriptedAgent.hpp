@@ -86,9 +86,9 @@ public:
       : StepAgentBase<DataClass>(initial_state, id) {}
   ~ScriptedAgent() = default;
 
-  void SetInit(std::unique_ptr<StmtBlock> init) { mInit = std::move(init); }
+  ScriptedAgent& SetInit(std::unique_ptr<StmtBlock> init) { mInit = std::move(init); return *this; }
 
-  void SetTurn(std::unique_ptr<StmtBlock> turn) { mTurn = std::move(turn); }
+  ScriptedAgent& SetTurn(std::unique_ptr<StmtBlock> turn) { mTurn = std::move(turn); return *this; }
 
   /// Choose the action to take a step in the appropriate direction.
   StepContainer GetTurn() override {
