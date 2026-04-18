@@ -6,6 +6,7 @@
 #include <thread>
 #include <vector>
 
+#include "../Interfaces/IActionLog.hpp"
 #include "Step.hpp"
 #include "StepAgentBase.hpp"
 #include "WorldGrid.hpp"
@@ -46,8 +47,10 @@ class StepWorldBase {
   ///@note This signature or logic is may not final, since other logic may need
   /// to be added to suport different agents, such as scripting agents.
   template <typename AgentDerived>
-  AgentDerived& AddAgent(DataClass data) {
-    auto agent_ptr = std::make_shared<AgentDerived>(data, next_id++);
+  AgentDerived& AddAgent(DataClass data, LogLevel loglevel = LogLevel::Normal,
+                         uint64_t tick = 0) {
+    auto agent_ptr =
+        std::make_shared<AgentDerived>(data, next_id++, log_level, tick);
     AgentDerived& agent_ref = *agent_ptr;
     ConfigAgent(agent_ref);
     agent_set.emplace_back(std::move(agent_ptr));
@@ -65,10 +68,11 @@ class StepWorldBase {
   /// @brief Step through each agent giving them a chance to take an action.kkk
   /// @note Override function to control execution order of agents.
   /// @note Override function to control which grid each agent receives.
-  virtual void RunAgents() {
+  virtual void RunAgents(LogLevel loglevel = LogLevel::Normal,
+                         uint64_t tick = 0) {
     for (const auto& agent_ptr : agent_set) {
       DataClass new_state = DoAction(agent_ptr);
-      agent_ptr->SetState(new_state);
+      agent_ptr->SetState(new_state, loglevel, tick);
     }
   }
 

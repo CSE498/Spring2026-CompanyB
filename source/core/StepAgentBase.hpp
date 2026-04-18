@@ -189,6 +189,12 @@ class StepAgentBase {
         std::string_view(mCachedAgentIdStr), "movement", logLevel, tick, data});
   }
 
+  // SetStateNoLog is used in cases where we want to update the agent's state
+  // without logging an action. Useful for helper functions or when the world
+  // needs to update the agent's state without it being considered an action
+  // taken by the agent.
+  void SetStateNoLog(DataClass data) { mData = data; }
+
   virtual void SetGoal(WorldPosition position) = 0;
 };
 
