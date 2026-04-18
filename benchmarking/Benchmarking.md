@@ -2,76 +2,89 @@
 
 ## Purpose
 
-This project includes a dedicated benchmarking feature to measure simulation scalability.
-The primary question it answers is: how runtime and memory usage change as agent count increases.
+The benchmarking module measures how simulation cost changes with workload size.
+It is designed to answer two practical questions:
 
-## Scope
+- How does execution time scale as agent count and tick count increase?
+- How does memory behavior change across repeated runs?
 
-- Language: Modern C++ (C++20/23)
-- Runtime environment: Linux and Docker-compatible
-- Focus metrics: wall-clock time and memory delta
-- Design goal: easy plug-in workflow for group-authored benchmark files
+## Current Architecture
 
-## How Benchmarking Is Implemented
+The implementation is split across three core modules:
 
-### 1) BenchRunner (orchestration layer)
+- BenchRunner: registration, execution, aggregation, and optional report writing.
+- MetricCollector: captures wall-clock duration and RSS-based memory snapshots.
+- ReportGenerator: writes normalized benchmark output in CSV or JSON.
 
-BenchRunner manages the full benchmark lifecycle:
+Core headers are in benchmarking/core/:
 
-- Registers benchmark tasks by name
-- Runs warmup iterations (untimed)
-- Runs measured iterations (timed)
-- Aggregates execution statistics
-- Supports one-call run-and-report workflow
+- BenchmarkTypes.hpp
+- BenchRunner.hpp
+- MetricCollector.hpp
+- ReportGenerator.hpp
 
-### 2) MetricCollector (measurement layer)
+## Data Model Summary
 
-MetricCollector captures runtime metrics during benchmark execution:
+The benchmark pipeline currently uses these types from BenchmarkTypes.hpp:
 
-- Wall time using high-resolution clock timing
-- Memory usage using RSS snapshots from system resource data
-
-### 3) ReportGenerator (export layer)
-
-ReportGenerator converts benchmark results into persistent reports:
-
-- CSV output for spreadsheet analysis
-- JSON output for tooling and automation
-
-### 4) Group benchmark workspace
-
-Group benchmark entry files live in the groups workspace under the benchmarking feature.
-Each file plugs into the same runner and report flow, so teams can add benchmarks without changing framework internals.
+- Params: benchmark_name, agent_count, tick_count, warmup_ticks, repetitions, seed.
+- MetricSample: wall_time_ns, memory_usage_kb, current_rss_at_stop_kb, success, error_message.
+- BenchmarkResult: aggregated averages, min, max, and standard deviation for each metric.
+- RunStatus and RegistrationResult: explicit status enums for registration and execution outcomes.
 
 ## Execution Flow
 
 ```mermaid
 flowchart LR
-    A[Register benchmark task] --> B[Warmup runs]
+    A[Register benchmark id and callable] --> B[Warmup runs]
     B --> C[Measured runs]
-    C --> D[Collect time and memory]
-    D --> E[Aggregate metrics]
-    E --> F[Write CSV and JSON reports]
+    C --> D[Collect per-run metric samples]
+    D --> E[Aggregate avg/min/max/stdev]
+    E --> F[Persist CSV or JSON report]
 ```
 
-## Build and Integration Model
+## How To Run
 
-- Benchmarking is exposed through an independent Makefile benchmark target.
-- Benchmark builds use optimized compilation settings.
-- Benchmark mode excludes GUI-focused paths to keep measurements consistent.
-- Benchmarking is separate from Docker CI execution flow, even though both use the same source tree.
+From repo root:
 
-## Outputs
+- make benchmark BENCH_FILE=example_1.cpp
+- make benchmark BENCH_FILE=groups/example_1.cpp
 
-- Result files are written to the benchmarking results location in the groups workspace.
-- Reports are intended for:
-  - professor review
-  - cross-group comparison
-  - regression tracking over time
+This uses the source Makefile benchmark target and builds with Release settings, NO_QT=ON, and benchmark-specific flags.
 
-## Why This Design
+## Output Location
 
-- Modular: measurement, orchestration, and export are separate concerns
-- Extensible: groups can add new benchmark files without touching core modules
-- Reproducible: standardized run flow and report format across teams
-- Concise to use: register benchmark task, run benchmark, write report
+Default report output path from BenchRunner::RunBenchmarkAndWriteReport is:
+
+- ../benchmarking/groups/results
+
+Group benchmark examples are in benchmarking/groups/ and include:
+
+- example_1.cpp
+- example_2.cpp
+- StepMazeWorldBenchmark.cpp
+
+## Report Fields
+
+Current CSV/JSON exports include:
+
+- benchmark_name
+- Params fields: agent_count, tick_count, warmup_ticks, repetitions, seed
+- Time stats: avg_wall_time_ns, min_wall_time_ns, max_wall_time_ns, stdev_wall_time_ns
+- Memory stats: avg_memory_usage_kb, min/max/stdev_memory_usage_kb
+- RSS-at-stop stats: avg_current_rss_at_stop_kb, min/max/stdev_current_rss_at_stop_kb
+- sample_count
+
+## Interpreting Results
+
+See Benchmarking result interpretation guide:
+
+- benchmarking/BenchmarkResultsInterpretation.md
+
+That guide explains what each metric means, how to detect scaling issues, and how to compare two runs safely.
+
+## Design Goals
+
+- Modular responsibilities across run, measurement, and report stages.
+- Group-extensible benchmark entry points with minimal framework changes.
+- Reproducible output format for review, comparison, and regression tracking.
