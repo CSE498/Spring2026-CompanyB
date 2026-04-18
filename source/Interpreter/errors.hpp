@@ -93,7 +93,8 @@ struct RuntimeErr : BaseErr {
     UNSUPPORTED_OP,
     NOT_BOOL_CONV,
     ENCOUNTERED_AGENT_DEF,
-    INVALID_MOVE_ARG
+    INVALID_MOVE_ARG,
+    TOO_MANY_MOVES
   };
 
   Kind m_Kind;

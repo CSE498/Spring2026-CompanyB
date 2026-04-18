@@ -24,7 +24,7 @@ namespace agentlang::Types {
 using Point = WorldPosition;
 using str = std::string;
 
-enum class Direction {
+enum class Dir {
   LEFT,
   RIGHT,
   UP,
@@ -35,13 +35,13 @@ enum class Direction {
 struct Car {};
 struct Student {};
 struct NullType {};
-using Type = std::variant<bool, int, double, str, Point, Direction, Car,
+using Type = std::variant<bool, int, double, str, Point, Dir, Car,
                           Student, NullType>;
 
 // Concept satisfied if T is a valid agentlang type
 template <typename T>
 concept TypeKind = Concepts::IsOneOf<T, bool, int, double, str, Point,
-                                     Direction, Car, Student, NullType>;
+                                     Dir, Car, Student, NullType>;
 static const std::array<std::string_view, 9> TYPE_NAMES = {
     "bool",      "int", "double",  "str", "point",
     "direction", "car", "student", "null"};
@@ -57,7 +57,7 @@ inline std::string_view TypeVariantToName(const Type& t) {
 inline std::optional<Type> NameToType(const emplex::Token &type_tok) {
   static const std::unordered_map<std::string, Type> type_map = {
       {"bool", bool{}}, {"int", int{}},         {"double", double{}},
-      {"str", str{}},   {"Point", Point{}},     {"Direction", Direction{}},
+      {"str", str{}},   {"Point", Point{}},     {"Direction", Dir{}},
       {"Car", Car{}},   {"Student", Student{}},
   };
 

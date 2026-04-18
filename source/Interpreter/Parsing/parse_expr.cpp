@@ -55,7 +55,7 @@ Parser::parse_expr(int prec) {
 
 std::expected<std::unique_ptr<AST::Node>, InterpErr> Parser::parse_term() {
   using agentlang::Operators::OpInfo;
-  using agentlang::Types::Direction;
+  using agentlang::Types::Dir;
   using AgentLexer::IDs;
   using AgentLexer::Token;
 
@@ -83,15 +83,15 @@ std::expected<std::unique_ptr<AST::Node>, InterpErr> Parser::parse_term() {
     return std::make_unique<AST::ValVariable>(next_token, sym.value());
   }
   case IDs::ID_LITERAL_DIR: {
-    Direction dir;
+    Dir dir;
     if (next_token.lexeme == "left")
-      dir = Direction::LEFT;
+      dir = Dir::LEFT;
     else if (next_token.lexeme == "right")
-      dir = Direction::RIGHT;
+      dir = Dir::RIGHT;
     else if (next_token.lexeme == "up")
-      dir = Direction::UP;
+      dir = Dir::UP;
     else if (next_token.lexeme == "down")
-      dir = Direction::DOWN;
+      dir = Dir::DOWN;
     else
       return ParseErr(
           ParseErr::INVALID_LITERAL,
