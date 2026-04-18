@@ -23,21 +23,21 @@ using agent_ptr_t = std::unique_ptr<AgentBase>;
 using agent_set_t = std::vector<agent_ptr_t>;
 
 class WorldBase {
-protected:
+ protected:
   /// NOTE: derived worlds may choose to have more than one grid.
-  WorldGrid main_grid; ///< Main grid for this world
+  WorldGrid main_grid;  ///< Main grid for this world
 
-  item_set_t item_set; ///< Vector of pointers to non-agent entities (ItemBase)
-  agent_set_t agent_set; ///< Vector of pointers to agent entities (AgentBase)
+  item_set_t item_set;  ///< Vector of pointers to non-agent entities (ItemBase)
+  agent_set_t agent_set;  ///< Vector of pointers to agent entities (AgentBase)
 
-  bool run_over = false; ///< Are we finished executing and now shutting down?
+  bool run_over = false;  ///< Are we finished executing and now shutting down?
 
   /// Helper function that is run whenever a new agent is created.
   /// @note Override this function to provide agents with actions or other
   /// setup.
   virtual void ConfigAgent(AgentBase & /* agent */) {}
 
-public:
+ public:
   WorldBase() = default;
   virtual ~WorldBase() = default;
 
@@ -100,7 +100,7 @@ public:
                 << std::endl;
     }
     agent_set.emplace_back(
-        std::move(agent_ptr)); // Move unique ptr for agent into set.
+        std::move(agent_ptr));  // Move unique ptr for agent into set.
     return agent_ref;
   }
 
@@ -147,23 +147,21 @@ public:
 
   // Provide a vector of IDs for other agents that the input agent is aware of.
   // (If not overridden, return ALL agents.)
-  virtual std::vector<size_t>
-  GetKnownAgents([[maybe_unused]] const AgentBase &agent) const {
+  virtual std::vector<size_t> GetKnownAgents(
+      [[maybe_unused]] const AgentBase &agent) const {
     std::vector<size_t> out_ids;
-    for (const agent_ptr_t &ptr : agent_set)
-      out_ids.push_back(ptr->GetID());
+    for (const agent_ptr_t &ptr : agent_set) out_ids.push_back(ptr->GetID());
     return out_ids;
   }
 
   // Provide a vector of IDs for items that the input agent is aware of.
   // (If not overridden, return ALL items.)
-  std::vector<size_t>
-  GetKnownItems([[maybe_unused]] const AgentBase &agent) const {
+  std::vector<size_t> GetKnownItems(
+      [[maybe_unused]] const AgentBase &agent) const {
     std::vector<size_t> out_ids;
-    for (const item_ptr_t &ptr : item_set)
-      out_ids.push_back(ptr->GetID());
+    for (const item_ptr_t &ptr : item_set) out_ids.push_back(ptr->GetID());
     return out_ids;
   }
 };
 
-} // End of namespace cse498
+}  // End of namespace cse498

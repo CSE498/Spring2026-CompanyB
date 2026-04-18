@@ -18,7 +18,7 @@
 namespace cse498 {
 
 class AgentBase : public Entity {
-protected:
+ protected:
   /// A map of names to IDs for each available action
   std::unordered_map<std::string, size_t> action_map;
 
@@ -28,10 +28,10 @@ protected:
 
   char symbol = '*';
 
-public:
+ public:
   AgentBase(size_t id, const std::string &name, const WorldBase &world)
       : Entity(id, name, world) {}
-  ~AgentBase() = default; // Already virtual from Entity
+  ~AgentBase() = default;  // Already virtual from Entity
 
   // Accessors
 
@@ -61,8 +61,7 @@ public:
   /// Return an action ID *if* that action exists, otherwise return zero.
   [[nodiscard]] size_t GetActionID(const std::string &action_name) const {
     auto it = action_map.find(action_name);
-    if (it == action_map.end())
-      return 0;
+    if (it == action_map.end()) return 0;
     return it->second;
   }
 
@@ -83,7 +82,7 @@ public:
   /// Provide info about an action that this agent can take.
   virtual AgentBase &AddAction(const std::string &action_name,
                                size_t action_id) {
-    assert(!HasAction(action_name)); // Cannot add existing action name.
+    assert(!HasAction(action_name));  // Cannot add existing action name.
     action_map[action_name] = action_id;
     return *this;
   }
@@ -109,4 +108,4 @@ public:
                       const std::string & /*msg_type*/ = "none") {}
 };
 
-} // End of namespace cse498
+}  // End of namespace cse498

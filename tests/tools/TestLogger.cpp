@@ -176,7 +176,11 @@ TEST_CASE("Logger - SaveAgentActions Operations", "[Logger]") {
   }
 
   SECTION("Logs validation failures when ActionLog returns errors") {
-    nlohmann::json dummyEvent = {{"agentId", "dummyId"}, {"actionType", "dummyType"}, {"logLevel", static_cast<int>(LogLevel::Normal)}, {"timestamp", 0}};
+    nlohmann::json dummyEvent = {
+        {"agentId", "dummyId"},
+        {"actionType", "dummyType"},
+        {"logLevel", static_cast<int>(LogLevel::Normal)},
+        {"timestamp", 0}};
     LogEventFailure failure{dummyEvent, "Test validation error"};
     actionLogPtr->mFailuresToReturn.push_back(failure);
 

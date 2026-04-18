@@ -1,20 +1,20 @@
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/matchers/catch_matchers_floating_point.hpp>
-
 #include <nlohmann/json.hpp>
 #include <vector>
 
-#include "../../source/core/WorldPosition.hpp"
+#include "../../source/Interfaces/IActionLog.hpp"
 #include "../../source/core/AgentData.hpp"
 #include "../../source/core/StepAgentBase.hpp"
-#include "../../source/Interfaces/IActionLog.hpp"
+#include "../../source/core/WorldPosition.hpp"
 
 namespace cse498 {
 
 // Test agent using TrafficData
 class TestTrafficAgent : public StepAgentBase<TrafficData> {
  public:
-  TestTrafficAgent(TrafficData data, size_t id, LogLevel logLevel = LogLevel::Normal, uint64_t tick = 0)
+  TestTrafficAgent(TrafficData data, size_t id,
+                   LogLevel logLevel = LogLevel::Normal, uint64_t tick = 0)
       : StepAgentBase(data, id, logLevel, tick) {}
 
   [[nodiscard]] steps::StepContainer GetTurn() override {
@@ -27,19 +27,18 @@ class TestTrafficAgent : public StepAgentBase<TrafficData> {
 };
 
 TEST_CASE("StepAgentBase - Single Action Logging", "[StepAgentBase]") {
-  TrafficData initialData{
-      .destination = std::nullopt,
-      .position = WorldPosition{0, 0},
-      .direction = Direction::North,
-      .is_active = true,
-      .symbol = 'A',
-      .colour = "red"
-  };
+  TrafficData initialData{.destination = std::nullopt,
+                          .position = WorldPosition{0, 0},
+                          .direction = Direction::North,
+                          .is_active = true,
+                          .symbol = 'A',
+                          .colour = "red"};
 
   TestTrafficAgent agent(initialData, 42, LogLevel::Normal, 0);
 
   SECTION("No actions initially") {
-    REQUIRE(agent.GetStates().size() == 1);  // Initial state is logged in constructor
+    REQUIRE(agent.GetStates().size() ==
+            1);  // Initial state is logged in constructor
     const auto& initialAction = agent.GetStates()[0];
     REQUIRE(initialAction.agentId == "42");
     REQUIRE(initialAction.actionType == "initial_state");
@@ -49,14 +48,12 @@ TEST_CASE("StepAgentBase - Single Action Logging", "[StepAgentBase]") {
   }
 
   SECTION("SetState logs one action") {
-    TrafficData newData{
-        .destination = std::nullopt,
-        .position = WorldPosition{1, 0},
-        .direction = Direction::East,
-        .is_active = true,
-        .symbol = 'A',
-        .colour = "red"
-    };
+    TrafficData newData{.destination = std::nullopt,
+                        .position = WorldPosition{1, 0},
+                        .direction = Direction::East,
+                        .is_active = true,
+                        .symbol = 'A',
+                        .colour = "red"};
 
     agent.SetState(newData, LogLevel::Normal, 100);
 
@@ -69,14 +66,12 @@ TEST_CASE("StepAgentBase - Single Action Logging", "[StepAgentBase]") {
 }
 
 TEST_CASE("StepAgentBase - Agent ID Caching", "[StepAgentBase]") {
-  TrafficData data{
-      .destination = std::nullopt,
-      .position = WorldPosition{0, 0},
-      .direction = Direction::North,
-      .is_active = true,
-      .symbol = 'B',
-      .colour = "blue"
-  };
+  TrafficData data{.destination = std::nullopt,
+                   .position = WorldPosition{0, 0},
+                   .direction = Direction::North,
+                   .is_active = true,
+                   .symbol = 'B',
+                   .colour = "blue"};
 
   SECTION("Numeric agent ID is stringified and cached") {
     TestTrafficAgent agent(data, 123, LogLevel::Normal, 0);
@@ -102,14 +97,12 @@ TEST_CASE("StepAgentBase - Agent ID Caching", "[StepAgentBase]") {
 }
 
 TEST_CASE("StepAgentBase - Multiple Actions", "[StepAgentBase]") {
-  TrafficData data{
-      .destination = std::nullopt,
-      .position = WorldPosition{0, 0},
-      .direction = Direction::North,
-      .is_active = true,
-      .symbol = 'C',
-      .colour = "green"
-  };
+  TrafficData data{.destination = std::nullopt,
+                   .position = WorldPosition{0, 0},
+                   .direction = Direction::North,
+                   .is_active = true,
+                   .symbol = 'C',
+                   .colour = "green"};
 
   TestTrafficAgent agent(data, 99, LogLevel::Normal, 0);
 
@@ -128,7 +121,8 @@ TEST_CASE("StepAgentBase - Multiple Actions", "[StepAgentBase]") {
     agent.SetState(data, LogLevel::Verbose, 2);
     agent.SetState(data, LogLevel::Debug, 3);
 
-    REQUIRE(agent.GetStates()[0].logLevel == LogLevel::Normal); // Initial state log level
+    REQUIRE(agent.GetStates()[0].logLevel ==
+            LogLevel::Normal);  // Initial state log level
     REQUIRE(agent.GetStates()[1].logLevel == LogLevel::Normal);
     REQUIRE(agent.GetStates()[2].logLevel == LogLevel::Verbose);
     REQUIRE(agent.GetStates()[3].logLevel == LogLevel::Debug);
@@ -139,7 +133,7 @@ TEST_CASE("StepAgentBase - Multiple Actions", "[StepAgentBase]") {
     agent.SetState(data, LogLevel::Normal, 2000);
     agent.SetState(data, LogLevel::Normal, 3000);
 
-    REQUIRE(agent.GetStates()[0].timestamp == 0); // Initial state timestamp
+    REQUIRE(agent.GetStates()[0].timestamp == 0);  // Initial state timestamp
     REQUIRE(agent.GetStates()[1].timestamp == 1000);
     REQUIRE(agent.GetStates()[2].timestamp == 2000);
     REQUIRE(agent.GetStates()[3].timestamp == 3000);
@@ -147,14 +141,12 @@ TEST_CASE("StepAgentBase - Multiple Actions", "[StepAgentBase]") {
 }
 
 TEST_CASE("StepAgentBase - JSON Serialization", "[StepAgentBase]") {
-  TrafficData data{
-      .destination = std::nullopt,
-      .position = WorldPosition{5, 10},
-      .direction = Direction::South,
-      .is_active = true,
-      .symbol = 'D',
-      .colour = "yellow"
-  };
+  TrafficData data{.destination = std::nullopt,
+                   .position = WorldPosition{5, 10},
+                   .direction = Direction::South,
+                   .is_active = true,
+                   .symbol = 'D',
+                   .colour = "yellow"};
 
   TestTrafficAgent agent(data, 77, LogLevel::Normal, 0);
   agent.SetState(data, LogLevel::Verbose, 500);
@@ -187,14 +179,12 @@ TEST_CASE("StepAgentBase - JSON Serialization", "[StepAgentBase]") {
 }
 
 TEST_CASE("StepAgentBase - Cached Agent ID Lifetime", "[StepAgentBase]") {
-  TrafficData data{
-      .destination = std::nullopt,
-      .position = WorldPosition{0, 0},
-      .direction = Direction::North,
-      .is_active = true,
-      .symbol = 'E',
-      .colour = "cyan"
-  };
+  TrafficData data{.destination = std::nullopt,
+                   .position = WorldPosition{0, 0},
+                   .direction = Direction::North,
+                   .is_active = true,
+                   .symbol = 'E',
+                   .colour = "cyan"};
 
   SECTION("Agent ID remains valid after construction") {
     TestTrafficAgent agent(data, 555, LogLevel::Normal, 0);
@@ -211,25 +201,21 @@ TEST_CASE("StepAgentBase - Cached Agent ID Lifetime", "[StepAgentBase]") {
 }
 
 TEST_CASE("StepAgentBase - Data Preservation", "[StepAgentBase]") {
-  TrafficData initialData{
-      .destination = std::nullopt,
-      .position = WorldPosition{0, 0},
-      .direction = cse498::Direction::North,
-      .is_active = true,
-      .symbol = 'F',
-      .colour = "magenta"
-  };
+  TrafficData initialData{.destination = std::nullopt,
+                          .position = WorldPosition{0, 0},
+                          .direction = cse498::Direction::North,
+                          .is_active = true,
+                          .symbol = 'F',
+                          .colour = "magenta"};
 
   TestTrafficAgent agent(initialData, 88, LogLevel::Normal, 0);
 
-  TrafficData newData{
-      .destination = WorldPosition{10, 20},
-      .position = WorldPosition{5, 5},
-      .direction = cse498::Direction::West,
-      .is_active = false,
-      .symbol = 'X',
-      .colour = "black"
-  };
+  TrafficData newData{.destination = WorldPosition{10, 20},
+                      .position = WorldPosition{5, 5},
+                      .direction = cse498::Direction::West,
+                      .is_active = false,
+                      .symbol = 'X',
+                      .colour = "black"};
 
   agent.SetState(newData, LogLevel::Debug, 999);
 
@@ -256,14 +242,12 @@ TEST_CASE("StepAgentBase - Data Preservation", "[StepAgentBase]") {
 }
 
 TEST_CASE("StepAgentBase - ActionLog Concept Compliance", "[StepAgentBase]") {
-  TrafficData data{
-      .destination = std::nullopt,
-      .position = WorldPosition{0, 0},
-      .direction = Direction::North,
-      .is_active = true,
-      .symbol = 'G',
-      .colour = "white"
-  };
+  TrafficData data{.destination = std::nullopt,
+                   .position = WorldPosition{0, 0},
+                   .direction = Direction::North,
+                   .is_active = true,
+                   .symbol = 'G',
+                   .colour = "white"};
 
   TestTrafficAgent agent(data, 11, LogLevel::Normal, 0);
   agent.SetState(data, LogLevel::Normal, 100);

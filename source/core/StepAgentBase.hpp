@@ -2,10 +2,10 @@
 
 #include <string>
 
+#include "../Interfaces/IActionLog.hpp"
 #include "Step.hpp"
 #include "WorldPosition.hpp"
 #include "core.hpp"
-#include "../Interfaces/IActionLog.hpp"
 
 namespace cse498 {
 using Concepts::IsDataClass;
@@ -13,11 +13,11 @@ using cse498::steps::StepContainer;
 
 template <IsDataClass DataClass>
 class StepAgentBase {
-private:
+ private:
   /// Unique id of the agent
   const size_t mId;
 
-  ///Helper functions:
+  /// Helper functions:
   WorldPosition DeserializePosition(const nlohmann::json& pos) {
     if (pos.contains("x") && pos.at("x").is_number_integer() &&
         pos.contains("y") && pos.at("y").is_number_integer()) {
@@ -40,13 +40,15 @@ private:
     if (healthState == "susceptible") return HealthState::SUSCEPTIBLE;
     if (healthState == "infected") return HealthState::INFECTED;
     if (healthState == "recovered") return HealthState::RECOVERED;
-    return HealthState::SUSCEPTIBLE;  // Default health state if deserialization fails
+    return HealthState::SUSCEPTIBLE;  // Default health state if deserialization
+                                      // fails
   }
 
   DataClass DeserializeTrafficData(const nlohmann::json& details) {
     DataClass data{};
 
-    if (details.contains("destination") && details.at("destination").is_object()) {
+    if (details.contains("destination") &&
+        details.at("destination").is_object()) {
       data.destination = DeserializePosition(details.at("destination"));
     }
     if (details.contains("position") && details.at("position").is_object()) {
@@ -71,15 +73,19 @@ private:
 
   DataClass DeserializeDiseaseData(const nlohmann::json& details) {
     DataClass data{};
-    
+
     if (details.contains("infection_probability") &&
         details.at("infection_probability").is_number()) {
-      data.infection_probability = details.at("infection_probability").get<double>();
+      data.infection_probability =
+          details.at("infection_probability").get<double>();
     }
-    if (details.contains("infection_state") && details.at("infection_state").is_string()) {
-      data.infection_state = DeserializeHealthState(details.at("infection_state"));
+    if (details.contains("infection_state") &&
+        details.at("infection_state").is_string()) {
+      data.infection_state =
+          DeserializeHealthState(details.at("infection_state"));
     }
-    if (details.contains("destination") && details.at("destination").is_object()) {
+    if (details.contains("destination") &&
+        details.at("destination").is_object()) {
       data.destination = DeserializePosition(details.at("destination"));
     }
     if (details.contains("position") && details.at("position").is_object()) {
@@ -96,20 +102,19 @@ private:
   /// Log of all actions taken by the agent, used for replay
   std::vector<ActionEvent<DataClass>> mActions;
 
-  /// Cached string representation of agent ID to keep string_view (needed in logging) backing alive
+  /// Cached string representation of agent ID to keep string_view (needed in
+  /// logging) backing alive
   std::string mCachedAgentIdStr;
 
  public:
-  StepAgentBase(DataClass data, size_t id, LogLevel logLevel = LogLevel::Normal, uint64_t tick = 0)
+  StepAgentBase(DataClass data, size_t id, LogLevel logLevel = LogLevel::Normal,
+                uint64_t tick = 0)
       : mData{data}, mId{id}, mCachedAgentIdStr{std::to_string(id)} {
-    // Log the initial state of the agent for replay purposes (not sure if this is needed but seems useful to have the initial state in the log)
-    mActions.push_back(ActionEvent<DataClass>({
-      std::string_view(mCachedAgentIdStr),
-      "initial_state",
-      logLevel,
-      tick,
-      data
-    }));
+    // Log the initial state of the agent for replay purposes (not sure if this
+    // is needed but seems useful to have the initial state in the log)
+    mActions.push_back(
+        ActionEvent<DataClass>({std::string_view(mCachedAgentIdStr),
+                                "initial_state", logLevel, tick, data}));
   }
   virtual ~StepAgentBase() = default;
 
@@ -144,7 +149,8 @@ private:
       return;
     }
 
-    if (!eventData.contains("details") || !eventData.at("details").is_object()) {
+    if (!eventData.contains("details") ||
+        !eventData.at("details").is_object()) {
       return;
     }
 
@@ -154,8 +160,8 @@ private:
       details = this->DeserializeTrafficData(eventData.at("details"));
     } else if constexpr (std::is_same_v<DataClass, DiseaseData>) {
       details = this->DeserializeDiseaseData(eventData.at("details"));
-    } 
-    
+    }
+
     LogLevel logLevel = static_cast<LogLevel>(levelRaw);
     uint64_t tick = eventData.at("timestamp").get<uint64_t>();
     this->SetState(details, logLevel, tick);
@@ -173,15 +179,14 @@ private:
   [[nodiscard]] DataClass GetState() const noexcept { return mData; }
 
   // Think: Should this also take in the log level and tick for replay purposes?
-  // In regular usage, the world will need to pass the tick and log level for logging purposes.
-  void SetState(DataClass data, LogLevel logLevel = LogLevel::Normal, uint64_t tick = 0) {
+  // In regular usage, the world will need to pass the tick and log level for
+  // logging purposes.
+  void SetState(DataClass data, LogLevel logLevel = LogLevel::Normal,
+                uint64_t tick = 0) {
     mData = data;
     // Here handle logic to log for replay?
-    mActions.push_back(ActionEvent<DataClass>{std::string_view(mCachedAgentIdStr),
-                                               "movement",
-                                               logLevel,
-                                               tick,
-                                               data});
+    mActions.push_back(ActionEvent<DataClass>{
+        std::string_view(mCachedAgentIdStr), "movement", logLevel, tick, data});
   }
 
   virtual void SetGoal(WorldPosition position) = 0;
