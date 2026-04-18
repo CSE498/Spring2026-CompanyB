@@ -128,7 +128,7 @@ const char *TEST_5 = R"V0G0N(
 world traffic;
 
 let next_direction : direction = right;
-let new_direciton : direction = up;
+let new_direction : direction = up;
 
 if (next_direction == left)
   new_direction = left;
@@ -145,15 +145,17 @@ TEST_CASE("Ctrl-Flow: Else-if WITHOUT Else (Direction)",
   REQUIRE(result.has_value());
   REQUIRE(p.m_Nodes.size() == 3);
 
-  auto *stmt_if = dynamic_cast<StmtIf *>(p.m_Nodes[1].get());
-  REQUIRE(stmt_if != nullptr);
-  CHECK(dynamic_cast<ExprBinary *>(stmt_if->m_Condition.get()) != nullptr);
-  CHECK(dynamic_cast<StmtBlock *>(stmt_if->m_TBody.get()) != nullptr);
+  auto *first = dynamic_cast<Assign *>(p.m_Nodes[0].get());
+  REQUIRE(first);
+  auto *second = dynamic_cast<Assign *>(p.m_Nodes[1].get());
+  REQUIRE(second);
 
-  auto *stmt_else_if = dynamic_cast<StmtIf *>(p.m_Nodes[2].get());
-  REQUIRE(stmt_else_if != nullptr);
-  CHECK(dynamic_cast<ExprBinary *>(stmt_else_if->m_Condition.get()) != nullptr);
-  CHECK(dynamic_cast<StmtBlock *>(stmt_else_if->m_TBody.get()) != nullptr);
+  auto *stmt_if = dynamic_cast<StmtIf *>(p.m_Nodes[2].get());
+  REQUIRE(stmt_if);
+  REQUIRE(stmt_if->m_FBody.has_value());
+  auto *stmt_else_if = dynamic_cast<StmtIf *>(stmt_if->m_FBody.value().get());
+  REQUIRE(stmt_else_if);
+  CHECK_FALSE(stmt_else_if->m_FBody.has_value());
 }
 
 const char *TEST_6 = R"V0G0N(
@@ -162,7 +164,7 @@ const char *TEST_6 = R"V0G0N(
 world traffic;
 
 let next_direction : direction = right;
-let new_direciton : direction = up;
+let new_direction : direction = up;
 
 if (next_direction == left)
   new_direction = left;
