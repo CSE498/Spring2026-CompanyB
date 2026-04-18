@@ -59,11 +59,6 @@ std::expected<std::unique_ptr<AST::Node>, InterpErr> Parser::parse_var_def() {
       return expr.error();
     }
 
-    // Expect: <;>
-    res = m_Lexer.UseIf(IDs::ID_DELIM_SEMICLN);
-    if (!res)
-      return res.error();
-
     return std::make_unique<AST::Assign>(assign_token, sym_retrieve_res.value(),
                                          std::move(expr.value()));
   } else {
