@@ -122,7 +122,8 @@ class SwarmingAgent : public StepAgentBase<SwarmData> {
     }
   }
 
-  [[nodiscard]] StepContainer TrafficGetTurn() {
+  [[nodiscard]] StepContainer TrafficGetTurn()
+      requires(std::is_same_v<SwarmData, TrafficData>) {
     StepContainer container{};
 
     if (!this->mData.is_active) {
@@ -178,7 +179,8 @@ class SwarmingAgent : public StepAgentBase<SwarmData> {
     return container;
   }
 
-  [[nodiscard]] StepContainer InfectionGetTurn() {
+  [[nodiscard]] StepContainer InfectionGetTurn()
+      requires(std::is_same_v<SwarmData, DiseaseData>) {
     // Behavior in each state:
     // SUSCEPTIBLE:
     // Move randomly
@@ -202,21 +204,25 @@ class SwarmingAgent : public StepAgentBase<SwarmData> {
 
   // Helper function to set the agent's destination
   void SetGoal(WorldPosition goal) override {
-    auto state = this->GetState();
-    state.destination = goal;
-    this->SetState(state);
+    if constexpr (requires { this->mData.destination; }) {
+      auto state = this->GetState();
+      state.destination = goal;
+      this->SetState(state);
+    }
   }
 
   // Helper function to set whether the agent is swarming away or towards the
   // goal
-  void SetSwarmAway(bool swarm_away) {
+  void SetSwarmAway(bool swarm_away)
+      requires(std::is_same_v<SwarmData, TrafficData>) {
     auto state = this->GetState();
     state.swarm_away = swarm_away;
     this->SetState(state);
   }
 
   // Helper function to set whether the agent is active or not
-  void SetActive(bool active) {
+  void SetActive(bool active)
+      requires(std::is_same_v<SwarmData, TrafficData>) {
     auto state = this->GetState();
     state.is_active = active;
     this->SetState(state);
