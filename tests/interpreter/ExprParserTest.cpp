@@ -5,7 +5,9 @@
  */
 #include <catch2/catch_test_macros.hpp>
 
+#include "Interpreter/Evaluation/OpVisits.hpp"
 #include "Interpreter/Parser.hpp"
+#include "Interpreter/agentlang.hpp"
 #include "Interpreter/ast.hpp"
 #include "Interpreter/errors.hpp"
 #include "Interpreter/lexer.hpp"
@@ -23,12 +25,56 @@ using AgentLexer::IDs;
 
 // Parses the given statements under a "world traffic;" header.
 // Returns the parser (which holds m_Nodes and m_Syms) and the parse result.
-static std::pair<Parser, std::expected<std::vector<std::unique_ptr<StmtAgentDef>>, InterpErr>>
+static std::pair<
+    Parser,
+    std::expected<std::vector<std::unique_ptr<StmtAgentDef>>, InterpErr>>
 parse(std::string const &stmts) {
   Parser p;
   std::istringstream ss("world traffic;\n" + stmts);
   auto result = p.parse(ss);
   return {std::move(p), std::move(result)};
+}
+
+const char *LITERALS_TEST = R"V0G0N(
+// Check all literals are correctly parsed
+up;
+down;
+left;
+right;
+0.0;
+0.;
+0;
+true;
+false;
+"foo";
+
+)V0G0N";
+TEST_CASE("Literals"
+          "[expr][literal][parser]") {
+  auto [p, result] = parse(std::string{LITERALS_TEST});
+
+  CAPTURE(result);
+  REQUIRE(result.has_value());
+
+  using Types::Dir;
+  using Types::Type;
+
+  std::vector<Type> check_values{
+      Type{Dir::UP}, Type{Dir::DOWN}, Type{Dir::LEFT}, Type{Dir::RIGHT},
+      Type{0.0},     Type{0.0},       Type{0},         Type{true},
+      Type{false},   Type{"foo"}};
+
+  size_t i = 0;
+  for (Type cur_type : check_values) {
+    auto *lit = dynamic_cast<ValLiteral *>(p.m_Nodes[i].get());
+    REQUIRE(lit);
+    CHECK(lit->m_Val.index() == cur_type.index());
+    // Make use of opvisits to compare equality
+    CHECK(evaluate_binary(AgentLexer::IDs::ID_CMP_EQ, lit->m_Val, cur_type));
+    ++i;
+  }
+
+  CHECK(dynamic_cast<ValLiteral *>(p.m_Nodes[0].get()));
 }
 
 TEST_CASE("Expr (Basic): 1+-1", "[expr][parser]") {

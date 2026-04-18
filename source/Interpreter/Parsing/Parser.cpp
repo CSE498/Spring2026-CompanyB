@@ -71,9 +71,15 @@ Parser::parse(std::istream &in) {
 
 std::expected<AgentLexer::Token, InterpErr> Parser::parse_type() {
   using AgentLexer::IDs;
-  int agent = m_Env == Env::INFECTION ? IDs::ID_KW_STUDENT : IDs::ID_KW_CAR;
+  // Check for world-type mismatch
+  if (m_Lexer.Is(IDs::ID_KW_CAR) && (m_Env == Env::INFECTION))
+    return ParseErr(ParseErr::WORLD_MISMATCH,
+                    "Cannot instantiate car in infection world");
+  else if (m_Lexer.Is(IDs::ID_KW_STUDENT) && (m_Env == Env::TRAFFIC))
+    return ParseErr(ParseErr::WORLD_MISMATCH,
+                    "Cannot instantiate student in traffic world");
   return m_Lexer.UseIf(IDs::ID_KW_BOOL, IDs::ID_KW_INT, IDs::ID_KW_DOUBLE,
-                       IDs::ID_KW_STR, IDs::ID_KW_POINT,
-                       IDs::ID_KW_DIRECTION_T, agent);
+                       IDs::ID_KW_STR, IDs::ID_KW_POINT, IDs::ID_KW_DIRECTION_T,
+                       IDs::ID_KW_CAR, IDs::ID_KW_STUDENT);
 }
 }; // namespace cse498

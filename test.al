@@ -5,9 +5,16 @@ let square_walker : car {
         let a : int = 0;
     };
     turn : {
-        while (True) {
-
+        if ((a % 4) == 0) {
+            move(down);
+        } else if ((a%4) == 1) {
+            move(right);
+        } else if ((a%4) == 2) {
+            move(up);
+        } else {
+            move(left);
         }
+        a = a + 1;
     };
 };
 
