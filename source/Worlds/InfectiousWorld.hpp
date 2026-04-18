@@ -18,7 +18,7 @@
 #include <variant>
 #include <vector>
 
-#include "../core/DiseaseData.hpp"
+#include "../core/AgentData.hpp"
 #include "../core/Step.hpp"
 #include "../tools/Box.hpp" // quarantine zones with restricted movement
 #include "../tools/Circle.hpp" //infection radius around each agent

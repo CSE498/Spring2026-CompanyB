@@ -1,6 +1,6 @@
 #include <catch2/catch_test_macros.hpp>
 
-#include "../source/Agents/StepPacingAgent.hpp"
+#include "../source/Agents/ScriptedAgent.hpp"
 #include "../source/Worlds/InfectiousWorld.hpp"
 
 using namespace cse498;
@@ -19,7 +19,7 @@ TEST_CASE("InfectiousWorld: empty world counts", "[InfectiousWorld]") {
 
 TEST_CASE("InfectiousWorld: new agent is susceptible", "[InfectiousWorld]") {
   InfectiousWorld world(8, 6);
-  world.AddAgent<StepPacingAgent>(at(2, 2));
+  world.AddAgent<ScriptedAgent<DiseaseData>>(at(2, 2));
 
   CHECK(world.GetNumAgents() == 1);
   CHECK(world.GetAgentHealth(0) == HealthState::SUSCEPTIBLE);
@@ -30,7 +30,7 @@ TEST_CASE("InfectiousWorld: new agent is susceptible", "[InfectiousWorld]") {
 
 TEST_CASE("InfectiousWorld: InfectAgent updates state", "[InfectiousWorld]") {
   InfectiousWorld world(8, 6);
-  world.AddAgent<StepPacingAgent>(at(2, 2));
+  world.AddAgent<ScriptedAgent<DiseaseData>>(at(2, 2));
 
   world.InfectAgent(0);
   CHECK(world.GetAgentHealth(0) == HealthState::INFECTED);
@@ -52,8 +52,8 @@ TEST_CASE("InfectiousWorld: spread applies after timers for this tick",
   // still runs; with duration 1, patient zero would recover before spread.
   world.SetInfectionDuration(20);
 
-  world.AddAgent<StepPacingAgent>(at(2, 2));
-  world.AddAgent<StepPacingAgent>(at(3, 2));
+  world.AddAgent<ScriptedAgent<DiseaseData>>(at(2, 2));
+  world.AddAgent<ScriptedAgent<DiseaseData>>(at(3, 2));
   world.InfectAgent(0);
 
   world.UpdateWorld();
@@ -69,8 +69,8 @@ TEST_CASE("InfectiousWorld: new infection clock starts next UpdateWorld",
   world.SetInfectionRadius(5.0);
   world.SetInfectionDuration(20);
 
-  world.AddAgent<StepPacingAgent>(at(2, 2));
-  world.AddAgent<StepPacingAgent>(at(3, 2));
+  world.AddAgent<ScriptedAgent<DiseaseData>>(at(2, 2));
+  world.AddAgent<ScriptedAgent<DiseaseData>>(at(3, 2));
   world.InfectAgent(0);
 
   world.UpdateWorld();

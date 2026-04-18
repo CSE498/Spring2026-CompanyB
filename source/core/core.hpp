@@ -5,7 +5,7 @@
 #include <type_traits>
 #include <variant>
 
-#include "DiseaseData.hpp"
+#include "AgentData.hpp"
 
 namespace Concepts {
 template <typename T, typename... Ts>
@@ -37,7 +37,7 @@ concept UniqueTypes = all_unique<Ts..., std::void_t>();
  * after discussing with both world groups
  */
 template <typename T>
-concept IsDataClass = IsOneOf<T, int, cse498::DiseaseData>;
+concept IsDataClass = IsOneOf<T, cse498::TrafficData, cse498::DiseaseData>;
 
 }  // namespace Concepts
 

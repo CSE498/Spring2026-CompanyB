@@ -17,8 +17,8 @@
 #include <thread>
 #include <vector>
 
-#include "../source/Agents/StepPacingAgent.hpp"
-#include "../source/Agents/StepRandomAgent.hpp"
+#include "../source/Agents/ScriptedAgent.hpp"
+#include "../source/Agents/SwarmingAgent.hpp"
 #include "../source/Worlds/InfectiousWorld.hpp"
 
 using namespace cse498;
@@ -198,26 +198,26 @@ int RunInfectiousDemo() {
   // -----------------------------------------------------------------------
 
   // Pacers: IDs 0..7, structured back-and-forth movement
-  world.AddAgent<StepPacingAgent>(DiseaseData{WorldPosition{ 3,  3}});
-  world.AddAgent<StepPacingAgent>(DiseaseData{WorldPosition{ 7,  5}});
-  world.AddAgent<StepPacingAgent>(DiseaseData{WorldPosition{12,  7}});
-  world.AddAgent<StepPacingAgent>(DiseaseData{WorldPosition{18,  4}});
-  world.AddAgent<StepPacingAgent>(DiseaseData{WorldPosition{ 4, 13}});
-  world.AddAgent<StepPacingAgent>(DiseaseData{WorldPosition{10, 15}});
-  world.AddAgent<StepPacingAgent>(DiseaseData{WorldPosition{25,  3}});
-  world.AddAgent<StepPacingAgent>(DiseaseData{WorldPosition{27,  8}});
+  world.AddAgent<ScriptedAgent<DiseaseData>>(DiseaseData{WorldPosition{ 3,  3}});
+  world.AddAgent<ScriptedAgent<DiseaseData>>(DiseaseData{WorldPosition{ 7,  5}});
+  world.AddAgent<ScriptedAgent<DiseaseData>>(DiseaseData{WorldPosition{12,  7}});
+  world.AddAgent<ScriptedAgent<DiseaseData>>(DiseaseData{WorldPosition{18,  4}});
+  world.AddAgent<ScriptedAgent<DiseaseData>>(DiseaseData{WorldPosition{ 4, 13}});
+  world.AddAgent<ScriptedAgent<DiseaseData>>(DiseaseData{WorldPosition{10, 15}});
+  world.AddAgent<ScriptedAgent<DiseaseData>>(DiseaseData{WorldPosition{25,  3}});
+  world.AddAgent<ScriptedAgent<DiseaseData>>(DiseaseData{WorldPosition{27,  8}});
 
   // Random walkers: IDs 8..17, autonomous roaming
-  world.AddAgent<StepRandomAgent>(DiseaseData{WorldPosition{ 2,  8}});
-  world.AddAgent<StepRandomAgent>(DiseaseData{WorldPosition{ 5, 11}});
-  world.AddAgent<StepRandomAgent>(DiseaseData{WorldPosition{ 9,  4}});
-  world.AddAgent<StepRandomAgent>(DiseaseData{WorldPosition{14, 14}});
-  world.AddAgent<StepRandomAgent>(DiseaseData{WorldPosition{19,  9}});
-  world.AddAgent<StepRandomAgent>(DiseaseData{WorldPosition{20, 15}});
-  world.AddAgent<StepRandomAgent>(DiseaseData{WorldPosition{24,  6}});
-  world.AddAgent<StepRandomAgent>(DiseaseData{WorldPosition{25, 14}});
-  world.AddAgent<StepRandomAgent>(DiseaseData{WorldPosition{32, 11}});
-  world.AddAgent<StepRandomAgent>(DiseaseData{WorldPosition{38, 12}});
+  world.AddAgent<SwarmingAgent<DiseaseData>>(DiseaseData{WorldPosition{ 2,  8}});
+  world.AddAgent<SwarmingAgent<DiseaseData>>(DiseaseData{WorldPosition{ 5, 11}});
+  world.AddAgent<SwarmingAgent<DiseaseData>>(DiseaseData{WorldPosition{ 9,  4}});
+  world.AddAgent<SwarmingAgent<DiseaseData>>(DiseaseData{WorldPosition{14, 14}});
+  world.AddAgent<SwarmingAgent<DiseaseData>>(DiseaseData{WorldPosition{19,  9}});
+  world.AddAgent<SwarmingAgent<DiseaseData>>(DiseaseData{WorldPosition{20, 15}});
+  world.AddAgent<SwarmingAgent<DiseaseData>>(DiseaseData{WorldPosition{24,  6}});
+  world.AddAgent<SwarmingAgent<DiseaseData>>(DiseaseData{WorldPosition{25, 14}});
+  world.AddAgent<SwarmingAgent<DiseaseData>>(DiseaseData{WorldPosition{32, 11}});
+  world.AddAgent<SwarmingAgent<DiseaseData>>(DiseaseData{WorldPosition{38, 12}});
 
   // Patient zero — pacer in the left room
   world.InfectAgent(0);
@@ -227,7 +227,7 @@ int RunInfectiousDemo() {
     // Dynamic agent spawning: introduce a new infected random walker every N ticks
     if (tick > 0 && tick % demo::kSpawnInterval == 0 &&
         world.GetNumAgents() < demo::kMaxAgents) {
-      world.AddAgent<StepRandomAgent>(
+      world.AddAgent<SwarmingAgent<DiseaseData>>(
           DiseaseData{WorldPosition{demo::kSpawnX, demo::kSpawnY}});
       world.InfectAgent(world.GetNumAgents() - 1);  // spawned agents arrive infected
     }
