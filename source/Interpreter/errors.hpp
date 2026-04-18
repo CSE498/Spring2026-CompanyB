@@ -77,11 +77,13 @@ struct ParseErr : BaseErr {
     INVALID_WORLD = 8,
     AT_EOF = 9,
     ILLEGAL_ASSIGNMENT = 10,
+    WORLD_MISMATCH = 11,
   };
-  static constexpr std::array<std::string_view, 11> m_KindNames = {
-      "MISSING_TOKEN", "EXPECTED_STMT",    "OUT_OF_TURN",       "OUT_OF_INIT",
-      "OUT_OF_LOOP",   "INVALID_OP_TOKEN", "INVALID_LITERAL",   "INVALID_TERM",
-      "INVALID_WORLD", "AT_EOF",           "ILLEGAL_ASSIGNMENT"};
+  static constexpr std::array<std::string_view, 12> m_KindNames = {
+      "MISSING_TOKEN",   "EXPECTED_STMT",      "OUT_OF_TURN",
+      "OUT_OF_INIT",     "OUT_OF_LOOP",        "INVALID_OP_TOKEN",
+      "INVALID_LITERAL", "INVALID_TERM",       "INVALID_WORLD",
+      "AT_EOF",          "ILLEGAL_ASSIGNMENT", "WORLD_MISMATCH"};
 
   Kind m_Kind;
   ParseErr(Kind kind)

@@ -27,6 +27,37 @@ parse(std::string const &script) {
   return {std::move(p), std::move(result)};
 }
 
+const char *CAR_MISMATCH = R"V0G0N(
+world traffic;
+let agent : student {
+    init : { };
+    turn : { };
+};
+)V0G0N";
+TEST_CASE("AgentDef: Car cannot be instantiated in infection",
+          "[parser][agent-def]") {
+  auto [p, result] = parse(std::string{CAR_MISMATCH});
+
+  CAPTURE(result);
+  REQUIRE_FALSE(result.has_value());
+  CHECK(result.error().Is<ParseErr>(ParseErr::WORLD_MISMATCH));
+}
+const char *STUDENT_MISMATCH = R"V0G0N(
+world infection;
+let agent : car {
+    init : { };
+    turn : { };
+};
+)V0G0N";
+TEST_CASE("AgentDef: Student cannot be instantiated in traffic",
+          "[parser][agent-def]") {
+  auto [p, result] = parse(std::string{STUDENT_MISMATCH});
+
+  CAPTURE(result);
+  REQUIRE_FALSE(result.has_value());
+  CHECK(result.error().Is<ParseErr>(ParseErr::WORLD_MISMATCH));
+}
+
 TEST_CASE("AgentDef: empty init and turn are allowed", "[parser][agent-def]") {
   auto [p, result] = parse("world infection;\n"
                            "let walker : student {\n"
