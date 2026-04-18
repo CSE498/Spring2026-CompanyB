@@ -176,7 +176,7 @@ TEST_CASE("Ctrl-Flow (Loop-Ctrl): Basic Break Statement (Double)", "[ctrl-flow][
   REQUIRE(stmt_while != nullptr);
   CHECK(dynamic_cast<ExprBinary *>(stmt_while->m_Condition.get()) != nullptr);
 
-  auto *stmt_block = dynamic_cast<StmtBlock *>(stmt_while->m_Body.get();
+  auto *stmt_block = dynamic_cast<StmtBlock *>(stmt_while->m_Body.get());
   CHECK(stmt_block != nullptr);
 
   CHECK(dynamic_cast<StmtLoopCtl *>(stmt_block->m_Body[1].get()));
@@ -192,7 +192,7 @@ TEST_CASE("Ctrl-Flow (Loop-Ctrl): Basic Continue Statement (Double)", "[ctrl-flo
   REQUIRE(stmt_while != nullptr);
   CHECK(dynamic_cast<ExprBinary *>(stmt_while->m_Condition.get()) != nullptr);
 
-  auto *stmt_block = dynamic_cast<StmtBlock *>(stmt_while->m_Body.get();
+  auto *stmt_block = dynamic_cast<StmtBlock *>(stmt_while->m_Body.get());
   CHECK(stmt_block != nullptr);
 
   CHECK(dynamic_cast<StmtLoopCtl *>(stmt_block->m_Body[1].get()));
