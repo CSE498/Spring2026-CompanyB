@@ -3,7 +3,7 @@
  * @brief Demo of InfectiousWorld using the step-based agent system.
  *
  * compile (from demo/ directory):
- *   g++ -std=c++23 -DCSE498_INFECTIOUS_DEMO_STANDALONE -I../source \
+ *   g++ -std=c++23 -DDEMO_GROUP13 -I../source \
  *       Group13_main.cpp -o infectious_demo \
  *       ../source/tools/Point.cpp ../source/tools/Box.cpp
  * run:
@@ -248,6 +248,6 @@ int RunInfectiousDemo() {
   return 0;
 }
 
-#if defined(CSE498_INFECTIOUS_DEMO_STANDALONE)
+#if defined(DEMO_GROUP13)
 int main() { return RunInfectiousDemo(); }
 #endif
