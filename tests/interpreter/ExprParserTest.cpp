@@ -11,6 +11,8 @@
 #include "Interpreter/lexer.hpp"
 #include "test-tools/matchers.hpp"
 
+#include "interpreter-tests.hpp"
+
 #include <sstream>
 #include <string>
 
