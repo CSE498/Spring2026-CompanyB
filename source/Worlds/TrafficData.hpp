@@ -9,7 +9,7 @@
 namespace cse498 {
 struct TrafficData {
   std::optional<WorldPosition> destination;
-  WorldPosition position{3,7};
+  WorldPosition position{8,7};
   Direction direction;
   bool is_active{};
   char symbol = '@';

@@ -5,7 +5,7 @@ let square_walker : car {
     };
     turn : {
         let a : int = 0;
-        if (a % 2) {
+        if (0) {
             move(right);
         } else {
             move(left);

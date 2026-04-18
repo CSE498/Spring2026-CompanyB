@@ -100,6 +100,7 @@ public:
     if (!res.has_value()) {
       // TODO we do no move, but we need to report error
       std::cout << res.error().ToStr();
+      // std::terminate();
       return StepContainer{};
     };
 
@@ -155,10 +156,10 @@ public:
     if (Dir* direction = std::get_if<Dir>(&type)) {
       auto pos = this->GetState().position;
       switch (*direction) {
-        case Dir::LEFT: pos = pos.Left();
-        case Dir::RIGHT: pos = pos.Right();
-        case Dir::UP: pos = pos.Up();
-        case Dir::DOWN: pos = pos.Down();
+        case Dir::LEFT: pos = pos.Left(); break;
+        case Dir::RIGHT: pos = pos.Right(); break;
+        case Dir::UP: pos = pos.Up(); break;
+        case Dir::DOWN: pos = pos.Down(); break;
       }
       if (mCurrentTurn.empty()) {
         mCurrentTurn.add_step(MovementStep{pos});
