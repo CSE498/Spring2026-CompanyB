@@ -6,7 +6,6 @@
 #include <type_traits>
 #include <variant>
 
-#include "Worlds/Group11DummyData.hpp"
 #include "Worlds/TrafficData.hpp"
 #include "core/DiseaseData.hpp"
 
@@ -43,7 +42,7 @@ concept UniqueTypes = all_unique<Ts..., std::void_t>();
  * after discussing with both world groups
  */
 template <typename T>
-concept IsDataClass = IsOneOf<T, cse498::Group11DummyData, cse498::TrafficData, cse498::DiseaseData>;
+concept IsDataClass = IsOneOf<T, cse498::TrafficData, cse498::DiseaseData>;
 
 /** @brief Requires given type to have operator<<(std::stringstream&) defined.
  */
