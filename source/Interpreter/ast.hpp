@@ -237,4 +237,34 @@ struct ValVariable : public TypedNode {
       : TypedNode(token, symbol->type.index()), m_Symbol(symbol) {}
   ~ValVariable() = default;
 };
+
+static std::string IDNodeForTest(Node const *node) {
+  if (dynamic_cast<StmtBlock const *>(node)) {
+    return "StmtBlock";
+  } else if (dynamic_cast<EmptyNode const *>(node)) {
+    return "EmptyNode";
+  } else if (dynamic_cast<ExprUnary const *>(node)) {
+    return "ExprUnary";
+  } else if (dynamic_cast<ExprBinary const *>(node)) {
+    return "ExprBinary";
+  } else if (dynamic_cast<Assign const *>(node)) {
+    return "Assign";
+  } else if (dynamic_cast<StmtAgentDef const *>(node)) {
+    return "StmtAgentDef";
+  } else if (dynamic_cast<StmtAction const *>(node)) {
+    return "StmtAction";
+  } else if (dynamic_cast<StmtWhile const *>(node)) {
+    return "StmtWhile";
+  } else if (dynamic_cast<StmtLoopCtl const *>(node)) {
+    return "StmtLoopCtl";
+  } else if (dynamic_cast<StmtIf const *>(node)) {
+    return "StmtIf";
+  } else if (dynamic_cast<ValLiteral const *>(node)) {
+    return "ValLiteral";
+  } else if (dynamic_cast<ValVariable const *>(node)) {
+    return "ValVariable";
+  } else {
+    return "Somehow none of the above";
+  }
+}
 }; // namespace cse498::AST
