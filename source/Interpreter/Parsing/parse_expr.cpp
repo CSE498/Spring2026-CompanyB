@@ -47,8 +47,23 @@ Parser::parse_expr(int prec) {
     if (!right.has_value())
       return right.error();
 
-    std::unique_ptr<AST::ExprBinary> node = std::make_unique<AST::ExprBinary>(
-        cur_token, std::move(left.value()), std::move(right.value()));
+    std::unique_ptr<AST::Node> node;
+    if (cur_token.id == IDs::ID_OP_ASSIGN) {
+      // Left side must be a variable
+      AST::ValVariable *left_as_var =
+          dynamic_cast<AST::ValVariable *>(left.value().get());
+      if (!left_as_var)
+        return ParseErr(ParseErr::ILLEGAL_ASSIGNMENT,
+                        "Left side of assignment must be a symbol");
+
+      node = std::make_unique<AST::Assign>(cur_token, left_as_var->m_Symbol,
+                                           std::move(right.value()));
+    } else {
+      node = std::make_unique<AST::ExprBinary>(
+          cur_token, std::move(left.value()), std::move(right.value()));
+    }
+
+    assert(node != nullptr);
 
     if (cur_opinfo.value().m_Assoc == OpInfo::Assoc::LEFT)
       left = std::move(node);
