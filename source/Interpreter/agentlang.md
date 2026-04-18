@@ -7,7 +7,7 @@
 - ``double`` **:** Floating-point value, truthy if nonzero, returnable
 - ``str`` **:** String, truthy if nonempty, returnable
 - ``point`` **:** Pair of integers, not bool-convertible, returnable
-- ``direction`` **:** Enum of states ``LEFT``, ``RIGHT``, ``UP``, ``DOWN``, not bool convertible, returnable
+- ``direction`` **:** Enum of states ``left``, ``right``, ``up``, ``down``, not bool convertible, returnable
 - ``car`` **:** Agent type in the traffic world, not bool convertible, not returnable
 - ``student`` **:** Agent type in the infection world, not bool convertible, not returnable
 
