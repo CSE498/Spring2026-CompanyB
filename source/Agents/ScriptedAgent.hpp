@@ -60,10 +60,10 @@ struct AgentWrapper {
   }
 
   template <IsDataClass DataClass> AgentWrapper(ScriptedAgent<DataClass> *i) {
-    if constexpr (std::is_same_v<DataClass, DiseaseData>) {
-      m_Env = Env::INFECTION;
-    } else {
+    if constexpr (std::is_same_v<DataClass, TrafficData>) {
       m_Env = Env::TRAFFIC;
+    } else {
+      m_Env = Env::INFECTION;
     }
 
     m_AgentPtr = std::make_any<ScriptedAgent<DataClass> *>(i);
