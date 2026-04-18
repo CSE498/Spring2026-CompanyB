@@ -37,10 +37,12 @@ TEST_CASE("Expr (Basic): 1+-1", "[expr][parser]") {
   auto *val_literal = dynamic_cast<ValLiteral *>(expr_binary->m_Left.get());
   REQUIRE(val_literal != nullptr);
   CHECK(std::holds_alternative<int>(val_literal->m_Val));
+  CHECK(std::get<int>(val_literal->m_Val) == 1);
 
   val_literal = dynamic_cast<ValLiteral *>(expr_binary->m_Right.get());
   REQUIRE(val_literal != nullptr);
   CHECK(std::holds_alternative<int>(val_literal->m_Val));
+  CHECK(std::get<int>(val_literal->m_Val) == -1);
 }
 
 TEST_CASE("Expr (Ambiguity): 2-1+1", "[expr][parser]") {
@@ -57,6 +59,7 @@ TEST_CASE("Expr (Ambiguity): 2-1+1", "[expr][parser]") {
   auto *val_literal = dynamic_cast<ValLiteral *>(expr_binary->m_Right.get());
   REQUIRE(val_literal != nullptr);
   CHECK(std::holds_alternative<int>(val_literal->m_Val));
+  CHECK(std::get<int>(val_literal->m_Val) == 1);
 
   // ExprBinary #2
 
@@ -66,10 +69,12 @@ TEST_CASE("Expr (Ambiguity): 2-1+1", "[expr][parser]") {
   val_literal = dynamic_cast<ValLiteral *>(expr_binary_2->m_Left.get());
   REQUIRE(val_literal != nullptr);
   CHECK(std::holds_alternative<int>(val_literal->m_Val));
+  CHECK(std::get<int>(val_literal->m_Val) == 2);
 
   val_literal = dynamic_cast<ValLiteral *>(expr_binary_2->m_Right.get());
   REQUIRE(val_literal != nullptr);
   CHECK(std::holds_alternative<int>(val_literal->m_Val));
+  CHECK(std::get<int>(val_literal->m_Val) == 1);
 }
 
 TEST_CASE("Expr (Precedence): 2-3*4", "[expr][parser]") {
@@ -86,6 +91,7 @@ TEST_CASE("Expr (Precedence): 2-3*4", "[expr][parser]") {
   auto *val_literal = dynamic_cast<ValLiteral *>(expr_binary->m_Left.get());
   REQUIRE(val_literal != nullptr);
   CHECK(std::holds_alternative<int>(val_literal->m_Val));
+  CHECK(std::get<int>(val_literal->m_Val) == 2);
 
   // ExprBinary #2
 
@@ -95,10 +101,12 @@ TEST_CASE("Expr (Precedence): 2-3*4", "[expr][parser]") {
   val_literal = dynamic_cast<ValLiteral *>(expr_binary_2->m_Left.get());
   REQUIRE(val_literal != nullptr);
   CHECK(std::holds_alternative<int>(val_literal->m_Val));
+  CHECK(std::get<int>(val_literal->m_Val) == 3);
 
   val_literal = dynamic_cast<ValLiteral *>(expr_binary_2->m_Right.get());
   REQUIRE(val_literal != nullptr);
   CHECK(std::holds_alternative<int>(val_literal->m_Val));
+  CHECK(std::get<int>(val_literal->m_Val) == 4);
 }
 
 TEST_CASE("Expr (PMDAS): 1+2*(3+4)+5", "[expr][parser]") {
@@ -112,18 +120,20 @@ TEST_CASE("Expr (PMDAS): 1+2*(3+4)+5", "[expr][parser]") {
   auto *expr_binary = dynamic_cast<ExprBinary *>(p.m_Nodes[0].get());
   REQUIRE(expr_binary != nullptr);
 
-  auto *val_literal = dynamic_cast<ValLiteral *>(expr_binary->m_Left.get());
+  auto *val_literal = dynamic_cast<ValLiteral *>(expr_binary->m_Right.get());
   REQUIRE(val_literal != nullptr);
   CHECK(std::holds_alternative<int>(val_literal->m_Val));
+  CHECK(std::get<int>(val_literal->m_Val) == 5);
 
   // ExprBinary #2
 
-  auto *expr_binary_2 = dynamic_cast<ExprBinary *>(expr_binary->m_Right.get());
+  auto *expr_binary_2 = dynamic_cast<ExprBinary *>(expr_binary->m_Left.get());
   REQUIRE(expr_binary_2 != nullptr);
 
   val_literal = dynamic_cast<ValLiteral *>(expr_binary_2->m_Left.get());
   REQUIRE(val_literal != nullptr);
   CHECK(std::holds_alternative<int>(val_literal->m_Val));
+  CHECK(std::get<int>(val_literal->m_Val) == 1);
 
   // ExprBinary #3
 
@@ -134,6 +144,7 @@ TEST_CASE("Expr (PMDAS): 1+2*(3+4)+5", "[expr][parser]") {
   val_literal = dynamic_cast<ValLiteral *>(expr_binary_3->m_Left.get());
   REQUIRE(val_literal != nullptr);
   CHECK(std::holds_alternative<int>(val_literal->m_Val));
+  CHECK(std::get<int>(val_literal->m_Val) == 2);
 
   // ExprBinary #4
 
@@ -144,8 +155,10 @@ TEST_CASE("Expr (PMDAS): 1+2*(3+4)+5", "[expr][parser]") {
   val_literal = dynamic_cast<ValLiteral *>(expr_binary_4->m_Left.get());
   REQUIRE(val_literal != nullptr);
   CHECK(std::holds_alternative<int>(val_literal->m_Val));
+  CHECK(std::get<int>(val_literal->m_Val) == 3);
 
   val_literal = dynamic_cast<ValLiteral *>(expr_binary_4->m_Right.get());
   REQUIRE(val_literal != nullptr);
   CHECK(std::holds_alternative<int>(val_literal->m_Val));
+  CHECK(std::get<int>(val_literal->m_Val) == 4);
 }
