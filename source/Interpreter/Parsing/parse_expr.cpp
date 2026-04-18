@@ -43,6 +43,13 @@ Parser::parse_expr(int prec) {
     cur_opinfo = OpInfo::FromBinary(m_Lexer.Peek());
   }
 
+  // Consume semicolon if one is left
+  if (m_Lexer.Is(IDs::ID_DELIM_SEMICLN)) {
+    auto res = m_Lexer.Use();
+    if (!res.has_value())
+      return res.error();
+  }
+
   return left;
 }
 
