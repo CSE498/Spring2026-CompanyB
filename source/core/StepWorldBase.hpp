@@ -18,6 +18,9 @@ class StepWorldBase {
   using Agent = StepAgentBase<DataClass>;
   using AgentPtr = std::shared_ptr<Agent>;
 
+  /// Id of the next created agent
+  size_t next_id = 0;
+
  protected:
   /// Whether the simulation is running
   bool run_over = false;
@@ -41,7 +44,7 @@ class StepWorldBase {
   /// to be added to suport different agents, such as scripting agents.
   template <typename AgentDerived>
   AgentDerived &AddAgent(DataClass data) {
-    auto agent_ptr = std::make_shared<AgentDerived>(data);
+    auto agent_ptr = std::make_shared<AgentDerived>(data, next_id++);
     AgentDerived &agent_ref = *agent_ptr;
     ConfigAgent(agent_ref);
     agent_set.emplace_back(std::move(agent_ptr));
