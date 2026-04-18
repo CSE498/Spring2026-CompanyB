@@ -54,7 +54,7 @@ std::expected<std::unique_ptr<AST::Node>, InterpErr> Parser::parse_var_def() {
       return res.error();
 
     Token assign_token = res.value();
-    auto expr = parse_expr(6);
+    auto expr = parse_expr();
     if (!expr.has_value()) {
       return expr.error();
     }

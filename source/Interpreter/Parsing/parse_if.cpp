@@ -38,8 +38,9 @@ std::expected<std::unique_ptr<AST::Node>, InterpErr> Parser::parse_if() {
 
   m_Syms.PushSymbolScope();
   // Extract stmt_block
-  auto t_body =
-      (m_Lexer.Is(IDs::ID_DELIM_CLY_OPEN)) ? parse_stmt_block() : parse_stmt();
+  auto t_body = (m_Lexer.Is(IDs::ID_DELIM_CLY_OPEN))
+                    ? parse_stmt_block()
+                    : parse_stmt(ParseSetting::REQUIRED);
 
   m_Syms.PopSymbolScope();
 

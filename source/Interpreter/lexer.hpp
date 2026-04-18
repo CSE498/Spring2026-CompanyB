@@ -39,7 +39,8 @@ public:
 
   std::expected<Token, InterpErr> Use() {
     if (None())
-      return m_Lexer.eof_token;
+      return ParseErr(ParseErr::AT_EOF,
+                      "Reached EOF and tried to consume token");
 
     return m_Lexer.tokens.at(m_Lexer.token_id++);
   }
@@ -49,11 +50,11 @@ public:
       // Build the expected tokens string by folding over the pack
       std::string expected;
       bool first = true;
-      ((expected += (first ? "" : ", ") + m_Lexer.TokenName(id), first = false), ...);
+      ((expected += (first ? "" : ", ") + m_Lexer.TokenName(id), first = false),
+       ...);
 
       return LexerErr(LexerErr::UNEXP_TOKEN,
-                      std::format("Expected one of [{}] but got {}",
-                                  expected,
+                      std::format("Expected one of [{}] but got {}", expected,
                                   m_Lexer.TokenName(Peek().id)));
     }
     return Use();

@@ -83,6 +83,11 @@ struct StmtBlock : public Node {
 
 // Filler for scaffolding
 struct EmptyNode : public Node {
+
+  std::expected<Types::Type, InterpErr> Accept(AgentWrapper &) override {
+    return Types::NullType{};
+  };
+
   EmptyNode(emplex::Token token) : Node(token) {}
   ~EmptyNode() = default;
 };

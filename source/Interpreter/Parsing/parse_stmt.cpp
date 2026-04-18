@@ -2,43 +2,58 @@
 #include "Interpreter/ast.hpp"
 #include "Interpreter/errors.hpp"
 #include "Interpreter/lexer.hpp"
+#include <memory>
 
 namespace cse498 {
 
-std::expected<std::unique_ptr<AST::Node>, InterpErr> Parser::parse_stmt() {
+std::expected<std::unique_ptr<AST::Node>, InterpErr>
+Parser::parse_stmt(ParseSetting setting) {
   using AgentLexer::IDs;
+
+  std::expected<std::unique_ptr<AST::Node>, InterpErr> res;
 
   switch (m_Lexer.Peek()) {
   case IDs::ID_KW_BREAK: // Use fallthrough to do OR
   case IDs::ID_KW_CONTINUE:
-    return parse_loop_ctl();
+    res = parse_loop_ctl();
+    break;
   case IDs::ID_KW_WHILE:
+    // Doesn't expect a semi after
     return parse_while();
   case IDs::ID_KW_IF:
+    // Doesn't expect a semi after
     return parse_if();
   case IDs::ID_KW_MOVE:
-    return parse_move();
+    res = parse_move();
+    break;
   case IDs::ID_KW_LET:
-    return parse_var_def();
-  case IDs::ID_IDENTIFIER: {
-    auto node = parse_expr();
-    if (!node.has_value())
-      return node.error();
-    auto semi = m_Lexer.UseIf(IDs::ID_DELIM_SEMICLN);
-    if (!semi.has_value())
-      return semi.error();
-    return node;
-  }
+    res = parse_var_def();
+    break;
+  case IDs::ID_IDENTIFIER:
+    res = parse_expr();
+    break;
   case IDs::ID_DELIM_SEMICLN: {
-    auto res = m_Lexer.Use();
-    if (!m_Lexer.Any()) {
-      return ParseErr(ParseErr::AT_EOF);
-    }
-    return (!res.has_value()) ? res.error() : parse_stmt();
+    auto use_semi = m_Lexer.Use();
+    if (!use_semi.has_value())
+      return use_semi.error();
+    return std::make_unique<AST::EmptyNode>(use_semi.value());
   };
-  default:
-    return parse_expr();
+  case IDs::ID__EOF_: {
+    if (setting == ParseSetting::REQUIRED)
+      return ParseErr(ParseErr::EXPECTED_STMT,
+                      "Missing statement, unexpectedly reached EOF");
+    return ParseErr(ParseErr::AT_EOF);
   }
+  default:
+    res = parse_expr();
+  }
+
+  // Consume remaining semicolon
+  auto use_semi = m_Lexer.UseIf(IDs::ID_DELIM_SEMICLN);
+  if (!use_semi.has_value())
+    return use_semi.error();
+
+  return std::move(res.value());
 }
 
 std::expected<std::unique_ptr<AST::Node>, InterpErr>

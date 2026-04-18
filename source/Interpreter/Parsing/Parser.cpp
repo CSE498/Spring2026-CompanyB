@@ -9,7 +9,8 @@
 
 namespace cse498 {
 
-std::expected<std::vector<std::unique_ptr<AST::StmtAgentDef>>, InterpErr> Parser::parse(std::istream &in) {
+std::expected<std::vector<std::unique_ptr<AST::StmtAgentDef>>, InterpErr>
+Parser::parse(std::istream &in) {
   using AgentLexer::IDs;
   m_AgentDefs.clear();
 
@@ -56,9 +57,6 @@ std::expected<std::vector<std::unique_ptr<AST::StmtAgentDef>>, InterpErr> Parser
   while (m_Lexer.Any()) {
     auto stmt_res = parse_stmt();
     if (!stmt_res.has_value()) {
-      // Just break if we're done, not a fatal error
-      if (stmt_res.error().Is<ParseErr>(ParseErr::AT_EOF))
-        break;
       return stmt_res.error();
     }
 

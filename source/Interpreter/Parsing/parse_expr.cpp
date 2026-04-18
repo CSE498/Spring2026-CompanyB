@@ -2,9 +2,24 @@
 #include "Interpreter/agentlang.hpp"
 #include "Interpreter/ast.hpp"
 #include "Interpreter/errors.hpp"
+#include <memory>
 #include <string>
 
 namespace cse498 {
+
+std::expected<std::unique_ptr<AST::Node>, InterpErr>
+Parser::parse_expr_expect_semicln(int prec) {
+  // Parse an expression
+  auto ret = parse_expr(prec);
+  if (!ret.has_value())
+    return ret.error();
+
+  auto semi = m_Lexer.UseIf(AgentLexer::IDs::ID_DELIM_SEMICLN);
+  if (!semi.has_value())
+    return semi.error();
+
+  return std::move(ret.value());
+}
 
 std::expected<std::unique_ptr<AST::Node>, InterpErr>
 Parser::parse_expr(int prec) {
@@ -41,13 +56,6 @@ Parser::parse_expr(int prec) {
       return node;
 
     cur_opinfo = OpInfo::FromBinary(m_Lexer.Peek());
-  }
-
-  // Consume semicolon if one is left
-  if (m_Lexer.Is(IDs::ID_DELIM_SEMICLN)) {
-    auto res = m_Lexer.Use();
-    if (!res.has_value())
-      return res.error();
   }
 
   return left;

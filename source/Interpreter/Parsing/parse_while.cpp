@@ -39,8 +39,9 @@ std::expected<std::unique_ptr<AST::Node>, InterpErr> Parser::parse_while() {
   ++m_InLoop;
   m_Syms.PushSymbolScope();
 
-  auto body =
-      (m_Lexer.Is(IDs::ID_DELIM_CLY_OPEN)) ? parse_stmt_block() : parse_stmt();
+  auto body = (m_Lexer.Is(IDs::ID_DELIM_CLY_OPEN))
+                  ? parse_stmt_block()
+                  : parse_stmt(ParseSetting::REQUIRED);
 
   --m_InLoop;
   m_Syms.PopSymbolScope();
