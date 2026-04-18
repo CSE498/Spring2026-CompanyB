@@ -105,6 +105,19 @@ std::expected<std::unique_ptr<AST::Node>, InterpErr> Parser::parse_term() {
       return sym.error();
     return std::make_unique<AST::ValVariable>(next_token, sym.value());
   }
+  case IDs::ID_LITERAL_BOOL: {
+    bool b;
+    if (next_token.lexeme == "true") {
+      b = true;
+    } else if (next_token.lexeme == "false") {
+      b = false;
+    } else {
+      return ParseErr(
+          ParseErr::INVALID_LITERAL,
+          std::format("Invalid boolean literal '{}'", next_token.lexeme));
+    }
+    return std::make_unique<AST::ValLiteral>(next_token, b);
+  }
   case IDs::ID_LITERAL_DIR: {
     Dir dir;
     if (next_token.lexeme == "left")
