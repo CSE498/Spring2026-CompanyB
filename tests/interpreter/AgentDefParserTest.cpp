@@ -9,6 +9,8 @@
 #include "Interpreter/ast.hpp"
 #include "Interpreter/errors.hpp"
 
+#include "interpreter-tests.hpp"
+
 #include <sstream>
 #include <string>
 
@@ -30,6 +32,7 @@ TEST_CASE("AgentDef: empty init and turn are allowed", "[parser][agent-def]") {
                 "  turn : { };\n"
                 "};");
 
+  CAPTURE(result);
   REQUIRE(result.has_value());
   REQUIRE(p.m_AgentDefs.size() == 1);
 
@@ -53,6 +56,7 @@ TEST_CASE("AgentDef: goal/destination identifiers allowed in both contexts",
                 "  };\n"
                 "};");
 
+  CAPTURE(result);
   REQUIRE(result.has_value());
   REQUIRE(p.m_AgentDefs.size() == 1);
 
@@ -87,6 +91,7 @@ TEST_CASE("AgentDef: move in turn parses", "[parser][agent-def]") {
                 "  };\n"
                 "};");
 
+  CAPTURE(result);
   REQUIRE(result.has_value());
   REQUIRE(p.m_AgentDefs.size() == 1);
 
@@ -110,6 +115,7 @@ TEST_CASE("AgentDef: symbols from init are visible in turn",
                 "  };\n"
                 "};");
 
+  CAPTURE(result);
   REQUIRE(result.has_value());
   REQUIRE(p.m_AgentDefs.size() == 1);
 

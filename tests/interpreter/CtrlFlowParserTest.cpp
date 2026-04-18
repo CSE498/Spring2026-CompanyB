@@ -9,6 +9,9 @@
 #include "Interpreter/ast.hpp"
 #include "Interpreter/errors.hpp"
 
+#include "interpreter-tests.hpp"
+
+#include <format>
 #include <sstream>
 #include <string>
 
@@ -30,6 +33,7 @@ parse(std::string const &stmts) {
 TEST_CASE("Ctrl-Flow: Basic Empty Stmt-Block (Int)", "[ctrl-flow][int][parser]") {
   auto [p, result] = parse("let i : int = 5;\nif (i == 5) {}");
 
+  CAPTURE(result);
   REQUIRE(result.has_value());
   REQUIRE(p.m_Nodes.size() == 2);
 
@@ -42,6 +46,7 @@ TEST_CASE("Ctrl-Flow: Basic Empty Stmt-Block (Int)", "[ctrl-flow][int][parser]")
 TEST_CASE("Ctrl-Flow: Basic Empty Stmt (Int)", "[ctrl-flow][int][parser]") {
   auto [p, result] = parse("let i : int = 5;\nif (i == 5)");
 
+  CAPTURE(result);
   REQUIRE(result.has_value());
   REQUIRE(p.m_Nodes.size() == 2);
 
@@ -54,6 +59,7 @@ TEST_CASE("Ctrl-Flow: Basic Empty Stmt (Int)", "[ctrl-flow][int][parser]") {
 TEST_CASE("Ctrl-Flow: Basic Stmt-Block (Int)", "[ctrl-flow][int][parser]") {
   auto [p, result] = parse("let i : int = 5;\nif (i == 5) {i = 10;}");
 
+  CAPTURE(result);
   REQUIRE(result.has_value());
   REQUIRE(p.m_Nodes.size() == 2);
 
@@ -66,6 +72,7 @@ TEST_CASE("Ctrl-Flow: Basic Stmt-Block (Int)", "[ctrl-flow][int][parser]") {
 TEST_CASE("Ctrl-Flow: Basic Stmt (Int)", "[ctrl-flow][int][parser]") {
   auto [p, result] = parse("let i : int = 5;\nif (i == 5) i = 10;");
 
+  CAPTURE(result);
   REQUIRE(result.has_value());
   REQUIRE(p.m_Nodes.size() == 2);
 
@@ -78,6 +85,7 @@ TEST_CASE("Ctrl-Flow: Basic Stmt (Int)", "[ctrl-flow][int][parser]") {
 TEST_CASE("Ctrl-Flow: Else-if WITHOUT Else (Direction)", "[ctrl-flow][direction][parser]") {
   auto [p, result] = parse("let next_direction : direction = RIGHT;\nif (next_direction == LEFT) move(UP);\nelse if (next_direction == RIGHT) move(DOWN);");
 
+  CAPTURE(result);
   REQUIRE(result.has_value());
   REQUIRE(p.m_Nodes.size() == 3);
 
@@ -95,6 +103,7 @@ TEST_CASE("Ctrl-Flow: Else-if WITHOUT Else (Direction)", "[ctrl-flow][direction]
 TEST_CASE("Ctrl-Flow: Else-if WITH Else (Direction)", "[ctrl-flow][direction][parser]") {
   auto [p, result] = parse("let next_direction : direction = UP;\nif (next_direction == LEFT) move(UP);\nelse if (next_direction == RIGHT) move(DOWN);\nelse move(next_direction)");
 
+  CAPTURE(result);
   REQUIRE(result.has_value());
   REQUIRE(p.m_Nodes.size() == 4);
 
@@ -133,6 +142,7 @@ TEST_CASE("Ctrl-Flow (While): Basic Empty Stmt-Block Error (Double)", "[ctrl-flo
 TEST_CASE("Ctrl-Flow (While): Basic Empty Stmt (Double)", "[ctrl-flow][double][parser]") {
   auto [p, result] = parse("let x : double = 0.0;\nwhile (x < 2.0)");
 
+  CAPTURE(result);
   REQUIRE(result.has_value());
   REQUIRE(p.m_Nodes.size() == 2);
 
@@ -145,6 +155,7 @@ TEST_CASE("Ctrl-Flow (While): Basic Empty Stmt (Double)", "[ctrl-flow][double][p
 TEST_CASE("Ctrl-Flow (While): Basic Stmt-Block (Double)", "[ctrl-flow][double][parser]") {
   auto [p, result] = parse("let x : double = 0.0;\nwhile (x < 2.0) { x = x + 0.1 }");
 
+  CAPTURE(result);
   REQUIRE(result.has_value());
   REQUIRE(p.m_Nodes.size() == 2);
 
@@ -157,6 +168,7 @@ TEST_CASE("Ctrl-Flow (While): Basic Stmt-Block (Double)", "[ctrl-flow][double][p
 TEST_CASE("Ctrl-Flow (While): Basic Stmt (Double)", "[ctrl-flow][double][parser]") {
   auto [p, result] = parse("let x : double = 0.0;\nwhile (x < 2.0) x = x + 0.1");
 
+  CAPTURE(result);
   REQUIRE(result.has_value());
   REQUIRE(p.m_Nodes.size() == 2);
 
@@ -169,6 +181,7 @@ TEST_CASE("Ctrl-Flow (While): Basic Stmt (Double)", "[ctrl-flow][double][parser]
 TEST_CASE("Ctrl-Flow (Loop-Ctrl): Basic Break Statement (Double)", "[ctrl-flow][double][parser]") {
   auto [p, result] = parse("let x : double = 0.0;\nwhile (x < 2.0) { x = x + 0.1; break; }");
 
+  CAPTURE(result);
   REQUIRE(result.has_value());
   REQUIRE(p.m_Nodes.size() == 2);
 
@@ -185,6 +198,7 @@ TEST_CASE("Ctrl-Flow (Loop-Ctrl): Basic Break Statement (Double)", "[ctrl-flow][
 TEST_CASE("Ctrl-Flow (Loop-Ctrl): Basic Continue Statement (Double)", "[ctrl-flow][double][parser]") {
   auto [p, result] = parse("let x : double = 0.0;\nwhile (x < 2.0) { x = x + 0.1; continue; }");
 
+  CAPTURE(result);
   REQUIRE(result.has_value());
   REQUIRE(p.m_Nodes.size() == 2);
 
