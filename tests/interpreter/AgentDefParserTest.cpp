@@ -34,13 +34,14 @@ TEST_CASE("AgentDef: empty init and turn are allowed", "[parser][agent-def]") {
 
   CAPTURE(result);
   REQUIRE(result.has_value());
-  REQUIRE(p.m_AgentDefs.size() == 1);
+  auto &defs = result.value();
+  REQUIRE(defs.size() == 1);
 
-  auto *root = dynamic_cast<StmtAgentDef *>(p.m_AgentDefs[0].get());
+  auto *root = dynamic_cast<StmtAgentDef *>(defs[0].get());
   REQUIRE(root);
-  auto *init = dynamic_cast<Assign *>(root->m_Init.get());
+  auto *init = dynamic_cast<StmtBlock *>(root->m_Init.get());
   REQUIRE(init);
-  auto *turn = dynamic_cast<Assign *>(root->m_Turn.get());
+  auto *turn = dynamic_cast<StmtBlock *>(root->m_Turn.get());
   REQUIRE(turn);
 }
 
@@ -58,13 +59,14 @@ TEST_CASE("AgentDef: goal/destination identifiers allowed in both contexts",
 
   CAPTURE(result);
   REQUIRE(result.has_value());
-  REQUIRE(p.m_AgentDefs.size() == 1);
+  auto &defs = result.value();
+  REQUIRE(defs.size() == 1);
 
-  auto *root = dynamic_cast<StmtAgentDef *>(p.m_AgentDefs[0].get());
+  auto *root = dynamic_cast<StmtAgentDef *>(defs[0].get());
   REQUIRE(root);
-  auto *init = dynamic_cast<Assign *>(root->m_Init.get());
+  auto *init = dynamic_cast<StmtBlock *>(root->m_Init.get());
   REQUIRE(init);
-  auto *turn = dynamic_cast<Assign *>(root->m_Turn.get());
+  auto *turn = dynamic_cast<StmtBlock *>(root->m_Turn.get());
   REQUIRE(turn);
 }
 
@@ -79,7 +81,7 @@ TEST_CASE("AgentDef: move in init is an error", "[parser][agent-def]") {
   REQUIRE(std::holds_alternative<ParseErr>(result.error()));
   CHECK(std::get<ParseErr>(result.error()).m_Kind == ParseErr::OUT_OF_TURN);
 
-  REQUIRE(p.m_AgentDefs.size() == 0);
+  REQUIRE(p.m_AgentDefs.empty());
 }
 
 TEST_CASE("AgentDef: move in turn parses", "[parser][agent-def]") {
@@ -93,13 +95,14 @@ TEST_CASE("AgentDef: move in turn parses", "[parser][agent-def]") {
 
   CAPTURE(result);
   REQUIRE(result.has_value());
-  REQUIRE(p.m_AgentDefs.size() == 1);
+  auto &defs = result.value();
+  REQUIRE(defs.size() == 1);
 
-  auto *root = dynamic_cast<StmtAgentDef *>(p.m_AgentDefs[0].get());
+  auto *root = dynamic_cast<StmtAgentDef *>(defs[0].get());
   REQUIRE(root);
-  auto *init = dynamic_cast<Assign *>(root->m_Init.get());
+  auto *init = dynamic_cast<StmtBlock *>(root->m_Init.get());
   REQUIRE(init);
-  auto *turn = dynamic_cast<Assign *>(root->m_Turn.get());
+  auto *turn = dynamic_cast<StmtBlock *>(root->m_Turn.get());
   REQUIRE(turn);
 }
 
@@ -117,12 +120,13 @@ TEST_CASE("AgentDef: symbols from init are visible in turn",
 
   CAPTURE(result);
   REQUIRE(result.has_value());
-  REQUIRE(p.m_AgentDefs.size() == 1);
+  auto &defs = result.value();
+  REQUIRE(defs.size() == 1);
 
-  auto *root = dynamic_cast<StmtAgentDef *>(p.m_AgentDefs[0].get());
+  auto *root = dynamic_cast<StmtAgentDef *>(defs[0].get());
   REQUIRE(root);
-  auto *init = dynamic_cast<Assign *>(root->m_Init.get());
+  auto *init = dynamic_cast<StmtBlock *>(root->m_Init.get());
   REQUIRE(init);
-  auto *turn = dynamic_cast<Assign *>(root->m_Turn.get());
+  auto *turn = dynamic_cast<StmtBlock *>(root->m_Turn.get());
   REQUIRE(turn);
 }

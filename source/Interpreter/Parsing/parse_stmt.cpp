@@ -48,6 +48,9 @@ Parser::parse_stmt(ParseSetting setting) {
     res = parse_expr();
   }
 
+  if (!res.has_value())
+    return res.error();
+
   // Consume remaining semicolon
   auto use_semi = m_Lexer.UseIf(IDs::ID_DELIM_SEMICLN);
   if (!use_semi.has_value())

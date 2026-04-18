@@ -8,7 +8,7 @@ std::expected<std::unique_ptr<AST::Node>, InterpErr> Parser::parse_agent_def() {
   // clang-format off
   /*
   ---
-  <{> <KW_INIT> <:> <STMT|STMT_BLOCK> <;> <KW_TURN> <:> <STMT|STMT_BLOCK> <;> <}> <;>
+  <{> <KW_INIT> <:> <STMT|STMT_BLOCK> <;> <KW_TURN> <:> <STMT|STMT_BLOCK> <;> <}>
   ---
   */
   // clang-format on
@@ -71,11 +71,6 @@ std::expected<std::unique_ptr<AST::Node>, InterpErr> Parser::parse_agent_def() {
 
   // Expect: <}>
   res = m_Lexer.UseIf(IDs::ID_DELIM_CLY_CLOSE);
-  if (!res.has_value())
-    return res.error();
-
-  // Expect: <;>
-  res = m_Lexer.UseIf(IDs::ID_DELIM_SEMICLN);
   if (!res.has_value())
     return res.error();
 

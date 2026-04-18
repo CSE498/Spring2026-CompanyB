@@ -7,7 +7,7 @@ namespace cse498 {
 std::expected<std::unique_ptr<AST::Node>, InterpErr> Parser::parse_move() {
   /*
   ---
-  <KW_MOVE> <(> <EXPR> <)> <;>
+  <KW_MOVE> <(> <EXPR> <)>
   ---
   */
   using AgentLexer::IDs;
@@ -35,11 +35,6 @@ std::expected<std::unique_ptr<AST::Node>, InterpErr> Parser::parse_move() {
 
   // Expect: <)>
   res = m_Lexer.UseIf(IDs::ID_DELIM_PAREN_CLOSE);
-  if (!res.has_value())
-    return res.error();
-
-  // Expect: <;>
-  res = m_Lexer.UseIf(IDs::ID_DELIM_SEMICLN);
   if (!res.has_value())
     return res.error();
 

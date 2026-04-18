@@ -69,6 +69,19 @@ TEST_CASE("VarDef: bool from comparison expression", "[vardef][parser]") {
   CHECK(dynamic_cast<ExprBinary *>(assign->m_Value.get()) != nullptr);
 }
 
+TEST_CASE("VarDef: string literal", "[vardef][parser]") {
+  auto [p, result] = parse("let label : str = \"main\";");
+
+  REQUIRE(result.has_value());
+  REQUIRE(p.m_Nodes.size() == 1);
+
+  auto *assign = dynamic_cast<Assign *>(p.m_Nodes[0].get());
+  REQUIRE(assign != nullptr);
+  CHECK(assign->m_Sym->name == "label");
+  CHECK(std::holds_alternative<std::string>(assign->m_Sym->type));
+  CHECK(dynamic_cast<ValLiteral *>(assign->m_Value.get()) != nullptr);
+}
+
 // ------------------------------------------------------------
 // Expression definitions
 // ------------------------------------------------------------
