@@ -32,6 +32,8 @@ namespace cse498 {
 using AST::StmtBlock;
 using Concepts::IsDataClass;
 using namespace agentlang::Types;
+using steps::MovementStep;
+
 
 template <IsDataClass DataClass> class ScriptedAgent;
 
@@ -77,7 +79,7 @@ class ScriptedAgent : public StepAgentBase<DataClass> {
 
   std::unique_ptr<AgentWrapper> mAgentWrapper;
 
-  StepContainer current_turn;
+  StepContainer mCurrentTurn;
 
 public:
   ScriptedAgent(DataClass initial_state, size_t id)
@@ -90,11 +92,11 @@ public:
 
   /// Choose the action to take a step in the appropriate direction.
   StepContainer GetTurn() override {
-    current_turn = StepContainer{}; // Clear the container
+    mCurrentTurn = StepContainer{}; // Clear the container
 
     Visit(*mTurn);
 
-    return current_turn;
+    return mCurrentTurn;
   }
 
 
@@ -143,9 +145,15 @@ public:
 
   std::expected<Type, InterpErr> Visit(AST::StmtAction &node) {
     TRY_DECL(type, node.m_Direction->Accept(*mAgentWrapper))
-    if (auto* direction = std::get_if<cse498::agentlang::Types::Direction>(&type)) {
-      DataClass data = this->GetState();
-      
+    if (Dir* direction = std::get_if<Dir>(&type)) {
+      auto pos = this->GetState().position;
+      switch (*direction) {
+        case Dir::LEFT: pos = pos.Left();
+        case Dir::RIGHT: pos = pos.Right();
+        case Dir::UP: pos = pos.Up();
+        case Dir::DOWN: pos = pos.Down();
+      }
+      mCurrentTurn.add_step(MovementStep{pos});
     } else {
       return RuntimeErr{
         RuntimeErr::INVALID_MOVE_ARG,
