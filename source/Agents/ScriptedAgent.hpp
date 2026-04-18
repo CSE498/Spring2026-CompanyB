@@ -144,7 +144,7 @@ public:
   std::expected<Type, InterpErr> Visit(AST::StmtAction &node) {
     TRY_DECL(type, node.m_Direction->Accept(*mAgentWrapper))
     if (auto* direction = std::get_if<cse498::agentlang::Types::Direction>(&type)) {
-      DataClass data = GetState();
+      DataClass data = this->GetState();
       
     } else {
       return RuntimeErr{
