@@ -57,8 +57,8 @@ inline std::string_view TypeVariantToName(const Type& t) {
 inline std::optional<Type> NameToType(const emplex::Token &type_tok) {
   static const std::unordered_map<std::string, Type> type_map = {
       {"bool", bool{}}, {"int", int{}},         {"double", double{}},
-      {"str", str{}},   {"Point", Point{}},     {"Direction", Dir{}},
-      {"Car", Car{}},   {"Student", Student{}},
+      {"str", str{}},   {"point", Point{}},     {"direction", Dir{}},
+      {"car", Car{}},   {"student", Student{}},
   };
 
   auto it = type_map.find(type_tok.lexeme);

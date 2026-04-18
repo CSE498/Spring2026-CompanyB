@@ -29,7 +29,7 @@
 
 namespace cse498 {
 
-using AST::StmtBlock;
+using AST::Node;
 using Concepts::IsDataClass;
 using namespace agentlang::Types;
 using steps::MovementStep;
@@ -55,8 +55,8 @@ struct AgentWrapper {
   std::expected<Type, InterpErr> Visit(AST::ValLiteral &);
   std::expected<Type, InterpErr> Visit(AST::ValVariable &);
 
-  std::expected<Type, InterpErr> Evaluate(std::unique_ptr<AST::Node> &node) {
-    return node->Accept(*this);
+  std::expected<Type, InterpErr> Evaluate(AST::Node &node) {
+    return node.Accept(*this);
   }
 
   template <IsDataClass DataClass> AgentWrapper(ScriptedAgent<DataClass> *i) {
@@ -66,7 +66,7 @@ struct AgentWrapper {
       m_Env = Env::TRAFFIC;
     }
 
-    m_AgentPtr = std::make_any(i);
+    m_AgentPtr = std::make_any<ScriptedAgent<DataClass> *>(i);
   }
 };
 
@@ -74,8 +74,8 @@ template <IsDataClass DataClass>
 class ScriptedAgent : public StepAgentBase<DataClass> {
 
   // TODO: Actuall fill these out
-  std::unique_ptr<StmtBlock> mInit;
-  std::unique_ptr<StmtBlock> mTurn;
+  std::unique_ptr<Node> mInit;
+  std::unique_ptr<Node> mTurn;
 
   std::unique_ptr<AgentWrapper> mAgentWrapper;
 
@@ -83,23 +83,25 @@ class ScriptedAgent : public StepAgentBase<DataClass> {
 
 public:
   ScriptedAgent(DataClass initial_state, size_t id)
-      : StepAgentBase<DataClass>(initial_state, id) {}
+      : StepAgentBase<DataClass>(initial_state, id),
+        mAgentWrapper(std::make_unique<AgentWrapper>(this)) {}
+    
   ~ScriptedAgent() = default;
 
-  ScriptedAgent& SetInit(std::unique_ptr<StmtBlock> init) { mInit = std::move(init); return *this; }
+  ScriptedAgent& SetInit(std::unique_ptr<Node> init) { mInit = std::move(init); return *this; }
 
-  ScriptedAgent& SetTurn(std::unique_ptr<StmtBlock> turn) { mTurn = std::move(turn); return *this; }
+  ScriptedAgent& SetTurn(std::unique_ptr<Node> turn) { mTurn = std::move(turn); return *this; }
 
   /// Choose the action to take a step in the appropriate direction.
   StepContainer GetTurn() override {
     mCurrentTurn = StepContainer{}; // Clear the container
 
-    if (!Visit(*mTurn).has_value()) {
+    if (!mAgentWrapper->Evaluate(*mTurn).has_value()) {
       // TODO we do no move, but we need to report error
       return StepContainer{};
     };
 
-    return mCurrentTurn;
+    return std::move(mCurrentTurn);
   }
 
 

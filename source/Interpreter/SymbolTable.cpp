@@ -34,7 +34,10 @@ SymbolTable::GetSym(const std::string &name) const {
   if (res != m_ScopeStack.rend())
     idx = res->at(name).value();
   else
-    return SymbolErr(SymbolErr::UNDEFINED_SYMBOL);
+    return SymbolErr(SymbolErr::UNDEFINED_SYMBOL,
+    std::format("Could not resolve symbol {}",
+    name)
+    );
 
   return m_SymbolInfo.at(idx);
 }
@@ -48,7 +51,9 @@ std::expected<size_t, InterpErr> SymbolTable::AddSym(const Token &id_tok,
                                                      const Token &type_tok) {
   auto type_opt = NameToType(type_tok);
   if (!type_opt) {
-    return SymbolErr(SymbolErr::INVALID_TYPE);
+    return SymbolErr(SymbolErr::INVALID_TYPE, 
+    std::format("Invalid type name {}",
+    type_tok.lexeme));
   }
   return AddSym(id_tok, *type_opt);
 }
@@ -61,7 +66,9 @@ std::expected<size_t, InterpErr> SymbolTable::AddSym(const Token &id_tok,
   // Symbols focus on only CURRENT scope.
   auto &symbols = m_ScopeStack.back();
   if (symbols.contains(name)) {
-    return SymbolErr(SymbolErr::REDEFINITION);
+    return SymbolErr(SymbolErr::REDEFINITION,
+    std::format("Redefinition of symbol {}",
+    name));
   }
   size_t var_id = m_SymbolInfo.size();
   m_SymbolInfo.push_back(std::make_shared<SymInfo>(name, id_tok.line_id, type));

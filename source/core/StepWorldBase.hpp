@@ -11,6 +11,9 @@
 
 #include "Interpreter/Parser.hpp"
 #include "Interpreter/interpreter.hpp"
+#include "Agents/ScriptedAgent.hpp"
+
+#include <filesystem>
 
 namespace cse498 {
 
@@ -45,20 +48,28 @@ class StepWorldBase {
   /// setup.
   virtual void ConfigAgent([[maybe_unused]] Agent &agent) {}
 
-  std::string GetAgentFileContents() { return "ADD GET FILE CONTENTS FROM GUI"; }
+  std::string GetAgentFileContents() { 
+    std::ifstream file("test.al");
+    std::ostringstream buffer;
+    buffer << file.rdbuf();
+    return buffer.str();
+   }
 
   void SetupScriptedAgents() {
     std::string contents = GetAgentFileContents();
     std::stringstream ss{contents};
+    std::cout << contents;
+    
     auto parse_res = parser.parse(ss);
     if (!parse_res.has_value()) {
+      std::cout << parse_res.error().ToStr() << "\n";
       // TODO LOG?
+      // std::terminate();
       return;
     }
-
-    for (auto agent_def : parse_res.value()) {
+    for (auto& agent_def : parse_res.value()) {
       DataClass data;
-      AddAgent<ScriptedAgent>(data)
+      this->AddAgent<ScriptedAgent<DataClass>>(data)
         .SetInit(std::move(agent_def->m_Init))
         .SetTurn(std::move(agent_def->m_Turn));
     }

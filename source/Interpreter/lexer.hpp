@@ -45,9 +45,15 @@ public:
   }
   std::expected<Token, InterpErr> UseIf(std::convertible_to<int> auto... id) {
     if (!Is(id...)) {
+
+      // Build the expected tokens string by folding over the pack
+      std::string expected;
+      bool first = true;
+      ((expected += (first ? "" : ", ") + m_Lexer.TokenName(id), first = false), ...);
+
       return LexerErr(LexerErr::UNEXP_TOKEN,
                       std::format("Expected one of [{}] but got {}",
-                                  m_Lexer.TokenName(id)...,
+                                  expected,
                                   m_Lexer.TokenName(Peek().id)));
     }
     return Use();
