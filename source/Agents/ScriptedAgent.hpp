@@ -77,6 +77,8 @@ class ScriptedAgent : public StepAgentBase<DataClass> {
 
   std::unique_ptr<AgentWrapper> mAgentWrapper;
 
+  StepContainer current_turn;
+
 public:
   ScriptedAgent(DataClass initial_state, size_t id)
       : StepAgentBase<DataClass>(initial_state, id) {}
@@ -88,11 +90,13 @@ public:
 
   /// Choose the action to take a step in the appropriate direction.
   StepContainer GetTurn() override {
-    auto turn = EvaluateTurn();
-    return turn;
+    current_turn = StepContainer{}; // Clear the container
+
+    Visit(*mTurn);
+
+    return current_turn;
   }
 
-  StepContainer EvaluateTurn() { return StepContainer{}; }
 
   std::expected<Type, InterpErr> Visit(AST::StmtBlock &node) {
     std::expected<Type, InterpErr> res;
@@ -136,11 +140,24 @@ public:
       "Encountered an agent definition when evaluation agent turn"
     };
   }
+
   std::expected<Type, InterpErr> Visit(AST::StmtAction &node) {
-    return TempErr(
-        TempErr::NOT_IMPLEMENTED,
-        "Don't yet know where and how Daniel intends to do evaluation");
+    TRY_DECL(type, node.m_Direction->Accept(*mAgentWrapper))
+    if (auto* direction = std::get_if<cse498::agentlang::Types::Direction>(&type)) {
+      DataClass data = GetState();
+      
+    } else {
+      return RuntimeErr{
+        RuntimeErr::INVALID_MOVE_ARG,
+        std::format("move() expects type 'Direction', found {}",
+        TypeVariantToName(type)
+        )
+      };
+    }
+
+    return NullType{};
   }
+
   std::expected<Type, InterpErr> Visit(AST::StmtLoopCtl &node) {
     if (node.m_Action == AST::StmtLoopCtl::BREAK) {
       return LoopControlErr(

@@ -87,7 +87,8 @@ struct RuntimeErr : BaseErr {
     EMPTY_INTERP_WRAPPER,
     UNSUPPORTED_OP,
     NOT_BOOL_CONV,
-    ENCOUNTERED_AGENT_DEF
+    ENCOUNTERED_AGENT_DEF,
+    INVALID_MOVE_ARG
   };
 
   Kind m_Kind;
