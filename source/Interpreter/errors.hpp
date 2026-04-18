@@ -95,6 +95,19 @@ struct RuntimeErr : BaseErr {
   RuntimeErr(Kind kind, std::string const &msg) : BaseErr(msg), m_Kind(kind) {}
 };
 
+struct LoopControlErr : BaseErr {
+  bool operator==(const LoopControlErr &) const = default;
+  enum Kind {
+    BREAK,
+    CONTINUE,
+  };
+
+  Kind m_Kind;
+  LoopControlErr(Kind kind) : BaseErr(), m_Kind(kind) {}
+  LoopControlErr(Kind kind, std::string const &msg) : BaseErr(msg), m_Kind(kind) {}
+};
+
+
 // For internal errors as we implement the rest of the interpreter
 struct TempErr : BaseErr {
   bool operator==(const TempErr &) const = default;
@@ -108,7 +121,7 @@ struct TempErr : BaseErr {
 };
 
 using InterpErr_T =
-    std::variant<LexerErr, ParseErr, SymbolErr, ASTErr, RuntimeErr, TempErr>;
+    std::variant<LexerErr, ParseErr, SymbolErr, ASTErr, RuntimeErr, LoopControlErr, TempErr>;
 struct InterpErr : public InterpErr_T {
   using InterpErr_T::variant;
 

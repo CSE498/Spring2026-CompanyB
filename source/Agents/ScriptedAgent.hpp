@@ -133,7 +133,7 @@ public:
   std::expected<Type, InterpErr> Visit(AST::StmtAgentDef &node) {
     return RuntimeErr{
       RuntimeErr::ENCOUNTERED_AGENT_DEF,
-      "Encountered an agent definition when evaluation agent turn."
+      "Encountered an agent definition when evaluation agent turn"
     };
   }
   std::expected<Type, InterpErr> Visit(AST::StmtAction &node) {
@@ -142,16 +142,35 @@ public:
         "Don't yet know where and how Daniel intends to do evaluation");
   }
   std::expected<Type, InterpErr> Visit(AST::StmtLoopCtl &node) {
-    return TempErr(
-        TempErr::NOT_IMPLEMENTED,
-        "Don't yet know where and how Daniel intends to do evaluation");
+    if (node.m_Action == AST::StmtLoopCtl::BREAK) {
+      return LoopControlErr(
+        LoopControlErr::BREAK,
+        "'break' statement encountered outside of loop"
+      );
+    } 
+
+    return LoopControlErr(
+      LoopControlErr::CONTINUE,
+      "'continue' statement encountered outside of loop"
+    );
   }
   std::expected<Type, InterpErr> Visit(AST::StmtWhile &node) {
     TRY_DECL(cond, node.m_Condition->Accept(*mAgentWrapper))
     TRY_DECL(cond_truthy, evaluate_bool(cond))
     
     while (cond_truthy) {
-      TRY(node.m_Body->Accept(*mAgentWrapper))
+      auto body_res = node.m_Body->Accept(*mAgentWrapper);
+      if (!body_res.has_value()) {
+        if (auto* err = std::get_if<LoopControlErr>(&body_res.error())) {
+            if (err->m_Kind == LoopControlErr::BREAK) {
+              break;
+            } else {
+              continue;
+            }
+        } else {
+          return body_res.error();
+        }
+      }
 
       TRY_DECL(new_cond, node.m_Condition->Accept(*mAgentWrapper))
       TRY_DECL(new_cond_truthy, evaluate_bool(new_cond))
