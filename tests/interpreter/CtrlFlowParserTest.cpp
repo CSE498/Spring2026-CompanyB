@@ -17,7 +17,7 @@ using namespace cse498::AST;
 
 // Parses the given statements under a "world traffic;" header.
 // Returns the parser (which holds m_Nodes and m_Syms) and the parse result.
-static std::pair<Parser, std::expected<void, InterpErr>>
+static std::pair<Parser, std::expected<std::vector<std::unique_ptr<StmtAgentDef>>, InterpErr>>
 parse(std::string const &stmts) {
   Parser p;
   std::istringstream ss("world traffic;\n" + stmts);

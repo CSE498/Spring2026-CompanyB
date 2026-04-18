@@ -6,14 +6,16 @@
 #include <catch2/catch_test_macros.hpp>
 
 #include "Interpreter/Parser.hpp"
+#include "Interpreter/ast.hpp"
 #include "Interpreter/errors.hpp"
 
 #include <sstream>
 #include <string>
 
 using namespace cse498;
+using namespace cse498::AST;
 
-static std::pair<Parser, std::expected<void, InterpErr>>
+static std::pair<Parser, std::expected<std::vector<std::unique_ptr<StmtAgentDef>>, InterpErr>>
 parse(std::string const &script) {
   Parser p;
   std::istringstream ss(script);
@@ -22,18 +24,26 @@ parse(std::string const &script) {
 }
 
 TEST_CASE("AgentDef: empty init and turn are allowed", "[parser][agent-def]") {
-  REQUIRE(parse("world infection;\n"
+  auto [p, result] = parse("world infection;\n"
                 "let walker : student {\n"
                 "  init : { };\n"
                 "  turn : { };\n"
-                "};")
-              .second
-              .has_value());
+                "};");
+
+  REQUIRE(result.has_value());
+  REQUIRE(p.m_AgentDefs.size() == 1);
+
+  auto *root = dynamic_cast<StmtAgentDef *>(p.m_AgentDefs[0].get());
+  REQUIRE(root);
+  auto *init = dynamic_cast<Assign *>(root->m_Init.get());
+  REQUIRE(init);
+  auto *turn = dynamic_cast<Assign *>(root->m_Turn.get());
+  REQUIRE(turn);
 }
 
 TEST_CASE("AgentDef: goal/destination identifiers allowed in both contexts",
           "[parser][agent-def]") {
-  REQUIRE(parse("world traffic;\n"
+  auto [p, result] = parse("world traffic;\n"
                 "let driver : car {\n"
                 "  init : {\n"
                 "    let goal : int = 1;\n"
@@ -41,40 +51,56 @@ TEST_CASE("AgentDef: goal/destination identifiers allowed in both contexts",
                 "  turn : {\n"
                 "    let destination : int = 2;\n"
                 "  };\n"
-                "};")
-              .second
-              .has_value());
+                "};");
+
+  REQUIRE(result.has_value());
+  REQUIRE(p.m_AgentDefs.size() == 1);
+
+  auto *root = dynamic_cast<StmtAgentDef *>(p.m_AgentDefs[0].get());
+  REQUIRE(root);
+  auto *init = dynamic_cast<Assign *>(root->m_Init.get());
+  REQUIRE(init);
+  auto *turn = dynamic_cast<Assign *>(root->m_Turn.get());
+  REQUIRE(turn);
 }
 
 TEST_CASE("AgentDef: move in init is an error", "[parser][agent-def]") {
-  auto const result =
-      parse("world infection;\n"
-            "let walker : student {\n"
-            "  init : move(up);\n"
-            "  turn : { };\n"
-            "};")
-          .second;
+  auto [p, result] = parse("world infection;\n"
+                  "let walker : student {\n"
+                  "  init : move(up);\n"
+                  "  turn : { };\n"
+                  "};");
 
   REQUIRE_FALSE(result.has_value());
   REQUIRE(std::holds_alternative<ParseErr>(result.error()));
   CHECK(std::get<ParseErr>(result.error()).m_Kind == ParseErr::OUT_OF_TURN);
+
+  REQUIRE(p.m_AgentDefs.size() == 0);
 }
 
 TEST_CASE("AgentDef: move in turn parses", "[parser][agent-def]") {
-  REQUIRE(parse("world infection;\n"
+  auto [p, result] = parse("world infection;\n"
                 "let walker : student {\n"
                 "  init : { };\n"
                 "  turn : {\n"
                 "    move(up);\n"
                 "  };\n"
-                "};")
-              .second
-              .has_value());
+                "};");
+
+  REQUIRE(result.has_value());
+  REQUIRE(p.m_AgentDefs.size() == 1);
+
+  auto *root = dynamic_cast<StmtAgentDef *>(p.m_AgentDefs[0].get());
+  REQUIRE(root);
+  auto *init = dynamic_cast<Assign *>(root->m_Init.get());
+  REQUIRE(init);
+  auto *turn = dynamic_cast<Assign *>(root->m_Turn.get());
+  REQUIRE(turn);
 }
 
 TEST_CASE("AgentDef: symbols from init are visible in turn",
           "[parser][agent-def]") {
-  REQUIRE(parse("world infection;\n"
+  auto [p, result] = parse("world infection;\n"
                 "let square_walker : student {\n"
                 "  init : {\n"
                 "    let step_idx : int = 0;\n"
@@ -82,7 +108,15 @@ TEST_CASE("AgentDef: symbols from init are visible in turn",
                 "  turn : {\n"
                 "    step_idx;\n"
                 "  };\n"
-                "};")
-              .second
-              .has_value());
+                "};");
+
+  REQUIRE(result.has_value());
+  REQUIRE(p.m_AgentDefs.size() == 1);
+
+  auto *root = dynamic_cast<StmtAgentDef *>(p.m_AgentDefs[0].get());
+  REQUIRE(root);
+  auto *init = dynamic_cast<Assign *>(root->m_Init.get());
+  REQUIRE(init);
+  auto *turn = dynamic_cast<Assign *>(root->m_Turn.get());
+  REQUIRE(turn);
 }
