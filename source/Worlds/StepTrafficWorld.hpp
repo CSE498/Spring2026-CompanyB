@@ -154,13 +154,20 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
   size_t traffic_light_horizontal_id{};  ///< Traffic light allowing horizontal
                                          ///< movement ('-')
 
-  size_t spawn_id{};        ///< ID of cells that spawn agents.
+  // ID of cells that spawn agents.
+  size_t spawn_fast_id{}; // < Id for Fast spawners that uses the fast clock
+  size_t spawn_normal_id{}; // < Id for Normal spawners that uses the normal clock
+  size_t spawn_slow_id{}; // < Id for Slow spawners that uses the Slow clock
+
+  // Containers for the 3 different types of spawners
+  std::vector<WorldPosition> fast_spawner_positions{}; // < Fasp Spawner location container
+  std::vector<WorldPosition> normal_spawner_positions{}; // < normal Spawner location container
+  std::vector<WorldPosition> slow_spawner_positions{}; // < slow Spawner location container
+
   size_t destination_id{};  ///< ID of cells which are destinations that agents
                             ///< try to reach.
   std::vector<WorldPosition>
       traffic_light_positions{};  ///< Positions of all traffic lights.
-  std::vector<WorldPosition>
-      spawner_positions{};  ///< Positions of all spawner tiles.
   WeightedSet<WorldPosition>
       destination_positions{};  // Weighted set to randomly assign destinations
   std::map<WorldPosition, std::string>
@@ -183,11 +190,29 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
   int traffic_light_clock = 0;
 
   /// @brief The number of turns that pass before a new agent is spawned from
-  /// each spawner with a random destination.
-  static constexpr int spawn_period = 20;
+  /// each spawner with a random destination. This is for the Fast speed
+  static constexpr int fast_spawn_period = 10;
+  /// @brief The number of turns that pass before a new agent is spawned from
+  /// each spawner with a random destination. This is for the Normal speed
+  static constexpr int normal_spawn_period = 20;
+  /// @brief The number of turns that pass before a new agent is spawned from
+  /// each spawner with a random destination. This is for the Slow speed
+  static constexpr int slow_spawn_period = 30;
 
-  /// @brief Counts up each turn and gets reset when it reaches spawn_period.
-  int spawn_clock = 0;
+  /// @brief Counts up each turn and gets reset when it reaches spawn_period. Fast
+  int fast_spawn_clock = 0;
+  /// @brief Counts up each turn and gets reset when it reaches spawn_period. Normal
+  int normal_spawn_clock = 0;
+  /// @brief Counts up each turn and gets reset when it reaches spawn_period. Slow
+  int slow_spawn_clock = 0;
+
+  // Cyan shades for spawner tile display
+  /// @brief Bright Cyan for the fast spawner
+  inline static const std::string fast_spawn_colour = "\033[96m";
+  /// @brief Reg Cyan for the normal spawner
+  inline static const std::string normal_spawn_colour = "\033[36m";
+  /// @brief Dim Cyan for the slow spawner
+  inline static const std::string slow_spawn_colour = "\033[2;36m";
 
   /// @brief The number of currently-active agents that have been spawned by
   /// spawner tiles. Incremented whenever a spawner spawns something,
@@ -195,7 +220,7 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
   int num_spawned_agents = 0;
   /// @brief Cap on the number of active spawned agents that can exist at a
   /// time, to prevent the world from getting too chaotic.
-  static constexpr int max_spawned_agents = 3;
+  static constexpr int max_spawned_agents = 20;
 
   /// @brief Queue of IDs of despawned agents available for recycling.
   /// Written by Claude.
@@ -214,8 +239,10 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
     traffic_light_horizontal_id = main_grid.AddCellType(
         "traffic_light_horizontal",
         "Traffic light allowing horizontal (left/right) movement.", '-');
-    spawn_id =
-        main_grid.AddCellType("spawn", "Spawner for driving agents", 'S');
+
+    spawn_fast_id   = main_grid.AddCellType("spawn_fast",   "Fast spawner",   'F');
+    spawn_normal_id = main_grid.AddCellType("spawn_normal", "Normal spawner", 'N');
+    spawn_slow_id   = main_grid.AddCellType("spawn_slow",   "Slow spawner",   'S');
     destination_id = main_grid.AddCellType(
         "destination", "Destination for driving agents", 'D');
   }
@@ -228,8 +255,12 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
         WorldPosition pos(x, y);
         if (main_grid[pos] == traffic_light_vertical_id) {
           traffic_light_positions.push_back(pos);
-        } else if (main_grid[pos] == spawn_id) {
-          spawner_positions.push_back(pos);
+        } else if (main_grid[pos] == spawn_fast_id) {
+          fast_spawner_positions.push_back(pos);
+        } else if (main_grid[pos] == spawn_normal_id) {
+          normal_spawner_positions.push_back(pos);
+        } else if (main_grid[pos] == spawn_slow_id) {
+          slow_spawner_positions.push_back(pos);
         }
       }
     }
@@ -396,33 +427,45 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
     return std::ranges::find_if(agent_set, agent_at) != agent_set.end();
   }
 
-  /// @brief Update the spawn clock by 1 tick. If it's time to spawn more
-  /// agents, go to each spawner without an agent currently on top of it and
+  /// Pulls out common logic for the spawners and simplifies the update spwaners
+  /// go to each spawner without an agent currently on top of it and
   /// spawn a new DrivingAgent with a randomly chosen destination.
-  void UpdateSpawners() {
-    if (++spawn_clock >= spawn_period) {
-      spawn_clock = 0;
-      for (const WorldPosition &pos : spawner_positions) {
-        // Don't spawn on top of an existing agent
-        if (main_grid[pos] == spawn_id && !AgentExistsAt(pos) &&
-            num_spawned_agents < max_spawned_agents) {
-          auto dest = destination_positions.GetRandomElement();
-          if (dest.has_value()) {
-            WorldPosition dest_pos = dest.value();
+  void SpawnFromPositions(const std::vector<WorldPosition> &positions) {
+    for (const WorldPosition &pos : positions) {
+      if (!AgentExistsAt(pos) &&
+          num_spawned_agents < max_spawned_agents) {
+        auto dest = destination_positions.GetRandomElement();
+        if (dest.has_value()) {
+          WorldPosition dest_pos = dest.value();
 
-            if (!despawned_agent_ids.empty()) {
-              RecycleDespawnedAgent(pos, dest_pos);
-            } else {
-              TrafficData state = {
-                  dest_pos, pos, Direction::East,
-                  true,     '>', GetDestinationColour(dest_pos)};
-              AddAgent<SpawnedAgent>(state);
-            }
-
-            ++num_spawned_agents;
+          if (!despawned_agent_ids.empty()) {
+            RecycleDespawnedAgent(pos, dest_pos);
+          } else {
+            TrafficData state = {
+              dest_pos, pos, Direction::East,
+              true,     '>', GetDestinationColour(dest_pos)};
+            AddAgent<SpawnedAgent>(state);
           }
+          ++num_spawned_agents;
         }
-      }
+          }
+    }
+  }
+  /// @brief Update the spawn clock by 1 tick. If it's time to spawn more
+  /// agents, Uses the 3 new Timers and idas and containser for the 3 speeds
+  /// of spawners
+  void UpdateSpawners() {
+    if (++fast_spawn_clock >= fast_spawn_period) {
+      fast_spawn_clock = 0;
+      SpawnFromPositions(fast_spawner_positions);
+    }
+    if (++normal_spawn_clock >= normal_spawn_period) {
+      normal_spawn_clock = 0;
+      SpawnFromPositions(normal_spawner_positions);
+    }
+    if (++slow_spawn_clock >= slow_spawn_period) {
+      slow_spawn_clock = 0;
+      SpawnFromPositions(slow_spawner_positions);
     }
   }
 
@@ -508,6 +551,20 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
         if (!col.empty()) colour_grid[y][x] = col;
       }
     }
+
+    // Colour spawner tiles with cyan shades, all displayed as 'S'
+    auto colourSpawners = [&](const std::vector<WorldPosition> &positions, const std::string &colour)
+    {
+      for (const auto &pos : positions) {
+        size_t x = pos.CellX(), y = pos.CellY();
+        symbol_grid[y][x] = 'S';
+        colour_grid[y][x] = colour;
+      }
+    }
+
+    colourSpawners(fast_spawner_positions, fast_spawn_colour);
+    colourSpawners(normal_spawner_positions, normal_spawn_colour);
+    colourSpawners(slow_spawner_positions, slow_spawn_colour);
 
     // Stamp active agents onto the grid.
     for (const auto &agent_ptr : agent_set) {
