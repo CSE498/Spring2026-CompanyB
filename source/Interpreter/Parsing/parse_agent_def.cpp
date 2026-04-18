@@ -79,8 +79,11 @@ std::expected<std::unique_ptr<AST::Node>, InterpErr> Parser::parse_agent_def() {
   if (!res.has_value())
     return res.error();
 
-  return std::make_unique<AST::StmtAgentDef>(
-      agent_token, std::move(init.value()), std::move(turn.value()));
+
+  m_AgentDefs.emplace_back(std::move(std::make_unique<AST::StmtAgentDef>(
+      agent_token, std::move(init.value()), std::move(turn.value()))));
+
+  return nullptr;
 }
 
 }; // namespace cse498

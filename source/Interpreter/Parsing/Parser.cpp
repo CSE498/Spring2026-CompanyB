@@ -11,7 +11,7 @@ namespace cse498 {
 
 std::expected<void, InterpErr> Parser::parse(std::istream &in) {
   using AgentLexer::IDs;
-  m_Nodes.clear();
+  m_AgentDefs.clear();
 
   auto tokenize_res = m_Lexer.Tokenize(in);
   if (!tokenize_res.has_value())

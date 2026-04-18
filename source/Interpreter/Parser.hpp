@@ -11,6 +11,7 @@ struct Parser {
   enum class Env { TRAFFIC, INFECTION } m_Env;
   SymbolTable m_Syms{};
   std::vector<std::unique_ptr<AST::Node>> m_Nodes;
+  std::vector<std::unique_ptr<AST::StmtAgentDef>> m_AgentDefs;
 
   std::expected<void, InterpErr> parse(std::istream &);
 
