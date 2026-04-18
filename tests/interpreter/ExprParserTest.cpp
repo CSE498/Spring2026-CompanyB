@@ -33,9 +33,14 @@ TEST_CASE("Expr (Basic): 1+-1", "[expr][parser]") {
 
   auto *expr_binary = dynamic_cast<ExprBinary *>(p.m_Nodes[0].get());
   REQUIRE(expr_binary != nullptr);
-  CHECK(expr_binary->m_Sym->name == "+");
-  CHECK(std::holds_alternative<int>(expr_binary->m_Sym->type));
-  CHECK(dynamic_cast<ValLiteral *>(expr_binary->m_Value.get()) != nullptr);
+
+  auto *val_literal = dynamic_cast<ValLiteral *>(expr_binary->m_Left.get());
+  CHECK(val_literal != nullptr);
+  CHECK(std::holds_alternative<int>(val_literal->m_Val));
+
+  val_literal = dynamic_cast<ValLiteral *>(expr_binary->m_Right.get());
+  CHECK(val_literal != nullptr);
+  CHECK(std::holds_alternative<int>(val_literal->m_Val));
 }
 
 TEST_CASE("Expr (Ambiguity): 2-1+1", "[expr][parser]") {
@@ -44,11 +49,27 @@ TEST_CASE("Expr (Ambiguity): 2-1+1", "[expr][parser]") {
   REQUIRE(result.has_value());
   REQUIRE(p.m_Nodes.size() == 1);
 
+  // ExprBinary
+
   auto *expr_binary = dynamic_cast<ExprBinary *>(p.m_Nodes[0].get());
   REQUIRE(expr_binary != nullptr);
-  CHECK(expr_binary->m_Sym->name == "+");
-  CHECK(std::holds_alternative<int>(expr_binary->m_Sym->type));
-  CHECK(dynamic_cast<ValLiteral *>(expr_binary->m_Value.get()) != nullptr);
+
+  auto *val_literal = dynamic_cast<ValLiteral *>(expr_binary->m_Right.get());
+  CHECK(val_literal != nullptr);
+  CHECK(std::holds_alternative<int>(val_literal->m_Val));
+
+  // ExprBinary #2
+
+  auto *expr_binary_2 = dynamic_cast<ExprBinary *>(expr_binary->m_Left.get());
+  REQUIRE(expr_binary_2 != nullptr);
+
+  val_literal = dynamic_cast<ValLiteral *>(expr_binary_2->m_Left.get());
+  CHECK(val_literal != nullptr);
+  CHECK(std::holds_alternative<int>(val_literal->m_Val));
+
+  val_literal = dynamic_cast<ValLiteral *>(expr_binary_2->m_Right.get());
+  CHECK(val_literal != nullptr);
+  CHECK(std::holds_alternative<int>(val_literal->m_Val));
 }
 
 TEST_CASE("Expr (Precedence): 2-3*4", "[expr][parser]") {
@@ -57,11 +78,27 @@ TEST_CASE("Expr (Precedence): 2-3*4", "[expr][parser]") {
   REQUIRE(result.has_value());
   REQUIRE(p.m_Nodes.size() == 1);
 
+  // ExprBinary
+
   auto *expr_binary = dynamic_cast<ExprBinary *>(p.m_Nodes[0].get());
   REQUIRE(expr_binary != nullptr);
-  CHECK(expr_binary->m_Sym->name == "+");
-  CHECK(std::holds_alternative<int>(expr_binary->m_Sym->type));
-  CHECK(dynamic_cast<ValLiteral *>(expr_binary->m_Value.get()) != nullptr);
+
+  auto *val_literal = dynamic_cast<ValLiteral *>(expr_binary->m_Left.get());
+  CHECK(val_literal != nullptr);
+  CHECK(std::holds_alternative<int>(val_literal->m_Val));
+
+  // ExprBinary #2
+
+  auto *expr_binary_2 = dynamic_cast<ExprBinary *>(expr_binary->m_Right.get());
+  REQUIRE(expr_binary_2 != nullptr);
+
+  val_literal = dynamic_cast<ValLiteral *>(expr_binary_2->m_Left.get());
+  CHECK(val_literal != nullptr);
+  CHECK(std::holds_alternative<int>(val_literal->m_Val));
+
+  val_literal = dynamic_cast<ValLiteral *>(expr_binary_2->m_Right.get());
+  CHECK(val_literal != nullptr);
+  CHECK(std::holds_alternative<int>(val_literal->m_Val));
 }
 
 TEST_CASE("Expr (PMDAS): 1+2*(3+4)+5", "[expr][parser]") {
@@ -70,9 +107,43 @@ TEST_CASE("Expr (PMDAS): 1+2*(3+4)+5", "[expr][parser]") {
   REQUIRE(result.has_value());
   REQUIRE(p.m_Nodes.size() == 1);
 
+  // ExprBinary
+
   auto *expr_binary = dynamic_cast<ExprBinary *>(p.m_Nodes[0].get());
   REQUIRE(expr_binary != nullptr);
-  CHECK(expr_binary->m_Sym->name == "+");
-  CHECK(std::holds_alternative<int>(expr_binary->m_Sym->type));
-  CHECK(dynamic_cast<ValLiteral *>(expr_binary->m_Value.get()) != nullptr);
+
+  auto *val_literal = dynamic_cast<ValLiteral *>(expr_binary->m_Left.get());
+  CHECK(val_literal != nullptr);
+  CHECK(std::holds_alternative<int>(val_literal->m_Val));
+
+  // ExprBinary #2
+
+  auto *expr_binary_2 = dynamic_cast<ExprBinary *>(expr_binary->m_Right.get());
+  REQUIRE(expr_binary_2 != nullptr);
+
+  val_literal = dynamic_cast<ValLiteral *>(expr_binary_2->m_Left.get());
+  CHECK(val_literal != nullptr);
+  CHECK(std::holds_alternative<int>(val_literal->m_Val));
+
+  // ExprBinary #3
+
+  auto *expr_binary_3 = dynamic_cast<ExprBinary *>(expr_binary_2->m_Right.get());
+  REQUIRE(expr_binary_3 != nullptr);
+
+  val_literal = dynamic_cast<ValLiteral *>(expr_binary_3->m_Left.get());
+  CHECK(val_literal != nullptr);
+  CHECK(std::holds_alternative<int>(val_literal->m_Val));
+
+  // ExprBinary #4
+
+  auto *expr_binary_4 = dynamic_cast<ExprBinary *>(expr_binary_3->m_Right.get());
+  REQUIRE(expr_binary_4 != nullptr);
+
+  val_literal = dynamic_cast<ValLiteral *>(expr_binary_4->m_Left.get());
+  CHECK(val_literal != nullptr);
+  CHECK(std::holds_alternative<int>(val_literal->m_Val));
+
+  val_literal = dynamic_cast<ValLiteral *>(expr_binary_4->m_Right.get());
+  CHECK(val_literal != nullptr);
+  CHECK(std::holds_alternative<int>(val_literal->m_Val));
 }

@@ -25,93 +25,175 @@ parse(std::string const &stmts) {
   return {std::move(p), std::move(result)};
 }
 
+// If, Else If, and Else Statements
+
 TEST_CASE("Ctrl-Flow: Basic Empty Stmt-Block (Int)", "[ctrl-flow][int][parser]") {
   auto [p, result] = parse("let i : int = 5;\nif (i == 5) {}");
 
   REQUIRE(result.has_value());
-  REQUIRE(p.m_Nodes.size() == 1);
+  REQUIRE(p.m_Nodes.size() == 2);
 
-  auto *expr_binary = dynamic_cast<ExprBinary *>(p.m_Nodes[0].get());
-  REQUIRE(expr_binary != nullptr);
-  CHECK(expr_binary->m_Sym->name == "+");
-  CHECK(std::holds_alternative<int>(expr_binary->m_Sym->type));
-  CHECK(dynamic_cast<ValLiteral *>(expr_binary->m_Value.get()) != nullptr);
+  auto *stmt_if = dynamic_cast<StmtIf *>(p.m_Nodes[1].get());
+  REQUIRE(stmt_if != nullptr);
+  CHECK(dynamic_cast<ExprBinary *>(stmt_if->m_Condition.get()) != nullptr);
+  CHECK(dynamic_cast<StmtBlock *>(stmt_if->m_TBody.get()) != nullptr);
 }
 
 TEST_CASE("Ctrl-Flow: Basic Empty Stmt (Int)", "[ctrl-flow][int][parser]") {
   auto [p, result] = parse("let i : int = 5;\nif (i == 5)");
 
   REQUIRE(result.has_value());
-  REQUIRE(p.m_Nodes.size() == 1);
+  REQUIRE(p.m_Nodes.size() == 2);
 
-  auto *expr_binary = dynamic_cast<ExprBinary *>(p.m_Nodes[0].get());
-  REQUIRE(expr_binary != nullptr);
-  CHECK(expr_binary->m_Sym->name == "+");
-  CHECK(std::holds_alternative<int>(expr_binary->m_Sym->type));
-  CHECK(dynamic_cast<ValLiteral *>(expr_binary->m_Value.get()) != nullptr);
+  auto *stmt_if = dynamic_cast<StmtIf *>(p.m_Nodes[1].get());
+  REQUIRE(stmt_if != nullptr);
+  CHECK(dynamic_cast<ExprBinary *>(stmt_if->m_Condition.get()) != nullptr);
+  CHECK(dynamic_cast<StmtBlock *>(stmt_if->m_TBody.get()) != nullptr);
 }
 
 TEST_CASE("Ctrl-Flow: Basic Stmt-Block (Int)", "[ctrl-flow][int][parser]") {
   auto [p, result] = parse("let i : int = 5;\nif (i == 5) {i = 10;}");
 
   REQUIRE(result.has_value());
-  REQUIRE(p.m_Nodes.size() == 1);
+  REQUIRE(p.m_Nodes.size() == 2);
 
-  auto *expr_binary = dynamic_cast<ExprBinary *>(p.m_Nodes[0].get());
-  REQUIRE(expr_binary != nullptr);
-  CHECK(expr_binary->m_Sym->name == "+");
-  CHECK(std::holds_alternative<int>(expr_binary->m_Sym->type));
-  CHECK(dynamic_cast<ValLiteral *>(expr_binary->m_Value.get()) != nullptr);
+  auto *stmt_if = dynamic_cast<StmtIf *>(p.m_Nodes[1].get());
+  REQUIRE(stmt_if != nullptr);
+  CHECK(dynamic_cast<ExprBinary *>(stmt_if->m_Condition.get()) != nullptr);
+  CHECK(dynamic_cast<StmtBlock *>(stmt_if->m_TBody.get()) != nullptr);
 }
 
 TEST_CASE("Ctrl-Flow: Basic Stmt (Int)", "[ctrl-flow][int][parser]") {
   auto [p, result] = parse("let i : int = 5;\nif (i == 5) i = 10;");
 
   REQUIRE(result.has_value());
-  REQUIRE(p.m_Nodes.size() == 1);
+  REQUIRE(p.m_Nodes.size() == 2);
 
-  auto *expr_binary = dynamic_cast<ExprBinary *>(p.m_Nodes[0].get());
-  REQUIRE(expr_binary != nullptr);
-  CHECK(expr_binary->m_Sym->name == "+");
-  CHECK(std::holds_alternative<int>(expr_binary->m_Sym->type));
-  CHECK(dynamic_cast<ValLiteral *>(expr_binary->m_Value.get()) != nullptr);
+  auto *stmt_if = dynamic_cast<StmtIf *>(p.m_Nodes[1].get());
+  REQUIRE(stmt_if != nullptr);
+  CHECK(dynamic_cast<ExprBinary *>(stmt_if->m_Condition.get()) != nullptr);
+  CHECK(dynamic_cast<StmtBlock *>(stmt_if->m_TBody.get()) != nullptr);
 }
 
 TEST_CASE("Ctrl-Flow: Else-if WITHOUT Else (Direction)", "[ctrl-flow][direction][parser]") {
   auto [p, result] = parse("let next_direction : direction = RIGHT;\nif (next_direction == LEFT) move(UP);\nelse if (next_direction == RIGHT) move(DOWN);");
 
   REQUIRE(result.has_value());
-  REQUIRE(p.m_Nodes.size() == 1);
+  REQUIRE(p.m_Nodes.size() == 3);
 
-  auto *expr_binary = dynamic_cast<ExprBinary *>(p.m_Nodes[0].get());
-  REQUIRE(expr_binary != nullptr);
-  CHECK(expr_binary->m_Sym->name == "+");
-  CHECK(std::holds_alternative<int>(expr_binary->m_Sym->type));
-  CHECK(dynamic_cast<ValLiteral *>(expr_binary->m_Value.get()) != nullptr);
+  auto *stmt_if = dynamic_cast<StmtIf *>(p.m_Nodes[1].get());
+  REQUIRE(stmt_if != nullptr);
+  CHECK(dynamic_cast<ExprBinary *>(stmt_if->m_Condition.get()) != nullptr);
+  CHECK(dynamic_cast<StmtBlock *>(stmt_if->m_TBody.get()) != nullptr);
+
+  auto *stmt_else_if = dynamic_cast<StmtIf *>(p.m_Nodes[2].get());
+  REQUIRE(stmt_else_if != nullptr);
+  CHECK(dynamic_cast<ExprBinary *>(stmt_else_if->m_Condition.get()) != nullptr);
+  CHECK(dynamic_cast<StmtBlock *>(stmt_else_if->m_TBody.get()) != nullptr);
 }
 
 TEST_CASE("Ctrl-Flow: Else-if WITH Else (Direction)", "[ctrl-flow][direction][parser]") {
   auto [p, result] = parse("let next_direction : direction = UP;\nif (next_direction == LEFT) move(UP);\nelse if (next_direction == RIGHT) move(DOWN);\nelse move(next_direction)");
 
   REQUIRE(result.has_value());
-  REQUIRE(p.m_Nodes.size() == 1);
+  REQUIRE(p.m_Nodes.size() == 4);
 
-  auto *expr_binary = dynamic_cast<ExprBinary *>(p.m_Nodes[0].get());
-  REQUIRE(expr_binary != nullptr);
-  CHECK(expr_binary->m_Sym->name == "+");
-  CHECK(std::holds_alternative<int>(expr_binary->m_Sym->type));
-  CHECK(dynamic_cast<ValLiteral *>(expr_binary->m_Value.get()) != nullptr);
+  auto *stmt_if = dynamic_cast<StmtIf *>(p.m_Nodes[1].get());
+  REQUIRE(stmt_if != nullptr);
+  CHECK(dynamic_cast<ExprBinary *>(stmt_if->m_Condition.get()) != nullptr);
+  CHECK(dynamic_cast<StmtBlock *>(stmt_if->m_TBody.get()) != nullptr);
+
+  auto *stmt_else_if = dynamic_cast<StmtIf *>(p.m_Nodes[2].get());
+  REQUIRE(stmt_else_if != nullptr);
+  CHECK(dynamic_cast<ExprBinary *>(stmt_else_if->m_Condition.get()) != nullptr);
+  CHECK(dynamic_cast<StmtBlock *>(stmt_else_if->m_TBody.get()) != nullptr);
+
+  auto *stmt_else = dynamic_cast<StmtIf *>(p.m_Nodes[3].get());
+  REQUIRE(stmt_else_if != nullptr);
+  CHECK(dynamic_cast<ExprBinary *>(stmt_else_if->m_Condition.get()) != nullptr);
+  CHECK(dynamic_cast<StmtBlock *>(stmt_else_if->m_TBody.get()) != nullptr);
 }
 
-TEST_CASE("Ctrl-Flow: Condition without Paren Error (double)", "[ctrl-flow][double][parser]") {
+TEST_CASE("Ctrl-Flow: Condition without Paren Error (double)", "[ctrl-flow][error][double][parser]") {
   auto [p, result] = parse("let x : double = 2.0;\nif x == 2.0 x = 1.0;");
 
-  REQUIRE(result.has_value());
+  REQUIRE(result.has_value() == false);
   REQUIRE(p.m_Nodes.size() == 1);
+}
 
-  auto *expr_binary = dynamic_cast<ExprBinary *>(p.m_Nodes[0].get());
-  REQUIRE(expr_binary != nullptr);
-  CHECK(expr_binary->m_Sym->name == "+");
-  CHECK(std::holds_alternative<int>(expr_binary->m_Sym->type));
-  CHECK(dynamic_cast<ValLiteral *>(expr_binary->m_Value.get()) != nullptr);
+// While Statements
+
+TEST_CASE("Ctrl-Flow (While): Basic Empty Stmt-Block Error (Double)", "[ctrl-flow][error][double][parser]") {
+  auto [p, result] = parse("let x : double = 0.0;\nwhile (x < 2.0) {}");
+
+  REQUIRE(result.has_value() == false);
+  REQUIRE(p.m_Nodes.size() == 1);
+}
+
+TEST_CASE("Ctrl-Flow (While): Basic Empty Stmt (Double)", "[ctrl-flow][double][parser]") {
+  auto [p, result] = parse("let x : double = 0.0;\nwhile (x < 2.0)");
+
+  REQUIRE(result.has_value());
+  REQUIRE(p.m_Nodes.size() == 2);
+
+  auto *stmt_while = dynamic_cast<StmtWhile *>(p.m_Nodes[1].get());
+  REQUIRE(stmt_while != nullptr);
+  CHECK(dynamic_cast<ExprBinary *>(stmt_while->m_Condition.get()) != nullptr);
+  CHECK(dynamic_cast<StmtBlock *>(stmt_while->m_Body.get()) != nullptr);
+}
+
+TEST_CASE("Ctrl-Flow (While): Basic Stmt-Block (Double)", "[ctrl-flow][double][parser]") {
+  auto [p, result] = parse("let x : double = 0.0;\nwhile (x < 2.0) { x = x + 0.1 }");
+
+  REQUIRE(result.has_value());
+  REQUIRE(p.m_Nodes.size() == 2);
+
+  auto *stmt_while = dynamic_cast<StmtWhile *>(p.m_Nodes[1].get());
+  REQUIRE(stmt_while != nullptr);
+  CHECK(dynamic_cast<ExprBinary *>(stmt_while->m_Condition.get()) != nullptr);
+  CHECK(dynamic_cast<StmtBlock *>(stmt_while->m_Body.get()) != nullptr);
+}
+
+TEST_CASE("Ctrl-Flow (While): Basic Stmt (Double)", "[ctrl-flow][double][parser]") {
+  auto [p, result] = parse("let x : double = 0.0;\nwhile (x < 2.0) x = x + 0.1");
+
+  REQUIRE(result.has_value());
+  REQUIRE(p.m_Nodes.size() == 2);
+
+  auto *stmt_while = dynamic_cast<StmtWhile *>(p.m_Nodes[1].get());
+  REQUIRE(stmt_while != nullptr);
+  CHECK(dynamic_cast<ExprBinary *>(stmt_while->m_Condition.get()) != nullptr);
+  CHECK(dynamic_cast<StmtBlock *>(stmt_while->m_Body.get()) != nullptr);
+}
+
+TEST_CASE("Ctrl-Flow (Loop-Ctrl): Basic Break Statement (Double)", "[ctrl-flow][double][parser]") {
+  auto [p, result] = parse("let x : double = 0.0;\nwhile (x < 2.0) { x = x + 0.1; break; }");
+
+  REQUIRE(result.has_value());
+  REQUIRE(p.m_Nodes.size() == 2);
+
+  auto *stmt_while = dynamic_cast<StmtWhile *>(p.m_Nodes[1].get());
+  REQUIRE(stmt_while != nullptr);
+  CHECK(dynamic_cast<ExprBinary *>(stmt_while->m_Condition.get()) != nullptr);
+
+  auto *stmt_block = dynamic_cast<StmtBlock *>(stmt_while->m_Body.get();
+  CHECK(stmt_block != nullptr);
+
+  CHECK(dynamic_cast<StmtLoopCtl *>(stmt_block->m_Body[1].get()));
+}
+
+TEST_CASE("Ctrl-Flow (Loop-Ctrl): Basic Continue Statement (Double)", "[ctrl-flow][double][parser]") {
+  auto [p, result] = parse("let x : double = 0.0;\nwhile (x < 2.0) { x = x + 0.1; continue; }");
+
+  REQUIRE(result.has_value());
+  REQUIRE(p.m_Nodes.size() == 2);
+
+  auto *stmt_while = dynamic_cast<StmtWhile *>(p.m_Nodes[1].get());
+  REQUIRE(stmt_while != nullptr);
+  CHECK(dynamic_cast<ExprBinary *>(stmt_while->m_Condition.get()) != nullptr);
+
+  auto *stmt_block = dynamic_cast<StmtBlock *>(stmt_while->m_Body.get();
+  CHECK(stmt_block != nullptr);
+
+  CHECK(dynamic_cast<StmtLoopCtl *>(stmt_block->m_Body[1].get()));
 }
