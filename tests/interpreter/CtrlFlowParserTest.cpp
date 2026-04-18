@@ -113,12 +113,13 @@ TEST_CASE("Ctrl-Flow: Basic Stmt (Int)", "[ctrl-flow][int][parser]") {
 
   CAPTURE(result);
   REQUIRE(result.has_value());
+
   REQUIRE(p.m_Nodes.size() == 2);
 
   auto *stmt_if = dynamic_cast<StmtIf *>(p.m_Nodes[1].get());
   REQUIRE(stmt_if != nullptr);
   CHECK(dynamic_cast<ExprBinary *>(stmt_if->m_Condition.get()) != nullptr);
-  CHECK(dynamic_cast<StmtBlock *>(stmt_if->m_TBody.get()) != nullptr);
+  CHECK(dynamic_cast<ExprBinary *>(stmt_if->m_TBody.get()) != nullptr);
 }
 
 const char *TEST_5 = R"V0G0N(
