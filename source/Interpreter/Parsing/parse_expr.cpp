@@ -110,6 +110,15 @@ std::expected<std::unique_ptr<AST::Node>, InterpErr> Parser::parse_term() {
   case IDs::ID_LITERAL_STR: {
     return std::make_unique<AST::ValLiteral>(next_token, next_token.lexeme);
   }
+  case IDs::ID_DELIM_PAREN_OPEN: {
+    auto expr = parse_expr();
+    if (!expr.has_value())
+      return expr.error();
+    auto use_close_paren = m_Lexer.UseIf(IDs::ID_DELIM_PAREN_CLOSE);
+    if (!use_close_paren.has_value())
+      return use_close_paren.error();
+    return std::move(expr.value());
+  }
   default:
     return ParseErr(ParseErr::INVALID_TERM,
                     std::format("Invalid term '{}'", next_token.lexeme));
