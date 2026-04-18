@@ -17,13 +17,14 @@ void DataLog<DataClass>::AggregateData(const std::vector<AgentBase>& agents) {
   }
 
   for (const auto& agent : agents) {
-    auto state = agent.describe();
-    for (const auto& [fieldView, value] : state) {
-      std::string fieldKey(fieldView);
-      if (samples.contains(fieldKey)) {
-        samples[fieldKey].push_back(value);
-      }
-    }
+    // TODO: replace with toJson() or describe() once agent teams finalize their API
+    // auto state = agent.describe();
+    // for (const auto& [fieldView, value] : state) {
+    //   std::string fieldKey(fieldView);
+    //   if (samples.contains(fieldKey)) {
+    //     samples[fieldKey].push_back(value);
+    //   }
+    // }
   }
 
   // Compute TickStats for each declared field and append to the time series
