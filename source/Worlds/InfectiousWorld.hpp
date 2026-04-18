@@ -50,6 +50,16 @@ class InfectiousWorld : public SimWorldBase<DiseaseData> {
   double infection_radius = 1.5;
   size_t infection_duration = 10;
   size_t immunity_duration = 0;
+  size_t treatment_duration = 5;
+
+  WorldPosition clinic_entrance{};
+  bool has_clinic{false};
+
+  WorldPosition recovery_exit{};
+  bool has_recovery_exit{false};
+
+  /// If > 0, infected agents that have never reached the clinic recover.
+  size_t fallback_recovery_ticks{0};
 
   mutable std::mt19937 rng{
       std::random_device{}()};  // Maybe use random.hpp from group 19
@@ -126,27 +136,57 @@ class InfectiousWorld : public SimWorldBase<DiseaseData> {
 
     for (size_t id : newly_infected) {
       DiseaseData state = agent_set[id]->GetState();
-      state.health = HealthState::INFECTED;
-      state.ticks_in_state = 0;
+      state.health           = HealthState::INFECTED;
+      state.ticks_in_state   = 0;
+      state.quarantine_ticks = 0;
+      if (has_clinic) state.destination = clinic_entrance;
       agent_set[id]->SetState(state);
     }
   }
 
-  /// Advance each agent's disease timer and transition states.
+
   void UpdateHealthTimers() {
     for (auto& agent_ptr : agent_set) {
       DiseaseData state = agent_ptr->GetState();
-      state.ticks_in_state++;
 
-      if (state.health == HealthState::INFECTED &&
-          state.ticks_in_state >= infection_duration) {
-        state.health = HealthState::RECOVERED;
-        state.ticks_in_state = 0;
-      } else if (state.health == HealthState::RECOVERED &&
-                 immunity_duration > 0 &&
-                 state.ticks_in_state >= immunity_duration) {
-        state.health = HealthState::SUSCEPTIBLE;
-        state.ticks_in_state = 0;
+      if (state.health == HealthState::INFECTED) {
+        // Always count total infection ticks (drives fallback recovery).
+        state.ticks_in_state++;
+
+        if (IsInQuarantine(state.position)) {
+          // Count time specifically inside the clinic zone.
+          state.quarantine_ticks++;
+          if (state.quarantine_ticks >= treatment_duration) {
+            state.health           = HealthState::RECOVERED;
+            state.ticks_in_state   = 0;
+            state.quarantine_ticks = 0;
+            state.destination = has_recovery_exit
+                                    ? std::optional<WorldPosition>{recovery_exit}
+                                    : std::optional<WorldPosition>{};
+          }
+        } else if (fallback_recovery_ticks > 0 &&
+                   state.ticks_in_state >= fallback_recovery_ticks) {
+          // Fallback: agent never reached Olin — recover in place.
+          state.health           = HealthState::RECOVERED;
+          state.ticks_in_state   = 0;
+          state.quarantine_ticks = 0;
+          state.destination      = {};
+        }
+
+      } else if (state.health == HealthState::RECOVERED) {
+        // Clear destination once the agent reaches the recovery exit.
+        if (state.destination.has_value() &&
+            state.position == state.destination.value()) {
+          state.destination = {};
+        }
+        // Immunity waning countdown.
+        if (immunity_duration > 0) {
+          state.ticks_in_state++;
+          if (state.ticks_in_state >= immunity_duration) {
+            state.health         = HealthState::SUSCEPTIBLE;
+            state.ticks_in_state = 0;
+          }
+        }
       }
 
       agent_ptr->SetState(state);
@@ -177,18 +217,27 @@ class InfectiousWorld : public SimWorldBase<DiseaseData> {
 
             if constexpr (std::is_same_v<S, MovementStep>) {
               WorldPosition new_pos = step.loc;
+              WorldPosition old_pos = state.position;
+              bool entering_qtn = !IsInQuarantine(old_pos) &&
+                                   IsInQuarantine(new_pos);
+              bool blocked = entering_qtn &&
+                             (state.health != HealthState::INFECTED);
               if (main_grid.IsValid(new_pos) &&
                   main_grid[new_pos] != wall_id &&
-                  !IsInQuarantine(new_pos)) {
+                  !blocked) {
                 state.position = new_pos;
               }
             } else if constexpr (std::is_same_v<S, InfoStep>) {
               // Respond to LOC_AVAIL queries so agents can use ConditionalSteps
               if (step.aspect == InfoStep::Aspect::LOC_AVAIL) {
                 WorldPosition target = step.target;
+                bool entering_qtn = !IsInQuarantine(state.position) &&
+                                     IsInQuarantine(target);
+                bool blocked = entering_qtn &&
+                               (state.health != HealthState::INFECTED);
                 bool avail = main_grid.IsValid(target) &&
                              main_grid[target] != wall_id &&
-                             !IsInQuarantine(target);
+                             !blocked;
                 turn.inform(avail);
               }
             }
@@ -223,8 +272,10 @@ class InfectiousWorld : public SimWorldBase<DiseaseData> {
     if (id >= agent_set.size())
       throw std::out_of_range("InfectAgent: agent id out of range");
     DiseaseData state = agent_set[id]->GetState();
-    state.health = HealthState::INFECTED;
-    state.ticks_in_state = 0;
+    state.health           = HealthState::INFECTED;
+    state.ticks_in_state   = 0;
+    state.quarantine_ticks = 0;
+    if (has_clinic) state.destination = clinic_entrance;
     agent_set[id]->SetState(state);
   }
 
@@ -284,6 +335,17 @@ class InfectiousWorld : public SimWorldBase<DiseaseData> {
   void SetInfectionRadius(double r) { infection_radius = r; }
   void SetInfectionDuration(size_t ticks) { infection_duration = ticks; }
   void SetImmunityDuration(size_t ticks) { immunity_duration = ticks; }
+  void SetTreatmentDuration(size_t ticks) { treatment_duration = ticks; }
+ 
+  void SetFallbackRecoveryTicks(size_t ticks) { fallback_recovery_ticks = ticks; }
+  void SetClinicEntrance(WorldPosition pos) {
+    clinic_entrance = pos;
+    has_clinic = true;
+  }
+  void SetRecoveryExit(WorldPosition pos) {
+    recovery_exit = pos;
+    has_recovery_exit = true;
+  }
 
   [[nodiscard]] double GetTransmissionRate() const { return transmission_rate; }
   [[nodiscard]] double GetInfectionRadius() const { return infection_radius; }

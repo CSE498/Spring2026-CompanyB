@@ -47,6 +47,9 @@ struct DiseaseData {
   WorldPosition position{};
   HealthState health{HealthState::SUSCEPTIBLE};
   size_t ticks_in_state{0};
+
+  size_t quarantine_ticks{0};
+  std::optional<WorldPosition> destination{};
 };
 
 

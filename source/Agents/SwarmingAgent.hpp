@@ -171,11 +171,10 @@ class SwarmingAgent : public StepAgentBase<SwarmData> {
         [](bool is_available) -> std::expected<bool, cse498::steps::StepErr> {
           return is_available;
         })};
-
+        
     container.add_step(std::move(query), std::move(is_open),
                        cse498::steps::MovementStep{primary},
                        cse498::steps::MovementStep{backup});
-
     return container;
   }
 
