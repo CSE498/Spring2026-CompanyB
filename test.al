@@ -1,6 +1,6 @@
-world infection;
+world traffic;
 
-let square_walker : student {
+let square_walker : car {
     init : {
     };
     turn : {
