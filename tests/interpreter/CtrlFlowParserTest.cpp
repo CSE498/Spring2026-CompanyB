@@ -117,7 +117,7 @@ TEST_CASE("Ctrl-Flow: Else-if WITH Else (Direction)", "[ctrl-flow][direction][pa
 TEST_CASE("Ctrl-Flow: Condition without Paren Error (double)", "[ctrl-flow][error][double][parser]") {
   auto [p, result] = parse("let x : double = 2.0;\nif x == 2.0 x = 1.0;");
 
-  REQUIRE(result.has_value() == false);
+  REQUIRE_FALSE(result.has_value());
   REQUIRE(p.m_Nodes.size() == 1);
 }
 
@@ -126,7 +126,7 @@ TEST_CASE("Ctrl-Flow: Condition without Paren Error (double)", "[ctrl-flow][erro
 TEST_CASE("Ctrl-Flow (While): Basic Empty Stmt-Block Error (Double)", "[ctrl-flow][error][double][parser]") {
   auto [p, result] = parse("let x : double = 0.0;\nwhile (x < 2.0) {}");
 
-  REQUIRE(result.has_value() == false);
+  REQUIRE_FALSE(result.has_value());
   REQUIRE(p.m_Nodes.size() == 1);
 }
 
