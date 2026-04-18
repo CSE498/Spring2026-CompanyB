@@ -1,6 +1,7 @@
 #include "Interpreter/Parser.hpp"
 #include "Interpreter/ast.hpp"
 #include "Interpreter/errors.hpp"
+#include "Interpreter/lexer.hpp"
 
 namespace cse498 {
 
@@ -30,10 +31,13 @@ std::expected<std::unique_ptr<AST::Node>, InterpErr> Parser::parse_stmt() {
   }
   case IDs::ID_DELIM_SEMICLN: {
     auto res = m_Lexer.Use();
+    if (!m_Lexer.Any()) {
+      return ParseErr(ParseErr::AT_EOF);
+    }
     return (!res.has_value()) ? res.error() : parse_stmt();
   };
   default:
-    return ParseErr(ParseErr::EXPECTED_STMT);
+    return parse_expr();
   }
 }
 

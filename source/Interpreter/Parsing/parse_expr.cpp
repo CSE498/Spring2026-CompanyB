@@ -76,7 +76,9 @@ std::expected<std::unique_ptr<AST::Node>, InterpErr> Parser::parse_term() {
     else if (next_token.lexeme == "down")
       dir = Direction::DOWN;
     else
-      return ParseErr(ParseErr::INVALID_LITERAL);
+      return ParseErr(
+          ParseErr::INVALID_LITERAL,
+          std::format("Invalid direction literal '{}'", next_token.lexeme));
 
     return std::make_unique<AST::ValLiteral>(next_token, dir);
   }
@@ -92,7 +94,8 @@ std::expected<std::unique_ptr<AST::Node>, InterpErr> Parser::parse_term() {
     return std::make_unique<AST::ValLiteral>(next_token, next_token.lexeme);
   }
   default:
-    return ParseErr(ParseErr::INVALID_TERM);
+    return ParseErr(ParseErr::INVALID_TERM,
+                    std::format("Invalid term '{}'", next_token.lexeme));
   }
 }
 

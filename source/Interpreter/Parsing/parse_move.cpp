@@ -14,7 +14,7 @@ std::expected<std::unique_ptr<AST::Node>, InterpErr> Parser::parse_move() {
   using AgentLexer::Token;
   // A move is only legal if we're currently in a turn body
   if (!m_InTurn)
-    return ParseErr(ParseErr::OUT_OF_TURN);
+    return ParseErr(ParseErr::OUT_OF_TURN, "Move called outside of turn body");
 
   // Expect: <KW_MOVE>
   auto res = m_Lexer.UseIf(IDs::ID_KW_MOVE);
