@@ -53,6 +53,11 @@ std::expected<std::unique_ptr<AST::Node>, InterpErr> Parser::parse_if() {
 
   // Optionally handle an else, else-if, or nothing
   if (m_Lexer.Is(IDs::ID_KW_ELSE)) {
+    // Consume else
+    auto else_token = this->m_Lexer.UseIf(IDs::ID_KW_ELSE);
+    if (!else_token.has_value())
+      return else_token.error();
+
     m_Syms.PushSymbolScope();
     auto f_body = (m_Lexer.Is(IDs::ID_DELIM_CLY_OPEN)) ? parse_stmt_block()
                                                        : parse_stmt();
