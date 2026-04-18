@@ -12,7 +12,7 @@
 using namespace cse498;
 
 int main() {
-  Group11TestWorld world;
+  ScriptingTestWorld world;
   world.AddAgent<ScriptedAgent<Group11DummyData>>(
       Group11DummyData(WorldPosition{3, 7}));
 

@@ -11,14 +11,14 @@
 #include <memory>
 #include <thread>
 
-#include "Group11DummyData.hpp"
+#include "Worlds/TrafficData.hpp"
 #include "Step.hpp"
 #include "core/StepWorldBase.hpp"
 
 // clang-format off
 namespace cse498 {
 
-  class ScriptingTestWorld : public StepWorldBase<Group11DummyData> {
+  class ScriptingTestWorld : public StepWorldBase<TrafficData> {
   protected:
     enum ActionType { REMAIN_STILL=0, MOVE_UP, MOVE_DOWN, MOVE_LEFT, MOVE_RIGHT };
 
@@ -72,14 +72,15 @@ namespace cse498 {
         // We'll want to modify the agent and the container, so we'll hold on to
         // some references for them. You'll have to do the same for any other
         // non-variant external context desired.
-        Group11DummyData &data;
+        TrafficData &data;
         StepContainer &container;
         
         // Now we'll need to have an operator() overload for each Step type.
         VisitRet operator()(steps::MovementStep step) {
           // The simplest step -- the agent just wants to move to a space.
           // FILL IN: Implement logic actually changing agent's position.
-          data = Group11DummyData{step.loc};
+          data = TrafficData{};
+          data.position = step.loc;
           return {};
         }
         
@@ -128,13 +129,13 @@ namespace cse498 {
       };
       
       /// Allow the agents to move around the maze.
-      Group11DummyData DoAction(std::shared_ptr<StepAgentBase<Group11DummyData>> agent) override {
+      TrafficData DoAction(std::shared_ptr<StepAgentBase<TrafficData>> agent) override {
         // Determine where the agent is trying to move.
         using namespace cse498::steps;
         
         // Get the turn from the agent
         StepContainer agent_turn = agent->GetTurn();
-        Group11DummyData data = agent->GetState();
+        TrafficData data = agent->GetState();
 
         // The functor we'll dispatch our step calls out to doesn't change with
         // each step, so we can instantiate it here outside the loop. To be as
@@ -196,7 +197,7 @@ namespace cse498 {
 
         // Substitute in agents.
         for (auto &agent : agent_set) {
-        WorldPosition pos = agent->GetState().pos;
+        WorldPosition pos = agent->GetState().position;
         symbol_grid[pos.CellY()][pos.CellX()] = agent->GetState().symbol;
         }
 
