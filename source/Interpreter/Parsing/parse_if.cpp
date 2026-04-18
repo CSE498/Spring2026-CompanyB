@@ -15,7 +15,7 @@ std::expected<std::unique_ptr<AST::Node>, InterpErr> Parser::parse_if() {
   using AgentLexer::Token;
 
   // Expect: KW_IF | KW_ELSE_IF
-  auto res = m_Lexer.UseIf(IDs::ID_KW_IF, IDs::ID_KW_ELSE_IF);
+  auto res = m_Lexer.UseIf(IDs::ID_KW_IF);
   if (!res.has_value())
     return res.error();
 
@@ -67,15 +67,7 @@ std::expected<std::unique_ptr<AST::Node>, InterpErr> Parser::parse_if() {
     m_Syms.PopSymbolScope();
 
     node->m_FBody = std::move(f_body.value());
-  } else if (m_Lexer.Is(IDs::ID_KW_ELSE_IF)) {
-    auto f_body = parse_if();
-
-    if (!f_body.has_value())
-      return f_body.error();
-
-    node->m_FBody = std::move(f_body.value());
   }
-
   return node;
 }
 
