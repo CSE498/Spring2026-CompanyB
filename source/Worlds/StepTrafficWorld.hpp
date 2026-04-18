@@ -560,7 +560,7 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
         symbol_grid[y][x] = 'S';
         colour_grid[y][x] = colour;
       }
-    }
+    };
 
     colourSpawners(fast_spawner_positions, fast_spawn_colour);
     colourSpawners(normal_spawner_positions, normal_spawn_colour);
