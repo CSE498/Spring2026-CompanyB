@@ -1,6 +1,6 @@
 world traffic;
 
-let square_walker : car {
+let square_walker : student {
     init : {
         let a : int = 0;
     };
@@ -15,5 +15,13 @@ let square_walker : car {
             move(left);
         }
         a = a + 1;
+    };
+};
+
+let right_walker : student {
+    init : {
+    };
+    turn : {
+       move(right);
     };
 };
