@@ -94,7 +94,10 @@ public:
   StepContainer GetTurn() override {
     mCurrentTurn = StepContainer{}; // Clear the container
 
-    Visit(*mTurn);
+    if (!Visit(*mTurn).has_value()) {
+      // TODO we do no move, but we need to report error
+      return StepContainer{};
+    };
 
     return mCurrentTurn;
   }
@@ -153,7 +156,14 @@ public:
         case Dir::UP: pos = pos.Up();
         case Dir::DOWN: pos = pos.Down();
       }
-      mCurrentTurn.add_step(MovementStep{pos});
+      if (mCurrentTurn.empty()) {
+        mCurrentTurn.add_step(MovementStep{pos});
+      } else {
+        return RuntimeErr{
+          RuntimeErr::TOO_MANY_MOVES,
+          "A maximum of 1 move is permitted per agent turn"
+        };
+      }
     } else {
       return RuntimeErr{
         RuntimeErr::INVALID_MOVE_ARG,
