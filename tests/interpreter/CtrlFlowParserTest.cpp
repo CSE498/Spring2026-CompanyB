@@ -9,6 +9,7 @@
 #include "Interpreter/ast.hpp"
 #include "Interpreter/errors.hpp"
 
+#include "catch2/matchers/catch_matchers.hpp"
 #include "interpreter-tests.hpp"
 
 #include <format>
@@ -119,7 +120,7 @@ TEST_CASE("Ctrl-Flow: Basic Stmt (Int)", "[ctrl-flow][int][parser]") {
   auto *stmt_if = dynamic_cast<StmtIf *>(p.m_Nodes[1].get());
   REQUIRE(stmt_if != nullptr);
   CHECK(dynamic_cast<ExprBinary *>(stmt_if->m_Condition.get()) != nullptr);
-  CHECK(dynamic_cast<ExprBinary *>(stmt_if->m_TBody.get()) != nullptr);
+  CHECK(dynamic_cast<Assign *>(stmt_if->m_TBody.get()) != nullptr);
 }
 
 const char *TEST_5 = R"V0G0N(
@@ -180,22 +181,20 @@ TEST_CASE("Ctrl-Flow: Else-if WITH Else (Direction)",
 
   CAPTURE(result);
   REQUIRE(result.has_value());
-  REQUIRE(p.m_Nodes.size() == 4);
+  REQUIRE(p.m_Nodes.size() == 3);
 
-  auto *stmt_if = dynamic_cast<StmtIf *>(p.m_Nodes[1].get());
-  REQUIRE(stmt_if != nullptr);
-  CHECK(dynamic_cast<ExprBinary *>(stmt_if->m_Condition.get()) != nullptr);
-  CHECK(dynamic_cast<StmtBlock *>(stmt_if->m_TBody.get()) != nullptr);
-
-  auto *stmt_else_if = dynamic_cast<StmtIf *>(p.m_Nodes[2].get());
-  REQUIRE(stmt_else_if != nullptr);
-  CHECK(dynamic_cast<ExprBinary *>(stmt_else_if->m_Condition.get()) != nullptr);
-  CHECK(dynamic_cast<StmtBlock *>(stmt_else_if->m_TBody.get()) != nullptr);
-
-  auto *stmt_else = dynamic_cast<StmtIf *>(p.m_Nodes[3].get());
-  REQUIRE(stmt_else != nullptr);
-  CHECK(dynamic_cast<ExprBinary *>(stmt_else->m_Condition.get()) != nullptr);
-  CHECK(dynamic_cast<StmtBlock *>(stmt_else->m_TBody.get()) != nullptr);
+  auto *stmt_if = dynamic_cast<StmtIf *>(p.m_Nodes[2].get());
+  REQUIRE(stmt_if);
+  REQUIRE(stmt_if->m_FBody.has_value());
+  auto *stmt_if_t = dynamic_cast<Assign *>(stmt_if->m_TBody.get());
+  REQUIRE(stmt_if_t);
+  auto *stmt_if_f = dynamic_cast<StmtIf *>(stmt_if->m_FBody.value().get());
+  REQUIRE(stmt_if_f);
+  REQUIRE(stmt_if_f->m_FBody.has_value());
+  auto *stmt_if_f_t = dynamic_cast<Assign *>(stmt_if_f->m_TBody.get());
+  REQUIRE(stmt_if_f_t);
+  auto *stmt_if_f_f = dynamic_cast<Assign *>(stmt_if_f->m_FBody.value().get());
+  REQUIRE(stmt_if_f_f);
 }
 
 const char *TEST_7 = R"V0G0N(
@@ -236,7 +235,7 @@ TEST_CASE("Ctrl-Flow (While): Basic Empty Stmt-Block (Double)",
 
   auto *first = dynamic_cast<AST::Assign *>(p.m_Nodes[0].get());
   REQUIRE(first);
-  auto *second = dynamic_cast<AST::Assign *>(p.m_Nodes[1].get());
+  auto *second = dynamic_cast<AST::StmtWhile *>(p.m_Nodes[1].get());
   REQUIRE(second);
 
   // TODO - further test nodes
@@ -258,12 +257,7 @@ TEST_CASE("Ctrl-Flow (While): Basic Empty Stmt (Error) (Double)",
 
   CAPTURE(result);
   REQUIRE_FALSE(result.has_value());
-  REQUIRE(p.m_Nodes.size() == 2);
-
-  auto *stmt_while = dynamic_cast<StmtWhile *>(p.m_Nodes[1].get());
-  REQUIRE(stmt_while != nullptr);
-  CHECK(dynamic_cast<ExprBinary *>(stmt_while->m_Condition.get()) != nullptr);
-  CHECK(dynamic_cast<StmtBlock *>(stmt_while->m_Body.get()) != nullptr);
+  CHECK(result.error().Is<ParseErr>(ParseErr::EXPECTED_STMT));
 }
 
 const char *TEST_10 = R"V0G0N(
@@ -310,7 +304,7 @@ TEST_CASE("Ctrl-Flow (While): Basic Stmt (Double)",
   auto *stmt_while = dynamic_cast<StmtWhile *>(p.m_Nodes[1].get());
   REQUIRE(stmt_while != nullptr);
   CHECK(dynamic_cast<ExprBinary *>(stmt_while->m_Condition.get()) != nullptr);
-  CHECK(dynamic_cast<StmtBlock *>(stmt_while->m_Body.get()) != nullptr);
+  CHECK(dynamic_cast<Assign *>(stmt_while->m_Body.get()) != nullptr);
 }
 
 const char *TEST_12 = R"V0G0N(

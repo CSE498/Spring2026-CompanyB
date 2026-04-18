@@ -17,7 +17,9 @@
 using namespace cse498;
 using namespace cse498::AST;
 
-static std::pair<Parser, std::expected<std::vector<std::unique_ptr<StmtAgentDef>>, InterpErr>>
+static std::pair<
+    Parser,
+    std::expected<std::vector<std::unique_ptr<StmtAgentDef>>, InterpErr>>
 parse(std::string const &script) {
   Parser p;
   std::istringstream ss(script);
@@ -27,10 +29,10 @@ parse(std::string const &script) {
 
 TEST_CASE("AgentDef: empty init and turn are allowed", "[parser][agent-def]") {
   auto [p, result] = parse("world infection;\n"
-                "let walker : student {\n"
-                "  init : { };\n"
-                "  turn : { };\n"
-                "};");
+                           "let walker : student {\n"
+                           "  init : { };\n"
+                           "  turn : { };\n"
+                           "};");
 
   CAPTURE(result);
   REQUIRE(result.has_value());
@@ -48,14 +50,14 @@ TEST_CASE("AgentDef: empty init and turn are allowed", "[parser][agent-def]") {
 TEST_CASE("AgentDef: goal/destination identifiers allowed in both contexts",
           "[parser][agent-def]") {
   auto [p, result] = parse("world traffic;\n"
-                "let driver : car {\n"
-                "  init : {\n"
-                "    let goal : int = 1;\n"
-                "  };\n"
-                "  turn : {\n"
-                "    let destination : int = 2;\n"
-                "  };\n"
-                "};");
+                           "let driver : car {\n"
+                           "  init : {\n"
+                           "    let goal : int = 1;\n"
+                           "  };\n"
+                           "  turn : {\n"
+                           "    let destination : int = 2;\n"
+                           "  };\n"
+                           "};");
 
   CAPTURE(result);
   REQUIRE(result.has_value());
@@ -72,10 +74,10 @@ TEST_CASE("AgentDef: goal/destination identifiers allowed in both contexts",
 
 TEST_CASE("AgentDef: move in init is an error", "[parser][agent-def]") {
   auto [p, result] = parse("world infection;\n"
-                  "let walker : student {\n"
-                  "  init : move(up);\n"
-                  "  turn : { };\n"
-                  "};");
+                           "let walker : student {\n"
+                           "  init : move(up);\n"
+                           "  turn : { };\n"
+                           "};");
 
   REQUIRE_FALSE(result.has_value());
   REQUIRE(std::holds_alternative<ParseErr>(result.error()));
@@ -86,12 +88,12 @@ TEST_CASE("AgentDef: move in init is an error", "[parser][agent-def]") {
 
 TEST_CASE("AgentDef: move in turn parses", "[parser][agent-def]") {
   auto [p, result] = parse("world infection;\n"
-                "let walker : student {\n"
-                "  init : { };\n"
-                "  turn : {\n"
-                "    move(up);\n"
-                "  };\n"
-                "};");
+                           "let walker : student {\n"
+                           "  init : { };\n"
+                           "  turn : {\n"
+                           "    move(up);\n"
+                           "  };\n"
+                           "};");
 
   CAPTURE(result);
   REQUIRE(result.has_value());
@@ -109,14 +111,14 @@ TEST_CASE("AgentDef: move in turn parses", "[parser][agent-def]") {
 TEST_CASE("AgentDef: symbols from init are visible in turn",
           "[parser][agent-def]") {
   auto [p, result] = parse("world infection;\n"
-                "let square_walker : student {\n"
-                "  init : {\n"
-                "    let step_idx : int = 0;\n"
-                "  };\n"
-                "  turn : {\n"
-                "    step_idx;\n"
-                "  };\n"
-                "};");
+                           "let square_walker : student {\n"
+                           "  init : {\n"
+                           "    let step_idx : int = 0;\n"
+                           "  };\n"
+                           "  turn : {\n"
+                           "    step_idx;\n"
+                           "  };\n"
+                           "};");
 
   CAPTURE(result);
   REQUIRE(result.has_value());
