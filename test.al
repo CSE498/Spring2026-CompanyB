@@ -2,10 +2,10 @@ world traffic;
 
 let square_walker : car {
     init : {
+        let a : int = 0;
     };
     turn : {
-        let a : int = 0;
-        if (0) {
+        if (a % 2) {
             move(right);
         } else {
             move(left);
