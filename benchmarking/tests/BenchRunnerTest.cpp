@@ -153,6 +153,9 @@ TEST_CASE("BenchRunnerTest.RunBenchmarkProducesLastResult", "[benchmarking][runn
   CHECK(result->agent_count == params.agent_count);
   CHECK(result->sample_count == params.repetitions);
   CHECK(result->avg_wall_time_ns > 0);
+  CHECK(result->avg_current_rss_at_stop_kb > 0);
+  CHECK(result->min_current_rss_at_stop_kb > 0);
+  CHECK(result->max_current_rss_at_stop_kb >= result->min_current_rss_at_stop_kb);
 }
 
 TEST_CASE("BenchRunnerTest.RunAndWriteReportRejectsInvalidFileName", "[benchmarking][runner]") {

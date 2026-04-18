@@ -98,6 +98,9 @@ BenchmarkResult AggregateResult(const std::vector<MetricSample>& samples, const 
   const auto memory_usage = AggregateMetric(samples, [](const MetricSample& sample) {
     return sample.memory_usage_kb;
   });
+  const auto current_rss_at_stop = AggregateMetric(samples, [](const MetricSample& sample) {
+    return sample.current_rss_at_stop_kb;
+  });
 
   result.avg_wall_time_ns = wall_time.average;
   result.min_wall_time_ns = wall_time.minimum;
@@ -107,6 +110,10 @@ BenchmarkResult AggregateResult(const std::vector<MetricSample>& samples, const 
   result.min_memory_usage_kb = memory_usage.minimum;
   result.max_memory_usage_kb = memory_usage.maximum;
   result.stdev_memory_usage_kb = memory_usage.stdev;
+  result.avg_current_rss_at_stop_kb = current_rss_at_stop.average;
+  result.min_current_rss_at_stop_kb = current_rss_at_stop.minimum;
+  result.max_current_rss_at_stop_kb = current_rss_at_stop.maximum;
+  result.stdev_current_rss_at_stop_kb = current_rss_at_stop.stdev;
   return result;
 }
 

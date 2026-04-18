@@ -58,3 +58,12 @@ TEST_CASE("BenchmarkTypesTest.ParamsIsInvalidWithZeroRepetitions", "[benchmarkin
 
   REQUIRE_FALSE(params.IsValid());
 }
+
+TEST_CASE("BenchmarkTypesTest.BenchmarkResultDefaultsIncludeRssAtStopFields", "[benchmarking][types]") {
+  BenchmarkResult result{};
+
+  REQUIRE(result.avg_current_rss_at_stop_kb == 0);
+  REQUIRE(result.min_current_rss_at_stop_kb == 0);
+  REQUIRE(result.max_current_rss_at_stop_kb == 0);
+  REQUIRE(result.stdev_current_rss_at_stop_kb == 0);
+}

@@ -1,0 +1,2 @@
+benchmark_name,agent_count,tick_count,warmup_ticks,repetitions,seed,avg_wall_time_ns,min_wall_time_ns,max_wall_time_ns,stdev_wall_time_ns,avg_memory_usage_kb,min_memory_usage_kb,max_memory_usage_kb,stdev_memory_usage_kb,avg_current_rss_at_stop_kb,min_current_rss_at_stop_kb,max_current_rss_at_stop_kb,stdev_current_rss_at_stop_kb,sample_count
+"step_maze_world",100,1000,1,10,42,22064734,12113531,56127281,16540595,0,0,0,0,4480,4480,4480,0,10

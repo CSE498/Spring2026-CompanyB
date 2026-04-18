@@ -23,6 +23,7 @@ struct Params {
 struct MetricSample {
   std::uint64_t wall_time_ns{0};
   std::uint64_t memory_usage_kb{0};
+  std::uint64_t current_rss_at_stop_kb{0};
   bool success{true};
   std::string error_message{};
 };
@@ -37,6 +38,10 @@ struct BenchmarkResult {
   std::uint64_t min_memory_usage_kb{0};
   std::uint64_t max_memory_usage_kb{0};
   std::uint64_t stdev_memory_usage_kb{0};
+  std::uint64_t avg_current_rss_at_stop_kb{0};
+  std::uint64_t min_current_rss_at_stop_kb{0};
+  std::uint64_t max_current_rss_at_stop_kb{0};
+  std::uint64_t stdev_current_rss_at_stop_kb{0};
   std::uint32_t sample_count{0};
 };
 

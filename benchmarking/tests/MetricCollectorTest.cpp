@@ -24,6 +24,7 @@ TEST_CASE("MetricCollectorTest.GetSampleFailsIfNeverStarted", "[benchmarking][me
   const auto sample = collector.GetSample();
 
   REQUIRE_FALSE(sample.success);
+  CHECK(sample.current_rss_at_stop_kb == 0);
 }
 
 TEST_CASE("MetricCollectorTest.StartStopProducesSuccessfulSample", "[benchmarking][metric]") {
@@ -40,6 +41,7 @@ TEST_CASE("MetricCollectorTest.StartStopProducesSuccessfulSample", "[benchmarkin
   const auto sample = collector.GetSample();
   REQUIRE(sample.success);
   CHECK(sample.wall_time_ns > 0);
+  CHECK(sample.current_rss_at_stop_kb > 0);
 }
 
 TEST_CASE("MetricCollectorTest.ThreadLocalFunctionsFailWithoutActiveCollector", "[benchmarking][metric]") {
@@ -50,4 +52,5 @@ TEST_CASE("MetricCollectorTest.ThreadLocalFunctionsFailWithoutActiveCollector", 
   REQUIRE(start_status == MetricCollectorError::TimingNotStarted);
   REQUIRE(stop_status == MetricCollectorError::TimingNotStarted);
   REQUIRE_FALSE(sample.success);
+  CHECK(sample.current_rss_at_stop_kb == 0);
 }

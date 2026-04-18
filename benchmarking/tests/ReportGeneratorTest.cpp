@@ -34,6 +34,10 @@ BenchmarkReportEntry MakeEntry() {
   entry.result.min_memory_usage_kb = 10;
   entry.result.max_memory_usage_kb = 15;
   entry.result.stdev_memory_usage_kb = 2;
+  entry.result.avg_current_rss_at_stop_kb = 256;
+  entry.result.min_current_rss_at_stop_kb = 240;
+  entry.result.max_current_rss_at_stop_kb = 272;
+  entry.result.stdev_current_rss_at_stop_kb = 8;
   entry.result.sample_count = 5;
   return entry;
 }
@@ -63,8 +67,10 @@ TEST_CASE("ReportGeneratorTest.WriteCsvProducesExpectedContent", "[benchmarking]
 
   const auto content = ReadFile(path);
   CHECK(content.find("benchmark_name,agent_count,tick_count,warmup_ticks,repetitions,seed") != std::string::npos);
+  CHECK(content.find("avg_current_rss_at_stop_kb") != std::string::npos);
   CHECK(content.find("\"swarm_update\"") != std::string::npos);
   CHECK(content.find("1000") != std::string::npos);
+  CHECK(content.find("256") != std::string::npos);
 
   std::filesystem::remove(path);
 }
@@ -82,6 +88,7 @@ TEST_CASE("ReportGeneratorTest.WriteJsonProducesExpectedContent", "[benchmarking
   const auto content = ReadFile(path);
   CHECK(content.find("\"benchmarks\"") != std::string::npos);
   CHECK(content.find("\"benchmark_name\":\"swarm_update\"") != std::string::npos);
+  CHECK(content.find("\"avg_current_rss_at_stop_kb\":256") != std::string::npos);
   CHECK(content.find("\"sample_count\":5") != std::string::npos);
 
   std::filesystem::remove(path);

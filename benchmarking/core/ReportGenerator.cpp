@@ -70,6 +70,10 @@ void WriteJsonResult(std::ofstream& output, const BenchmarkResult& result) {
   output << "\"min_memory_usage_kb\":" << result.min_memory_usage_kb << ',';
   output << "\"max_memory_usage_kb\":" << result.max_memory_usage_kb << ',';
   output << "\"stdev_memory_usage_kb\":" << result.stdev_memory_usage_kb << ',';
+  output << "\"avg_current_rss_at_stop_kb\":" << result.avg_current_rss_at_stop_kb << ',';
+  output << "\"min_current_rss_at_stop_kb\":" << result.min_current_rss_at_stop_kb << ',';
+  output << "\"max_current_rss_at_stop_kb\":" << result.max_current_rss_at_stop_kb << ',';
+  output << "\"stdev_current_rss_at_stop_kb\":" << result.stdev_current_rss_at_stop_kb << ',';
   output << "\"sample_count\":" << result.sample_count;
   output << "}";
 }
@@ -101,7 +105,7 @@ ReportStatus ReportGenerator::WriteCsv(std::filesystem::path output_path,
   }
 
   if (!WriteLine(output,
-                 "benchmark_name,agent_count,tick_count,warmup_ticks,repetitions,seed,avg_wall_time_ns,min_wall_time_ns,max_wall_time_ns,stdev_wall_time_ns,avg_memory_usage_kb,min_memory_usage_kb,max_memory_usage_kb,stdev_memory_usage_kb,sample_count")) {
+                 "benchmark_name,agent_count,tick_count,warmup_ticks,repetitions,seed,avg_wall_time_ns,min_wall_time_ns,max_wall_time_ns,stdev_wall_time_ns,avg_memory_usage_kb,min_memory_usage_kb,max_memory_usage_kb,stdev_memory_usage_kb,avg_current_rss_at_stop_kb,min_current_rss_at_stop_kb,max_current_rss_at_stop_kb,stdev_current_rss_at_stop_kb,sample_count")) {
     return ReportStatus::WriteFailed;
   }
 
@@ -121,6 +125,10 @@ ReportStatus ReportGenerator::WriteCsv(std::filesystem::path output_path,
          << entry.result.min_memory_usage_kb << ','
          << entry.result.max_memory_usage_kb << ','
          << entry.result.stdev_memory_usage_kb << ','
+         << entry.result.avg_current_rss_at_stop_kb << ','
+         << entry.result.min_current_rss_at_stop_kb << ','
+         << entry.result.max_current_rss_at_stop_kb << ','
+         << entry.result.stdev_current_rss_at_stop_kb << ','
          << entry.result.sample_count;
 
     if (!WriteLine(output, line.str())) {

@@ -6,7 +6,7 @@
 
 // Include the modules that we will be using.
 #include "Agents/SwarmingAgent.hpp"
-#include "Worlds/MazeWorld.hpp"
+#include "Worlds/StepMazeWorld.hpp"
 #include "core/AgentData.hpp"
 #include "tools/StateGridPosition.hpp"
 
@@ -29,7 +29,7 @@ int main() {
       cse498::WorldPosition{3, 1},  // position    (open floor)
       cse498::Direction::North, true};
 
-  MazeWorld world;
+  StepMazeWorld world;
 
   //   world.AddAgent<PacingAgent>("Pacer 1").SetLocation(WorldPosition{3, 1});
   //   world.AddAgent<PacingAgent>("Pacer 2").SetLocation(WorldPosition{6, 1});

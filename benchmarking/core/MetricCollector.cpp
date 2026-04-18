@@ -1,5 +1,8 @@
 #include "MetricCollector.hpp"
+
+#include <cstdio>
 #include <optional>
+#include <unistd.h>
 #include <thread>
 
 #if defined(__linux__) || defined(__APPLE__)
@@ -8,18 +11,39 @@
 
 namespace cse498::benchmarking {
 
-// Helper to read RSS in KB via getrusage.
+// Helper to read current RSS in KB.
 static std::optional<std::uint64_t> ReadRSSKB() {
-#if defined(__linux__) || defined(__APPLE__)
+#if defined(__linux__)
+  // /proc/self/statm format: size resident shared text lib data dt
+  std::FILE* file = std::fopen("/proc/self/statm", "r");
+  if (file == nullptr) {
+    return std::nullopt;
+  }
+
+  unsigned long pages_total = 0;
+  unsigned long pages_resident = 0;
+  const int scanned = std::fscanf(file, "%lu %lu", &pages_total, &pages_resident);
+  std::fclose(file);
+
+  if (scanned != 2) {
+    return std::nullopt;
+  }
+
+  const long page_size = sysconf(_SC_PAGESIZE);
+  if (page_size <= 0) {
+    return std::nullopt;
+  }
+
+  const std::uint64_t bytes = static_cast<std::uint64_t>(pages_resident) *
+                              static_cast<std::uint64_t>(page_size);
+  return bytes / 1024ULL;
+#elif defined(__APPLE__)
+  // macOS fallback: ru_maxrss (best available without extra APIs).
   struct rusage usage {};
   if (getrusage(RUSAGE_SELF, &usage) != 0) {
     return std::nullopt;
   }
-#if defined(__APPLE__)
   return static_cast<std::uint64_t>(usage.ru_maxrss / 1024);
-#else
-  return static_cast<std::uint64_t>(usage.ru_maxrss);
-#endif
 #else
   // Placeholder for non-Linux systems
   return std::nullopt;
@@ -87,9 +111,10 @@ MetricSample MetricCollector::GetSample() {
   auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>(stop_time - start_time);
   sample.wall_time_ns = static_cast<std::uint64_t>(duration.count());
   
-  // Compute RSS delta (can be negative)
+  // Compute current RSS delta (can be negative)
   std::int64_t rss_delta = static_cast<std::int64_t>(stop_rss_kb) - static_cast<std::int64_t>(start_rss_kb);
   sample.memory_usage_kb = static_cast<std::uint64_t>(rss_delta >= 0 ? rss_delta : 0);
+  sample.current_rss_at_stop_kb = stop_rss_kb;
   
   sample.success = true;
   return sample;
