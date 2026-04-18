@@ -8,7 +8,7 @@
 
 namespace cse498 {
 
-template <DataConcept DataClass>
+template <typename DataClass>
 void DataLog<DataClass>::AggregateData(const std::vector<AgentBase>& agents) {
   // Collect per-field samples from all agents for this tick
   std::unordered_map<std::string, std::vector<double>> samples;
@@ -55,7 +55,7 @@ void DataLog<DataClass>::AggregateData(const std::vector<AgentBase>& agents) {
   }
 }
 
-template <DataConcept DataClass>
+template <typename DataClass>
 const std::unordered_map<std::string, std::vector<TickStats>>&
 DataLog<DataClass>::GetAggregationData() const {
   return time_series;

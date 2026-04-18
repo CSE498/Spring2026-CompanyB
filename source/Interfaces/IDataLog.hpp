@@ -25,18 +25,11 @@ struct TickStats {
 
 enum class WorldType { Infection, Traffic };
 
-template <typename DataClass>
-concept DataConcept = requires(DataClass a) {
-  {
-    a.describe()
-  } -> std::same_as<std::unordered_map<std::string_view, double>>;
-};
-
 /**
  * @class IDataLog
  * @brief Interface for data aggregation and storage.
  */
-template <DataConcept DataClass>
+template <typename DataClass>
 class IDataLog {
  public:
   virtual ~IDataLog() = default;

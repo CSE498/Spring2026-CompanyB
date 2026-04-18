@@ -17,7 +17,7 @@
 
 namespace cse498 {
 
-template <DataConcept DataClass>
+template <typename DataClass>
 class DataLog : public IDataLog<DataClass> {
  private:
   std::unordered_map<std::string, std::vector<TickStats>> time_series;
