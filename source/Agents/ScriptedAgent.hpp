@@ -16,14 +16,18 @@
   }
 
 #include "Interpreter/Evaluation/OpVisits.hpp"
+#include "Interpreter/SymbolTable.hpp"
 #include "Interpreter/agentlang.hpp"
 #include "Interpreter/ast.hpp"
+#include "Interpreter/errors.hpp"
+#include "StateGridPosition.hpp"
 #include "core/AgentData.hpp"
 #include "core/Step.hpp"
 #include "core/StepAgentBase.hpp"
 #include "core/WorldPosition.hpp"
 #include "core/core.hpp"
 #include <any>
+#include <variant>
 
 #include <memory>
 
@@ -54,6 +58,7 @@ struct AgentWrapper {
   std::expected<Type, InterpErr> Visit(AST::StmtIf &);
   std::expected<Type, InterpErr> Visit(AST::ValLiteral &);
   std::expected<Type, InterpErr> Visit(AST::ValVariable &);
+  std::expected<Type, InterpErr> Visit(AST::ValMagic &);
 
   std::expected<Type, InterpErr> Evaluate(AST::Node &node) {
     return node.Accept(*this);
@@ -128,20 +133,44 @@ public:
     return evaluate_binary(node.m_Token, lhs, rhs);
   }
   std::expected<Type, InterpErr> Visit(AST::Assign &node) {
+    // Assignee is a symbol
     TRY_DECL(expr, node.m_Value->Accept(*mAgentWrapper));
 
-    // If expr is not same type as variable. TODO Perhpas add casting later?
-    if (node.m_Sym->type.index() != expr.index()) {
-      return RuntimeErr(
-        RuntimeErr::TYPE_MISMATCH, 
-        std::format("Attempted to assign expression of type {} to variable of type {}",
-          TypeVariantToName(expr),
-          TypeVariantToName(node.m_Sym->type)
-        )
-      );
+    if (std::holds_alternative<std::shared_ptr<SymInfo>>(node.m_Sym)) {
+      std::shared_ptr<SymInfo> sym =
+          std::get<std::shared_ptr<SymInfo>>(node.m_Sym);
+
+      // If expr is not same type as variable. TODO Perhpas add casting later?
+      if (sym->type.index() != expr.index()) {
+        return RuntimeErr(
+            RuntimeErr::TYPE_MISMATCH,
+            std::format("Attempted to assign expression of type {} "
+                        "to variable of type {}",
+                        TypeVariantToName(expr), TypeVariantToName(sym->type)));
+        sym->type = expr;
+      }
+    } else {
+      // Assignee is a magic val
+      AST::ValMagic::Value val_magic =
+          std::get<AST::ValMagic::Value>(node.m_Sym);
+
+      switch (val_magic) {
+      case AST::ValMagic::Value::POSITION: {
+        if (!std::holds_alternative<Point>(expr))
+          return RuntimeErr(RuntimeErr::TYPE_MISMATCH,
+                            std::format("Attempted to set magic value "
+                                        "__position__ to non-point type '{}'",
+                                        TypeVariantToName(expr)));
+        auto data = this->GetState();
+        data.position = std::get<Point>(expr);
+        this->SetState(data);
+      };
+      default:
+        return RuntimeErr(RuntimeErr::MAGIC_ERR,
+                          "Attempted to set non-mutable magic value");
+      };
     }
 
-    node.m_Sym->type = expr;
     return expr;
   }
   std::expected<Type, InterpErr> Visit(AST::StmtAgentDef &node) {
@@ -235,6 +264,58 @@ public:
   }
   std::expected<Type, InterpErr> Visit(AST::ValVariable &node) {
     return node.m_Symbol->type;
+  }
+  std::expected<Type, InterpErr> Visit(AST::ValMagic &node) {
+    if (!node.m_Getting)
+      return RuntimeErr(RuntimeErr::MAGIC_ERR, "ValMagic visited when setting");
+    // Non world-specific values
+    using Value = AST::ValMagic::Value;
+    if (node.m_Value == Value::POSITION)
+      return this->GetState().position;
+    if (node.m_Value == Value::DESTINATION)
+      return this->GetState().destination.value();
+
+    if constexpr (std::is_same_v<DataClass, DiseaseData>) {
+      // Disease world magic values
+      auto data = this->GetState();
+
+      switch (node.m_Value) {
+      case Value::INFECTED:
+        return data.infection_state == HealthState::INFECTED;
+      case Value::SUSCEPTIBLE:
+        return data.infection_state == HealthState::SUSCEPTIBLE;
+      case Value::RECOVERED:
+        return data.infection_state == HealthState::RECOVERED;
+      default:
+        break;
+      };
+
+    } else {
+      // Traffic world magic values
+      TrafficData data = this->GetState();
+
+      switch (node.m_Value) {
+      case Value::FACING:
+        switch (data.direction) {
+        case Direction::North:
+          return Dir::UP;
+        case Direction::East:
+          return Dir::RIGHT;
+        case Direction::South:
+          return Dir::DOWN;
+        case Direction::West:
+          return Dir::LEFT;
+        };
+        break;
+      default:
+        break;
+      };
+    }
+
+    // If we're here, the value requested is not valid in this dataclass
+    return RuntimeErr(
+        RuntimeErr::MAGIC_ERR,
+        "Could not match requested magic value to world dataclass for setting");
   }
 
   void SetGoal([[maybe_unused]] WorldPosition pos) override {}

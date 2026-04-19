@@ -7,13 +7,16 @@ namespace cse498 {
 std::expected<Type, InterpErr>
 templ_visit(AgentWrapper &i, std::derived_from<AST::Node> auto &node) {
   if (!i.m_AgentPtr.has_value())
-    return RuntimeErr(RuntimeErr::EMPTY_INTERP_WRAPPER,
-                      "AgentWrapper is missing a pointer to the scripted agent");
+    return RuntimeErr(
+        RuntimeErr::EMPTY_INTERP_WRAPPER,
+        "AgentWrapper is missing a pointer to the scripted agent");
 
   if (i.m_Env == AgentWrapper::Env::TRAFFIC) {
-    return std::any_cast<ScriptedAgent<TrafficData> *>(i.m_AgentPtr)->Visit(node);
+    return std::any_cast<ScriptedAgent<TrafficData> *>(i.m_AgentPtr)
+        ->Visit(node);
   } else {
-    return std::any_cast<ScriptedAgent<DiseaseData> *>(i.m_AgentPtr)->Visit(node);
+    return std::any_cast<ScriptedAgent<DiseaseData> *>(i.m_AgentPtr)
+        ->Visit(node);
   }
 }
 
@@ -62,6 +65,10 @@ std::expected<Type, InterpErr> AgentWrapper::Visit(AST::ValLiteral &node) {
 }
 
 std::expected<Type, InterpErr> AgentWrapper::Visit(AST::ValVariable &node) {
+  return templ_visit(*this, node);
+}
+
+std::expected<Type, InterpErr> AgentWrapper::Visit(AST::ValMagic &node) {
   return templ_visit(*this, node);
 }
 
