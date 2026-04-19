@@ -1,12 +1,21 @@
 #pragma once
 
+#include <chrono>
+#include <iostream>
 #include <memory>
+#include <thread>
 #include <vector>
+#include <sstream>
 
 #include "Step.hpp"
 #include "StepAgentBase.hpp"
 #include "WorldGrid.hpp"
 #include "core.hpp"
+
+#include "Interpreter/Parser.hpp"
+#include "Agents/ScriptedAgent.hpp"
+
+#include <filesystem>
 
 namespace cse498 {
 
@@ -21,6 +30,9 @@ class StepWorldBase {
   /// Id of the next created agent
   size_t next_id = 0;
 
+  /// Parser for scripted agent
+  Parser parser{};
+
  protected:
   /// Whether the simulation is running
   bool run_over = false;
@@ -32,7 +44,34 @@ class StepWorldBase {
   /// Helper function that is run whenever a new agent is created.
   /// @note Override this function to provide agents with actions or other
   /// setup.
-  virtual void ConfigAgent([[maybe_unused]] Agent &agent) {}
+  virtual void ConfigAgent([[maybe_unused]] Agent& agent) {}
+
+  std::string GetAgentFileContents() { 
+    std::ifstream file("test.al");
+    std::ostringstream buffer;
+    buffer << file.rdbuf();
+    return buffer.str();
+   }
+
+  void SetupScriptedAgents() {
+    std::string contents = GetAgentFileContents();
+    std::stringstream ss{contents};
+    std::cout << contents;
+    
+    auto parse_res = parser.parse(ss);
+    if (!parse_res.has_value()) {
+      std::cout << parse_res.error().ToStr() << "\n";
+      // TODO LOG?
+      // std::terminate();
+      return;
+    }
+    for (auto& agent_def : parse_res.value()) {
+      DataClass data;
+      this->AddAgent<ScriptedAgent<DataClass>>(data)
+        .SetInit(std::move(agent_def->m_Init))
+        .SetTurn(std::move(agent_def->m_Turn));
+    }
+  }
 
  public:
   StepWorldBase() = default;
@@ -43,9 +82,9 @@ class StepWorldBase {
   ///@note This signature or logic is may not final, since other logic may need
   /// to be added to suport different agents, such as scripting agents.
   template <typename AgentDerived>
-  AgentDerived &AddAgent(DataClass data) {
+  AgentDerived& AddAgent(DataClass data) {
     auto agent_ptr = std::make_shared<AgentDerived>(data, next_id++);
-    AgentDerived &agent_ref = *agent_ptr;
+    AgentDerived& agent_ref = *agent_ptr;
     ConfigAgent(agent_ref);
     agent_set.emplace_back(std::move(agent_ptr));
     return agent_ref;
@@ -63,7 +102,7 @@ class StepWorldBase {
   /// @note Override function to control execution order of agents.
   /// @note Override function to control which grid each agent receives.
   virtual void RunAgents() {
-    for (const auto &agent_ptr : agent_set) {
+    for (const auto& agent_ptr : agent_set) {
       DataClass new_state = DoAction(agent_ptr);
       agent_ptr->SetState(new_state);
     }
@@ -76,6 +115,7 @@ class StepWorldBase {
 
   /// @brief Run all agents repeatedly until an end condition is met.
   virtual void Run() {
+    SetupScriptedAgents();
     run_over = false;
     while (!run_over) {
       RunAgents();

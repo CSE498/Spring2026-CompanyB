@@ -5,6 +5,9 @@
 #pragma once
 
 #include <algorithm>
+#include <cassert>
+#include <concepts>
+#include <exception>
 #include <expected>
 #include <functional>
 #include <initializer_list>
@@ -13,6 +16,11 @@
 #include <vector>
 
 namespace cse498 {
+
+template <typename T>
+concept VectorReturnable =
+    !std::is_reference_v<T> &&
+    requires(std::vector<T> v, T t) { v.emplace_back(t); };
 
 enum class FunctionSetError { IndexOutOfBounds };
 
@@ -33,14 +41,14 @@ class FunctionSet {
 
  public:
   /** @brief Default constructor, creates an empty FunctionSet. */
-  FunctionSet() = default;
+  constexpr FunctionSet() = default;
 
   /**
    * @brief Construct a FunctionSet from an initializer list of functions.
    *
    * @param list The initializer list of std::function objects.
    */
-  FunctionSet(std::initializer_list<FuncType> list) {
+  constexpr FunctionSet(std::initializer_list<FuncType> list) {
     for (const auto& val : list) {
       add(val);
     }
@@ -54,15 +62,15 @@ class FunctionSet {
   constexpr void add(const FuncType& func) { functions.emplace_back(func); }
 
   /**
-   * @brief Check whether a fucntion can be stored in the set.
+   * @brief Check whether a function can be stored in the set.
    *
-   * @pram func The function to check.
+   * @param func The function to check.
    *
    * @note We never actually use f, but its useful so the compiler can auto
    *deduce type
    **/
   template <typename F>
-  constexpr bool check_storable(const F& f) {
+  constexpr bool check_storable([[maybe_unused]] const F& f) const {
     return std::is_constructible_v<FuncType, F>;
   }
 
@@ -72,43 +80,109 @@ class FunctionSet {
    * Exceptions thrown by any function propagate out.
    *
    * @param args Arguments to pass to each stored function.
+   * @returns std::vector<Ret> with the function return types, if they are
+   * vector storable, void otherwise.
    */
-  constexpr void invoke(const Params&... args) const {
-    std::ranges::for_each(functions,
-                          [&](const FuncType& func) { func(args...); });
+  constexpr auto invoke(const Params&... args) const {
+    if constexpr (VectorReturnable<Ret>) {
+      std::vector<Ret> results;
+      results.reserve(functions.size());
+      for (const auto& func : functions) results.emplace_back(func(args...));
+      return results;
+    } else {
+      std::ranges::for_each(functions,
+                            [&](const FuncType& func) { func(args...); });
+    }
   }
 
   /**
    * @brief Invoke all functions and collect any errors.
    *
    * Executes each function in the set. If a function throws, its index
-   * is recorded. Returns a std::expected:
-   * - `void` on success
-   * - `std::vector<std::pair<size_t, std::exception_ptr>>` of function indexes
-   * that threw and the exception
+   * and the exception are recorded and execution continues with the next
+   * function. Returns a std::expected:
+   * - On success: std::vector<Ret> (if Ret is VectorReturnable), or void
+   * - On failure: std::vector<std::pair<size_t, std::exception_ptr>> containing
+   *   the index and exception pointer for each function that threw
    *
    * @param args Arguments to pass to each function.
-   * @return std::expected<void, std::vector<size_t>>
+   * @return std::expected<std::vector<Ret>, ErrorType> if Ret is
+   * VectorReturnable, std::expected<void, ErrorType> otherwise, where ErrorType
+   * = std::vector<std::pair<size_t, std::exception_ptr>>
    */
-  constexpr std::expected<void,
-                          std::vector<std::pair<size_t, std::exception_ptr>>>
-  invoke_catch(const Params&... args) const {
+  constexpr auto invoke_catch(const Params&... args) const {
+    using ErrorType = std::vector<std::pair<size_t, std::exception_ptr>>;
     std::vector<std::pair<size_t, std::exception_ptr>> errors;
-    // std::views::enumerate doesnt work on apple clang so we do old style for
-    // loop instead
-    // We cant do a normal range based loop because we want the index
-    for (size_t index{0}; index < functions.size(); ++index) {
-      auto func = functions[index];
-      try {
-        func(args...);
-      } catch (...) {
-        errors.emplace_back(index, std::current_exception());
+
+    if constexpr (VectorReturnable<Ret>) {
+      std::vector<Ret> results;
+      results.reserve(functions.size());
+      for (size_t index{0}; index < functions.size(); ++index) {
+        try {
+          results.emplace_back(functions[index](args...));
+        } catch (...) {
+          errors.emplace_back(index, std::current_exception());
+        }
       }
+      if (!errors.empty())
+        return std::expected<std::vector<Ret>, ErrorType>{
+            std::unexpected{errors}};
+      return std::expected<std::vector<Ret>, ErrorType>{results};
+    } else {
+      for (size_t index{0}; index < functions.size(); ++index) {
+        try {
+          functions[index](args...);
+        } catch (...) {
+          errors.emplace_back(index, std::current_exception());
+        }
+      }
+      if (!errors.empty())
+        return std::expected<void, ErrorType>{std::unexpected{errors}};
+      return std::expected<void, ErrorType>{};
     }
-    if (!errors.empty()) {
-      return std::unexpected{errors};
+  }
+
+  /**
+   * @brief Invoke functions in the set until one throws.
+   *
+   * Executes each function in order. If a function throws, execution stops
+   * immediately and the index of the failing function and its exception are
+   * returned. Returns a std::expected:
+   * - On success: std::vector<Ret> (if Ret is VectorReturnable), or void
+   * - On failure: std::pair<size_t, std::exception_ptr> containing the index
+   *   and exception pointer of the first function that threw
+   *
+   * @param args Arguments to pass to each function.
+   * @return std::expected<std::vector<Ret>, ErrorType> if Ret is
+   * VectorReturnable, std::expected<void, ErrorType> otherwise, where ErrorType
+   * = std::pair<size_t, std::exception_ptr>
+   */
+  constexpr auto invoke_until_catch(const Params&... args) const {
+    using ErrorType = std::pair<size_t, std::exception_ptr>;
+
+    if constexpr (VectorReturnable<Ret>) {
+      std::vector<Ret> results;
+      results.reserve(functions.size());
+      for (size_t index{0}; index < functions.size(); ++index) {
+        try {
+          results.emplace_back(functions[index](args...));
+        } catch (...) {
+          return std::expected<std::vector<Ret>, ErrorType>{
+              std::unexpected{ErrorType{index, std::current_exception()}}};
+        }
+      }
+      return std::expected<std::vector<Ret>, ErrorType>{results};
+    } else {
+      for (size_t index{0}; index < functions.size(); ++index) {
+        try {
+          functions[index](args...);
+        } catch (...) {
+          return std::expected<void, ErrorType>{
+              std::unexpected{ErrorType{index, std::current_exception()}}};
+        }
+      }
+      return std::expected<void, ErrorType>{};
     }
-    return {};
   }
 
   /**
@@ -119,6 +193,22 @@ class FunctionSet {
    * @param args Arguments to pass to each stored function.
    */
   constexpr void operator()(Params... args) const { invoke(args...); }
+
+  /**
+   * @brief Get underlying function container if the caller wants to do any
+   * modification or uncommon operations that hasnt been implemented in the
+   * FunctionSet. We can do this because the FunctionSet holds no state on the
+   * function vector ,so it being modified without our knowledge doesnt break
+   * any invariant.
+   */
+  [[nodiscard]] constexpr std::vector<FuncType>& GetFunctions() noexcept {
+    return functions;
+  }
+
+  [[nodiscard]] constexpr const std::vector<FuncType>& GetFunctions()
+      const noexcept {
+    return functions;
+  }
 
   /**
    * @brief Access a function by index with bounds checking.
@@ -151,6 +241,7 @@ class FunctionSet {
    * @note UB if index is out of bounds
    */
   [[nodiscard]] constexpr FuncType& operator[](size_t index) noexcept {
+    assert(index < size());
     return functions[index];
   }
 
@@ -164,6 +255,7 @@ class FunctionSet {
    */
   [[nodiscard]] constexpr const FuncType& operator[](
       size_t index) const noexcept {
+    assert(index < size());
     return functions[index];
   }
 
@@ -208,6 +300,7 @@ class FunctionSet {
    * @note UB if set is empty
    */
   [[nodiscard]] constexpr FuncType& front() noexcept {
+    assert(size());
     return functions.front();
   }
 
@@ -218,6 +311,7 @@ class FunctionSet {
    * @note UB if set is empty
    */
   [[nodiscard]] constexpr const FuncType& front() const noexcept {
+    assert(size());
     return functions.front();
   }
 
@@ -227,7 +321,10 @@ class FunctionSet {
    *
    * @note UB if set is empty
    */
-  [[nodiscard]] constexpr FuncType& back() noexcept { return functions.back(); }
+  [[nodiscard]] constexpr FuncType& back() noexcept {
+    assert(size());
+    return functions.back();
+  }
 
   /**
    * @brief Const overload of back().
@@ -236,6 +333,7 @@ class FunctionSet {
    * @note UB if set is empty
    */
   [[nodiscard]] constexpr const FuncType& back() const noexcept {
+    assert(size());
     return functions.back();
   }
 

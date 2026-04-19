@@ -1,18 +1,24 @@
 #pragma once
 
+#include <sstream>
 #include <stdlib.h>
 
 #include <type_traits>
 #include <variant>
 
+#include "AgentData.hpp"
+
 namespace Concepts {
+/** @brief Require that the type `T` is equivalent to any of the types `...Ts`
+ */
 template <typename T, typename... Ts>
 concept IsOneOf = (std::is_same_v<T, Ts> || ...);
 
-template <typename Head, typename... Tail>
-constexpr bool all_unique() {
+/** @brief Helper compile-time call to check if all types in a list of types are
+ * unique. */
+template <typename Head, typename... Tail> constexpr bool all_unique() {
   // On final element, must be unique
-  if constexpr (std::is_void_v<std::tuple<Tail...>>()) {
+  if constexpr (sizeof...(Tail) == 1) {
     return true;
   } else if constexpr (IsOneOf<Head, Tail...>) {
     return false;
@@ -25,7 +31,7 @@ constexpr bool all_unique() {
 /** @brief Wraps `all_unique()` to provide a corresponding concept requirement.
  */
 template <typename... Ts>
-concept UniqueTypes = all_unique<Ts..., std::void_t>();
+concept UniqueTypes = all_unique<Ts...>();
 
 /**
  * @brief Determines a valid dataclass for the agents and world
@@ -35,9 +41,14 @@ concept UniqueTypes = all_unique<Ts..., std::void_t>();
  * after discussing with both world groups
  */
 template <typename T>
-concept IsDataClass = IsOneOf<T, int>;
+concept IsDataClass = IsOneOf<T, cse498::TrafficData, cse498::DiseaseData>;
 
-}  // namespace Concepts
+/** @brief Requires given type to have operator<<(std::stringstream&) defined.
+ */
+template <typename T>
+concept Printable = requires(T t) { std::stringstream() << t; };
+
+} // namespace Concepts
 
 namespace StaticUtil {
 /**
@@ -54,15 +65,14 @@ namespace StaticUtil {
  * @return size_t
  */
 
-template <typename... VariantTypes, std::variant<VariantTypes...> Variant,
-          typename TargetType, size_t idx = 0>
-  requires Concepts::UniqueTypes<VariantTypes...>
+template <typename Variant, typename TargetType, size_t idx = 0>
+  requires requires(Variant v) { std::variant_size_v<Variant>; }
 constexpr size_t variant_index() {
-  if constexpr (std::is_same_v<TargetType, std::variant_alternative_t<
-                                               idx, decltype(Variant)>>) {
+  if constexpr (std::is_same_v<TargetType,
+                               std::variant_alternative_t<idx, Variant>>) {
     return idx;
   } else {
     return variant_index<Variant, TargetType, idx + 1>();
   }
 }
-};  // namespace StaticUtil
+}; // namespace StaticUtil

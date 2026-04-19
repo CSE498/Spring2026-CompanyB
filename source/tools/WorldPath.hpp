@@ -38,6 +38,53 @@ class WorldPath {
 
   constexpr WorldPath() noexcept = default;
 
+  /**
+   * @brief Constructs a path from a braced list of points.
+   * @param pts Initializer list of points. All must have finite coordinates
+   *
+   * @code
+   *   // patrol route inline
+   *   WorldPath patrol = {{0, 0}, {10, 0}, {10, 10}, {0, 10}, {0, 0}};
+   *
+   *   // two-point path for distance queries
+   *   WorldPath segment{{0, 0}, {3, 4}};
+   *   assert(segment.totalLength() == 5.0);
+   * @endcode
+   */
+  WorldPath(std::initializer_list<Point> pts) : points_(pts) {
+    assert(isValid());
+  }
+
+  /**
+   * @brief Constructs a path from any range whose elements can build a Point.
+   * @tparam R An input range whose elements satisfy
+   *           std::constructible_from<Point, range_reference_t<R>>.
+   * @param range The source range of points.
+   *
+   * @code
+   *   // Convert an existing container of waypoints
+   *   std::vector<Point> waypoints = computeWaypoints();
+   *   WorldPath path(waypoints);
+   *
+   *   // Build from a reversed view without copying twice
+   *   WorldPath returnTrip(waypoints | std::views::reverse);
+   * @endcode
+   */
+  template <std::ranges::input_range R>
+    requires(!std::same_as<std::remove_cvref_t<R>, WorldPath>) &&
+            std::constructible_from<Point, std::ranges::range_reference_t<R>>
+  explicit WorldPath(R&& range) {
+    if constexpr (std::ranges::sized_range<R>) {
+      points_.reserve(std::ranges::size(range));
+    }
+
+    for (auto&& p : range) {
+      points_.emplace_back(std::forward<decltype(p)>(p));
+    }
+
+    assert(isValid());
+  }
+
   constexpr auto begin() noexcept { return points_.begin(); }
   constexpr auto end() noexcept { return points_.end(); }
   constexpr auto begin() const noexcept { return points_.begin(); }
@@ -45,29 +92,6 @@ class WorldPath {
 
   constexpr Point& operator[](std::size_t i) noexcept { return points_[i]; }
   constexpr const Point& operator[](std::size_t i) const noexcept {
-    return points_[i];
-  }
-
-  /**
-   * @brief Bounds-checked access to the i-th point.
-   * @param i Index of the point.
-   * @return Reference to the point at index i.
-   * @throws std::out_of_range if i >= size().
-   */
-  [[deprecated(
-      "Exceptions are disallowed. Use get() for checked access or [] for "
-      "unchecked access.")]] Point&
-  at(std::size_t i) {
-    if (i >= points_.size()) throw std::out_of_range("WorldPath::at");
-    return points_[i];
-  }
-
-  /** @copydoc at(std::size_t) */
-  [[deprecated(
-      "Exceptions are disallowed. Use get() for checked access or [] for "
-      "unchecked access.")]] const Point&
-  at(std::size_t i) const {
-    if (i >= points_.size()) throw std::out_of_range("WorldPath::at");
     return points_[i];
   }
 
