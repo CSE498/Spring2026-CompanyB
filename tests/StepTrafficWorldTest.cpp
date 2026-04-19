@@ -5,7 +5,7 @@
 #include <fstream>
 #include <optional>
 
-#include "../../source/worlds/StepTrafficWorld.hpp"
+#include "../source/worlds/StepTrafficWorld.hpp"
 
 using namespace cse498;
 using namespace cse498::steps;
@@ -367,4 +367,5 @@ TEST_CASE("Edge cases", "[StepTrafficWorld][edge]") {
     CHECK_NOTHROW(tw.SetFrameDelay(std::chrono::milliseconds{0}));
   }
 }
+
 
