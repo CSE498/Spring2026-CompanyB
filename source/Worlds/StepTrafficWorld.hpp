@@ -33,8 +33,6 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
     StepContainer &container;
     StepTrafficWorld &world;
 
-    size_t grass_id{};
-
     // Now we'll need to have an operator() overload for each Step type.
     // NOTE: all this "typename StepVisitor::VisitRet" stuff (instead of just
     // "VisitRet") is for some reason required when adding "template <typename
@@ -56,15 +54,11 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
     }
 
     typename StepVisitor::VisitRet operator()(steps::InfoStep step) {
-      // When we get an info step, the agent would like to do something
-      // conditionally (the container handles the branching internally).
-      // It will provide us with the "aspect" about the world, and the
-      // location it wants the info about. In return, we'll "inform" the
-      // container with what has been requested.
       switch (step.aspect) {
         using Aspect = cse498::steps::InfoStep::Aspect;
         case Aspect::LOC_AVAIL: {
-          container.inform(world.CanMakeMoveAt(agent, step.target).value_or(false));
+          container.inform(
+              world.CanMakeMoveAt(agent, step.target).value_or(false));
           break;
         }
         case Aspect::OCCUPANCY_FRAC: {
@@ -80,11 +74,6 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
       };
       return {};
     }
-
-    // Note for someone who may want to refactor in the future to not have to
-    // fill fill in overloads for steps we shouldn't reach (like
-    // ConditionalStep), we could either (a) extend the InfoHandler approach for
-    // a defaulted visitor or apply CRTP and have it build in these overloads.
 
     typename StepVisitor::VisitRet operator()(
         [[maybe_unused]] steps::ConditionalStep step) {
@@ -120,7 +109,7 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
 
   // Containers for the 3 different types of spawners
   std::vector<WorldPosition>
-      fast_spawner_positions{};  // < Fasp Spawner location container
+      fast_spawner_positions{};  // < fast Spawner location container
   std::vector<WorldPosition>
       normal_spawner_positions{};  // < normal Spawner location container
   std::vector<WorldPosition>
@@ -191,9 +180,9 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
   /// Written by Claude.
   std::queue<size_t> despawned_agent_ids{};
 
+ private:
   // Pulled by Claude out of the preexisting constructor — registers cell types
   // and scans the loaded grid for traffic lights, spawners, and destinations.
- private:
   void RegisterCellTypes() {
     road_id = main_grid.AddCellType("road", "Road to drive in", '.');
     grass_id =
@@ -285,7 +274,7 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
   ~StepTrafficWorld() = default;
 
   [[nodiscard]] std::expected<Direction, WorldErr> GetNewDirection(
-      WorldPosition pos, WorldPosition new_pos) {
+      WorldPosition pos, WorldPosition new_pos) const {
     size_t old_x = pos.CellX();
     size_t old_y = pos.CellY();
     size_t new_x = new_pos.CellX();
@@ -314,7 +303,7 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
   }
   // TODO: explain everything that's going on here
   [[nodiscard]] std::expected<bool, WorldErr> CanMakeMoveAt(
-      const Agent &agent, const WorldPosition &new_pos) {
+      const Agent &agent, const WorldPosition &new_pos) const {
     if (!IsValid(new_pos) || IsGrass(new_pos)) {
       return false;
     }
@@ -399,7 +388,7 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
       return agent->GetState();
     }
     StepContainer steps = agent->GetTurn();
-    StepVisitor visitor{*agent, steps, *this, grass_id};
+    StepVisitor visitor{*agent, steps, *this};
     WorldPosition prev_position = agent->GetState().position;
     while (!steps.exhausted()) {
       std::expected<Step, StepErr> step = steps.get_next();
