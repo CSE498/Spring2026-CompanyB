@@ -50,7 +50,7 @@ class StepWorldBase {
   AgentDerived& AddAgent(DataClass data, LogLevel loglevel = LogLevel::Normal,
                          uint64_t tick = 0) {
     auto agent_ptr =
-        std::make_shared<AgentDerived>(data, next_id++, log_level, tick);
+        std::make_shared<AgentDerived>(data, next_id++, loglevel, tick);
     AgentDerived& agent_ref = *agent_ptr;
     ConfigAgent(agent_ref);
     agent_set.emplace_back(std::move(agent_ptr));
