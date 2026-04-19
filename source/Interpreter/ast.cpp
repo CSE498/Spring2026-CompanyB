@@ -1,7 +1,6 @@
 #include "ast.hpp"
 #include "Agents/ScriptedAgent.hpp"
 #include "Interpreter/errors.hpp"
-#include "Interpreter/interpreter.hpp"
 #include <expected>
 namespace cse498::AST {
 Node::~Node() {};

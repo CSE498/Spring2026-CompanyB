@@ -1,6 +1,5 @@
 #include "Agents/ScriptedAgent.hpp"
 #include "Interpreter/agentlang.hpp"
-#include "Interpreter/interpreter.hpp"
 #include "core/AgentData.hpp"
 
 namespace cse498 {
