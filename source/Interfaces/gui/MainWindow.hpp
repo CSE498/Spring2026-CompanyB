@@ -66,7 +66,7 @@ private:
 
     // Timer
     QTimer* mTimer = nullptr;
-    int mTickInterval = 300;
+    int mTickInterval = 150;
 
     // For ImageGrid construction
     WorldBase& mWorld;

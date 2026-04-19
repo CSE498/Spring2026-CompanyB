@@ -8,6 +8,7 @@
 #include "../../core/WorldBase.hpp"
 #include "../../Worlds/MazeWorld.hpp"
 #include "../../Worlds/InfectiousWorld.hpp"
+#include "../../Worlds/TrafficWorld.hpp"
 
 namespace cse498 {
 

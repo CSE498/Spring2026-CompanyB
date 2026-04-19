@@ -5,6 +5,8 @@
 
 #include "../core/WorldBase.hpp"
 #include "../tools/WeightedSet.hpp"
+#include "../Agents/DrivingAgent.hpp"
+#include "../tools/StateGridPosition.hpp"
 
 namespace cse498 {
 

@@ -39,7 +39,7 @@ MainWindow::MainWindow(WorldBase &world, const std::vector<QString> &imagePaths,
 
 void MainWindow::setupAgents() {
     if (mMode == 1) {
-        mWorld.AddAgent<PacingAgent>("Agent-1").SetLocation(WorldPosition{3, 2});
+
     } else {
         auto& iw = static_cast<InfectiousWorld&>(mWorld);
         iw.AddAgent<PacingAgent>("Agent-1").SetLocation(WorldPosition{3, 2});
