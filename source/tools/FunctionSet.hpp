@@ -7,6 +7,7 @@
 #include <algorithm>
 #include <cassert>
 #include <concepts>
+#include <exception>
 #include <expected>
 #include <functional>
 #include <initializer_list>

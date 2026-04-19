@@ -18,7 +18,7 @@
 #include "Interpreter/Evaluation/OpVisits.hpp"
 #include "Interpreter/agentlang.hpp"
 #include "Interpreter/ast.hpp"
-#include "core/DiseaseData.hpp"
+#include "core/AgentData.hpp"
 #include "core/Step.hpp"
 #include "core/StepAgentBase.hpp"
 #include "core/WorldPosition.hpp"

@@ -6,8 +6,7 @@
 #include <type_traits>
 #include <variant>
 
-#include "Worlds/TrafficData.hpp"
-#include "core/DiseaseData.hpp"
+#include "AgentData.hpp"
 
 namespace Concepts {
 /** @brief Require that the type `T` is equivalent to any of the types `...Ts`
@@ -32,7 +31,7 @@ template <typename Head, typename... Tail> constexpr bool all_unique() {
 /** @brief Wraps `all_unique()` to provide a corresponding concept requirement.
  */
 template <typename... Ts>
-concept UniqueTypes = all_unique<Ts..., std::void_t>();
+concept UniqueTypes = all_unique<Ts...>();
 
 /**
  * @brief Determines a valid dataclass for the agents and world

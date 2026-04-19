@@ -11,7 +11,7 @@
 #include <memory>
 #include <thread>
 
-#include "Worlds/TrafficData.hpp"
+#include "core/AgentData.hpp"
 #include "Step.hpp"
 #include "core/StepWorldBase.hpp"
 

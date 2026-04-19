@@ -10,8 +10,8 @@
 #include <utility>
 #include <variant>
 
-#include "core/WorldPosition.hpp"
-#include "core/core.hpp"
+#include "WorldPosition.hpp"
+#include "core.hpp"
 #include "tools/FuncInfo.hpp"
 
 namespace cse498 {
@@ -92,7 +92,7 @@ struct StepContainer;
 struct MovementStep {
   WorldPosition loc;
 
-  bool operator==(MovementStep const &other) { return other.loc == loc; }
+  bool operator==(MovementStep const& other) { return other.loc == loc; }
 };
 
 struct InfoStep {
@@ -159,14 +159,14 @@ struct StepContainer {
   // Root is an "empty" node so that "last" can always be bound
   std::unique_ptr<Node> root = std::make_unique<Node>();
   // This is *non owning* and a shared_ptr doesn't make sense
-  Node *last = root.get();
+  Node* last = root.get();
 
   // When iterating, the "indexing" ptr needs no mutation
-  Node const *cur_node = root.get();
+  Node const* cur_node = root.get();
   // Need one node prior to handle infostep stuff
-  Node const *prev_node = nullptr;
+  Node const* prev_node = nullptr;
 
-  std::stack<Node const *> next_stack;
+  std::stack<Node const*> next_stack;
 
   // Filled in by .inform()
   std::optional<InfoType> world_info = {};
@@ -195,7 +195,7 @@ struct StepContainer {
   // step as a branch w/o needing a full stepcontainer
 
   template <BranchLike T>
-  void add_step(InfoStep &&i, ConditionalStep &&s, T &&t_body) {
+  void add_step(InfoStep&& i, ConditionalStep&& s, T&& t_body) {
     assert(last != nullptr);
 
     // Insert infostep node first
@@ -219,7 +219,7 @@ struct StepContainer {
   }
 
   template <BranchLike T, BranchLike F>
-  void add_step(InfoStep &&i, ConditionalStep &&s, T &&t_body, F &&f_body) {
+  void add_step(InfoStep&& i, ConditionalStep&& s, T&& t_body, F&& f_body) {
     assert(last != nullptr);
 
     // Do everything the single-branch add_step does, then just additionally add

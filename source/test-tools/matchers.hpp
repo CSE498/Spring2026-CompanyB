@@ -34,7 +34,7 @@ template <typename T> struct OptNotNull : Catch::Matchers::MatcherGenericBase {
 
 struct ExpNotErr : Catch::Matchers::MatcherGenericBase {
   template <typename T, typename E>
-  bool match(std::expected<T, E> const &other) const {
+  bool match(std::expected<T, E> const& other) const {
     return other.has_value();
   }
 
@@ -55,12 +55,12 @@ struct ExpIsErr : Catch::Matchers::MatcherGenericBase {
 template <typename State, CheckExp DoCheckExp = CheckExp::NO>
 struct VariantState : Catch::Matchers::MatcherGenericBase {
   template <typename... Types>
-  bool match(std::variant<Types...> const &other) const {
+  bool match(std::variant<Types...> const& other) const {
     return std::holds_alternative<State>(other);
   }
 
   template <typename... Types>
-  bool match(std::optional<std::variant<Types...>> const &other) const {
+  bool match(std::optional<std::variant<Types...>> const& other) const {
     return std::holds_alternative<State>(other.value());
   }
 

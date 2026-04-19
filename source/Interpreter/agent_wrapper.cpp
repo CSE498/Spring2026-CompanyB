@@ -1,8 +1,7 @@
 #include "Agents/ScriptedAgent.hpp"
-#include "DiseaseData.hpp"
 #include "Interpreter/agentlang.hpp"
 #include "Interpreter/interpreter.hpp"
-#include "Worlds/TrafficData.hpp"
+#include "core/AgentData.hpp"
 
 namespace cse498 {
 
