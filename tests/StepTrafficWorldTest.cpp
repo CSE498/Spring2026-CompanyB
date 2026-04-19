@@ -5,7 +5,7 @@
 #include <fstream>
 #include <optional>
 
-#include "../source/worlds/StepTrafficWorld.hpp"
+#include "../source/Worlds/StepTrafficWorld.hpp"
 
 using namespace cse498;
 using namespace cse498::steps;
