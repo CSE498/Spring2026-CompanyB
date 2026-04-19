@@ -6,6 +6,7 @@
 #include <variant>
 
 #include "Worlds/Group11DummyData.hpp"
+#include "AgentData.hpp"
 
 namespace Concepts {
 /** @brief Require that the type `T` is equivalent to any of the types `...Ts`
@@ -31,7 +32,7 @@ constexpr bool all_unique() {
 /** @brief Wraps `all_unique()` to provide a corresponding concept requirement.
  */
 template <typename... Ts>
-concept UniqueTypes = all_unique<Ts..., std::void_t>();
+concept UniqueTypes = all_unique<Ts...>();
 
 /**
  * @brief Determines a valid dataclass for the agents and world
@@ -41,7 +42,7 @@ concept UniqueTypes = all_unique<Ts..., std::void_t>();
  * after discussing with both world groups
  */
 template <typename T>
-concept IsDataClass = IsOneOf<T, cse498::Group11DummyData>;
+concept IsDataClass = IsOneOf<T, cse498::Group11DummyData, cse498::TrafficData, cse498::DiseaseData>;
 
 }  // namespace Concepts
 
