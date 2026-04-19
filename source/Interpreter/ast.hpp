@@ -124,29 +124,8 @@ struct ValVariable : public TypedNode {
   std::expected<Types::Type, InterpErr> Accept(AgentWrapper &) override;
 
   ValVariable(emplex::Token token, std::shared_ptr<Symbols::SymInfo> symbol)
-      : TypedNode(token, symbol->type.index()), m_Symbol(symbol) {}
+      : TypedNode(token), m_Symbol(symbol) {}
   ~ValVariable() = default;
-};
-
-// Magic val reference
-struct ValMagic : public Node {
-  enum class Value {
-    POSITION,    // __position__, valid both
-    DESTINATION, // __destination__, valid both
-    INFECTED,    // __infected__, valid infection
-    SUSCEPTIBLE, // __susceptible__, valid infection
-    RECOVERED,   // __recovered__, valid infection
-    FACING,      // __facing__, valid traffic
-  };
-
-  Value m_Value;
-  bool m_Getting; // true = getting, false = setting
-
-  std::expected<Types::Type, InterpErr> Accept(AgentWrapper &) override;
-
-  ValMagic(emplex::Token token, Value value)
-      : Node(token), m_Value(value), m_Getting(true) {}
-  ~ValMagic() = default;
 };
 
 // -- Expressions --
@@ -175,7 +154,7 @@ struct ExprBinary : public TypedNode {
 };
 
 struct Assign : public TypedNode {
-  std::variant<std::shared_ptr<Symbols::SymInfo>, ValMagic::Value> m_Sym;
+  std::shared_ptr<Symbols::SymInfo> m_Sym;
   std::unique_ptr<Node> m_Value;
 
   // std::expected<size_t, InterpErr> ResolveType() override {
@@ -184,9 +163,6 @@ struct Assign : public TypedNode {
   std::expected<Types::Type, InterpErr> Accept(AgentWrapper &) override;
 
   Assign(emplex::Token const &token, std::shared_ptr<Symbols::SymInfo> sym,
-         std::unique_ptr<Node> &&value)
-      : TypedNode(token), m_Sym(sym), m_Value(std::move(value)) {}
-  Assign(emplex::Token const &token, ValMagic::Value sym,
          std::unique_ptr<Node> &&value)
       : TypedNode(token), m_Sym(sym), m_Value(std::move(value)) {}
   ~Assign() = default;
@@ -295,8 +271,6 @@ static std::string IDNodeForTest(Node const *node) {
     return "ValLiteral";
   } else if (dynamic_cast<ValVariable const *>(node)) {
     return "ValVariable";
-  } else if (dynamic_cast<ValMagic const *>(node)) {
-    return "ValMagic";
   } else {
     return "Somehow none of the above";
   }

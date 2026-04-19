@@ -68,6 +68,7 @@ SymbolTable::PrepAdd(const Token &id_tok) {
                      std::format("Redefinition of symbol {}", name));
   }
   size_t var_id = m_SymbolInfo.size();
+  symbols[name] = var_id;
 
   return std::pair<std::string, size_t>{name, var_id};
 };
@@ -84,14 +85,10 @@ std::expected<size_t, InterpErr> SymbolTable::AddSym(const Token &id_tok,
   m_SymbolInfo.push_back(std::make_shared<SymInfo>(name, id_tok.line_id, sym));
   return idx;
 }
-std::expected<size_t, InterpErr> SymbolTable::AddSym(const Token &id_tok,
+std::expected<size_t, InterpErr> SymbolTable::AddSym(std::string name,
                                                      MagicSym sym) {
-  TRY_DECL(sym_pair, PrepAdd(id_tok));
-  auto [name, idx] = sym_pair;
-
-  m_SymbolInfo.push_back(
-      std::make_shared<SymInfo>(name, id_tok.line_id, sym, sym.CanMut()));
-  return idx;
+  m_SymbolInfo.push_back(std::make_shared<SymInfo>(name, 0, sym, sym.CanMut()));
+  return m_SymbolInfo.size() - 1;
 }
 std::expected<size_t, InterpErr> SymbolTable::AddSym(const Token &id_tok,
                                                      FuncSym &&sym) {

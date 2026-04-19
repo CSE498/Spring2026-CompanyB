@@ -172,10 +172,10 @@ struct VarSym {
 
 struct FuncSym {
   std::vector<std::shared_ptr<SymInfo>> m_Params;
-  std::unique_ptr<AST::StmtBlock> m_Body;
+  // std::unique_ptr<AST::StmtBlock> m_Body;
 
-  FuncSym(std::vector<std::shared_ptr<SymInfo>> &&params,
-          std::unique_ptr<AST::StmtBlock> &&body);
+  FuncSym(std::vector<std::shared_ptr<SymInfo>> &&params)
+      : m_Params(std::move(params)) {};
 };
 
 struct MagicSym {
@@ -202,8 +202,28 @@ struct MagicSym {
 using SymVariant_T = std::variant<VarSym, FuncSym, MagicSym>;
 struct SymVariant : SymVariant_T {
   using SymVariant_T::variant;
+  using SymVariant_T::operator=;
   // Feels like there's a good chance I'll want to have done this later
   // so just doing it now
+
+  std::string StateAsStr() const {
+    switch (this->index()) {
+    case 0:
+      return "variant";
+    case 1:
+      return "function";
+    case 2:
+      return "magic";
+    default:
+      return "invalid_sym";
+    }
+  }
+
+  template <typename T> bool IsA() const {
+    return this->index() == StaticUtil::variant_index<SymVariant_T, T>();
+  }
+
+  template <typename T> T As() const { return std::get<T>(*this); }
 };
 
 struct SymInfo {
@@ -214,10 +234,10 @@ struct SymInfo {
 
   template <typename T>
   SymInfo(std::string _name, size_t _line_def, T &&_sym)
-      : name(_name), line_def(_line_def), SymVariant(std::forward<T>(_sym)) {}
+      : name(_name), line_def(_line_def), sym(std::forward<T>(_sym)) {}
   template <typename T>
   SymInfo(std::string _name, size_t _line_def, T &&_sym, bool _mut)
-      : name(_name), line_def(_line_def), SymVariant(std::forward<T>(_sym)),
+      : name(_name), line_def(_line_def), sym(std::forward<T>(_sym)),
         mut(_mut) {}
 };
 

@@ -68,8 +68,4 @@ std::expected<Type, InterpErr> AgentWrapper::Visit(AST::ValVariable &node) {
   return templ_visit(*this, node);
 }
 
-std::expected<Type, InterpErr> AgentWrapper::Visit(AST::ValMagic &node) {
-  return templ_visit(*this, node);
-}
-
 }; // namespace cse498

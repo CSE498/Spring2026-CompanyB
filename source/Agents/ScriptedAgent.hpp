@@ -17,6 +17,7 @@
 #include "core/WorldPosition.hpp"
 #include "core/core.hpp"
 #include <any>
+#include <ranges>
 #include <variant>
 
 #include <memory>
@@ -26,6 +27,7 @@ namespace cse498 {
 using AST::Node;
 using Concepts::IsDataClass;
 using namespace agentlang::Types;
+using namespace agentlang::Symbols;
 using steps::MovementStep;
 
 template <IsDataClass DataClass> class ScriptedAgent;
@@ -47,7 +49,6 @@ struct AgentWrapper {
   std::expected<Type, InterpErr> Visit(AST::StmtIf &);
   std::expected<Type, InterpErr> Visit(AST::ValLiteral &);
   std::expected<Type, InterpErr> Visit(AST::ValVariable &);
-  std::expected<Type, InterpErr> Visit(AST::ValMagic &);
 
   std::expected<Type, InterpErr> Evaluate(AST::Node &node) {
     return node.Accept(*this);
@@ -74,6 +75,8 @@ class ScriptedAgent : public StepAgentBase<DataClass> {
   std::unique_ptr<AgentWrapper> mAgentWrapper;
 
   StepContainer mCurrentTurn;
+
+  std::optional<Type> mCurrentRetval = {};
 
 public:
   ScriptedAgent(DataClass initial_state, size_t id)
@@ -107,6 +110,143 @@ public:
     return std::move(mCurrentTurn);
   }
 
+  /* --------------- Visits for symbol types ---------------- */
+  struct SymAssignVisitor {
+    std::unique_ptr<AgentWrapper> &mAgentWrapper;
+    std::unique_ptr<Node> &mVal;
+    std::shared_ptr<SymInfo> &mSymPtr;
+    StepAgentBase<DataClass> &mAgentBase;
+
+    SymAssignVisitor(std::unique_ptr<AgentWrapper> &_AgentWrapper,
+                     std::unique_ptr<Node> &_Val,
+                     std::shared_ptr<SymInfo> &_SymPtr,
+                     StepAgentBase<DataClass> &_AgentBase)
+        : mAgentWrapper(_AgentWrapper), mVal(_Val), mSymPtr(_SymPtr),
+          mAgentBase(_AgentBase) {};
+
+    std::expected<Type, InterpErr> operator()(VarSym v) {
+      TRY_DECL(val_result, mVal->Accept(*mAgentWrapper));
+
+      // Handle for type mismatch
+      if (v.m_Type.index() != val_result.index())
+        return RuntimeErr(
+            RuntimeErr::TYPE_MISMATCH,
+            std::format("Attempted to assign expression of type {} "
+                        "to variable of type {}",
+                        TypeVariantToName(val_result),
+                        TypeVariantToName(v.m_Type)));
+
+      mSymPtr->sym = val_result;
+      return val_result;
+    }
+
+    std::expected<Type, InterpErr> operator()(MagicSym m) {
+      // Assigning mVal's result to an agent value
+      using Value = MagicSym::Value;
+
+      TRY_DECL(val_result, mVal->Accept(*mAgentWrapper));
+
+      switch (m.m_Value) {
+      case Value::DESTINATION: {
+        // Ensure val_result is a point
+        if (!std::holds_alternative<Point>(val_result))
+          return RuntimeErr(
+              RuntimeErr::TYPE_MISMATCH,
+              std::format("Attempted to set magic value "
+                          "__destination__ to non-point type '{}'",
+                          TypeVariantToName(val_result)));
+
+        auto data = mAgentBase.GetState();
+        data.position = std::get<Point>(val_result);
+        mAgentBase.SetState(data);
+      }
+      default:
+        return RuntimeErr(RuntimeErr::MAGIC_ERR,
+                          "Attempted to set non-mutable magic value");
+      };
+
+      return val_result;
+    }
+
+    std::expected<Type, InterpErr> operator()(FuncSym f) {
+      return RuntimeErr(RuntimeErr::IMMUTABLE_ERR,
+                        "Attempted to assign to function");
+    }
+  };
+
+  struct SymGetVisitor {
+    std::unique_ptr<AgentWrapper> &mAgentWrapper;
+    StepAgentBase<DataClass> &mAgentBase;
+    std::vector<Type> mParams{};
+
+    SymGetVisitor(std::unique_ptr<AgentWrapper> &_AgentWrapper,
+                  StepAgentBase<DataClass> &_AgentBase,
+                  std::vector<Type> _Params)
+        : mAgentWrapper(_AgentWrapper), mAgentBase(_AgentBase),
+          mParams(_Params) {}
+
+    std::expected<Type, InterpErr> operator()(VarSym v) { return v.m_Type; }
+
+    std::expected<Type, InterpErr> operator()(MagicSym m) {
+      using Value = MagicSym::Value;
+      auto data = mAgentBase.GetState();
+
+      switch (m.m_Value) {
+      case MagicSym::Value::POSITION:
+        return Type{data.position};
+      case MagicSym::Value::DESTINATION: {
+        auto ret = data.destination;
+        if (!ret.has_value())
+          return NullType{};
+        else
+          return Type{ret.value()};
+      }
+      case MagicSym::Value::INFECTED:
+        if constexpr (std::is_same_v<DataClass, DiseaseData>) {
+          return Type{data.infection_state == HealthState::INFECTED};
+        }
+        break;
+      case MagicSym::Value::SUSCEPTIBLE:
+        if constexpr (std::is_same_v<DataClass, DiseaseData>) {
+          return Type{data.infection_state == HealthState::SUSCEPTIBLE};
+        }
+        break;
+      case MagicSym::Value::RECOVERED:
+        if constexpr (std::is_same_v<DataClass, DiseaseData>) {
+          return Type{data.infection_state == HealthState::RECOVERED};
+        }
+        break;
+      case MagicSym::Value::FACING:
+        if constexpr (std::is_same_v<DataClass, TrafficData>) {
+          switch (data.direction) {
+          case Direction::North:
+            return Type{Dir::UP};
+          case Direction::East:
+            return Type{Dir::RIGHT};
+          case Direction::South:
+            return Type{Dir::DOWN};
+          case Direction::West:
+            return Type{Dir::LEFT};
+          };
+        }
+        break;
+      }
+      // If we're here, the value requested is not valid in this dataclass
+      return RuntimeErr(RuntimeErr::MAGIC_ERR,
+                        "Could not match requested magic value to world "
+                        "dataclass for setting");
+    }
+
+    std::expected<Type, InterpErr> operator()(FuncSym f) {
+      // Sequentially set each param symbol
+      for (auto [index, val] : std::views::enumerate(mParams)) {
+        f.m_Params[index]->sym = val;
+      }
+      return NullType{};
+    }
+  };
+  /* -------------------------------------------------------- */
+
   std::expected<Type, InterpErr> Visit(AST::StmtBlock &node) {
     std::expected<Type, InterpErr> res;
     for (auto &cur_node : node.m_Body) {
@@ -130,42 +270,15 @@ public:
     // Assignee is a symbol
     TRY_DECL(expr, node.m_Value->Accept(*mAgentWrapper));
 
-    if (std::holds_alternative<std::shared_ptr<SymInfo>>(node.m_Sym)) {
-      std::shared_ptr<SymInfo> sym =
-          std::get<std::shared_ptr<SymInfo>>(node.m_Sym);
+    if (!node.m_Sym->mut)
+      return RuntimeErr(RuntimeErr::IMMUTABLE_ERR,
+                        std::format("Tried to modify immutable symbol '{}:{}'",
+                                    node.m_Sym->sym.StateAsStr(),
+                                    node.m_Sym->name));
 
-      // If expr is not same type as variable. TODO Perhpas add casting later?
-      if (sym->type.index() != expr.index()) {
-        return RuntimeErr(
-            RuntimeErr::TYPE_MISMATCH,
-            std::format("Attempted to assign expression of type {} "
-                        "to variable of type {}",
-                        TypeVariantToName(expr), TypeVariantToName(sym->type)));
-        sym->type = expr;
-      }
-    } else {
-      // Assignee is a magic val
-      AST::ValMagic::Value val_magic =
-          std::get<AST::ValMagic::Value>(node.m_Sym);
-
-      switch (val_magic) {
-      case AST::ValMagic::Value::POSITION: {
-        if (!std::holds_alternative<Point>(expr))
-          return RuntimeErr(RuntimeErr::TYPE_MISMATCH,
-                            std::format("Attempted to set magic value "
-                                        "__position__ to non-point type '{}'",
-                                        TypeVariantToName(expr)));
-        auto data = this->GetState();
-        data.position = std::get<Point>(expr);
-        this->SetState(data);
-      };
-      default:
-        return RuntimeErr(RuntimeErr::MAGIC_ERR,
-                          "Attempted to set non-mutable magic value");
-      };
-    }
-
-    return expr;
+    return std::visit(
+        SymAssignVisitor(mAgentWrapper, node.m_Value, node.m_Sym, *this),
+        node.m_Sym->sym);
   }
   std::expected<Type, InterpErr> Visit(AST::StmtAgentDef &node) {
     return RuntimeErr{
@@ -255,59 +368,8 @@ public:
     return node.m_Val;
   }
   std::expected<Type, InterpErr> Visit(AST::ValVariable &node) {
-    return node.m_Symbol->type;
-  }
-  std::expected<Type, InterpErr> Visit(AST::ValMagic &node) {
-    if (!node.m_Getting)
-      return RuntimeErr(RuntimeErr::MAGIC_ERR, "ValMagic visited when setting");
-    // Non world-specific values
-    using Value = AST::ValMagic::Value;
-    if (node.m_Value == Value::POSITION)
-      return this->GetState().position;
-    if (node.m_Value == Value::DESTINATION)
-      return this->GetState().destination.value();
-
-    if constexpr (std::is_same_v<DataClass, DiseaseData>) {
-      // Disease world magic values
-      auto data = this->GetState();
-
-      switch (node.m_Value) {
-      case Value::INFECTED:
-        return data.infection_state == HealthState::INFECTED;
-      case Value::SUSCEPTIBLE:
-        return data.infection_state == HealthState::SUSCEPTIBLE;
-      case Value::RECOVERED:
-        return data.infection_state == HealthState::RECOVERED;
-      default:
-        break;
-      };
-
-    } else {
-      // Traffic world magic values
-      TrafficData data = this->GetState();
-
-      switch (node.m_Value) {
-      case Value::FACING:
-        switch (data.direction) {
-        case Direction::North:
-          return Dir::UP;
-        case Direction::East:
-          return Dir::RIGHT;
-        case Direction::South:
-          return Dir::DOWN;
-        case Direction::West:
-          return Dir::LEFT;
-        };
-        break;
-      default:
-        break;
-      };
-    }
-
-    // If we're here, the value requested is not valid in this dataclass
-    return RuntimeErr(
-        RuntimeErr::MAGIC_ERR,
-        "Could not match requested magic value to world dataclass for setting");
+    return std::visit(SymGetVisitor(mAgentWrapper, *this, {}),
+                      node.m_Symbol->sym);
   }
 
   void SetGoal([[maybe_unused]] WorldPosition pos) override {}

@@ -50,8 +50,4 @@ std::expected<Types::Type, InterpErr> ValVariable::Accept(AgentWrapper &i) {
   return i.Visit(*this);
 }
 
-std::expected<Types::Type, InterpErr> ValMagic::Accept(AgentWrapper &i) {
-  return i.Visit(*this);
-}
-
 }; // namespace cse498::AST

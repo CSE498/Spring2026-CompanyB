@@ -45,7 +45,7 @@ public:
   PrepAdd(const Token &);
 
   // Magic
-  std::expected<size_t, InterpErr> AddSym(const Token &, MagicSym);
+  std::expected<size_t, InterpErr> AddSym(std::string, MagicSym);
 
   // Variable
   std::expected<size_t, InterpErr> AddSym(const Token &, VarSym);

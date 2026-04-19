@@ -26,6 +26,7 @@ private:
   int m_InLoop = 0;
   bool m_InInit = false;
   bool m_InTurn = false;
+  bool m_InFunc = false;
 
   std::expected<std::unique_ptr<AST::Node>, InterpErr>
   parse_stmt(ParseSetting setting = ParseSetting::NONE);

@@ -122,12 +122,17 @@ struct RuntimeErr : BaseErr {
     INVALID_MOVE_ARG = 5,
     TOO_MANY_MOVES = 6,
     MAGIC_ERR = 7,
+    IMMUTABLE_ERR = 8,
+    TOO_FEW_ARGS = 9,
+    TOO_MANY_ARGS = 10,
   };
-  static constexpr std::array<std::string_view, 8> m_KindNames = {
+  static constexpr std::array<std::string_view, 11> m_KindNames = {
       "TYPE_MISMATCH",         "EMPTY_INTERP_WRAPPER",
       "UNSUPPORTED_OP",        "NOT_BOOL_CONV",
       "ENCOUNTERED_AGENT_DEF", "INVALID_MOVE_ARG",
-      "TOO_MANY_MOVES",        "MAGIC_ERR"};
+      "TOO_MANY_MOVES",        "MAGIC_ERR",
+      "IMMUTABLE_ERR",         "TOO_FEW_ARGS",
+      "TOO_MANY_ARGS"};
 
   Kind m_Kind;
   RuntimeErr(Kind kind)
@@ -141,9 +146,10 @@ struct LoopControlErr : BaseErr {
   enum Kind {
     BREAK = 0,
     CONTINUE = 1,
+    RETURN = 2,
   };
-  static constexpr std::array<std::string_view, 2> m_KindNames = {"BREAK",
-                                                                  "CONTINUE"};
+  static constexpr std::array<std::string_view, 3> m_KindNames = {
+      "BREAK", "CONTINUE", "RETURN"};
 
   Kind m_Kind;
   LoopControlErr(Kind kind)

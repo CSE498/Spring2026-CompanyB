@@ -1,8 +1,10 @@
 #include "Interpreter/Parser.hpp"
+#include "Interpreter/Lexing/lexer-gen.hpp"
 #include "Interpreter/agentlang.hpp"
 #include "Interpreter/ast.hpp"
 #include "Interpreter/errors.hpp"
 #include "Interpreter/lexer.hpp"
+#include "Interpreter/macros.hpp"
 #include <expected>
 #include <memory>
 #include <vector>
@@ -17,6 +19,12 @@ Parser::parse(std::istream &in) {
   auto tokenize_res = m_Lexer.Tokenize(in);
   if (!tokenize_res.has_value())
     return tokenize_res.error();
+
+  using Value = agentlang::Symbols::MagicSym::Value;
+
+  // Put in the universal magic vals
+  TRY(m_Syms.AddSym("__position__", Value::POSITION));
+  TRY(m_Syms.AddSym("__destination__", Value::DESTINATION));
 
   /*
   We first need to check that the first statement configures the world
@@ -35,12 +43,20 @@ Parser::parse(std::istream &in) {
     return token_res.error();
 
   switch (token_res.value()) {
-  case IDs::ID_KW_TRAFFIC:
+  case IDs::ID_KW_TRAFFIC: {
     m_Env = Env::TRAFFIC;
+    // Put in the traffic-related magic vals
+    TRY(m_Syms.AddSym("__facing__", Value::FACING));
     break;
-  case IDs::ID_KW_INFECTION:
+  }
+  case IDs::ID_KW_INFECTION: {
     m_Env = Env::INFECTION;
+    // Put in the infection-related magic vals
+    TRY(m_Syms.AddSym("__infected__", Value::INFECTED));
+    TRY(m_Syms.AddSym("__susceptible__", Value::SUSCEPTIBLE));
+    TRY(m_Syms.AddSym("__recovered__", Value::RECOVERED));
     break;
+  }
   default:
     return ParseErr(ParseErr::INVALID_WORLD,
                     std::format("Token '{}' is not a valid world configuration",

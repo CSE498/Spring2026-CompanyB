@@ -1,7 +1,9 @@
 #include "Interpreter/Parser.hpp"
+#include "Interpreter/agentlang.hpp"
 #include "Interpreter/ast.hpp"
 #include "Interpreter/errors.hpp"
 #include "Interpreter/lexer.hpp"
+#include "Interpreter/macros.hpp"
 
 namespace cse498 {
 
@@ -13,6 +15,7 @@ std::expected<std::unique_ptr<AST::Node>, InterpErr> Parser::parse_var_def() {
   */
   using AgentLexer::IDs;
   using AgentLexer::Token;
+  using namespace agentlang::Types;
 
   // Expect: KW_LET
   std::expected<Token, InterpErr> res = m_Lexer.UseIf(IDs::ID_KW_LET);
@@ -39,7 +42,9 @@ std::expected<std::unique_ptr<AST::Node>, InterpErr> Parser::parse_var_def() {
 
   // Imp: Symbol table interaction
   Token type_token = res.value();
-  auto sym_add_res = m_Syms.AddSym(id_token, type_token);
+  // auto sym_add_res = m_Syms.AddSym(id_token, type_token);
+  auto sym_add_res =
+      m_Syms.AddSym(id_token, NameToType(type_token).value_or(NullType{}));
   if (!sym_add_res)
     return sym_add_res.error();
 
