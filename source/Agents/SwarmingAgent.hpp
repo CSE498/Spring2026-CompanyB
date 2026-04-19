@@ -204,7 +204,7 @@ class SwarmingAgent : public StepAgentBase<SwarmData> {
   void SetGoal(WorldPosition goal) override {
     auto state = this->GetState();
     state.destination = goal;
-    this->SetState(state);
+    this->SetStateNoLog(state);
   }
 
   // Helper function to set whether the agent is swarming away or towards the
@@ -212,14 +212,14 @@ class SwarmingAgent : public StepAgentBase<SwarmData> {
   void SetSwarmAway(bool swarm_away) {
     auto state = this->GetState();
     state.swarm_away = swarm_away;
-    this->SetState(state);
+    this->SetStateNoLog(state);
   }
 
   // Helper function to set whether the agent is active or not
   void SetActive(bool active) {
     auto state = this->GetState();
     state.is_active = active;
-    this->SetState(state);
+    this->SetStateNoLog(state);
   }
 };
 

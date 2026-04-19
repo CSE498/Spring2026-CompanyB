@@ -20,27 +20,36 @@ class ActionLog : public IActionLog<AgentType> {
   /// @param eventPayload JSON object representing the event to
   /// validate.
   /// @return True if the payload is valid, false otherwise.
-  std::optional<LogEventFailure> ValidateBase(const nlohmann::json& eventPayload) {
+  std::optional<LogEventFailure> ValidateBase(
+      const nlohmann::json& eventPayload) {
     // agentId validation
-    if (!eventPayload.contains("agentId") || 
-        !eventPayload.operator[]("agentId").is_string() || 
-        eventPayload.operator[]("agentId").get<std::string>().empty()) [[unlikely]] {
-      return LogEventFailure{eventPayload, "Validation failed: agentId is missing or empty."};
+    if (!eventPayload.contains("agentId") ||
+        !eventPayload.operator[]("agentId").is_string() ||
+        eventPayload.operator[]("agentId").get<std::string>().empty())
+        [[unlikely]] {
+      return LogEventFailure{eventPayload,
+                             "Validation failed: agentId is missing or empty."};
     }
     // logLevel validation
-    if (!eventPayload.contains("logLevel") || 
+    if (!eventPayload.contains("logLevel") ||
         !eventPayload.operator[]("logLevel").is_number_integer()) [[unlikely]] {
-      return LogEventFailure{eventPayload, "Validation failed: logLevel is missing or not an integer."};
+      return LogEventFailure{
+          eventPayload,
+          "Validation failed: logLevel is missing or not an integer."};
     }
     int logLevel = eventPayload.operator[]("logLevel").get<int>();
-    if (logLevel < static_cast<int>(LogLevel::Normal) || 
+    if (logLevel < static_cast<int>(LogLevel::Normal) ||
         logLevel > static_cast<int>(LogLevel::Silent)) [[unlikely]] {
-      return LogEventFailure{eventPayload, "Validation failed: logLevel is out of range."};
+      return LogEventFailure{eventPayload,
+                             "Validation failed: logLevel is out of range."};
     }
     // timestamp validation
-    if (!eventPayload.contains("timestamp") || 
-        !eventPayload.operator[]("timestamp").is_number_integer() || eventPayload.operator[]("timestamp").get<int64_t>() <= 0) [[unlikely]] {
-      return LogEventFailure{eventPayload, "Validation failed: timestamp is missing or not positive."};
+    if (!eventPayload.contains("timestamp") ||
+        !eventPayload.operator[]("timestamp").is_number_integer() ||
+        eventPayload.operator[]("timestamp").get<int64_t>() <= 0) [[unlikely]] {
+      return LogEventFailure{
+          eventPayload,
+          "Validation failed: timestamp is missing or not positive."};
     }
     return std::nullopt;
   }

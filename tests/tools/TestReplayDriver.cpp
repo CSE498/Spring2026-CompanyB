@@ -15,7 +15,6 @@ TEST_CASE("ReplayDriver can read and replay events from a JSON file",
 
   mockAgent->getLoggable();
 
-  
   cse498::ReplayDriver<cse498::MockAgent> replayDriver;
 
   replayDriver.AgentMap("test_events.json");

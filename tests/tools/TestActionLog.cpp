@@ -22,7 +22,9 @@ class ActionLogMockAgent {
 TEST_CASE("LogEventByOneAgent", "[ActionLog]") {
   ActionLog<ActionLogMockAgent> actionLog;
   ActionLogMockAgent agent;
-  agent.AddAction({{"agentId", "agent1"}, {"logLevel", static_cast<int>(LogLevel::Normal)}, {"timestamp", 100}});
+  agent.AddAction({{"agentId", "agent1"},
+                   {"logLevel", static_cast<int>(LogLevel::Normal)},
+                   {"timestamp", 100}});
 
   std::vector<ActionLogMockAgent> agents = {agent};
   auto [events, failures] = actionLog.LogAgentStates(agents);
@@ -36,10 +38,14 @@ TEST_CASE("LogEventByMultipleAgent", "[ActionLog]") {
   ActionLog<ActionLogMockAgent> actionLog;
 
   ActionLogMockAgent agent1;
-  agent1.AddAction({{"agentId", "agent1"}, {"logLevel", static_cast<int>(LogLevel::Normal)}, {"timestamp", 100}});
+  agent1.AddAction({{"agentId", "agent1"},
+                    {"logLevel", static_cast<int>(LogLevel::Normal)},
+                    {"timestamp", 100}});
 
   ActionLogMockAgent agent2;
-  agent2.AddAction({{"agentId", "agent2"}, {"logLevel", static_cast<int>(LogLevel::Verbose)}, {"timestamp", 101}});
+  agent2.AddAction({{"agentId", "agent2"},
+                    {"logLevel", static_cast<int>(LogLevel::Verbose)},
+                    {"timestamp", 101}});
 
   std::vector<ActionLogMockAgent> agents = {agent1, agent2};
   auto [events, failures] = actionLog.LogAgentStates(agents);
@@ -54,11 +60,17 @@ TEST_CASE("LogEventByMultipleAgentMultipleActions", "[ActionLog]") {
   ActionLog<ActionLogMockAgent> actionLog;
 
   ActionLogMockAgent agent1;
-  agent1.AddAction({{"agentId", "agent1"}, {"logLevel", static_cast<int>(LogLevel::Normal)}, {"timestamp", 100}});
-  agent1.AddAction({{"agentId", "agent1"}, {"logLevel", static_cast<int>(LogLevel::Debug)}, {"timestamp", 105}});
+  agent1.AddAction({{"agentId", "agent1"},
+                    {"logLevel", static_cast<int>(LogLevel::Normal)},
+                    {"timestamp", 100}});
+  agent1.AddAction({{"agentId", "agent1"},
+                    {"logLevel", static_cast<int>(LogLevel::Debug)},
+                    {"timestamp", 105}});
 
   ActionLogMockAgent agent2;
-  agent2.AddAction({{"agentId", "agent2"}, {"logLevel", static_cast<int>(LogLevel::Verbose)}, {"timestamp", 110}});
+  agent2.AddAction({{"agentId", "agent2"},
+                    {"logLevel", static_cast<int>(LogLevel::Verbose)},
+                    {"timestamp", 110}});
 
   std::vector<ActionLogMockAgent> agents = {agent1, agent2};
   auto [events, failures] = actionLog.LogAgentStates(agents);
@@ -71,7 +83,9 @@ TEST_CASE("LogEventFailed_Timestamp", "[ActionLog]") {
   ActionLog<ActionLogMockAgent> actionLog;
 
   ActionLogMockAgent agent;
-  agent.AddAction({{"agentId", "agent1"}, {"logLevel", static_cast<int>(LogLevel::Normal)}, {"timestamp", -1}});  // Negative timestamp
+  agent.AddAction({{"agentId", "agent1"},
+                   {"logLevel", static_cast<int>(LogLevel::Normal)},
+                   {"timestamp", -1}});  // Negative timestamp
 
   std::vector<ActionLogMockAgent> agents = {agent};
   auto [events, failures] = actionLog.LogAgentStates(agents);
@@ -85,7 +99,8 @@ TEST_CASE("LogEventFailed_LogLevel", "[ActionLog]") {
 
   ActionLogMockAgent agent;
   // Out of range enum value
-  agent.AddAction({{"agentId", "agent1"}, {"logLevel", 99}, {"timestamp", 100}});
+  agent.AddAction(
+      {{"agentId", "agent1"}, {"logLevel", 99}, {"timestamp", 100}});
 
   std::vector<ActionLogMockAgent> agents = {agent};
   auto [events, failures] = actionLog.LogAgentStates(agents);
@@ -98,8 +113,12 @@ TEST_CASE("MultipleLogFailure", "[ActionLog]") {
   ActionLog<ActionLogMockAgent> actionLog;
 
   ActionLogMockAgent agent;
-  agent.AddAction({{"agentId", ""}, {"logLevel", static_cast<int>(LogLevel::Normal)}, {"timestamp", 100}});    // Fail 1
-  agent.AddAction({{"agentId", "agent1"}, {"logLevel", static_cast<int>(LogLevel::Normal)}, {"timestamp", -1}});  // Fail 2
+  agent.AddAction({{"agentId", ""},
+                   {"logLevel", static_cast<int>(LogLevel::Normal)},
+                   {"timestamp", 100}});  // Fail 1
+  agent.AddAction({{"agentId", "agent1"},
+                   {"logLevel", static_cast<int>(LogLevel::Normal)},
+                   {"timestamp", -1}});  // Fail 2
 
   std::vector<ActionLogMockAgent> agents = {agent};
   auto [events, failures] = actionLog.LogAgentStates(agents);
@@ -112,8 +131,12 @@ TEST_CASE("PartialLogFailures", "[ActionLog]") {
   ActionLog<ActionLogMockAgent> actionLog;
 
   ActionLogMockAgent agent;
-  agent.AddAction({{"agentId", "agent1"}, {"logLevel", static_cast<int>(LogLevel::Normal)}, {"timestamp", 100}});  // Success
-  agent.AddAction({{"agentId", ""}, {"logLevel", static_cast<int>(LogLevel::Normal)}, {"timestamp", 101}});        // Failure
+  agent.AddAction({{"agentId", "agent1"},
+                   {"logLevel", static_cast<int>(LogLevel::Normal)},
+                   {"timestamp", 100}});  // Success
+  agent.AddAction({{"agentId", ""},
+                   {"logLevel", static_cast<int>(LogLevel::Normal)},
+                   {"timestamp", 101}});  // Failure
 
   std::vector<ActionLogMockAgent> agents = {agent};
   auto [events, failures] = actionLog.LogAgentStates(agents);

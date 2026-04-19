@@ -95,10 +95,10 @@ class Logger : public ILogger<AgentType> {
       const std::vector<AgentType>& agents) override {
     auto [events, eventFailures] = mActionLog->LogAgentStates(agents);
     for (const auto& failure : eventFailures) {
-      mOutputManager->LogMessage(
-          LogLevel::Verbose,
-          std::string("Validation failed for event: ") +
-              failure.state.dump() + ". Reason: " + failure.message);
+      mOutputManager->LogMessage(LogLevel::Verbose,
+                                 std::string("Validation failed for event: ") +
+                                     failure.state.dump() +
+                                     ". Reason: " + failure.message);
     }
     mOutputManager->WriteActionEvents(events);
     if (!mOutputManager->Flush()) {

@@ -76,7 +76,11 @@ template <typename... Ts> struct _InfoHandler {
   _InfoHandler(F f)
       : funcs({pick_handler<typename std::tuple_element<
                                 0, typename FuncInfo::FuncInfo<F>::args>::type,
+<<<<<<< HEAD
                             Ts>(f)...}) {}
+=======
+                            Ts>(f)...}){};
+>>>>>>> origin/Group12-AgentBaseDataLogging
 
   template <typename S> std::expected<bool, StepErr> operator()(S s) {
     return std::invoke(std::get<InfoFunc<S>>(funcs), s);
@@ -92,7 +96,7 @@ struct StepContainer;
 struct MovementStep {
   WorldPosition loc;
 
-  bool operator==(MovementStep const& other) { return other.loc == loc; }
+  bool operator==(MovementStep const& other) const { return other.loc == loc; }
 };
 
 struct InfoStep {
