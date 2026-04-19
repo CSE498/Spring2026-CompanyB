@@ -49,15 +49,24 @@ Parser::parse_expr(int prec) {
 
     std::unique_ptr<AST::Node> node;
     if (cur_token.id == IDs::ID_OP_ASSIGN) {
-      // Left side must be a variable
-      AST::ValVariable *left_as_var =
-          dynamic_cast<AST::ValVariable *>(left.value().get());
-      if (!left_as_var)
-        return ParseErr(ParseErr::ILLEGAL_ASSIGNMENT,
-                        "Left side of assignment must be a symbol");
+      // Left side must be a variable or a magic val
+      AST::ValVariable *left_as_var;
+      AST::ValMagic *left_as_magic;
 
-      node = std::make_unique<AST::Assign>(cur_token, left_as_var->m_Symbol,
-                                           std::move(right.value()));
+      if ((left_as_var =
+               dynamic_cast<AST::ValVariable *>(left.value().get()))) {
+        node = std::make_unique<AST::Assign>(cur_token, left_as_var->m_Symbol,
+                                             std::move(right.value()));
+      } else if ((left_as_magic =
+                      dynamic_cast<AST::ValMagic *>(left.value().get()))) {
+        node = std::make_unique<AST::Assign>(cur_token, left_as_magic->m_Value,
+                                             std::move(right.value()));
+      } else {
+        return ParseErr(
+            ParseErr::ILLEGAL_ASSIGNMENT,
+            "Left side of assignment must be a symbol or magic value");
+      }
+
     } else {
       node = std::make_unique<AST::ExprBinary>(
           cur_token, std::move(left.value()), std::move(right.value()));
@@ -99,6 +108,36 @@ std::expected<std::unique_ptr<AST::Node>, InterpErr> Parser::parse_term() {
   }
 
   switch (next_token.id) {
+  case IDs::ID_MAGIC_VAL: {
+    using Value = AST::ValMagic::Value;
+    AST::ValMagic::Value magic_val;
+    std::string magic_id =
+        next_token.lexeme.substr(2, next_token.lexeme.length() - 4);
+    // Guard checks with world verification
+    if ((m_Env == Env::INFECTION) && (magic_id == "infected")) {
+      magic_val = Value::INFECTED;
+    } else if ((m_Env == Env::INFECTION) && (magic_id == "susceptible")) {
+      magic_val = Value::SUSCEPTIBLE;
+    } else if ((m_Env == Env::INFECTION) && (magic_id == "recovered")) {
+      magic_val = Value::RECOVERED;
+    } else if ((m_Env == Env::TRAFFIC) && (magic_id == "facing")) {
+      magic_val = Value::FACING;
+    } else if (magic_id == "position") {
+      magic_val = Value::POSITION;
+    } else if (magic_id == "destination") {
+      magic_val = Value::DESTINATION;
+    }
+
+    else {
+      return ParseErr(
+          ParseErr::MAGIC_ERR,
+          std::format("Magic value '{}' is not a recognized name in {} world",
+                      magic_id,
+                      (m_Env == Env::INFECTION) ? "infection" : "traffic"));
+    }
+
+    return std::make_unique<AST::ValMagic>(next_token, magic_val);
+  }
   case IDs::ID_IDENTIFIER: {
     auto sym = m_Syms.GetSym(next_token.lexeme);
     if (!sym.has_value())
