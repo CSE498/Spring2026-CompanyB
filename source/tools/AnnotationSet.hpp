@@ -32,50 +32,50 @@ class AnnotationSet {
   std::unordered_set<tag> tags;
 
  public:
-  AnnotationSet() = default;                       // Default constructor
-  AnnotationSet(const AnnotationSet &) = default;  // Default copy
-  AnnotationSet &operator=(const AnnotationSet &) = default;  // Default assign
+  AnnotationSet() = default;                      // Default constructor
+  AnnotationSet(const AnnotationSet&) = default;  // Default copy
+  AnnotationSet& operator=(const AnnotationSet&) = default;  // Default assign
   ~AnnotationSet() = default;  // Default destructor
 
   /*
    * @brief Adds a tag to the annotation set.
    * @param tag The tag to be added.
    */
-  std::optional<const tag *> addTag(const tag &);
+  std::optional<const tag*> addTag(const tag&);
 
   /*
    * @brief Removes a tag from the annotation set.
    * @param tag The tag to be removed.
    * @return true if the tag was removed, false if it was not found.
    */
-  std::expected<void, std::string> removeTag(const tag &);
+  std::expected<void, std::string> removeTag(const tag&);
 
   /*
    * @brief Checks if a tag exists in the annotation set.
    * @param tag The tag to be checked.
    * @return true if the tag exists, false otherwise.
    */
-  [[nodiscard]] bool hasTag(const tag &) const;
+  [[nodiscard]] bool hasTag(const tag&) const;
 
   /*
    * @brief Retrieves a tag from the annotation set.
    * @param tag The tag to be retrieved.
    * @return A pointer to the tag if found, nullptr otherwise.
    */
-  std::optional<const tag *> getTag(const tag &) const;
+  std::optional<const tag*> getTag(const tag&) const;
 
   /*
    * @brief Retrieves a tag from the annotation set.
    * @param tag The tag to be retrieved.
    * @return A pointer to the tag if found, nullptr otherwise.
    */
-  std::optional<const tag *> operator[](const tag &) const;
+  std::optional<const tag*> operator[](const tag&) const;
 
   /*
    * @brief Retrieves all tags in the annotation set.
    * @return A set of all tags.
    */
-  const std::unordered_set<tag> &getTags() const;
+  const std::unordered_set<tag>& getTags() const;
 
   /*
    * @brief Returns the number of tags in the annotation set.

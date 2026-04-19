@@ -5,6 +5,7 @@
 #pragma once
 
 #include <algorithm>
+#include <exception>
 #include <expected>
 #include <functional>
 #include <initializer_list>
