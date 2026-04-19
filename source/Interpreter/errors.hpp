@@ -78,12 +78,14 @@ struct ParseErr : BaseErr {
     AT_EOF = 9,
     ILLEGAL_ASSIGNMENT = 10,
     WORLD_MISMATCH = 11,
+    MAGIC_ERR = 12,
   };
-  static constexpr std::array<std::string_view, 12> m_KindNames = {
+  static constexpr std::array<std::string_view, 13> m_KindNames = {
       "MISSING_TOKEN",   "EXPECTED_STMT",      "OUT_OF_TURN",
       "OUT_OF_INIT",     "OUT_OF_LOOP",        "INVALID_OP_TOKEN",
       "INVALID_LITERAL", "INVALID_TERM",       "INVALID_WORLD",
-      "AT_EOF",          "ILLEGAL_ASSIGNMENT", "WORLD_MISMATCH"};
+      "AT_EOF",          "ILLEGAL_ASSIGNMENT", "WORLD_MISMATCH",
+      "MAGIC_ERR"};
 
   Kind m_Kind;
   ParseErr(Kind kind)
@@ -118,12 +120,14 @@ struct RuntimeErr : BaseErr {
     NOT_BOOL_CONV = 3,
     ENCOUNTERED_AGENT_DEF = 4,
     INVALID_MOVE_ARG = 5,
-    TOO_MANY_MOVES = 6
+    TOO_MANY_MOVES = 6,
+    MAGIC_ERR = 7,
   };
-  static constexpr std::array<std::string_view, 7> m_KindNames = {
-      "TYPE_MISMATCH", "EMPTY_INTERP_WRAPPER",  "UNSUPPORTED_OP",
-      "NOT_BOOL_CONV", "ENCOUNTERED_AGENT_DEF", "INVALID_MOVE_ARG",
-      "TOO_MANY_MOVES"};
+  static constexpr std::array<std::string_view, 8> m_KindNames = {
+      "TYPE_MISMATCH",         "EMPTY_INTERP_WRAPPER",
+      "UNSUPPORTED_OP",        "NOT_BOOL_CONV",
+      "ENCOUNTERED_AGENT_DEF", "INVALID_MOVE_ARG",
+      "TOO_MANY_MOVES",        "MAGIC_ERR"};
 
   Kind m_Kind;
   RuntimeErr(Kind kind)
