@@ -18,6 +18,13 @@
 
 namespace cse498 {
 
+// Forward declarations
+namespace AST {
+struct Node;
+struct StmtBlock;
+struct ValVariable;
+}; // namespace AST
+
 namespace agentlang::Types {
 
 // Alias so that the internal "point" and the type "point" match
@@ -35,13 +42,13 @@ enum class Dir {
 struct Car {};
 struct Student {};
 struct NullType {};
-using Type = std::variant<bool, int, double, str, Point, Dir, Car,
-                          Student, NullType>;
+using Type =
+    std::variant<bool, int, double, str, Point, Dir, Car, Student, NullType>;
 
 // Concept satisfied if T is a valid agentlang type
 template <typename T>
-concept TypeKind = Concepts::IsOneOf<T, bool, int, double, str, Point,
-                                     Dir, Car, Student, NullType>;
+concept TypeKind = Concepts::IsOneOf<T, bool, int, double, str, Point, Dir, Car,
+                                     Student, NullType>;
 static const std::array<std::string_view, 9> TYPE_NAMES = {
     "bool",      "int", "double",  "str", "point",
     "direction", "car", "student", "null"};
@@ -50,8 +57,9 @@ template <TypeKind T> inline std::string_view TypeToName() {
   return TYPE_NAMES.at(StaticUtil::variant_index<Type, T>());
 }
 
-inline std::string_view TypeVariantToName(const Type& t) {
-  return std::visit([](auto&& v) { return TypeToName<std::decay_t<decltype(v)>>(); }, t);
+inline std::string_view TypeVariantToName(const Type &t) {
+  return std::visit(
+      [](auto &&v) { return TypeToName<std::decay_t<decltype(v)>>(); }, t);
 }
 
 inline std::optional<Type> NameToType(const emplex::Token &type_tok) {
@@ -153,10 +161,64 @@ namespace agentlang::Symbols {
 
 using agentlang::Types::Type;
 
+// Forwrad decl.
+struct SymInfo;
+
+struct VarSym {
+  Type m_Type;
+
+  VarSym(Type t) : m_Type(t) {}
+};
+
+struct FuncSym {
+  std::vector<std::shared_ptr<SymInfo>> m_Params;
+  std::unique_ptr<AST::StmtBlock> m_Body;
+
+  FuncSym(std::vector<std::shared_ptr<SymInfo>> &&params,
+          std::unique_ptr<AST::StmtBlock> &&body);
+};
+
+struct MagicSym {
+  enum class Value {
+    POSITION,    // __position__, valid both
+    DESTINATION, // __destination__, valid both
+    INFECTED,    // __infected__, valid infection
+    SUSCEPTIBLE, // __susceptible__, valid infection
+    RECOVERED,   // __recovered__, valid infection
+    FACING,      // __facing__, valid traffic
+  };
+
+  Value m_Value;
+
+  bool CanMut() {
+    // Return whether the current value is a mutable magic val
+    // Only one can be for now
+    return (m_Value == Value::DESTINATION);
+  };
+
+  MagicSym(Value value) : m_Value(value) {}
+};
+
+using SymVariant_T = std::variant<VarSym, FuncSym, MagicSym>;
+struct SymVariant : SymVariant_T {
+  using SymVariant_T::variant;
+  // Feels like there's a good chance I'll want to have done this later
+  // so just doing it now
+};
+
 struct SymInfo {
   std::string name;
   size_t line_def;
-  Type type;
+  SymVariant sym;
+  bool mut = true;
+
+  template <typename T>
+  SymInfo(std::string _name, size_t _line_def, T &&_sym)
+      : name(_name), line_def(_line_def), SymVariant(std::forward<T>(_sym)) {}
+  template <typename T>
+  SymInfo(std::string _name, size_t _line_def, T &&_sym, bool _mut)
+      : name(_name), line_def(_line_def), SymVariant(std::forward<T>(_sym)),
+        mut(_mut) {}
 };
 
 } // namespace agentlang::Symbols
