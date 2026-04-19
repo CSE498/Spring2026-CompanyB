@@ -4,22 +4,12 @@
 
 #pragma once
 
-#define TRY_DECL(var, expr) \
-  auto _result_##var = (expr); \
-  if (!_result_##var.has_value()) { return _result_##var.error(); } \
-  auto var = _result_##var.value();
-
-#define TRY(expr) \
-  { \
-    auto _result = (expr); \
-    if (!_result.has_value()) { return _result.error(); } \
-  }
-
 #include "Interpreter/Evaluation/OpVisits.hpp"
 #include "Interpreter/SymbolTable.hpp"
 #include "Interpreter/agentlang.hpp"
 #include "Interpreter/ast.hpp"
 #include "Interpreter/errors.hpp"
+#include "Interpreter/macros.hpp"
 #include "StateGridPosition.hpp"
 #include "core/AgentData.hpp"
 #include "core/Step.hpp"
@@ -37,7 +27,6 @@ using AST::Node;
 using Concepts::IsDataClass;
 using namespace agentlang::Types;
 using steps::MovementStep;
-
 
 template <IsDataClass DataClass> class ScriptedAgent;
 
@@ -90,12 +79,18 @@ public:
   ScriptedAgent(DataClass initial_state, size_t id)
       : StepAgentBase<DataClass>(initial_state, id),
         mAgentWrapper(std::make_unique<AgentWrapper>(this)) {}
-    
+
   ~ScriptedAgent() = default;
 
-  ScriptedAgent& SetInit(std::unique_ptr<Node> init) { mInit = std::move(init); return *this; }
+  ScriptedAgent &SetInit(std::unique_ptr<Node> init) {
+    mInit = std::move(init);
+    return *this;
+  }
 
-  ScriptedAgent& SetTurn(std::unique_ptr<Node> turn) { mTurn = std::move(turn); return *this; }
+  ScriptedAgent &SetTurn(std::unique_ptr<Node> turn) {
+    mTurn = std::move(turn);
+    return *this;
+  }
 
   /// Choose the action to take a step in the appropriate direction.
   StepContainer GetTurn() override {
@@ -111,7 +106,6 @@ public:
 
     return std::move(mCurrentTurn);
   }
-
 
   std::expected<Type, InterpErr> Visit(AST::StmtBlock &node) {
     std::expected<Type, InterpErr> res;
@@ -175,36 +169,38 @@ public:
   }
   std::expected<Type, InterpErr> Visit(AST::StmtAgentDef &node) {
     return RuntimeErr{
-      RuntimeErr::ENCOUNTERED_AGENT_DEF,
-      "Encountered an agent definition when evaluation agent turn"
-    };
+        RuntimeErr::ENCOUNTERED_AGENT_DEF,
+        "Encountered an agent definition when evaluation agent turn"};
   }
 
   std::expected<Type, InterpErr> Visit(AST::StmtAction &node) {
     TRY_DECL(type, node.m_Direction->Accept(*mAgentWrapper))
-    if (Dir* direction = std::get_if<Dir>(&type)) {
+    if (Dir *direction = std::get_if<Dir>(&type)) {
       auto pos = this->GetState().position;
       switch (*direction) {
-        case Dir::LEFT: pos = pos.Left(); break;
-        case Dir::RIGHT: pos = pos.Right(); break;
-        case Dir::UP: pos = pos.Up(); break;
-        case Dir::DOWN: pos = pos.Down(); break;
+      case Dir::LEFT:
+        pos = pos.Left();
+        break;
+      case Dir::RIGHT:
+        pos = pos.Right();
+        break;
+      case Dir::UP:
+        pos = pos.Up();
+        break;
+      case Dir::DOWN:
+        pos = pos.Down();
+        break;
       }
       if (mCurrentTurn.empty()) {
         mCurrentTurn.add_step(MovementStep{pos});
       } else {
-        return RuntimeErr{
-          RuntimeErr::TOO_MANY_MOVES,
-          "A maximum of 1 move is permitted per agent turn"
-        };
+        return RuntimeErr{RuntimeErr::TOO_MANY_MOVES,
+                          "A maximum of 1 move is permitted per agent turn"};
       }
     } else {
-      return RuntimeErr{
-        RuntimeErr::INVALID_MOVE_ARG,
-        std::format("move() expects type 'Direction', found {}",
-        TypeVariantToName(type)
-        )
-      };
+      return RuntimeErr{RuntimeErr::INVALID_MOVE_ARG,
+                        std::format("move() expects type 'Direction', found {}",
+                                    TypeVariantToName(type))};
     }
 
     return NullType{};
@@ -212,30 +208,26 @@ public:
 
   std::expected<Type, InterpErr> Visit(AST::StmtLoopCtl &node) {
     if (node.m_Action == AST::StmtLoopCtl::BREAK) {
-      return LoopControlErr(
-        LoopControlErr::BREAK,
-        "'break' statement encountered outside of loop"
-      );
-    } 
+      return LoopControlErr(LoopControlErr::BREAK,
+                            "'break' statement encountered outside of loop");
+    }
 
-    return LoopControlErr(
-      LoopControlErr::CONTINUE,
-      "'continue' statement encountered outside of loop"
-    );
+    return LoopControlErr(LoopControlErr::CONTINUE,
+                          "'continue' statement encountered outside of loop");
   }
   std::expected<Type, InterpErr> Visit(AST::StmtWhile &node) {
     TRY_DECL(cond, node.m_Condition->Accept(*mAgentWrapper))
     TRY_DECL(cond_truthy, evaluate_bool(cond))
-    
+
     while (cond_truthy) {
       auto body_res = node.m_Body->Accept(*mAgentWrapper);
       if (!body_res.has_value()) {
-        if (auto* err = std::get_if<LoopControlErr>(&body_res.error())) {
-            if (err->m_Kind == LoopControlErr::BREAK) {
-              break;
-            } else {
-              continue;
-            }
+        if (auto *err = std::get_if<LoopControlErr>(&body_res.error())) {
+          if (err->m_Kind == LoopControlErr::BREAK) {
+            break;
+          } else {
+            continue;
+          }
         } else {
           return body_res.error();
         }

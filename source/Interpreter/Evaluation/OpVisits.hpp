@@ -7,22 +7,13 @@
 #include <functional>
 #include <type_traits>
 
+#include "Interpreter/macros.hpp"
+
 template <typename... Ts> struct Overload : Ts... {
   using Ts::operator()...;
 };
 
 using namespace cse498::agentlang::Types;
-
-/** @brief Wrap expression in an if-constexpr which checks if that
-expression is well-formed, returning it if so. If not, execution continues
-without alteration, permitting fallthrough when used in a switch.*/
-#define STATIC_CHECKED_OP(expression)                                          \
-  {                                                                            \
-    if constexpr (requires { expression; }) {                                  \
-      return (expression);                                                     \
-    }                                                                          \
-  }
-// I'm sorry it's just gonna make it so much more readable
 
 namespace cse498 {
 
