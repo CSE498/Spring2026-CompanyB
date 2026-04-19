@@ -25,7 +25,6 @@
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/matchers/catch_matchers_floating_point.hpp>
 #include <climits>
-#include <concepts>
 #include <deque>
 #include <list>
 #include <map>
@@ -38,15 +37,6 @@
 #include "../../source/tools/RobinHoodMap.hpp"
 
 using cse498::RobinHoodMap;
-
-/**
- * Helper class to test non-comparable keys
- */
-class NonComparable {
- public:
-  NonComparable() = default;
-  bool operator==(const NonComparable&) const = delete;
-};
 
 // ============================================================================
 // COMPILE-TIME ASSERTIONS

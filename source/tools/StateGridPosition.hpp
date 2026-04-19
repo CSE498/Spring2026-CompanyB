@@ -199,7 +199,6 @@ class StateGridPosition {
       case Direction::West:
         return StateGridPosition(col, row + 1, direction_facing);
     }
-    return {};
   }
 
   [[nodiscard]] StateGridPosition GetRightwardPosition() const {
@@ -213,7 +212,6 @@ class StateGridPosition {
       case Direction::West:
         return StateGridPosition(col, row - 1, direction_facing);
     }
-    return {};
   }
 
   // @brief Get position at requested offset

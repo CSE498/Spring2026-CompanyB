@@ -1,9 +1,11 @@
+#include "../../source/tools/DataMap.hpp"
+// #include "../../third-party/Catch/single_include/catch2/catch.hpp"
+// #include "../../third-party/Catch/single_include/catch2/catch.hpp"
+
 #include <catch2/catch_test_macros.hpp>
 #include <set>
 #include <string>
 #include <vector>
-
-#include "../../source/tools/DataMap.hpp"
 
 TEST_CASE("DataMap can store and retrieve values", "[DataMap]") {
   cse498::DataMap data;
@@ -243,8 +245,41 @@ TEST_CASE("DataMap handles custom struct types", "[DataMap]") {
   REQUIRE(retrieved.value().health == 100.0);
 }
 
+TEST_CASE("DataMap operator[] supports map-style access", "[DataMap]") {
+  cse498::DataMap data;
+
+  SECTION("operator[] inserts missing key with empty any") {
+    auto slot = data["missing"];
+    REQUIRE(data.Contains("missing"));
+    REQUIRE(!slot.has_value());
+  }
+
+  SECTION("operator[] can assign and then read through Get") {
+    data["score"] = 123;
+    auto score = data.Get<int>("score");
+    REQUIRE(score.has_value());
+    REQUIRE(score.value() == 123);
+  }
+
+  SECTION("operator[] can mutate an existing value") {
+    data.Set("name", std::string("Alice"));
+    data["name"] = std::string("Bob");
+    REQUIRE(data.Get<std::string>("name").value() == "Bob");
+  }
+}
+
+TEST_CASE("DataMap const operator[] reads existing key", "[DataMap]") {
+  cse498::DataMap mutable_data;
+  mutable_data.Set("answer", 42);
+
+  const cse498::DataMap& data = mutable_data;
+  const std::any& value = data["answer"];
+
+  REQUIRE(std::any_cast<int>(value) == 42);
+}
+
 // ============================================================================
-// Error handling tests
+// Error handling tests (now possible with std::expected)
 // ============================================================================
 
 TEST_CASE("DataMap Get returns error for non-existent key", "[DataMap]") {
@@ -252,8 +287,7 @@ TEST_CASE("DataMap Get returns error for non-existent key", "[DataMap]") {
 
   auto result = data.Get<int>("nonexistent");
   REQUIRE_FALSE(result.has_value());
-  REQUIRE(result.error().errorType ==
-          cse498::DataMap::Error::ErrorType::KeyNotFound);
+  REQUIRE(result.error() == "Key not found");
 }
 
 TEST_CASE("DataMap Get returns error for type mismatch", "[DataMap]") {
@@ -262,8 +296,7 @@ TEST_CASE("DataMap Get returns error for type mismatch", "[DataMap]") {
 
   auto result = data.Get<double>("value");
   REQUIRE_FALSE(result.has_value());
-  REQUIRE(result.error().errorType ==
-          cse498::DataMap::Error::ErrorType::TypeMismatch);
+  REQUIRE(result.error() == "Type mismatch for key");
 }
 
 TEST_CASE("DataMap Get error cases with various types", "[DataMap]") {
@@ -284,8 +317,7 @@ TEST_CASE("DataMap Get error cases with various types", "[DataMap]") {
   SECTION("key not found on non-empty map") {
     auto result = data.Get<int>("missing");
     REQUIRE_FALSE(result.has_value());
-    REQUIRE(result.error().errorType ==
-            cse498::DataMap::Error::ErrorType::KeyNotFound);
+    REQUIRE(result.error() == "Key not found");
   }
 }
 
@@ -467,7 +499,7 @@ TEST_CASE("DataMap GetRef returns mutable reference", "[DataMap]") {
   cse498::DataMap data;
   data.Set("counter", 0);
 
-  int& ref = data.GetRef<int>("counter").value().get();
+  int& ref = data.GetRef<int>("counter");
   ref = 42;
 
   REQUIRE(data.Get<int>("counter").value() == 42);
@@ -477,7 +509,7 @@ TEST_CASE("DataMap GetRef with string type", "[DataMap]") {
   cse498::DataMap data;
   data.Set("greeting", std::string("hello"));
 
-  std::string& ref = data.GetRef<std::string>("greeting").value().get();
+  std::string& ref = data.GetRef<std::string>("greeting");
   ref += " world";
 
   REQUIRE(data.Get<std::string>("greeting").value() == "hello world");
@@ -487,7 +519,7 @@ TEST_CASE("DataMap GetRef with vector type", "[DataMap]") {
   cse498::DataMap data;
   data.Set("nums", std::vector<int>{1, 2, 3});
 
-  auto& ref = data.GetRef<std::vector<int>>("nums").value().get();
+  auto& ref = data.GetRef<std::vector<int>>("nums");
   ref.push_back(4);
 
   auto result = data.Get<std::vector<int>>("nums").value();

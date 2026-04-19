@@ -1,9 +1,7 @@
 #pragma once
 #include <algorithm>
-#include <fstream>
 #include <map>
 #include <queue>
-#include <string>
 
 #include "../core/WorldBase.hpp"
 #include "../tools/WeightedSet.hpp"
@@ -20,28 +18,28 @@ class TrafficWorld : public WorldBase {
     MOVE_RIGHT
   };
 
-  size_t road_id{};   ///< ID of road cells, which agents can move on.
-  size_t grass_id{};  ///< ID of grass cells, which agents can't move on..
+  size_t road_id;   ///< ID of road cells, which agents can move on.
+  size_t grass_id;  ///< ID of grass cells, which agents can't move on..
 
   // Reworked by Claude — two cell types for traffic light phases,
   // with symbols showing which direction traffic may flow.
-  size_t traffic_light_vertical_id{};    ///< Traffic light allowing vertical
-                                         ///< movement ('|')
-  size_t traffic_light_horizontal_id{};  ///< Traffic light allowing horizontal
-                                         ///< movement ('-')
+  size_t traffic_light_vertical_id;    ///< Traffic light allowing vertical
+                                       ///< movement ('|')
+  size_t traffic_light_horizontal_id;  ///< Traffic light allowing horizontal
+                                       ///< movement ('-')
 
-  size_t spawn_id{};        ///< ID of cells that spawn agents.
-  size_t destination_id{};  ///< ID of cells which are destinations that agents
-                            ///< try to reach.
+  size_t spawn_id;        ///< ID of cells that spawn agents.
+  size_t destination_id;  ///< ID of cells which are destinations that agents
+                          ///< try to reach.
 
   std::vector<WorldPosition>
-      traffic_light_positions{};  ///< Positions of all traffic lights.
+      traffic_light_positions;  ///< Positions of all traffic lights.
   std::vector<WorldPosition>
-      spawner_positions{};  ///< Positions of all spawner tiles.
+      spawner_positions;  ///< Positions of all spawner tiles.
   WeightedSet<WorldPosition>
-      destination_positions{};  // Weighted set to randomly assign destinations
+      destination_positions;  // Weighted set to randomly assign destinations
   std::map<WorldPosition, std::string>
-      destination_colours{};  ///< Per-destination ANSI colour codes.
+      destination_colours;  ///< Per-destination ANSI colour codes.
 
   /// @brief Indicates whether traffic lights in the world allow agents to pass
   /// through intersections vertically or horizontally.
@@ -76,7 +74,7 @@ class TrafficWorld : public WorldBase {
 
   /// @brief Queue of IDs of despawned agents available for recycling.
   /// Written by Claude.
-  std::queue<size_t> despawned_agent_ids{};
+  std::queue<size_t> despawned_agent_ids;
 
   /// Provide the agent with movement actions.
   void ConfigAgent(AgentBase &agent) override {
@@ -87,28 +85,59 @@ class TrafficWorld : public WorldBase {
     agent.AddAction("right", MOVE_RIGHT);
   }
 
-  // Pulled by Claude out of the preexisting constructor — registers cell types
-  // and scans the loaded grid for traffic lights, spawners, and destinations.
- private:
-  void RegisterCellTypes() {
+ public:
+  TrafficWorld() {
     road_id = main_grid.AddCellType("road", "Road to drive in", '.');
     grass_id =
         main_grid.AddCellType("grass", "Grass that cars can't go on.", '#');
+    // Written by Claude — register both traffic light phases with directional
+    // symbols
     traffic_light_vertical_id = main_grid.AddCellType(
         "traffic_light_vertical",
         "Traffic light allowing vertical (up/down) movement.", '|');
     traffic_light_horizontal_id = main_grid.AddCellType(
         "traffic_light_horizontal",
         "Traffic light allowing horizontal (left/right) movement.", '-');
+
     spawn_id =
         main_grid.AddCellType("spawn", "Spawner for driving agents", 'S');
+
     destination_id = main_grid.AddCellType(
         "destination", "Destination for driving agents", 'D');
-  }
 
-  /// @brief Scan the grid after loading to find traffic lights, spawners,
-  /// and destinations.
-  void ScanGrid() {
+    // City-block grid: perimeter road + 2 inner horizontal + 2 inner vertical
+    // roads forming 12 intersections.
+    // '.' = road  '#' = grass/block  'S' = spawn  'D' = destination
+    // '|' = traffic light (vertical phase, allows up/down)
+    // '-' = traffic light (horizontal phase, allows left/right)
+    // All lights start as '|' so they are found by the vertical-scan below.
+
+    // clang-format off
+    main_grid.Load(std::vector<std::string>{
+        "###################################",
+        "#..S.....|...............|........#",
+        "#.#######.###############.#######.#",
+        "#.#######.###############.#######D#",
+        "#.#######.###############.#######.#",
+        "#D#######.###############.#######.#",
+        "#.#######.###############.#######.#",
+        "#|.......|...............|.......|#",
+        "#.#######.###############.#######.#",
+        "#.#######.###############.#######.#",
+        "#.#######.###############.#######.#",
+        "#.#######.###############.#######.#",
+        "#.#######.###############.#######.#",
+        "#|.......|...............|.......|#",
+        "#.#######.###############.#######.#",
+        "#D#######.###############.#######.#",
+        "#.#######.###############.#######.#",
+        "#........|...............|........#",
+        "###################################"});
+
+    // clang-format on
+
+    // Initially written by Claude, then modified — record all traffic light and
+    // spawner positions
     for (size_t y = 0; y < main_grid.GetHeight(); ++y) {
       for (size_t x = 0; x < main_grid.GetWidth(); ++x) {
         WorldPosition pos(x, y);
@@ -138,26 +167,6 @@ class TrafficWorld : public WorldBase {
         }
       }
     }
-  }
-
- public:
-  /// @brief Construct a TrafficWorld from a vector of strings representing
-  /// the grid layout.
-  /// Written by Claude.
-  explicit TrafficWorld(const std::vector<std::string> &grid_lines) {
-    RegisterCellTypes();
-    main_grid.Load(grid_lines);
-    ScanGrid();
-  }
-
-  /// @brief Construct a TrafficWorld by reading a grid layout from a file.
-  /// Written by Claude.
-  explicit TrafficWorld(const std::string &filepath) {
-    RegisterCellTypes();
-    std::ifstream file(filepath);
-    assert(file.is_open() && "TrafficWorld: could not open grid file");
-    main_grid.Load(file);
-    ScanGrid();
   }
 
   /// @brief Return the ANSI colour code pre-assigned to a destination tile,
