@@ -73,7 +73,8 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
         return std::unexpected<WorldErr>("invalid move");
       }
 
-      if (new_dir == world.GetOppositeDirection(agent.GetState().direction)) {
+      if (new_dir == world.GetOppositeDirection(agent.GetState().direction) &&
+          !world.IsDeadEnd(pos)) {
         return {};
       }
 
@@ -155,14 +156,18 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
                                          ///< movement ('-')
 
   // ID of cells that spawn agents.
-  size_t spawn_fast_id{}; // < Id for Fast spawners that uses the fast clock
-  size_t spawn_normal_id{}; // < Id for Normal spawners that uses the normal clock
-  size_t spawn_slow_id{}; // < Id for Slow spawners that uses the Slow clock
+  size_t spawn_fast_id{};  // < Id for Fast spawners that uses the fast clock
+  size_t
+      spawn_normal_id{};  // < Id for Normal spawners that uses the normal clock
+  size_t spawn_slow_id{};  // < Id for Slow spawners that uses the Slow clock
 
   // Containers for the 3 different types of spawners
-  std::vector<WorldPosition> fast_spawner_positions{}; // < Fasp Spawner location container
-  std::vector<WorldPosition> normal_spawner_positions{}; // < normal Spawner location container
-  std::vector<WorldPosition> slow_spawner_positions{}; // < slow Spawner location container
+  std::vector<WorldPosition>
+      fast_spawner_positions{};  // < Fasp Spawner location container
+  std::vector<WorldPosition>
+      normal_spawner_positions{};  // < normal Spawner location container
+  std::vector<WorldPosition>
+      slow_spawner_positions{};  // < slow Spawner location container
 
   size_t destination_id{};  ///< ID of cells which are destinations that agents
                             ///< try to reach.
@@ -199,11 +204,14 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
   /// each spawner with a random destination. This is for the Slow speed
   static constexpr int slow_spawn_period = 30;
 
-  /// @brief Counts up each turn and gets reset when it reaches spawn_period. Fast
+  /// @brief Counts up each turn and gets reset when it reaches spawn_period.
+  /// Fast
   int fast_spawn_clock = 0;
-  /// @brief Counts up each turn and gets reset when it reaches spawn_period. Normal
+  /// @brief Counts up each turn and gets reset when it reaches spawn_period.
+  /// Normal
   int normal_spawn_clock = 0;
-  /// @brief Counts up each turn and gets reset when it reaches spawn_period. Slow
+  /// @brief Counts up each turn and gets reset when it reaches spawn_period.
+  /// Slow
   int slow_spawn_clock = 0;
 
   // Cyan shades for spawner tile display
@@ -240,9 +248,10 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
         "traffic_light_horizontal",
         "Traffic light allowing horizontal (left/right) movement.", '-');
 
-    spawn_fast_id   = main_grid.AddCellType("spawn_fast",   "Fast spawner",   'F');
-    spawn_normal_id = main_grid.AddCellType("spawn_normal", "Normal spawner", 'N');
-    spawn_slow_id   = main_grid.AddCellType("spawn_slow",   "Slow spawner",   'S');
+    spawn_fast_id = main_grid.AddCellType("spawn_fast", "Fast spawner", 'F');
+    spawn_normal_id =
+        main_grid.AddCellType("spawn_normal", "Normal spawner", 'N');
+    spawn_slow_id = main_grid.AddCellType("spawn_slow", "Slow spawner", 'S');
     destination_id = main_grid.AddCellType(
         "destination", "Destination for driving agents", 'D');
   }
@@ -334,6 +343,16 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
   [[nodiscard]] bool VerticalBlockedAt(const WorldPosition &pos) const {
     return main_grid.IsValid(pos) &&
            main_grid[pos] == traffic_light_horizontal_id;
+  }
+
+  [[nodiscard]] bool IsDeadEnd(const WorldPosition &pos) const {
+    int grass_count = 0;
+    if (IsGrass(pos.Up())) grass_count++;
+    if (IsGrass(pos.Down())) grass_count++;
+    if (IsGrass(pos.Left())) grass_count++;
+    if (IsGrass(pos.Right())) grass_count++;
+
+    return grass_count == 3;
   }
 
   [[nodiscard]] Direction GetOppositeDirection(const Direction dir) const {
@@ -432,8 +451,7 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
   /// spawn a new DrivingAgent with a randomly chosen destination.
   void SpawnFromPositions(const std::vector<WorldPosition> &positions) {
     for (const WorldPosition &pos : positions) {
-      if (!AgentExistsAt(pos) &&
-          num_spawned_agents < max_spawned_agents) {
+      if (!AgentExistsAt(pos) && num_spawned_agents < max_spawned_agents) {
         auto dest = destination_positions.GetRandomElement();
         if (dest.has_value()) {
           WorldPosition dest_pos = dest.value();
@@ -441,14 +459,13 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
           if (!despawned_agent_ids.empty()) {
             RecycleDespawnedAgent(pos, dest_pos);
           } else {
-            TrafficData state = {
-              dest_pos, pos, Direction::East,
-              true,     '>', GetDestinationColour(dest_pos)};
+            TrafficData state = {dest_pos, pos, Direction::East,
+                                 true,     '>', GetDestinationColour(dest_pos)};
             AddAgent<SpawnedAgent>(state);
           }
           ++num_spawned_agents;
         }
-          }
+      }
     }
   }
   /// @brief Update the spawn clock by 1 tick. If it's time to spawn more
@@ -553,8 +570,8 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
     }
 
     // Colour spawner tiles with cyan shades, all displayed as 'S'
-    auto colourSpawners = [&](const std::vector<WorldPosition> &positions, const std::string &colour)
-    {
+    auto colourSpawners = [&](const std::vector<WorldPosition> &positions,
+                              const std::string &colour) {
       for (const auto &pos : positions) {
         size_t x = pos.CellX(), y = pos.CellY();
         symbol_grid[y][x] = 'S';
