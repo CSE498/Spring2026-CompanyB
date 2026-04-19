@@ -174,7 +174,7 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
   int num_spawned_agents = 0;
   /// @brief Cap on the number of active spawned agents that can exist at a
   /// time, to prevent the world from getting too chaotic.
-  static constexpr int max_spawned_agents = 20;
+  static constexpr int max_spawned_agents = 50;
 
   /// @brief Queue of IDs of despawned agents available for recycling.
   /// Written by Claude.
