@@ -12,7 +12,7 @@ struct TrafficData {
   cse498::WorldPosition position;
   cse498::Direction direction;
   // bool swarm_away;  // true = flee, false = approach
-  bool is_active;
+  bool is_active{};
   char symbol = '@';
   std::string colour = "blue";
 };
@@ -23,7 +23,7 @@ struct TrafficData {
 enum class HealthState { SUSCEPTIBLE, INFECTED, RECOVERED };
 
 struct DiseaseData {
-  double infection_probability;
+  double infection_probability{};
   cse498::HealthState infection_state;
   std::optional<cse498::WorldPosition> destination;
   cse498::WorldPosition position;
