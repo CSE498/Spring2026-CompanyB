@@ -40,58 +40,16 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
     // "VisitRet") is for some reason required when adding "template <typename
     // SpawnedAgent>".
     typename StepVisitor::VisitRet operator()(steps::MovementStep step) {
-      // The simplest step -- the agent just wants to move to a space.
-      if (!world.IsValid(step.loc) || world.IsGrass(step.loc)) {
-        // TODO: return an error here maybe?
-        // not necessarily though, will have to think about it.
-        return {};
+      auto can_move = world.CanMakeMoveAt(agent, step.loc);
+      if (!can_move.has_value()) {
+        return std::unexpected<WorldErr>(can_move.error());
       }
+      if (!can_move.value()) return {};
 
-      WorldPosition pos = agent.GetState().position;
-      size_t old_x = pos.CellX();
-      size_t old_y = pos.CellY();
-      size_t new_x = step.loc.CellX();
-      size_t new_y = step.loc.CellY();
-      Direction new_dir{};
-      if (new_x == old_x) {
-        if (new_y == old_y - 1) {
-          new_dir = Direction::North;
-        } else if (new_y == old_y + 1) {
-          new_dir = Direction::South;
-        } else {
-          return std::unexpected<WorldErr>("invalid move");
-        }
-      } else if (new_y == old_y) {
-        if (new_x == old_x - 1) {
-          new_dir = Direction::West;
-        } else if (new_x == old_x + 1) {
-          new_dir = Direction::East;
-        } else {
-          return std::unexpected<WorldErr>("invalid move");
-        }
-      } else {
-        return std::unexpected<WorldErr>("invalid move");
-      }
-
-      if (new_dir == world.GetOppositeDirection(agent.GetState().direction) &&
-          !world.IsDeadEnd(pos)) {
-        return {};
-      }
-
-      if (world.HorizontalBlockedAt(step.loc) &&
-          (new_dir == Direction::East || new_dir == Direction::West)) {
-        return {};
-      } else if (world.VerticalBlockedAt(step.loc) &&
-                 (new_dir == Direction::North || new_dir == Direction::South)) {
-        return {};
-      }
-
-      if (world.CanCollideWithAgentAt(new_dir, step.loc)) {
-        return {};
-      }
+      WorldPosition old_pos = agent.GetState().position;
       auto curr_state = agent.GetState();
       curr_state.position = step.loc;
-      curr_state.direction = new_dir;
+      curr_state.direction = world.GetNewDirection(old_pos, step.loc).value();
       agent.SetState(curr_state);
 
       return {};
@@ -106,8 +64,7 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
       switch (step.aspect) {
         using Aspect = cse498::steps::InfoStep::Aspect;
         case Aspect::LOC_AVAIL: {
-          container.inform(world.IsValid(step.target) &&
-                           !world.IsGrass(step.target));
+          container.inform(world.CanMakeMoveAt(agent, step.target).value_or(false));
           break;
         }
         case Aspect::OCCUPANCY_FRAC: {
@@ -326,6 +283,68 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
     return empty;
   }
   ~StepTrafficWorld() = default;
+
+  [[nodiscard]] std::expected<Direction, WorldErr> GetNewDirection(
+      WorldPosition pos, WorldPosition new_pos) {
+    size_t old_x = pos.CellX();
+    size_t old_y = pos.CellY();
+    size_t new_x = new_pos.CellX();
+    size_t new_y = new_pos.CellY();
+    Direction new_dir{};
+    if (new_x == old_x) {
+      if (new_y == old_y - 1) {
+        new_dir = Direction::North;
+      } else if (new_y == old_y + 1) {
+        new_dir = Direction::South;
+      } else {
+        return std::unexpected<WorldErr>("invalid move");
+      }
+    } else if (new_y == old_y) {
+      if (new_x == old_x - 1) {
+        new_dir = Direction::West;
+      } else if (new_x == old_x + 1) {
+        new_dir = Direction::East;
+      } else {
+        return std::unexpected<WorldErr>("invalid move");
+      }
+    } else {
+      return std::unexpected<WorldErr>("invalid move");
+    }
+    return new_dir;
+  }
+  // TODO: explain everything that's going on here
+  [[nodiscard]] std::expected<bool, WorldErr> CanMakeMoveAt(
+      const Agent &agent, const WorldPosition &new_pos) {
+    if (!IsValid(new_pos) || IsGrass(new_pos)) {
+      return false;
+    }
+
+    WorldPosition pos = agent.GetState().position;
+    std::expected<Direction, WorldErr> new_dir_ret =
+        GetNewDirection(pos, new_pos);
+    if (!new_dir_ret.has_value()) {
+      return std::unexpected<WorldErr>(new_dir_ret.error());
+    }
+    Direction new_dir = new_dir_ret.value();
+
+    if (new_dir == GetOppositeDirection(agent.GetState().direction) &&
+        !IsDeadEnd(pos)) {
+      return false;
+    }
+
+    if (HorizontalBlockedAt(new_pos) &&
+        (new_dir == Direction::East || new_dir == Direction::West)) {
+      return false;
+    } else if (VerticalBlockedAt(new_pos) &&
+               (new_dir == Direction::North || new_dir == Direction::South)) {
+      return false;
+    }
+
+    if (CanCollideWithAgentAt(new_dir, new_pos)) {
+      return false;
+    }
+    return true;
+  }
 
   [[nodiscard]] bool IsValid(const WorldPosition &pos) const {
     return main_grid.IsValid(pos);
