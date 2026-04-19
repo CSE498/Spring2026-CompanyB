@@ -85,7 +85,7 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
         return {};
       }
 
-      if (world.CanCollideWithAgentAt(agent, step.loc)) {
+      if (world.CanCollideWithAgentAt(new_dir, step.loc)) {
         return {};
       }
       auto curr_state = agent.GetState();
@@ -342,9 +342,9 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
     return static_cast<Direction>((static_cast<int>(dir) + 2) & 3);
   }
 
-  [[nodiscard]] bool CanCollideWithAgentAt(const Agent &agent,
+  [[nodiscard]] bool CanCollideWithAgentAt(const Direction agent_direction,
                                            const WorldPosition &pos) const {
-    Direction opposite = GetOppositeDirection(agent.GetState().direction);
+    Direction opposite = GetOppositeDirection(agent_direction);
     auto is_agent_at_position = [&](const AgentPtr &ptr) {
       return ptr->GetState().is_active && ptr->GetState().position == pos;
     };
