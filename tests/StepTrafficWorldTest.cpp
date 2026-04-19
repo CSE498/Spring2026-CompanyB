@@ -275,27 +275,21 @@ TEST_CASE("DoAction", "[StepTrafficWorld][do_action]") {
 TEST_CASE("CanCollideWithAgentAt", "[StepTrafficWorld][collision]") {
   SECTION("empty target cell: no collision") {
     TestWorld tw{kLine};
-    auto a = std::make_shared<ScriptedAgent>(
-        Make(WorldPosition{2,1}, {}, Direction::East), 99);
-    CHECK_FALSE(tw.CanCollideWithAgentAt(*a, WorldPosition{3,1}));
+    CHECK_FALSE(tw.CanCollideWithAgentAt(Direction::East, WorldPosition{3,1}));
   }
   SECTION("same-direction active agent ahead: collision") {
     // Two agents travelling the same direction should not occupy the same cell.
     // The rear agent must wait behind the front one.
     TestWorld tw{kLine};
     tw.AddAgent<StillAgent>(Make(WorldPosition{3,1}, {}, Direction::East));
-    auto rear = std::make_shared<ScriptedAgent>(
-        Make(WorldPosition{2,1}, {}, Direction::East), 99);
-    CHECK(tw.CanCollideWithAgentAt(*rear, WorldPosition{3,1}));
+    CHECK(tw.CanCollideWithAgentAt(Direction::East, WorldPosition{3,1}));
   }
   SECTION("inactive agent at target: no collision") {
     // Inactive agents are treated as absent for collision purposes.
     TestWorld tw{kLine};
     tw.AddAgent<StillAgent>(
         Make(WorldPosition{3,1}, {}, Direction::East, false));
-    auto mover = std::make_shared<ScriptedAgent>(
-        Make(WorldPosition{2,1}, {}, Direction::East), 99);
-    CHECK_FALSE(tw.CanCollideWithAgentAt(*mover, WorldPosition{3,1}));
+    CHECK_FALSE(tw.CanCollideWithAgentAt(Direction::East, WorldPosition{3,1}));
   }
 }
 
