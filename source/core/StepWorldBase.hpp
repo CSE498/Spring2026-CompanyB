@@ -13,7 +13,6 @@
 #include "core.hpp"
 
 #include "Interpreter/Parser.hpp"
-#include "Interpreter/interpreter.hpp"
 #include "Agents/ScriptedAgent.hpp"
 
 #include <filesystem>
@@ -33,10 +32,6 @@ class StepWorldBase {
 
   /// Parser for scripted agent
   Parser parser{};
-
-  /// interpreter for scripted agents
-  Interpreter<DataClass> interpreter{};
-
 
  protected:
   /// Whether the simulation is running
