@@ -63,7 +63,7 @@ class DataLog : public IDataLog<DataClass> {
   /// @brief Aggregate agent states for the current tick; appends one TickStats
   /// entry per declared field to the time series.
   /// @param agents Vector of agents in the world
-  void AggregateData(const std::vector<AgentBase>& agents) override;
+  void AggregateData(const std::vector<std::shared_ptr<StepAgentBase<DataClass>>>& agents) override;
 
   /// @brief Returns the full time series for all declared fields.
   /// Index into the vector by tick number; call .back() for the latest tick.

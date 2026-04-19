@@ -2,6 +2,7 @@
 #include "DataLog.hpp"
 
 #include <algorithm>
+#include <memory>
 #include <numeric>
 #include <string>
 #include <vector>
@@ -9,7 +10,7 @@
 namespace cse498 {
 
 template <typename DataClass>
-void DataLog<DataClass>::AggregateData(const std::vector<AgentBase>& agents) {
+void DataLog<DataClass>::AggregateData(const std::vector<std::shared_ptr<StepAgentBase<DataClass>>>& agents) {
   // Collect per-field samples from all agents for this tick
   std::unordered_map<std::string, std::vector<double>> samples;
   for (const auto& [fieldName, unused] : time_series) {

@@ -6,11 +6,12 @@
 #pragma once
 
 #include <cstddef>
+#include <memory>
 #include <string>
 #include <unordered_map>
 #include <vector>
 
-#include "../core/AgentBase.hpp"
+#include "../core/StepAgentBase.hpp"
 
 namespace cse498 {
 
@@ -36,7 +37,7 @@ class IDataLog {
 
   /// @brief Aggregate agent states; should be called every tick
   /// @param agents Vector of agents in the world
-  virtual void AggregateData(const std::vector<AgentBase>& agents) = 0;
+  virtual void AggregateData(const std::vector<std::shared_ptr<StepAgentBase<DataClass>>>& agents) = 0;
 
   /// @brief Returns the full time series of aggregation data for all declared
   /// fields. Each vector entry corresponds to one tick (index 0 = first tick).
