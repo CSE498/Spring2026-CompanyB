@@ -61,9 +61,6 @@
 # Simulation logs
 /logs/
 
-# Doxygen generated issues log
-doxyIssues.txt
-
 # Build
 /build/
 **/build/
