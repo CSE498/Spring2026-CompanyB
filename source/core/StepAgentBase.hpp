@@ -17,90 +17,12 @@ class StepAgentBase {
   /// Unique id of the agent
   const size_t mId;
 
-  /// Helper functions:
-  WorldPosition DeserializePosition(const nlohmann::json& pos) {
-    if (pos.contains("x") && pos.at("x").is_number_integer() &&
-        pos.contains("y") && pos.at("y").is_number_integer()) {
-      return WorldPosition{pos.at("x").get<int>(), pos.at("y").get<int>()};
-    }
-    return WorldPosition{0, 0};  // Default position if deserialization fails
-  }
-
-  Direction DeserializeDirection(const nlohmann::json& dir) {
-    std::string direction = dir.get<std::string>();
-    if (direction == "North") return Direction::North;
-    if (direction == "South") return Direction::South;
-    if (direction == "West") return Direction::West;
-    if (direction == "East") return Direction::East;
-    return Direction::North;  // Default direction if deserialization fails
-  }
-
-  HealthState DeserializeHealthState(const nlohmann::json& state) {
-    std::string healthState = state.get<std::string>();
-    if (healthState == "susceptible") return HealthState::SUSCEPTIBLE;
-    if (healthState == "infected") return HealthState::INFECTED;
-    if (healthState == "recovered") return HealthState::RECOVERED;
-    return HealthState::SUSCEPTIBLE;  // Default health state if deserialization
-                                      // fails
-  }
-
-  DataClass DeserializeTrafficData(const nlohmann::json& details) {
-    DataClass data{};
-
-    if (details.contains("destination") &&
-        details.at("destination").is_object()) {
-      data.destination = DeserializePosition(details.at("destination"));
-    }
-    if (details.contains("position") && details.at("position").is_object()) {
-      data.position = DeserializePosition(details.at("position"));
-    }
-    if (details.contains("direction") && details.at("direction").is_string()) {
-      data.direction = DeserializeDirection(details.at("direction"));
-    }
-    if (details.contains("is_active") && details.at("is_active").is_boolean()) {
-      data.is_active = details.at("is_active").get<bool>();
-    }
-    if (details.contains("symbol") && details.at("symbol").is_string()) {
-      data.symbol = details.at("symbol").get<std::string>();
-    }
-    if (details.contains("colour") && details.at("colour").is_string()) {
-      data.colour = details.at("colour").get<std::string>();
-    }
-
-    // Implementation for deserializing traffic data
-    return data;
-  }
-
-  DataClass DeserializeDiseaseData(const nlohmann::json& details) {
-    DataClass data{};
-
-    if (details.contains("infection_probability") &&
-        details.at("infection_probability").is_number()) {
-      data.infection_probability =
-          details.at("infection_probability").get<double>();
-    }
-    if (details.contains("infection_state") &&
-        details.at("infection_state").is_string()) {
-      data.infection_state =
-          DeserializeHealthState(details.at("infection_state"));
-    }
-    if (details.contains("destination") &&
-        details.at("destination").is_object()) {
-      data.destination = DeserializePosition(details.at("destination"));
-    }
-    if (details.contains("position") && details.at("position").is_object()) {
-      data.position = DeserializePosition(details.at("position"));
-    }
-
-    return data;
-  }
-
  protected:
   /// Data class that holds agent data
   DataClass mData;
 
-  /// Log of all actions taken by the agent, used for replay
-  std::vector<ActionEvent<DataClass>> mActions;
+  /// Log of all states taken by the agent in JSON format, used for replay
+  std::vector<nlohmann::json> mStates;
 
   /// Cached string representation of agent ID to keep string_view (needed in
   /// logging) backing alive
@@ -112,17 +34,21 @@ class StepAgentBase {
       : mData{data}, mId{id}, mCachedAgentIdStr{std::to_string(id)} {
     // Log the initial state of the agent for replay purposes (not sure if this
     // is needed but seems useful to have the initial state in the log)
-    mActions.push_back(
-        ActionEvent<DataClass>({std::string_view(mCachedAgentIdStr),
-                                "initial_state", logLevel, tick, data}));
+    mStates.push_back({
+        {"agentId", mCachedAgentIdStr},
+        {"actionType", "initial_state"},
+        {"logLevel", static_cast<int>(logLevel)},
+        {"timestamp", tick},
+        {"details", data.ToJSON()}
+    });
   }
   virtual ~StepAgentBase() = default;
 
   /// Get the ID of the agent
   [[nodiscard]] size_t getId() const noexcept { return mId; }
 
-  [[nodiscard]] const std::vector<ActionEvent<DataClass>>& GetStates() const {
-    return mActions;
+  [[nodiscard]] const std::vector<nlohmann::json>& GetStates() const {
+    return mStates;
   }
 
   void loadFromJson(const nlohmann::json& eventData) {
@@ -154,13 +80,8 @@ class StepAgentBase {
       return;
     }
 
-    DataClass details{};
-
-    if constexpr (std::is_same_v<DataClass, TrafficData>) {
-      details = this->DeserializeTrafficData(eventData.at("details"));
-    } else if constexpr (std::is_same_v<DataClass, DiseaseData>) {
-      details = this->DeserializeDiseaseData(eventData.at("details"));
-    }
+    // Delegate entirely to the generic data class static method
+    DataClass details = DataClass::FromJSON(eventData.at("details"));
 
     LogLevel logLevel = static_cast<LogLevel>(levelRaw);
     uint64_t tick = eventData.at("timestamp").get<uint64_t>();
@@ -185,8 +106,13 @@ class StepAgentBase {
                 uint64_t tick = 0) {
     mData = data;
     // Here handle logic to log for replay?
-    mActions.push_back(ActionEvent<DataClass>{
-        std::string_view(mCachedAgentIdStr), "movement", logLevel, tick, data});
+    mStates.push_back({
+        {"agentId", mCachedAgentIdStr},
+        {"actionType", "movement"},
+        {"logLevel", static_cast<int>(logLevel)},
+        {"timestamp", tick},
+        {"details", data.ToJSON()}
+    });
   }
 
   // SetStateNoLog is used in cases where we want to update the agent's state

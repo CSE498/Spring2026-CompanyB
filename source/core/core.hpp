@@ -5,6 +5,7 @@
 
 #include <type_traits>
 #include <variant>
+#include <nlohmann/json.hpp>
 
 #include "AgentData.hpp"
 
@@ -33,6 +34,13 @@ template <typename Head, typename... Tail> constexpr bool all_unique() {
 template <typename... Ts>
 concept UniqueTypes = all_unique<Ts...>();
 
+/** @brief Requires a type to support ToJSON and FromJSON APIs */
+template <typename T>
+concept HasJsonAPI = requires(T t, const nlohmann::json& j) {
+  { t.ToJSON() } -> std::same_as<nlohmann::json>;
+  { T::FromJSON(j) } -> std::same_as<T>;
+};
+
 /**
  * @brief Determines a valid dataclass for the agents and world
  * @note REPLACE THE INT WITH THE LIST OF DATACLASSES FOR BOTH WORLDS i.e
@@ -41,7 +49,7 @@ concept UniqueTypes = all_unique<Ts...>();
  * after discussing with both world groups
  */
 template <typename T>
-concept IsDataClass = IsOneOf<T, cse498::TrafficData, cse498::DiseaseData>;
+concept IsDataClass = IsOneOf<T, cse498::TrafficData, cse498::DiseaseData> && HasJsonAPI<T>;
 
 /** @brief Requires given type to have operator<<(std::stringstream&) defined.
  */
