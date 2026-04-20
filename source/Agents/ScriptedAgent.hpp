@@ -162,7 +162,7 @@ public:
                           TypeVariantToName(val_result)));
 
         auto data = mAgentBase.GetState();
-        data.position = std::get<Point>(val_result);
+        data.destination = std::get<Point>(val_result);
         mAgentBase.SetState(data);
         break;
       }

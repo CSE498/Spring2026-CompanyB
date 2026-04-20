@@ -32,7 +32,7 @@ Parser::parse(std::istream &in) {
         if (args.size() < 1)
           return RuntimeErr(RuntimeErr::TOO_FEW_ARGS);
         else if (args.size() > 1)
-          return RuntimeErr(RuntimeErr::TOO_FEW_ARGS);
+          return RuntimeErr(RuntimeErr::TOO_MANY_ARGS);
 
         return evaluate_binary(IDs::ID_OP_ADD, args.at(0), 1);
       });
@@ -43,7 +43,7 @@ Parser::parse(std::istream &in) {
         if (args.size() < 2)
           return RuntimeErr(RuntimeErr::TOO_FEW_ARGS);
         else if (args.size() > 2)
-          return RuntimeErr(RuntimeErr::TOO_FEW_ARGS);
+          return RuntimeErr(RuntimeErr::TOO_MANY_ARGS);
 
         if (!std::holds_alternative<int>(args.at(0)) ||
             !std::holds_alternative<int>(args.at(1)))
@@ -57,7 +57,7 @@ Parser::parse(std::istream &in) {
         if (args.size() < 1)
           return RuntimeErr(RuntimeErr::TOO_FEW_ARGS);
         else if (args.size() > 1)
-          return RuntimeErr(RuntimeErr::TOO_FEW_ARGS);
+          return RuntimeErr(RuntimeErr::TOO_MANY_ARGS);
 
         if (!std::holds_alternative<Point>(args.at(0)))
           return RuntimeErr(RuntimeErr::TYPE_MISMATCH);
@@ -70,7 +70,7 @@ Parser::parse(std::istream &in) {
         if (args.size() < 1)
           return RuntimeErr(RuntimeErr::TOO_FEW_ARGS);
         else if (args.size() > 1)
-          return RuntimeErr(RuntimeErr::TOO_FEW_ARGS);
+          return RuntimeErr(RuntimeErr::TOO_MANY_ARGS);
 
         if (!std::holds_alternative<Point>(args.at(0)))
           return RuntimeErr(RuntimeErr::TYPE_MISMATCH);

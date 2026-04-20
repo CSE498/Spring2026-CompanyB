@@ -192,6 +192,7 @@ struct FuncSym {
 
 struct MagicSym {
   enum class Value {
+    SPAWN,        // __spawn__, valid both
     POSITION,    // __position__, valid both
     DESTINATION, // __destination__, valid both
     INFECTED,    // __infected__, valid infection
@@ -222,6 +223,8 @@ struct MagicSym {
       return "recovered";
     case Value::FACING:
       return "facing";
+    case Value::SPAWN:
+      return "spawn";
     };
     return "ERROR";
   }
