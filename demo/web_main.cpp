@@ -4,7 +4,9 @@
  **/
 
 #include <emscripten.h>
+#include <emscripten/val.h>
 
+#include <charconv>
 #include <functional>
 
 #include "WebButton.h"
@@ -35,10 +37,85 @@ static std::unique_ptr<InfectiousWorld> virus_world;
 static std::shared_ptr<WebTextbox> log_textbox;
 static std::unique_ptr<WebTextboxOutputManager> logger;
 
-// Per-sim event tracking so we can emit logs when things change.
+// Per-sim event tracking so we can emit logs when things change
 static size_t last_traffic_agent_count = 0;
-static std::vector<int> last_virus_health;  // per-agent state snapshot
+static std::vector<bool> traffic_reached_log;
+static std::vector<int> last_virus_health;
 static size_t sim_tick = 0;  // incremented each advance step
+
+// Tick-rate control
+static constexpr int tickRateMin = 1;
+static constexpr int tickRateMax = 1000;
+static int sim_tps = 20;             // target simulation ticks per second
+static int sim_tps_last_valid = 20;  // revert target on bad input
+static double last_step_ms = 0.0;    // emscripten_get_now() at last sim step
+
+// How many simulation steps are due this frame based on elapsed wall-clock
+// time and the target tps. Supports tps > framerate by running multiple steps
+// per MainLoop call. Capped to avoid CPU overconsumption and browser lag.
+static int StepsThisFrame() {
+    int tps = sim_tps < 1 ? 1 : sim_tps;
+    double interval = 1000.0 / static_cast<double>(tps);
+    double now = emscripten_get_now();
+    if (last_step_ms == 0.0) last_step_ms = now;
+    double elapsed = now - last_step_ms;
+    int steps = static_cast<int>(elapsed / interval);
+    constexpr int maxStepsPerFrame = 20;
+    if (steps < 0) steps = 0;
+    if (steps > maxStepsPerFrame) {
+        steps = maxStepsPerFrame;
+        last_step_ms = now;  // resync to wall clock after a long pause
+    } else if (steps > 0) {
+        last_step_ms += steps * interval;
+    }
+    return steps;
+}
+
+// Parse a non-throwing int from a string. Returns true on full successful parse.
+static bool TryParseInt(const std::string& s, int& out) {
+    if (s.empty()) return false;
+    const char* begin = s.data();
+    const char* end = begin + s.size();
+    auto res = std::from_chars(begin, end, out);
+    return res.ec == std::errc{} && res.ptr == end;
+}
+
+// Read the current user-set tps from the DOM input, if present.
+// Only updates live when the value is within range; out-of-range values are
+// handled on submission.
+static void PollTickRateInput() {
+    emscripten::val input = emscripten::val::global("document")
+        .call<emscripten::val>("getElementById", std::string("tick-rate-input"));
+    if (input.isNull() || input.isUndefined()) return;
+    std::string i = input["value"].as<std::string>();
+    int v = 0;
+    if (TryParseInt(i, v) && v >= tickRateMin && v <= tickRateMax) {
+        sim_tps = v;
+        sim_tps_last_valid = v;
+    }
+}
+
+void LogSim(const std::string& entity, const std::string& msg, const std::string& tag);
+
+// Called by JS when the tick-rate input submits. Validates and
+// reverts to the last valid value if out of range.
+extern "C" EMSCRIPTEN_KEEPALIVE void validate_tick_rate() {
+    emscripten::val input = emscripten::val::global("document")
+        .call<emscripten::val>("getElementById", std::string("tick-rate-input"));
+    if (input.isNull() || input.isUndefined()) return;
+    std::string i = input["value"].as<std::string>();
+    int v = 0;
+    bool valid = TryParseInt(i, v);
+    if (!valid || v < tickRateMin || v > tickRateMax) {
+        LogSim("Input",
+               "Tick rate must be between " + std::to_string(tickRateMin) +
+               " and " + std::to_string(tickRateMax) +
+               ". Reset to " + std::to_string(sim_tps_last_valid) + ".",
+               "error");
+        input.set("value", std::to_string(sim_tps_last_valid));
+        sim_tps = sim_tps_last_valid;
+    }
+}
 
 static size_t GetActiveTick() { return sim_tick; }
 
@@ -94,6 +171,7 @@ auto handle_sim_state = [](SimState next) {
             if (active_sim == ActiveSim::TRAFFIC) {
                 traffic_world = std::make_unique<TrafficWorld>("assets/grids/DemoWorld.grid");
                 last_traffic_agent_count = 0;
+                traffic_reached_log.clear();
             } else if (active_sim == ActiveSim::VIRUS) {
                 SetupVirusWorld();
                 last_virus_health.clear();
@@ -132,10 +210,10 @@ void DrawTrafficSim() {
                   GameCanvas->SetFillColor({100, 0, 100}).DrawRect(cx, cy, cell_w, cell_h, true);
                   break;
               case 'S':
-                  GameCanvas->SetFillColor({100, 100, 100}).DrawRect(cx, cy, cell_w, cell_h, true);
+                  GameCanvas->SetFillColor({100, 100, 100}).DrawRect(cx, cy, 10*cell_w, 10*cell_h, true);
                   break;
               case 'D':
-                  GameCanvas->SetFillColor({200, 200, 200}).DrawRect(cx, cy, cell_w, cell_h, true);
+                  GameCanvas->SetFillColor({200, 200, 200}).DrawRect(cx, cy, 10*cell_w, 10*cell_h, true);
                   break;
               default:
                   break;
@@ -153,16 +231,36 @@ void DrawTrafficSim() {
     }
 
     if (sim_state == SimState::PLAYING) {
-        traffic_world->RunAgents();
-        traffic_world->UpdateWorld();
-        sim_tick++;
-        UpdateGraphs();
+        int steps = StepsThisFrame();
+        for (int s = 0; s < steps; ++s) {
+            traffic_world->RunAgents();
+            traffic_world->UpdateWorld();
+            sim_tick++;
+            UpdateGraphs();
 
-        size_t n = traffic_world->GetNumAgents();
-        for (size_t id = last_traffic_agent_count; id < n; ++id) {
-            LogSim("Agent " + std::to_string(id), "Spawned", "info");
+            size_t n = traffic_world->GetNumAgents();
+            if (traffic_reached_log.size() < n) {
+                traffic_reached_log.resize(n, false);
+            }
+            for (size_t id = last_traffic_agent_count; id < n; ++id) {
+                LogSim("Agent " + std::to_string(id), "Spawned", "info");
+            }
+            last_traffic_agent_count = n;
+
+            for (size_t id = 0; id < n; ++id) {
+                const AgentBase& agent = traffic_world->GetAgent(id);
+                const auto* driver = dynamic_cast<const DrivingAgent*>(&agent);
+                if (!driver) continue;
+                bool reached = driver->GetReachedDestination();
+                if (reached && !traffic_reached_log[id]) {
+                    LogSim("Agent " + std::to_string(id), "Reached destination", "start");
+                    traffic_reached_log[id] = true;
+                } else if (!reached && traffic_reached_log[id]) {
+                    LogSim("Agent " + std::to_string(id), "Spawned", "info");
+                    traffic_reached_log[id] = false;
+                }
+            }
         }
-        last_traffic_agent_count = n;
     }
 }
 
@@ -222,25 +320,28 @@ void DrawVirusSim() {
     }
 
     if (sim_state == SimState::PLAYING) {
-        virus_world->RunAgents();
-        virus_world->UpdateWorld();
-        sim_tick++;
-        UpdateGraphs();
+        int steps = StepsThisFrame();
+        for (int s = 0; s < steps; ++s) {
+            virus_world->RunAgents();
+            virus_world->UpdateWorld();
+            sim_tick++;
+            UpdateGraphs();
 
-        size_t n = virus_world->GetNumAgents();
-        if (last_virus_health.size() != n) last_virus_health.assign(n, -1);
-        for (size_t id = 0; id < n; ++id) {
-            int cur = static_cast<int>(virus_world->GetAgentHealth(id));
-            if (cur != last_virus_health[id]) {
-                const char* label = "";
-                switch (virus_world->GetAgentHealth(id)) {
-                    case InfectiousWorld::HealthState::SUSCEPTIBLE: label = "became susceptible"; break;
-                    case InfectiousWorld::HealthState::INFECTED:    label = "infected"; break;
-                    case InfectiousWorld::HealthState::RECOVERED:   label = "recovered"; break;
+            size_t n = virus_world->GetNumAgents();
+            if (last_virus_health.size() != n) last_virus_health.assign(n, -1);
+            for (size_t id = 0; id < n; ++id) {
+                int cur = static_cast<int>(virus_world->GetAgentHealth(id));
+                if (cur != last_virus_health[id]) {
+                    const char* label = "";
+                    switch (virus_world->GetAgentHealth(id)) {
+                        case InfectiousWorld::HealthState::SUSCEPTIBLE: label = "became susceptible"; break;
+                        case InfectiousWorld::HealthState::INFECTED:    label = "infected"; break;
+                        case InfectiousWorld::HealthState::RECOVERED:   label = "recovered"; break;
+                    }
+                    LogSim("Agent " + std::to_string(id), label,
+                           virus_world->GetAgentHealth(id) == InfectiousWorld::HealthState::INFECTED ? "error" : "info");
+                    last_virus_health[id] = cur;
                 }
-                LogSim("Agent " + std::to_string(id), label,
-                       virus_world->GetAgentHealth(id) == InfectiousWorld::HealthState::INFECTED ? "error" : "info");
-                last_virus_health[id] = cur;
             }
         }
     }
@@ -289,6 +390,34 @@ void set_active_layout(std::shared_ptr<WebElement>&& layout) {
     elements["active_layout"] = layout;
 }
 
+// Builds the tickrate control input
+std::shared_ptr<WebElement> TickRateControl() {
+    auto layout = UIItem<WebLayout>(WebOptions{
+        .id = "tick-rate-control",
+    });
+
+    emscripten::val document = emscripten::val::global("document");
+    emscripten::val input = document.call<emscripten::val>("createElement", std::string("input"));
+    input.set("id", "tick-rate-input");
+    input.set("type", "number");
+    input.set("value", std::to_string(sim_tps));
+
+    emscripten::val span = document.call<emscripten::val>("createElement", std::string("span"));
+    span.set("innerText", std::string(" ticks per second"));
+
+    layout->GetDOMElement().call<void>("appendChild", input);
+    layout->GetDOMElement().call<void>("appendChild", span);
+
+    // Validate
+    EM_ASM({
+        var inp = document.getElementById('tick-rate-input');
+        if (!inp) return;
+        inp.addEventListener('change', function() { Module._validate_tick_rate(); });
+    });
+
+    return layout->SetDirection("row").SetAlignItems("center").SetGap("6px");
+}
+
 // Here we create a function that creates the layout for the simulation screen
 // It takes a lambda as a parameter
 // This is a function we want to run when a button is clicked
@@ -326,6 +455,7 @@ std::shared_ptr<WebElement> SimulationLayout(ActiveSim sim, std::function<void()
 
     auto game_area = UIItem<WebLayout>(WebOptions{
         .id = "game-area",
+        .classes = sim == ActiveSim::TRAFFIC ? std::vector<std::string>{"traffic"} : std::vector<std::string>{},
         .children = game_children,
     });
 
@@ -351,6 +481,7 @@ std::shared_ptr<WebElement> SimulationLayout(ActiveSim sim, std::function<void()
                         // TODO: When the World object is available, do: world_ptr->LoadScript(file_content);
                     }),
                     UIItem<WebButton>("", WebOptions{ .id = "save-btn", .classes={"button"} })->SetOnClick(btn_lambda),
+                    TickRateControl(),
                     UIItem<WebButton>("", WebOptions{ .id = "exit-btn", .classes={"button"} })->SetOnClick(exit_lambda)
                 }
             })->SetHeight("80px").SetDirection("row").SetAlignItems("center").SetGap("10px"),
@@ -436,6 +567,7 @@ void load_traffic_layout() {
     sim_tick   = 0;
     traffic_world = std::make_unique<TrafficWorld>("assets/grids/DemoWorld.grid");
     last_traffic_agent_count = 0;
+    traffic_reached_log.clear();
     set_active_layout(SimulationLayout(ActiveSim::TRAFFIC, load_traffic_layout, load_menu_layout));
     logger = std::make_unique<WebTextboxOutputManager>(log_textbox);
     LogSim("World", "Traffic simulation loaded. Press start to begin.", "info");
@@ -455,6 +587,7 @@ void load_virus_layout() {
 
 void MainLoop() {
     if (!GameCanvas) return;
+    PollTickRateInput();
     switch (active_sim) {
         case ActiveSim::TRAFFIC: DrawTrafficSim(); break;
         case ActiveSim::VIRUS:   DrawVirusSim();   break;
