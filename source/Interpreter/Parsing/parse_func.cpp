@@ -1,10 +1,10 @@
+#include <variant>
+
 #include "Interpreter/Parser.hpp"
 #include "Interpreter/SymbolTable.hpp"
 #include "Interpreter/ast.hpp"
 #include "Interpreter/errors.hpp"
-
 #include "Interpreter/macros.hpp"
-#include <variant>
 
 namespace cse498 {
 
@@ -42,8 +42,7 @@ std::expected<std::unique_ptr<AST::Node>, InterpErr> Parser::parse_func() {
     TRY_DECL(param_sym, m_Syms.GetSym(param_sym_idx));
 
     // Use up remaining comma if there
-    if (m_Lexer.Is(IDs::ID_DELIM_COMMA))
-      TRY(m_Lexer.Use());
+    if (m_Lexer.Is(IDs::ID_DELIM_COMMA)) TRY(m_Lexer.Use());
 
     params.push_back(param_sym);
   }
@@ -139,4 +138,4 @@ std::expected<std::unique_ptr<AST::Node>, InterpErr> Parser::parse_return() {
   return std::make_unique<AST::StmtReturn>(ret_token, std::move(ret_node));
 }
 
-}; // namespace cse498
+};  // namespace cse498

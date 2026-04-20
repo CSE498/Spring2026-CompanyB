@@ -1,11 +1,5 @@
 #pragma once
 
-#include "Interpreter/errors.hpp"
-#include "RobinHoodMap.hpp"
-#include "core.hpp"
-#include "core/WorldPosition.hpp"
-#include "lexer.hpp"
-
 #include <cstddef>
 #include <functional>
 #include <limits>
@@ -16,6 +10,12 @@
 #include <unordered_map>
 #include <variant>
 
+#include "Interpreter/errors.hpp"
+#include "RobinHoodMap.hpp"
+#include "core.hpp"
+#include "core/WorldPosition.hpp"
+#include "lexer.hpp"
+
 namespace cse498 {
 
 // Forward declarations
@@ -23,7 +23,7 @@ namespace AST {
 struct Node;
 struct StmtBlock;
 struct ValVariable;
-}; // namespace AST
+};  // namespace AST
 
 namespace agentlang::Types {
 
@@ -53,7 +53,8 @@ static const std::array<std::string_view, 9> TYPE_NAMES = {
     "bool",      "int", "double",  "str", "point",
     "direction", "car", "student", "null"};
 
-template <TypeKind T> inline std::string_view TypeToName() {
+template <TypeKind T>
+inline std::string_view TypeToName() {
   return TYPE_NAMES.at(StaticUtil::variant_index<Type, T>());
 }
 
@@ -75,7 +76,7 @@ inline std::optional<Type> NameToType(const emplex::Token &type_tok) {
   }
   return std::nullopt;
 }
-}; // namespace agentlang::Types
+};  // namespace agentlang::Types
 
 namespace agentlang::Operators {
 
@@ -102,47 +103,47 @@ struct OpInfo {
    - 7 : Assignment
   */
 
-  static std::expected<OpInfo, InterpErr>
-  FromBinary(AgentLexer::Token const &token) {
+  static std::expected<OpInfo, InterpErr> FromBinary(
+      AgentLexer::Token const &token) {
     using AgentLexer::IDs;
     // Use fallthrough to evaluate as logical-or
     switch (token.id) {
-    case IDs::ID_OP_MULT:
-    case IDs::ID_OP_DIVIDE:
-    case IDs::ID_OP_REM:
-      return OpInfo{4, Assoc::LEFT};
-    case IDs::ID_OP_MINUS:
-    case IDs::ID_OP_ADD:
-      return OpInfo{5, Assoc::LEFT};
-    case IDs::ID_CMP_EQ:
-    case IDs::ID_CMP_NEQ:
-    case IDs::ID_CMP_LT:
-    case IDs::ID_CMP_LEQ:
-    case IDs::ID_CMP_GT:
-    case IDs::ID_CMP_GEQ:
-      return OpInfo{6, Assoc::NEITHER};
-    case IDs::ID_OP_ASSIGN:
-      return OpInfo{7, Assoc::RIGHT};
-    default:
-      return std::unexpected(ParseErr(
-          ParseErr::INVALID_OP_TOKEN,
-          std::format("Given token '{}' is not a valid binary operator",
-                      AgentLexer::TokenName(token.id))));
+      case IDs::ID_OP_MULT:
+      case IDs::ID_OP_DIVIDE:
+      case IDs::ID_OP_REM:
+        return OpInfo{4, Assoc::LEFT};
+      case IDs::ID_OP_MINUS:
+      case IDs::ID_OP_ADD:
+        return OpInfo{5, Assoc::LEFT};
+      case IDs::ID_CMP_EQ:
+      case IDs::ID_CMP_NEQ:
+      case IDs::ID_CMP_LT:
+      case IDs::ID_CMP_LEQ:
+      case IDs::ID_CMP_GT:
+      case IDs::ID_CMP_GEQ:
+        return OpInfo{6, Assoc::NEITHER};
+      case IDs::ID_OP_ASSIGN:
+        return OpInfo{7, Assoc::RIGHT};
+      default:
+        return std::unexpected(ParseErr(
+            ParseErr::INVALID_OP_TOKEN,
+            std::format("Given token '{}' is not a valid binary operator",
+                        AgentLexer::TokenName(token.id))));
     };
   }
-  static std::expected<OpInfo, InterpErr>
-  FromUnary(AgentLexer::Token const &token) {
+  static std::expected<OpInfo, InterpErr> FromUnary(
+      AgentLexer::Token const &token) {
     using AgentLexer::IDs;
     // Use fallthrough to evaluate as logical-or
     switch (token.id) {
-    case IDs::ID_OP_MINUS:
-    case IDs::ID_OP_LNOT:
-      return OpInfo{2, Assoc::RIGHT};
-    default:
-      return std::unexpected(
-          ParseErr(ParseErr::INVALID_OP_TOKEN,
-                   std::format("Given token '{}' is not a valid unary operator",
-                               AgentLexer::TokenName(token.id))));
+      case IDs::ID_OP_MINUS:
+      case IDs::ID_OP_LNOT:
+        return OpInfo{2, Assoc::RIGHT};
+      default:
+        return std::unexpected(ParseErr(
+            ParseErr::INVALID_OP_TOKEN,
+            std::format("Given token '{}' is not a valid unary operator",
+                        AgentLexer::TokenName(token.id))));
     };
   }
 
@@ -155,7 +156,7 @@ struct OpInfo {
     return ((token.id <= MAX_OP) && (token.id >= MIN_OP));
   }
 };
-}; // namespace agentlang::Operators
+};  // namespace agentlang::Operators
 
 namespace agentlang::Symbols {
 
@@ -193,12 +194,12 @@ struct FuncSym {
 struct MagicSym {
   enum class Value {
     SPAWN,        // __spawn__, valid both
-    POSITION,    // __position__, valid both
-    DESTINATION, // __destination__, valid both
-    INFECTED,    // __infected__, valid infection
-    SUSCEPTIBLE, // __susceptible__, valid infection
-    RECOVERED,   // __recovered__, valid infection
-    FACING,      // __facing__, valid traffic
+    POSITION,     // __position__, valid both
+    DESTINATION,  // __destination__, valid both
+    INFECTED,     // __infected__, valid infection
+    SUSCEPTIBLE,  // __susceptible__, valid infection
+    RECOVERED,    // __recovered__, valid infection
+    FACING,       // __facing__, valid traffic
   };
 
   Value m_Value;
@@ -211,20 +212,20 @@ struct MagicSym {
 
   static std::string ToStr(Value m) {
     switch (m) {
-    case Value::POSITION:
-      return "position";
-    case Value::DESTINATION:
-      return "destination";
-    case Value::INFECTED:
-      return "infected";
-    case Value::SUSCEPTIBLE:
-      return "susceptible";
-    case Value::RECOVERED:
-      return "recovered";
-    case Value::FACING:
-      return "facing";
-    case Value::SPAWN:
-      return "spawn";
+      case Value::POSITION:
+        return "position";
+      case Value::DESTINATION:
+        return "destination";
+      case Value::INFECTED:
+        return "infected";
+      case Value::SUSCEPTIBLE:
+        return "susceptible";
+      case Value::RECOVERED:
+        return "recovered";
+      case Value::FACING:
+        return "facing";
+      case Value::SPAWN:
+        return "spawn";
     };
     return "ERROR";
   }
@@ -241,22 +242,26 @@ struct SymVariant : SymVariant_T {
 
   std::string StateAsStr() const {
     switch (this->index()) {
-    case 0:
-      return "variant";
-    case 1:
-      return "function";
-    case 2:
-      return "magic";
-    default:
-      return "invalid_sym";
+      case 0:
+        return "variant";
+      case 1:
+        return "function";
+      case 2:
+        return "magic";
+      default:
+        return "invalid_sym";
     }
   }
 
-  template <typename T> bool IsA() const {
+  template <typename T>
+  bool IsA() const {
     return this->index() == StaticUtil::variant_index<SymVariant_T, T>();
   }
 
-  template <typename T> T As() const { return std::get<T>(*this); }
+  template <typename T>
+  T As() const {
+    return std::get<T>(*this);
+  }
 };
 
 struct SymInfo {
@@ -271,10 +276,12 @@ struct SymInfo {
 
   template <typename T>
   SymInfo(std::string _name, size_t _line_def, T &&_sym, bool _mut)
-      : name(_name), line_def(_line_def), sym(std::forward<T>(_sym)),
+      : name(_name),
+        line_def(_line_def),
+        sym(std::forward<T>(_sym)),
         mut(_mut) {}
 };
 
-} // namespace agentlang::Symbols
+}  // namespace agentlang::Symbols
 
-}; // namespace cse498
+};  // namespace cse498

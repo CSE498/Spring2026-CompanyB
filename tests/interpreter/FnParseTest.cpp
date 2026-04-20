@@ -3,7 +3,6 @@
 #include "Interpreter/Parser.hpp"
 #include "Interpreter/ast.hpp"
 #include "Interpreter/lexer.hpp"
-
 #include "interpreter-tests.hpp"
 
 using namespace cse498;

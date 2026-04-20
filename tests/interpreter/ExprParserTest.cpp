@@ -4,6 +4,8 @@
  * @author Lalit Chitibomma
  */
 #include <catch2/catch_test_macros.hpp>
+#include <sstream>
+#include <string>
 
 #include "Interpreter/Evaluation/OpVisits.hpp"
 #include "Interpreter/Parser.hpp"
@@ -11,12 +13,8 @@
 #include "Interpreter/ast.hpp"
 #include "Interpreter/errors.hpp"
 #include "Interpreter/lexer.hpp"
-#include "test-tools/matchers.hpp"
-
 #include "interpreter-tests.hpp"
-
-#include <sstream>
-#include <string>
+#include "test-tools/matchers.hpp"
 
 using namespace cse498;
 using namespace cse498::AST;
@@ -49,8 +47,9 @@ false;
 "foo";
 
 )V0G0N";
-TEST_CASE("Literals"
-          "[expr][literal][parser]") {
+TEST_CASE(
+    "Literals"
+    "[expr][literal][parser]") {
   auto [p, result] = parse(std::string{LITERALS_TEST});
 
   CAPTURE(result);

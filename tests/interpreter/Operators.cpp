@@ -1,5 +1,9 @@
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/matchers/catch_matchers_templated.hpp>
+#include <expected>
+#include <functional>
+#include <unordered_map>
+#include <variant>
 
 #include "Interpreter/Evaluation/OpVisits.hpp"
 #include "Interpreter/Parser.hpp"
@@ -7,10 +11,6 @@
 #include "Interpreter/errors.hpp"
 #include "catch2/matchers/catch_matchers_floating_point.hpp"
 #include "test-tools/matchers.hpp"
-#include <expected>
-#include <functional>
-#include <unordered_map>
-#include <variant>
 
 struct EmptyDataclass {};
 

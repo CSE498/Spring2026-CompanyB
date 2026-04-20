@@ -19,44 +19,37 @@ std::expected<std::unique_ptr<AST::Node>, InterpErr> Parser::parse_var_def() {
 
   // Expect: KW_LET
   std::expected<Token, InterpErr> res = m_Lexer.UseIf(IDs::ID_KW_LET);
-  if (!res)
-    return res.error();
+  if (!res) return res.error();
 
   // Expect: ID
   res = m_Lexer.UseIf(IDs::ID_IDENTIFIER);
-  if (!res)
-    return res.error();
+  if (!res) return res.error();
 
   // Imp: Symbol table interaction
   Token id_token = res.value();
 
   // Expect: DELIM_CLN
   res = m_Lexer.UseIf(IDs::ID_DELIM_CLN);
-  if (!res)
-    return res.error();
+  if (!res) return res.error();
 
   // Expect: One of the types
   res = parse_type();
-  if (!res)
-    return res.error();
+  if (!res) return res.error();
 
   // Imp: Symbol table interaction
   Token type_token = res.value();
   // auto sym_add_res = m_Syms.AddSym(id_token, type_token);
   auto sym_add_res =
       m_Syms.AddSym(id_token, NameToType(type_token).value_or(NullType{}));
-  if (!sym_add_res)
-    return sym_add_res.error();
+  if (!sym_add_res) return sym_add_res.error();
 
   auto sym_retrieve_res = m_Syms.GetSym(sym_add_res.value());
-  if (!sym_retrieve_res)
-    return sym_retrieve_res.error();
+  if (!sym_retrieve_res) return sym_retrieve_res.error();
 
   // Expect: OP_ASSIGN
   if (m_Lexer.Is(IDs::ID_OP_ASSIGN)) {
     res = m_Lexer.UseIf(IDs::ID_OP_ASSIGN);
-    if (!res)
-      return res.error();
+    if (!res) return res.error();
 
     Token assign_token = res.value();
     auto expr = parse_expr();
@@ -77,4 +70,4 @@ std::expected<std::unique_ptr<AST::Node>, InterpErr> Parser::parse_var_def() {
   }
 }
 
-}; // namespace cse498
+};  // namespace cse498

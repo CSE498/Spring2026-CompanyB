@@ -1,13 +1,14 @@
 #pragma once
 
-#include "Interpreter/errors.hpp"
-#include "Lexing/lexer-gen.hpp"
-#include "core.hpp"
 #include <expected>
 #include <format>
 #include <string>
 #include <string_view>
 #include <type_traits>
+
+#include "Interpreter/errors.hpp"
+#include "Lexing/lexer-gen.hpp"
+#include "core.hpp"
 
 namespace cse498::AgentLexer {
 
@@ -21,7 +22,7 @@ using IDs = emplex::Lexer;
 class Lexer {
   emplex::Lexer m_Lexer{};
 
-public:
+ public:
   std::expected<void, InterpErr> Tokenize(std::string_view i) {
     m_Lexer.Tokenize(i);
     return {};
@@ -46,7 +47,6 @@ public:
   }
   std::expected<Token, InterpErr> UseIf(std::convertible_to<int> auto... id) {
     if (!Is(id...)) {
-
       // Build the expected tokens string by folding over the pack
       std::string expected;
       bool first = true;
@@ -72,4 +72,4 @@ public:
   };
 };
 
-}; // namespace cse498::AgentLexer
+};  // namespace cse498::AgentLexer

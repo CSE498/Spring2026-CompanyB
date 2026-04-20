@@ -1,8 +1,8 @@
 #pragma once
 
-#include <sstream>
 #include <stdlib.h>
 
+#include <sstream>
 #include <type_traits>
 #include <variant>
 
@@ -16,7 +16,8 @@ concept IsOneOf = (std::is_same_v<T, Ts> || ...);
 
 /** @brief Helper compile-time call to check if all types in a list of types are
  * unique. */
-template <typename Head, typename... Tail> constexpr bool all_unique() {
+template <typename Head, typename... Tail>
+constexpr bool all_unique() {
   // On final element, must be unique
   if constexpr (sizeof...(Tail) == 1) {
     return true;
@@ -48,7 +49,7 @@ concept IsDataClass = IsOneOf<T, cse498::TrafficData, cse498::DiseaseData>;
 template <typename T>
 concept Printable = requires(T t) { std::stringstream() << t; };
 
-} // namespace Concepts
+}  // namespace Concepts
 
 namespace StaticUtil {
 /**
@@ -75,4 +76,4 @@ constexpr size_t variant_index() {
     return variant_index<Variant, TargetType, idx + 1>();
   }
 }
-}; // namespace StaticUtil
+};  // namespace StaticUtil

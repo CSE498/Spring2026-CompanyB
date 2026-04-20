@@ -4,17 +4,15 @@
  * @author Lalit Chitibomma
  */
 #include <catch2/catch_test_macros.hpp>
+#include <format>
+#include <sstream>
+#include <string>
 
 #include "Interpreter/Parser.hpp"
 #include "Interpreter/ast.hpp"
 #include "Interpreter/errors.hpp"
-
 #include "catch2/matchers/catch_matchers.hpp"
 #include "interpreter-tests.hpp"
-
-#include <format>
-#include <sstream>
-#include <string>
 
 using namespace cse498;
 using namespace cse498::AST;

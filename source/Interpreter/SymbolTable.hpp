@@ -1,10 +1,5 @@
 #pragma once
 
-#include "Interpreter/agentlang.hpp"
-#include "Interpreter/errors.hpp"
-#include "Interpreter/lexer.hpp"
-#include "tools/RobinHoodMap.hpp"
-
 #include <cstddef>
 #include <expected>
 #include <memory>
@@ -12,6 +7,11 @@
 #include <string>
 #include <utility>
 #include <vector>
+
+#include "Interpreter/agentlang.hpp"
+#include "Interpreter/errors.hpp"
+#include "Interpreter/lexer.hpp"
+#include "tools/RobinHoodMap.hpp"
 
 namespace cse498 {
 
@@ -27,16 +27,16 @@ using agentlang::Types::Type;
 using AgentLexer::Token;
 
 class SymbolTable {
-public:
+ public:
   using Scope = RobinHoodMap<std::string, size_t>;
   using SymInfoPtr = std::shared_ptr<SymInfo>;
 
-private:
+ private:
   std::vector<Scope> m_ScopeStack;
   std::vector<std::shared_ptr<SymInfo>> m_SymbolInfo;
   std::vector<std::shared_ptr<AST::Node>> m_Funcs;
 
-public:
+ public:
   void PushSymbolScope();
   void PopSymbolScope();
 
@@ -47,10 +47,10 @@ public:
   std::expected<size_t, InterpErr> AddSym(const Token &id_tok,
                                           const Token &type_tok);
 
-  std::expected<std::pair<std::string, size_t>, InterpErr>
-  PrepAdd(const Token &);
-  std::expected<std::pair<std::string, size_t>, InterpErr>
-  PrepAdd(std::string const&);
+  std::expected<std::pair<std::string, size_t>, InterpErr> PrepAdd(
+      const Token &);
+  std::expected<std::pair<std::string, size_t>, InterpErr> PrepAdd(
+      std::string const &);
 
   // Magic
   std::expected<size_t, InterpErr> AddSym(std::string, MagicSym);
@@ -60,10 +60,10 @@ public:
   std::expected<size_t, InterpErr> AddSym(const Token &, Type);
 
   // Function
-  std::expected<size_t, InterpErr> AddSym(std::string const&, FuncSym &&);
+  std::expected<size_t, InterpErr> AddSym(std::string const &, FuncSym &&);
   std::expected<size_t, InterpErr> AddSym(const Token &, FuncSym &&);
   std::expected<size_t, InterpErr> AddFunc(std::unique_ptr<AST::Node> &&);
   std::expected<std::shared_ptr<AST::Node>, InterpErr> GetFunc(size_t);
 };
 
-} // namespace cse498
+}  // namespace cse498

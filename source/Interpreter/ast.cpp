@@ -1,10 +1,12 @@
 #include "ast.hpp"
+
+#include <expected>
+
 #include "Agents/ScriptedAgent.hpp"
 #include "Interpreter/SymbolTable.hpp"
 #include "Interpreter/agentlang.hpp"
 #include "Interpreter/errors.hpp"
 #include "Interpreter/macros.hpp"
-#include <expected>
 namespace cse498::AST {
 Node::~Node() {};
 TypedNode::~TypedNode() {};
@@ -157,4 +159,4 @@ std::expected<void, InterpErr> ValVariable::Finalize(SymbolTable &s) {
   return {};
 }
 
-}; // namespace cse498::AST
+};  // namespace cse498::AST

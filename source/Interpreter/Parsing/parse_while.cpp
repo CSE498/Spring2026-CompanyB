@@ -16,25 +16,21 @@ std::expected<std::unique_ptr<AST::Node>, InterpErr> Parser::parse_while() {
 
   // Expect: KW_WHILE
   auto res = m_Lexer.UseIf(IDs::ID_KW_WHILE);
-  if (!res.has_value())
-    return res.error();
+  if (!res.has_value()) return res.error();
 
   Token while_token = res.value();
 
   // Expect: DELIM_PAREN_OPEN
   res = m_Lexer.UseIf(IDs::ID_DELIM_PAREN_OPEN);
-  if (!res.has_value())
-    return res.error();
+  if (!res.has_value()) return res.error();
 
   // Extract expr
   auto expr = parse_expr();
-  if (!expr.has_value())
-    return expr.error();
+  if (!expr.has_value()) return expr.error();
 
   // Expect: DELIM_PAREN_CLOSE
   res = m_Lexer.UseIf(IDs::ID_DELIM_PAREN_CLOSE);
-  if (!res.has_value())
-    return res.error();
+  if (!res.has_value()) return res.error();
 
   ++m_InLoop;
   m_Syms.PushSymbolScope();
@@ -47,8 +43,7 @@ std::expected<std::unique_ptr<AST::Node>, InterpErr> Parser::parse_while() {
   m_Syms.PopSymbolScope();
   assert(m_InLoop >= 0);
 
-  if (!body.has_value())
-    return body.error();
+  if (!body.has_value()) return body.error();
 
   return std::make_unique<AST::StmtWhile>(while_token, std::move(expr.value()),
                                           std::move(body.value()));
@@ -59,12 +54,10 @@ std::expected<std::unique_ptr<AST::Node>, InterpErr> Parser::parse_loop_ctl() {
   using AgentLexer::Token;
 
   assert(m_InLoop >= 0);
-  if (m_InLoop == 0)
-    return ParseErr(ParseErr::OUT_OF_LOOP);
+  if (m_InLoop == 0) return ParseErr(ParseErr::OUT_OF_LOOP);
 
   auto res = m_Lexer.UseIf(IDs::ID_KW_BREAK, IDs::ID_KW_CONTINUE);
-  if (!res.has_value())
-    return res.error();
+  if (!res.has_value()) return res.error();
 
   return std::make_unique<AST::StmtLoopCtl>(res.value(),
                                             (res.value().id == IDs::ID_KW_BREAK)
@@ -72,4 +65,4 @@ std::expected<std::unique_ptr<AST::Node>, InterpErr> Parser::parse_loop_ctl() {
                                                 : AST::StmtLoopCtl::CONTINUE);
 }
 
-}; // namespace cse498
+};  // namespace cse498

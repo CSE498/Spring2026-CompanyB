@@ -1,8 +1,10 @@
 #include "Interpreter/Evaluation/OpVisits.hpp"
+
+#include <expected>
+
 #include "Interpreter/agentlang.hpp"
 #include "Interpreter/errors.hpp"
 #include "core.hpp"
-#include <expected>
 
 namespace cse498 {
 
@@ -27,4 +29,4 @@ std::expected<bool, InterpErr> evaluate_bool(Type t) {
   return std::visit(BoolConvVisitor{}, t);
 }
 
-}; // namespace cse498
+};  // namespace cse498

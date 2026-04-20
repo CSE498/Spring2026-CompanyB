@@ -1,21 +1,19 @@
 #pragma once
 
 #include <chrono>
+#include <filesystem>
 #include <iostream>
 #include <memory>
+#include <sstream>
 #include <thread>
 #include <vector>
-#include <sstream>
 
+#include "Agents/ScriptedAgent.hpp"
+#include "Interpreter/Parser.hpp"
 #include "Step.hpp"
 #include "StepAgentBase.hpp"
 #include "WorldGrid.hpp"
 #include "core.hpp"
-
-#include "Interpreter/Parser.hpp"
-#include "Agents/ScriptedAgent.hpp"
-
-#include <filesystem>
 
 namespace cse498 {
 
@@ -46,18 +44,18 @@ class StepWorldBase {
   /// setup.
   virtual void ConfigAgent([[maybe_unused]] Agent& agent) {}
 
-  std::string GetAgentFileContents() { 
+  std::string GetAgentFileContents() {
     std::ifstream file("test.al");
     std::ostringstream buffer;
     buffer << file.rdbuf();
     return buffer.str();
-   }
+  }
 
   void SetupScriptedAgents() {
     std::string contents = GetAgentFileContents();
     std::stringstream ss{contents};
     std::cout << contents;
-    
+
     auto parse_res = parser.parse(ss);
     if (!parse_res.has_value()) {
       std::cout << parse_res.error().ToStr() << "\n";
@@ -68,8 +66,8 @@ class StepWorldBase {
     for (auto& agent_def : parse_res.value()) {
       DataClass data;
       this->AddAgent<ScriptedAgent<DataClass>>(data)
-        .SetInit(std::move(agent_def->m_Init))
-        .SetTurn(std::move(agent_def->m_Turn));
+          .SetInit(std::move(agent_def->m_Init))
+          .SetTurn(std::move(agent_def->m_Turn));
     }
   }
 

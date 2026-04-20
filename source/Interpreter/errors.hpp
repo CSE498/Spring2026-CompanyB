@@ -18,7 +18,7 @@ struct BaseErr {
   BaseErr(std::string const &why) : m_Why(why) {}
 
   template <typename T, typename E, typename Self>
-  operator std::expected<T, E>(this Self &&self) {
+  operator std::expected<T, E>(this Self && self) {
     return std::unexpected(std::forward<Self>(self));
   }
 
@@ -137,13 +137,21 @@ struct RuntimeErr : BaseErr {
     SPAWN_OUTSIDE_INIT = 15,
   };
   static constexpr std::array<std::string_view, 15> m_KindNames = {
-      "TYPE_MISMATCH",         "EMPTY_INTERP_WRAPPER",
-      "UNSUPPORTED_OP",        "NOT_BOOL_CONV",
-      "ENCOUNTERED_AGENT_DEF", "INVALID_MOVE_ARG",
-      "TOO_MANY_MOVES",        "MAGIC_ERR",
-      "IMMUTABLE_ERR",         "TOO_FEW_ARGS",
-      "TOO_MANY_ARGS",         "MISSING_RETURN",
-      "IMPOSSIBLE_STATE",      "UNRESOLVED_FUNCTION", "VALUE_ERR"};
+      "TYPE_MISMATCH",
+      "EMPTY_INTERP_WRAPPER",
+      "UNSUPPORTED_OP",
+      "NOT_BOOL_CONV",
+      "ENCOUNTERED_AGENT_DEF",
+      "INVALID_MOVE_ARG",
+      "TOO_MANY_MOVES",
+      "MAGIC_ERR",
+      "IMMUTABLE_ERR",
+      "TOO_FEW_ARGS",
+      "TOO_MANY_ARGS",
+      "MISSING_RETURN",
+      "IMPOSSIBLE_STATE",
+      "UNRESOLVED_FUNCTION",
+      "VALUE_ERR"};
 
   Kind m_Kind;
   RuntimeErr(Kind kind)
@@ -190,18 +198,20 @@ using InterpErr_T = std::variant<LexerErr, ParseErr, SymbolErr, ASTErr,
 struct InterpErr : public InterpErr_T {
   using InterpErr_T::variant;
 
-  template <typename T> operator std::expected<T, InterpErr>() {
+  template <typename T>
+  operator std::expected<T, InterpErr>() {
     return std::unexpected(*this);
   }
 
   std::string ToStr() const { return std::visit(StrVis{}, *this); }
 
-  template <typename ErrT> bool Is(ErrT::Kind err) {
+  template <typename ErrT>
+  bool Is(ErrT::Kind err) {
     return (std::holds_alternative<ErrT>(*this) &&
             (std::get<ErrT>(*this).m_Kind == err));
   }
 
-private:
+ private:
   struct StrVis {
     std::string operator()(std::derived_from<BaseErr> auto e) {
       return e.m_Why;
@@ -209,4 +219,4 @@ private:
   };
 };
 
-}; // namespace cse498
+};  // namespace cse498

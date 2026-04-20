@@ -5,8 +5,8 @@
 
 namespace cse498 {
 
-std::expected<Type, InterpErr>
-templ_visit(AgentWrapper &i, std::derived_from<AST::Node> auto &node) {
+std::expected<Type, InterpErr> templ_visit(
+    AgentWrapper &i, std::derived_from<AST::Node> auto &node) {
   if (!i.m_AgentPtr.has_value())
     return RuntimeErr(
         RuntimeErr::EMPTY_INTERP_WRAPPER,
@@ -41,7 +41,6 @@ std::expected<Type, InterpErr> AgentWrapper::Visit(AST::StmtAgentDef &node) {
 }
 
 std::expected<Type, InterpErr> AgentWrapper::Visit(AST::StmtAction &node) {
-
   return templ_visit(*this, node);
 }
 
@@ -50,7 +49,6 @@ std::expected<Type, InterpErr> AgentWrapper::Visit(AST::StmtWhile &node) {
 }
 
 std::expected<Type, InterpErr> AgentWrapper::Visit(AST::StmtLoopCtl &node) {
-
   return templ_visit(*this, node);
 }
 
@@ -77,4 +75,4 @@ std::expected<Type, InterpErr> AgentWrapper::Visit(AST::ValVariable &node) {
   return templ_visit(*this, node);
 }
 
-}; // namespace cse498
+};  // namespace cse498

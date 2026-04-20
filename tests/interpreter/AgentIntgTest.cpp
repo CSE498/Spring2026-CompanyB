@@ -4,16 +4,14 @@
  * @author Lalit Chitibomma
  */
 #include <catch2/catch_test_macros.hpp>
-
-#include "Worlds/ScriptingTestWorld.hpp"
-#include "Agents/ScriptedAgent.hpp"
-
-#include "catch2/matchers/catch_matchers.hpp"
-#include "interpreter-tests.hpp"
-
 #include <format>
 #include <sstream>
 #include <string>
+
+#include "Agents/ScriptedAgent.hpp"
+#include "Worlds/ScriptingTestWorld.hpp"
+#include "catch2/matchers/catch_matchers.hpp"
+#include "interpreter-tests.hpp"
 
 using namespace cse498;
 using namespace cse498::AST;
@@ -53,8 +51,7 @@ let square_walker : car {
 
 )V0G0N";
 
-TEST_CASE("Basic Agent Test",
-          "[traffic][intg]") {
+TEST_CASE("Basic Agent Test", "[traffic][intg]") {
   auto [p, result] = parse(std::string{AGENT_CAR});
 
   // Init and Turn Exist (like AgentDefParserTest)
@@ -71,7 +68,7 @@ TEST_CASE("Basic Agent Test",
   REQUIRE(turn);
 
   TrafficData data = {};
-  
+
   ScriptedAgent agent(data, 0);
   ScriptingTestWorld();
 

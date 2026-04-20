@@ -16,20 +16,17 @@ std::expected<std::unique_ptr<AST::Node>, InterpErr> Parser::parse_agent_def() {
   using AgentLexer::Token;
 
   auto res = m_Lexer.UseIf(IDs::ID_DELIM_CLY_OPEN);
-  if (!res.has_value())
-    return res.error();
+  if (!res.has_value()) return res.error();
 
   Token agent_token = res.value();
 
   // Expect: <KW_INIT>
   res = m_Lexer.UseIf(IDs::ID_KW_INIT);
-  if (!res.has_value())
-    return res.error();
+  if (!res.has_value()) return res.error();
 
   // Expect: <:>
   res = m_Lexer.UseIf(IDs::ID_DELIM_CLN);
-  if (!res.has_value())
-    return res.error();
+  if (!res.has_value()) return res.error();
 
   m_InInit = true;
   m_Syms.PushSymbolScope();
@@ -37,23 +34,19 @@ std::expected<std::unique_ptr<AST::Node>, InterpErr> Parser::parse_agent_def() {
   auto init =
       (m_Lexer.Is(IDs::ID_DELIM_CLY_OPEN)) ? parse_stmt_block() : parse_stmt();
   m_InInit = false;
-  if (!init.has_value())
-    return init.error();
+  if (!init.has_value()) return init.error();
 
   // Expect: <;>
   res = m_Lexer.UseIf(IDs::ID_DELIM_SEMICLN);
-  if (!res.has_value())
-    return res.error();
+  if (!res.has_value()) return res.error();
 
   // Expect: <KW_TURN>
   res = m_Lexer.UseIf(IDs::ID_KW_TURN);
-  if (!res.has_value())
-    return res.error();
+  if (!res.has_value()) return res.error();
 
   // Expect: <:>
   res = m_Lexer.UseIf(IDs::ID_DELIM_CLN);
-  if (!res.has_value())
-    return res.error();
+  if (!res.has_value()) return res.error();
 
   m_InTurn = true;
   // Expect: <STMT_BLOCK|STMT>
@@ -61,19 +54,15 @@ std::expected<std::unique_ptr<AST::Node>, InterpErr> Parser::parse_agent_def() {
       (m_Lexer.Is(IDs::ID_DELIM_CLY_OPEN)) ? parse_stmt_block() : parse_stmt();
   m_InTurn = false;
   m_Syms.PopSymbolScope();
-  if (!turn.has_value())
-    return turn.error();
+  if (!turn.has_value()) return turn.error();
 
   // Expect: <;>
   res = m_Lexer.UseIf(IDs::ID_DELIM_SEMICLN);
-  if (!res.has_value())
-    return res.error();
+  if (!res.has_value()) return res.error();
 
   // Expect: <}>
   res = m_Lexer.UseIf(IDs::ID_DELIM_CLY_CLOSE);
-  if (!res.has_value())
-    return res.error();
-
+  if (!res.has_value()) return res.error();
 
   m_AgentDefs.emplace_back(std::move(std::make_unique<AST::StmtAgentDef>(
       agent_token, std::move(init.value()), std::move(turn.value()))));
@@ -81,4 +70,4 @@ std::expected<std::unique_ptr<AST::Node>, InterpErr> Parser::parse_agent_def() {
   return nullptr;
 }
 
-}; // namespace cse498
+};  // namespace cse498

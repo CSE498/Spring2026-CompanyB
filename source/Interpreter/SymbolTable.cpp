@@ -1,13 +1,14 @@
 #include "Interpreter/SymbolTable.hpp"
-#include "Interpreter/agentlang.hpp"
-#include "Interpreter/ast.hpp"
-#include "Interpreter/errors.hpp"
-#include "Interpreter/macros.hpp"
 
 #include <algorithm>
 #include <cassert>
 #include <expected>
 #include <ranges>
+
+#include "Interpreter/agentlang.hpp"
+#include "Interpreter/ast.hpp"
+#include "Interpreter/errors.hpp"
+#include "Interpreter/macros.hpp"
 
 using cse498::RobinHoodMap;
 using cse498::SymbolTable;
@@ -25,8 +26,8 @@ void SymbolTable::PopSymbolScope() {
   m_ScopeStack.pop_back();
 }
 
-[[nodiscard]] std::expected<SymInfoPtr, InterpErr>
-SymbolTable::GetSym(const std::string &name) const {
+[[nodiscard]] std::expected<SymInfoPtr, InterpErr> SymbolTable::GetSym(
+    const std::string &name) const {
   size_t idx;
 
   // Gives pointer to map w/ found symbol, otherwise end
@@ -42,8 +43,8 @@ SymbolTable::GetSym(const std::string &name) const {
   return m_SymbolInfo.at(idx);
 }
 
-[[nodiscard]] std::expected<SymInfoPtr, InterpErr>
-SymbolTable::GetSym(size_t id) const {
+[[nodiscard]] std::expected<SymInfoPtr, InterpErr> SymbolTable::GetSym(
+    size_t id) const {
   return m_SymbolInfo.at(id);
 }
 
@@ -56,8 +57,8 @@ std::expected<size_t, InterpErr> SymbolTable::AddSym(const Token &id_tok,
   }
   return AddSym(id_tok, *type_opt);
 }
-std::expected<std::pair<std::string, size_t>, InterpErr>
-SymbolTable::PrepAdd(std::string const &name) {
+std::expected<std::pair<std::string, size_t>, InterpErr> SymbolTable::PrepAdd(
+    std::string const &name) {
   assert(m_ScopeStack.size() > 0);
   // Symbols focus on only CURRENT scope.
   auto &symbols = m_ScopeStack.back();
@@ -71,8 +72,8 @@ SymbolTable::PrepAdd(std::string const &name) {
   return std::pair<std::string, size_t>{name, var_id};
 }
 
-std::expected<std::pair<std::string, size_t>, InterpErr>
-SymbolTable::PrepAdd(const Token &id_tok) {
+std::expected<std::pair<std::string, size_t>, InterpErr> SymbolTable::PrepAdd(
+    const Token &id_tok) {
   return PrepAdd(id_tok.lexeme);
 };
 
@@ -126,14 +127,14 @@ std::expected<size_t, InterpErr> SymbolTable::AddSym(const Token &id_tok,
   return idx;
 }
 
-std::expected<size_t, InterpErr>
-SymbolTable::AddFunc(std::unique_ptr<AST::Node> &&node) {
+std::expected<size_t, InterpErr> SymbolTable::AddFunc(
+    std::unique_ptr<AST::Node> &&node) {
   m_Funcs.push_back(std::move(node));
   return m_Funcs.size() - 1;
 }
 
-std::expected<std::shared_ptr<AST::Node>, InterpErr>
-SymbolTable::GetFunc(size_t idx) {
+std::expected<std::shared_ptr<AST::Node>, InterpErr> SymbolTable::GetFunc(
+    size_t idx) {
   if (idx >= m_Funcs.size())
     return SymbolErr(SymbolErr::INVALID_FUNC_IDX,
                      "Tried to retrieve function out of range");
@@ -141,4 +142,4 @@ SymbolTable::GetFunc(size_t idx) {
   return m_Funcs.at(idx);
 }
 
-}; // namespace cse498
+};  // namespace cse498

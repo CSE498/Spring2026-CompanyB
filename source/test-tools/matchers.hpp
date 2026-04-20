@@ -26,7 +26,8 @@ enum class CheckOpt {
   NO,
   YES,
 };
-template <typename T> struct OptNotNull : Catch::Matchers::MatcherGenericBase {
+template <typename T>
+struct OptNotNull : Catch::Matchers::MatcherGenericBase {
   bool match(std::optional<T> const &other) const { return other.has_value(); }
 
   std::string describe() const override { return "Has value (is not empty)"; }
@@ -34,7 +35,7 @@ template <typename T> struct OptNotNull : Catch::Matchers::MatcherGenericBase {
 
 struct ExpNotErr : Catch::Matchers::MatcherGenericBase {
   template <typename T, typename E>
-  bool match(std::expected<T, E> const& other) const {
+  bool match(std::expected<T, E> const &other) const {
     return other.has_value();
   }
 
@@ -55,12 +56,12 @@ struct ExpIsErr : Catch::Matchers::MatcherGenericBase {
 template <typename State, CheckExp DoCheckExp = CheckExp::NO>
 struct VariantState : Catch::Matchers::MatcherGenericBase {
   template <typename... Types>
-  bool match(std::variant<Types...> const& other) const {
+  bool match(std::variant<Types...> const &other) const {
     return std::holds_alternative<State>(other);
   }
 
   template <typename... Types>
-  bool match(std::optional<std::variant<Types...>> const& other) const {
+  bool match(std::optional<std::variant<Types...>> const &other) const {
     return std::holds_alternative<State>(other.value());
   }
 
@@ -103,15 +104,17 @@ concept VariantLike = requires(T t) { std::variant_size_v<T>; };
 template <typename State, CheckExp DoCheckExp = CheckExp::NO>
   requires std::equality_comparable<State>
 struct VariantHas : Catch::Matchers::MatcherGenericBase {
-  State m_Cmp; // Value to compare to
+  State m_Cmp;  // Value to compare to
 
   VariantHas(State cmp) : m_Cmp(cmp) {};
 
-  template <VariantLike V> bool match(V const &other) const {
+  template <VariantLike V>
+  bool match(V const &other) const {
     return (std::get<State>(other) == m_Cmp);
   }
 
-  template <VariantLike V> bool match(std::optional<V> const &other) const {
+  template <VariantLike V>
+  bool match(std::optional<V> const &other) const {
     return (std::get<State>(other.value()) == m_Cmp);
   }
 
@@ -154,5 +157,5 @@ struct VariantHas : Catch::Matchers::MatcherGenericBase {
   }
 };
 
-}; // namespace matchers
-}; // namespace cse498
+};  // namespace matchers
+};  // namespace cse498

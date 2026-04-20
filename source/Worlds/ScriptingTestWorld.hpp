@@ -213,4 +213,4 @@ namespace cse498 {
     }
     };
 // clang-format on
-} // End of namespace cse498
+}  // End of namespace cse498

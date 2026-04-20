@@ -4,6 +4,9 @@
  * @author Chirag Bhansali
  */
 #include <catch2/catch_test_macros.hpp>
+#include <sstream>
+#include <string>
+#include <variant>
 
 #include "Interpreter/Parser.hpp"
 #include "Interpreter/SymbolTable.hpp"
@@ -11,10 +14,6 @@
 #include "Interpreter/ast.hpp"
 #include "Interpreter/errors.hpp"
 #include "test-tools/matchers.hpp"
-
-#include <sstream>
-#include <string>
-#include <variant>
 
 using namespace cse498;
 using namespace cse498::AST;

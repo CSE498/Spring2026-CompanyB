@@ -18,7 +18,7 @@
 namespace cse498 {
 struct AgentWrapper;
 struct SymbolTable;
-}; // namespace cse498
+};  // namespace cse498
 
 namespace cse498::AST {
 // ----------------- Nodes -------------
@@ -77,7 +77,6 @@ struct StmtBlock : public Node {
 
 // Filler for scaffolding
 struct EmptyNode : public Node {
-
   std::expected<Types::Type, InterpErr> Accept(AgentWrapper &) override {
     return Types::NullType{};
   };
@@ -208,7 +207,8 @@ struct StmtWhile : public Node {
 
   StmtWhile(emplex::Token token, std::unique_ptr<Node> &&condition,
             std::unique_ptr<Node> &&body)
-      : Node(token), m_Condition(std::move(condition)),
+      : Node(token),
+        m_Condition(std::move(condition)),
         m_Body(std::move(body)) {}
   ~StmtWhile() = default;
 };
@@ -241,12 +241,16 @@ struct StmtIf : public Node {
 
   StmtIf(emplex::Token token, std::unique_ptr<Node> &&condition,
          std::unique_ptr<Node> &&t_body, std::unique_ptr<Node> &&f_body)
-      : Node(token), m_Condition(std::move(condition)),
-        m_TBody(std::move(t_body)), m_FBody(std::move(f_body)) {}
+      : Node(token),
+        m_Condition(std::move(condition)),
+        m_TBody(std::move(t_body)),
+        m_FBody(std::move(f_body)) {}
   StmtIf(emplex::Token token, std::unique_ptr<Node> &&condition,
          std::unique_ptr<Node> &&t_body)
-      : Node(token), m_Condition(std::move(condition)),
-        m_TBody(std::move(t_body)), m_FBody({}) {}
+      : Node(token),
+        m_Condition(std::move(condition)),
+        m_TBody(std::move(t_body)),
+        m_FBody({}) {}
   ~StmtIf() = default;
 };
 
@@ -323,4 +327,4 @@ static std::string IDNodeForTest(Node const *node) {
     return "Somehow none of the above";
   }
 }
-}; // namespace cse498::AST
+};  // namespace cse498::AST
