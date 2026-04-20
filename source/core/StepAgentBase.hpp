@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string>
+#include <unordered_map>
 
 #include "../Interfaces/IActionLog.hpp"
 #include "Step.hpp"
@@ -30,6 +31,9 @@ class StepAgentBase {
 
   /// Flag indicating if the agent is currently replaying past states
   bool mIsReplay = false;
+
+  /// Fast O(1) lookup map for replay: maps timestamp (tick) to its index in mStates
+  std::unordered_map<uint64_t, size_t> mReplayStateIndex;
 
  public:
   StepAgentBase(DataClass data, size_t id, LogLevel logLevel = LogLevel::Normal,
@@ -86,8 +90,12 @@ class StepAgentBase {
     if (!mIsReplay) {
       mIsReplay = true;
       mStates.clear(); // Clear the default initial_state from the constructor
+      mReplayStateIndex.clear();
     }
+    
+    size_t index = mStates.size();
     mStates.push_back(eventData);
+    mReplayStateIndex[eventData.at("timestamp").get<uint64_t>()] = index;
 
     // Apply initial state immediately so the agent starts correctly
     if (eventData.at("actionType").get<std::string>() == "initial_state") {
@@ -112,15 +120,12 @@ class StepAgentBase {
   void SetState(DataClass data, LogLevel logLevel = LogLevel::Normal,
                 uint64_t tick = 0) {
     if (mIsReplay) {
-      // Find the associated state in mStates for this tick,
-      // did it in reverse to avoid writing duplicate info.
-      for (auto it = mStates.rbegin(); it != mStates.rend(); ++it) {
-        if (it->contains("timestamp") && it->at("timestamp") == tick) {
-          if (it->contains("details") && it->at("details").is_object()) {
-            mData = DataClass::FromJSON(it->at("details"));
+      // Fast O(1) lookup for the state associated with this tick
+      if (auto it = mReplayStateIndex.find(tick); it != mReplayStateIndex.end()) {
+          const auto& state = mStates[it->second];
+          if (state.contains("details") && state.at("details").is_object()) {
+              mData = DataClass::FromJSON(state.at("details"));
           }
-          break;
-        }
       }
       return; // Do not log or overwrite states during replay
     }
