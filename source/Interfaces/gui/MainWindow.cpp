@@ -115,11 +115,12 @@ void MainWindow::setMainWidget() {
     mSidePanel = new QWidget(this);
     mSidePanel->setMinimumWidth(200);
 
-    mMainGraph = new MainGraph(mSidePanel);
-    mSidePanelLayout = new QVBoxLayout(mSidePanel);
-    mSidePanelLayout->addWidget(mMainGraph);
+    auto* verticalSplitter = new QSplitter(Qt::Vertical, mSidePanel);
 
-    mCommandLog = new QTextEdit(this);
+    mMainGraph = new MainGraph(verticalSplitter);
+    verticalSplitter->addWidget(mMainGraph);
+
+    mCommandLog = new QTextEdit(verticalSplitter);
     mCommandLog->setReadOnly(true);
     mCommandLog->setStyleSheet(
         "QTextEdit {"
@@ -132,7 +133,9 @@ void MainWindow::setMainWidget() {
         "  font-size: 12px;"
         "}");
     mCommandLog->setPlaceholderText("Commands will appear here...");
-    mSidePanelLayout->addWidget(mCommandLog, 1);
+    verticalSplitter->addWidget(mCommandLog);
+    mSidePanelLayout = new QVBoxLayout(mSidePanel);
+    mSidePanelLayout->addWidget(verticalSplitter);
     mSidePanel->setLayout(mSidePanelLayout);
 
     auto *splitter = new QSplitter(Qt::Horizontal, this);
