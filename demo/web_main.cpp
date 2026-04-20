@@ -198,22 +198,23 @@ void DrawTrafficSim() {
       for (size_t x = 0; x < W; ++x) {
           double cx = x * cell_w;
           double cy = y * cell_h;
+          int line_space = 10;
           char sym = grid.GetSymbol(WorldPosition{x, y});
           switch(sym) {
               case '.':
                   GameCanvas->SetFillColor({40, 40, 40}).DrawRect(cx, cy, cell_w, cell_h, true);
                   break;
               case '|':
-                  GameCanvas->SetFillColor({0, 100, 100}).DrawRect(cx, cy, cell_w, cell_h, true);
+                  GameCanvas->SetPenColor({0, 0, 0}).DrawLine({cx - line_space, cy - line_space}, {cx - line_space, cy + line_space}).DrawLine({cx + line_space, cy - line_space}, {cx + line_space, cy + line_space});
                   break;
               case '-':
-                  GameCanvas->SetFillColor({100, 0, 100}).DrawRect(cx, cy, cell_w, cell_h, true);
+                  GameCanvas->SetPenColor({0, 0, 0}).DrawLine({cx - line_space, cy - line_space}, {cx + line_space, cy - line_space}).DrawLine({cx - line_space, cy + line_space}, {cx + line_space, cy + line_space});
                   break;
               case 'S':
-                  GameCanvas->SetFillColor({100, 100, 100}).DrawRect(cx, cy, 10*cell_w, 10*cell_h, true);
+                  GameCanvas->SetFillColor({100, 100, 100}).DrawRect(cx - (10*cell_w / 2), cy - (10*cell_h / 2), 10*cell_w, 10*cell_h, true);
                   break;
               case 'D':
-                  GameCanvas->SetFillColor({200, 200, 200}).DrawRect(cx, cy, 10*cell_w, 10*cell_h, true);
+                  GameCanvas->SetFillColor({200, 200, 200}).DrawRect(cx - (10*cell_w / 2), cy - (10*cell_h / 2), 10*cell_w, 10*cell_h, true);
                   break;
               default:
                   break;
@@ -227,7 +228,7 @@ void DrawTrafficSim() {
         WorldPosition pos = agent.GetLocation().AsWorldPosition();
         double cx = pos.CellX() * cell_w + cell_w / 2.0;
         double cy = pos.CellY() * cell_h + cell_h / 2.0;
-        GameCanvas->SetFillColor({255, 80, 80}).DrawCircle(cx, cy, radius, true);
+        GameCanvas->SetFillColor({255, 80, 80}).DrawCircle(cx, cy, radius * 0.75, true);
     }
 
     if (sim_state == SimState::PLAYING) {
@@ -441,7 +442,7 @@ std::shared_ptr<WebElement> SimulationLayout(ActiveSim sim, std::function<void()
             })
         );
         game_children.push_back(
-            (GameCanvas = UIItem<WebCanvas>(1000, 1000, WebOptions{
+            (GameCanvas = UIItem<WebCanvas>(2000, 2000, WebOptions{
                 .id = "game-canvas",
             }))->SetFont("48px arial")
         );
