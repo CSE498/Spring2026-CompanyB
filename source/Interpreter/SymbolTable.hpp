@@ -49,6 +49,8 @@ public:
 
   std::expected<std::pair<std::string, size_t>, InterpErr>
   PrepAdd(const Token &);
+  std::expected<std::pair<std::string, size_t>, InterpErr>
+  PrepAdd(std::string const&);
 
   // Magic
   std::expected<size_t, InterpErr> AddSym(std::string, MagicSym);

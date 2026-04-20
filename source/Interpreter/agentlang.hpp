@@ -198,6 +198,23 @@ struct MagicSym {
     return (m_Value == Value::DESTINATION);
   };
 
+  operator std::string() const {
+    switch (m_Value) {
+    case Value::POSITION:
+      return "position";
+    case Value::DESTINATION:
+      return "destination";
+    case Value::INFECTED:
+      return "infected";
+    case Value::SUSCEPTIBLE:
+      return "susceptible";
+    case Value::RECOVERED:
+      return "recovered";
+    case Value::FACING:
+      return "facing";
+    };
+  }
+
   MagicSym(Value value) : m_Value(value) {}
 };
 

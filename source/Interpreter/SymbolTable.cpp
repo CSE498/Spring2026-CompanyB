@@ -56,12 +56,9 @@ std::expected<size_t, InterpErr> SymbolTable::AddSym(const Token &id_tok,
   }
   return AddSym(id_tok, *type_opt);
 }
-
 std::expected<std::pair<std::string, size_t>, InterpErr>
-SymbolTable::PrepAdd(const Token &id_tok) {
+SymbolTable::PrepAdd(std::string const &name) {
   assert(m_ScopeStack.size() > 0);
-  std::string name = id_tok.lexeme;
-
   // Symbols focus on only CURRENT scope.
   auto &symbols = m_ScopeStack.back();
   if (symbols.contains(name)) {
@@ -72,6 +69,11 @@ SymbolTable::PrepAdd(const Token &id_tok) {
   symbols[name] = var_id;
 
   return std::pair<std::string, size_t>{name, var_id};
+}
+
+std::expected<std::pair<std::string, size_t>, InterpErr>
+SymbolTable::PrepAdd(const Token &id_tok) {
+  return PrepAdd(id_tok.lexeme);
 };
 
 std::expected<size_t, InterpErr> SymbolTable::AddSym(const Token &id_tok,
@@ -86,8 +88,10 @@ std::expected<size_t, InterpErr> SymbolTable::AddSym(const Token &id_tok,
   m_SymbolInfo.push_back(std::make_shared<SymInfo>(name, id_tok.line_id, sym));
   return idx;
 }
-std::expected<size_t, InterpErr> SymbolTable::AddSym(std::string name,
+std::expected<size_t, InterpErr> SymbolTable::AddSym(std::string id,
                                                      MagicSym sym) {
+  TRY_DECL(sym_pair, PrepAdd(id));
+  auto [name, idx] = sym_pair;
   m_SymbolInfo.push_back(std::make_shared<SymInfo>(name, 0, sym, sym.CanMut()));
   return m_SymbolInfo.size() - 1;
 }

@@ -133,15 +133,16 @@ struct RuntimeErr : BaseErr {
     MISSING_RETURN = 11,
     IMPOSSIBLE_STATE = 12,
     UNRESOLVED_FUNCTION = 13,
+    VALUE_ERR = 14,
   };
-  static constexpr std::array<std::string_view, 14> m_KindNames = {
+  static constexpr std::array<std::string_view, 15> m_KindNames = {
       "TYPE_MISMATCH",         "EMPTY_INTERP_WRAPPER",
       "UNSUPPORTED_OP",        "NOT_BOOL_CONV",
       "ENCOUNTERED_AGENT_DEF", "INVALID_MOVE_ARG",
       "TOO_MANY_MOVES",        "MAGIC_ERR",
       "IMMUTABLE_ERR",         "TOO_FEW_ARGS",
       "TOO_MANY_ARGS",         "MISSING_RETURN",
-      "IMPOSSIBLE_STATE",      "UNRESOLVED_FUNCTION"};
+      "IMPOSSIBLE_STATE",      "UNRESOLVED_FUNCTION", "VALUE_ERR"};
 
   Kind m_Kind;
   RuntimeErr(Kind kind)

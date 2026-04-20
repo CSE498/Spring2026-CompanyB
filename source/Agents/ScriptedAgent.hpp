@@ -231,14 +231,18 @@ public:
             return Type{Dir::DOWN};
           case Direction::West:
             return Type{Dir::LEFT};
+          default:
+            return RuntimeErr(RuntimeErr::VALUE_ERR,
+                              std::format("Invalid facing state encountered"));
           };
         }
         break;
       }
       // If we're here, the value requested is not valid in this dataclass
       return RuntimeErr(RuntimeErr::MAGIC_ERR,
-                        "Could not match requested magic value to world "
-                        "dataclass for setting");
+                        std::format("Could not match requested magic value "
+                                    "'__{}__' to dataclass for getting",
+                                    std::string{m}));
     }
 
     std::expected<Type, InterpErr> operator()(FuncSym f) {
