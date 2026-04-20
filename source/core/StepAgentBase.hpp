@@ -28,6 +28,9 @@ class StepAgentBase {
   /// logging) backing alive
   std::string mCachedAgentIdStr;
 
+  /// Flag indicating if the agent is currently replaying past states
+  bool mIsReplay = false;
+
  public:
   StepAgentBase(DataClass data, size_t id, LogLevel logLevel = LogLevel::Normal,
                 uint64_t tick = 0)
@@ -80,12 +83,16 @@ class StepAgentBase {
       return;
     }
 
-    // Delegate entirely to the generic data class static method
-    DataClass details = DataClass::FromJSON(eventData.at("details"));
+    if (!mIsReplay) {
+      mIsReplay = true;
+      mStates.clear(); // Clear the default initial_state from the constructor
+    }
+    mStates.push_back(eventData);
 
-    LogLevel logLevel = static_cast<LogLevel>(levelRaw);
-    uint64_t tick = eventData.at("timestamp").get<uint64_t>();
-    this->SetState(details, logLevel, tick);
+    // Apply initial state immediately so the agent starts correctly
+    if (eventData.at("actionType").get<std::string>() == "initial_state") {
+      mData = DataClass::FromJSON(eventData.at("details"));
+    }
   }
 
   // The main logic that separates the agents. When prompted for their turn,
@@ -104,6 +111,20 @@ class StepAgentBase {
   // logging purposes.
   void SetState(DataClass data, LogLevel logLevel = LogLevel::Normal,
                 uint64_t tick = 0) {
+    if (mIsReplay) {
+      // Find the associated state in mStates for this tick,
+      // did it in reverse to avoid writing duplicate info.
+      for (auto it = mStates.rbegin(); it != mStates.rend(); ++it) {
+        if (it->contains("timestamp") && it->at("timestamp") == tick) {
+          if (it->contains("details") && it->at("details").is_object()) {
+            mData = DataClass::FromJSON(it->at("details"));
+          }
+          break;
+        }
+      }
+      return; // Do not log or overwrite states during replay
+    }
+
     mData = data;
     // Here handle logic to log for replay?
     mStates.push_back({
@@ -119,7 +140,10 @@ class StepAgentBase {
   // without logging an action. Useful for helper functions or when the world
   // needs to update the agent's state without it being considered an action
   // taken by the agent.
-  void SetStateNoLog(DataClass data) { mData = data; }
+  void SetStateNoLog(DataClass data) { 
+    if (mIsReplay) return;
+    mData = data; 
+  }
 
   virtual void SetGoal(WorldPosition position) = 0;
 };

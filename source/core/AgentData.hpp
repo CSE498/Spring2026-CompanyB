@@ -90,12 +90,9 @@ struct DiseaseData {
     nlohmann::json j = nlohmann::json::object();
     j["infection_probability"] = infection_probability;
     
-    switch(infection_state) {
-        case HealthState::SUSCEPTIBLE: j["infection_state"] = "susceptible"; break;
-        case HealthState::INFECTED:    j["infection_state"] = "infected"; break;
-        case HealthState::RECOVERED:   j["infection_state"] = "recovered"; break;
-        default:                       j["infection_state"] = "susceptible"; break;
-    }
+    j["susceptible"] = (infection_state == HealthState::SUSCEPTIBLE);
+    j["infected"]    = (infection_state == HealthState::INFECTED);
+    j["recovered"]   = (infection_state == HealthState::RECOVERED);
     
     if (destination.has_value()) {
         j["destination"] = {{"x", destination->CellX()}, {"y", destination->CellY()}};
@@ -109,11 +106,12 @@ struct DiseaseData {
       if (j.contains("infection_probability") && j.at("infection_probability").is_number()) {
           data.infection_probability = j.at("infection_probability").get<double>();
       }
-      if (j.contains("infection_state") && j.at("infection_state").is_string()) {
-          std::string hs = j.at("infection_state").get<std::string>();
-          if (hs == "susceptible") data.infection_state = HealthState::SUSCEPTIBLE;
-          else if (hs == "infected") data.infection_state = HealthState::INFECTED;
-          else if (hs == "recovered") data.infection_state = HealthState::RECOVERED;
+      if (j.contains("susceptible") && j.at("susceptible").is_boolean() && j.at("susceptible").get<bool>()) {
+          data.infection_state = HealthState::SUSCEPTIBLE;
+      } else if (j.contains("infected") && j.at("infected").is_boolean() && j.at("infected").get<bool>()) {
+          data.infection_state = HealthState::INFECTED;
+      } else if (j.contains("recovered") && j.at("recovered").is_boolean() && j.at("recovered").get<bool>()) {
+          data.infection_state = HealthState::RECOVERED;
       }
       if (j.contains("destination") && j.at("destination").is_object()) {
           auto d = j.at("destination");
