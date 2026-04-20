@@ -35,6 +35,9 @@ MainWindow::MainWindow(WorldBase &world, const std::vector<QString> &imagePaths,
     setupAgents();
     setImageGrid();
     setStatusBar();
+
+    mWorld.GetGrid().Print(mInitialState);
+
     startSimulation();
 }
 
@@ -122,6 +125,12 @@ void MainWindow::setMenuBar() {
     mReplayToggleAction->setStatusTip("Pause or resume the simulation");
     connect(mReplayToggleAction, &QAction::triggered, this, &MainWindow::onReplayToggle);
     mToolBar->addAction(mReplayToggleAction);
+
+    mReplayRestartAction = new QAction("⏮ Restart", this);
+    mReplayRestartAction->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_R));
+    mReplayRestartAction->setStatusTip("Reset and restart the simulation");
+    connect(mReplayRestartAction, &QAction::triggered, this, &MainWindow::onReplayRestart);
+    mToolBar->addAction(mReplayRestartAction);
 }
 
 void MainWindow::setMainWidget() {
@@ -302,6 +311,32 @@ void MainWindow::onReplayToggle() {
         logCommand("[System] Simulation resumed.");
     }
     mIsRunning = !mIsRunning;
+}
+
+void MainWindow::onReplayRestart() {
+    mTimer->stop();
+
+    // Reload the initial grid state
+    std::istringstream input(mInitialState.str());
+    mWorld.GetGrid().Load(input);
+
+    // Re-add agents from scratch
+    setupAgents();
+
+    // Rebuild the scene
+    mGraphicsScene->clear();
+    setImageGrid();
+
+    // Clear the log
+    mCommandLog->clear();
+
+    // Reset pause state and restart
+    mIsRunning = true;
+    mReplayToggleAction->setText("⏸ Pause");
+    mTimer->start(mTickInterval);
+
+    statusBar()->showMessage("Simulation restarted", TIMEOUT);
+    logCommand("[System] Simulation restarted.");
 }
 
 } // namespace cse498

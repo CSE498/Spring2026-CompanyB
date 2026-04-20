@@ -25,6 +25,8 @@ services:
       - ./demo:/app/demo:ro
       - ./build:/app/build
       - ./scripts/docker-entrypoint.sh:/app/docker-entrypoint.sh:ro
+      - ./images:/app/images:ro
+
     environment:
       - HOST_UID=${HOST_UID}
       - HOST_GID=${HOST_GID}

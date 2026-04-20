@@ -1,0 +1,175 @@
+24d212fb8 (Maksim Peter Savich 2026-01-31 14:12:31 -0500   1) #!/bin/bash
+24d212fb8 (Maksim Peter Savich 2026-01-31 14:12:31 -0500   2) set -e
+24d212fb8 (Maksim Peter Savich 2026-01-31 14:12:31 -0500   3) 
+24d212fb8 (Maksim Peter Savich 2026-01-31 14:12:31 -0500   4) # Default values
+24d212fb8 (Maksim Peter Savich 2026-01-31 14:12:31 -0500   5) export SERVE_PORT="${SERVE_PORT:-8080}"
+24d212fb8 (Maksim Peter Savich 2026-01-31 14:12:31 -0500   6) export SOURCE_DIR="${SOURCE_DIR:-/app/source}"
+24d212fb8 (Maksim Peter Savich 2026-01-31 14:12:31 -0500   7) export BUILD_DIR="${BUILD_DIR:-/app/build}"
+89623b7f2 (Maksim Peter Savich 2026-03-12 23:07:25 -0400   8) export GNUTLS_CPUID_OVERRIDE=0x1
+79f2af617 (Maksim Peter Savich 2026-03-21 15:55:03 -0400   9) export CC=/usr/bin/gcc
+79f2af617 (Maksim Peter Savich 2026-03-21 15:55:03 -0400  10) export CXX=/usr/bin/g++
+89623b7f2 (Maksim Peter Savich 2026-03-12 23:07:25 -0400  11) 
+89623b7f2 (Maksim Peter Savich 2026-03-12 23:07:25 -0400  12) # Restore build directory ownership to the host user
+89623b7f2 (Maksim Peter Savich 2026-03-12 23:07:25 -0400  13) fix_permissions() {
+89623b7f2 (Maksim Peter Savich 2026-03-12 23:07:25 -0400  14)     if [ -n "${HOST_UID}" ] && [ "${HOST_UID}" != "0" ]; then
+89623b7f2 (Maksim Peter Savich 2026-03-12 23:07:25 -0400  15)         chown -R "${HOST_UID}:${HOST_GID:-${HOST_UID}}" "${BUILD_DIR}"
+89623b7f2 (Maksim Peter Savich 2026-03-12 23:07:25 -0400  16)     fi
+89623b7f2 (Maksim Peter Savich 2026-03-12 23:07:25 -0400  17) }
+24d212fb8 (Maksim Peter Savich 2026-01-31 14:12:31 -0500  18) 
+77bb17c11 (Maksim Peter Savich 2026-03-18 20:11:56 -0400  19) # Always restore permissions on exit even if a failure occurs
+77bb17c11 (Maksim Peter Savich 2026-03-18 20:11:56 -0400  20) trap fix_permissions EXIT
+77bb17c11 (Maksim Peter Savich 2026-03-18 20:11:56 -0400  21) 
+24d212fb8 (Maksim Peter Savich 2026-01-31 14:12:31 -0500  22) show_help() {
+24d212fb8 (Maksim Peter Savich 2026-01-31 14:12:31 -0500  23)     echo
+d94e6dd4a (Maksim Peter Savich 2026-02-24 17:05:56 -0500  24)     echo "! THIS SCRIPT IS ONLY RECOMMENDED FOR USE IN THE INTERACTIVE SHELL !"
+d94e6dd4a (Maksim Peter Savich 2026-02-24 17:05:56 -0500  25)     echo ""
+24d212fb8 (Maksim Peter Savich 2026-01-31 14:12:31 -0500  26)     echo "Commands:"
+d94e6dd4a (Maksim Peter Savich 2026-02-24 17:05:56 -0500  27)     echo "  build-emscripten    Build the project with Emscripten"
+d94e6dd4a (Maksim Peter Savich 2026-02-24 17:05:56 -0500  28)     echo "  build-native        Build the project natively with Qt"
+d94e6dd4a (Maksim Peter Savich 2026-02-24 17:05:56 -0500  29)     echo "  test-emscripten     Build and run Emscripten tests"
+d94e6dd4a (Maksim Peter Savich 2026-02-24 17:05:56 -0500  30)     echo "  test-native         Build and run native tests"
+d94e6dd4a (Maksim Peter Savich 2026-02-24 17:05:56 -0500  31)     echo "  serve               Build and serve with emrun"
+d94e6dd4a (Maksim Peter Savich 2026-02-24 17:05:56 -0500  32)     echo "  clean               Clean build artifacts"
+d94e6dd4a (Maksim Peter Savich 2026-02-24 17:05:56 -0500  33)     echo "  shell               Start an interactive shell"
+d94e6dd4a (Maksim Peter Savich 2026-02-24 17:05:56 -0500  34)     echo "  help                Show this help message"
+24d212fb8 (Maksim Peter Savich 2026-01-31 14:12:31 -0500  35)     echo ""
+24d212fb8 (Maksim Peter Savich 2026-01-31 14:12:31 -0500  36)     echo "Environment Variables:"
+d94e6dd4a (Maksim Peter Savich 2026-02-24 17:05:56 -0500  37)     echo "  SERVE_PORT         Port for emrun server (default: 8080)"
+d94e6dd4a (Maksim Peter Savich 2026-02-24 17:05:56 -0500  38)     echo "  SOURCE_DIR         Source directory (default: /app/source)"
+d94e6dd4a (Maksim Peter Savich 2026-02-24 17:05:56 -0500  39)     echo "  BUILD_DIR          Build directory (default: /app/build)"
+028c6b62d (Maksim Peter Savich 2026-03-30 15:09:38 -0400  40)     echo "  NO_QT              Set to 1 to exclude Qt and GUI sources (native and dev only)"
+35872e6be (Maksim Peter Savich 2026-04-08 14:03:14 -0400  41)     echo "  TARGET_MAIN        Entry point file to build (searches source/ then demo/)"
+35872e6be (Maksim Peter Savich 2026-04-08 14:03:14 -0400  42)     echo "                     Default: simple_main.cpp (native), web_main.cpp (emscripten)"
+2a3e885ef (Maksim Peter Savich 2026-03-30 09:45:28 -0400  43)     echo "  CMAKE_BUILD_TYPE   Passed directly to cmake (e.g. Debug, Release)"
+2a3e885ef (Maksim Peter Savich 2026-03-30 09:45:28 -0400  44)     echo "  CMAKE_EXTRA_FLAGS  Extra C++ flags passed to cmake"
+24d212fb8 (Maksim Peter Savich 2026-01-31 14:12:31 -0500  45)     echo
+24d212fb8 (Maksim Peter Savich 2026-01-31 14:12:31 -0500  46) }
+24d212fb8 (Maksim Peter Savich 2026-01-31 14:12:31 -0500  47) 
+2a3e885ef (Maksim Peter Savich 2026-03-30 09:45:28 -0400  48) do_build_emscripten() {
+d94e6dd4a (Maksim Peter Savich 2026-02-24 17:05:56 -0500  49)     echo "==> Building with Emscripten <==="
+24d212fb8 (Maksim Peter Savich 2026-01-31 14:12:31 -0500  50) 
+24d212fb8 (Maksim Peter Savich 2026-01-31 14:12:31 -0500  51)     if [ ! -f "${SOURCE_DIR}/CMakeLists.txt" ]; then
+24d212fb8 (Maksim Peter Savich 2026-01-31 14:12:31 -0500  52)         echo "Error: No CMakeLists.txt found in ${SOURCE_DIR}"
+24d212fb8 (Maksim Peter Savich 2026-01-31 14:12:31 -0500  53)         exit 1
+24d212fb8 (Maksim Peter Savich 2026-01-31 14:12:31 -0500  54)     fi
+24d212fb8 (Maksim Peter Savich 2026-01-31 14:12:31 -0500  55) 
+d94e6dd4a (Maksim Peter Savich 2026-02-24 17:05:56 -0500  56)     mkdir -p "${BUILD_DIR}"
+24d212fb8 (Maksim Peter Savich 2026-01-31 14:12:31 -0500  57) 
+24d212fb8 (Maksim Peter Savich 2026-01-31 14:12:31 -0500  58)     # Configure with emcmake
+24d212fb8 (Maksim Peter Savich 2026-01-31 14:12:31 -0500  59)     emcmake cmake \
+24d212fb8 (Maksim Peter Savich 2026-01-31 14:12:31 -0500  60)         -S "${SOURCE_DIR}" \
+d94e6dd4a (Maksim Peter Savich 2026-02-24 17:05:56 -0500  61)         -B "${BUILD_DIR}/emscripten" \
+17dd617f1 (Maksim Peter Savich 2026-03-25 11:32:22 -0400  62)         -DCMAKE_RUNTIME_OUTPUT_DIRECTORY="${BUILD_DIR}/emscripten" \
+2a3e885ef (Maksim Peter Savich 2026-03-30 09:45:28 -0400  63)         ${CMAKE_BUILD_TYPE:+-DCMAKE_BUILD_TYPE="${CMAKE_BUILD_TYPE}"} \
+35872e6be (Maksim Peter Savich 2026-04-08 14:03:14 -0400  64)         ${CMAKE_EXTRA_FLAGS:+-DCMAKE_CXX_FLAGS="${CMAKE_EXTRA_FLAGS}"} \
+35872e6be (Maksim Peter Savich 2026-04-08 14:03:14 -0400  65)         ${TARGET_MAIN:+-DTARGET_MAIN="${TARGET_MAIN}"}
+24d212fb8 (Maksim Peter Savich 2026-01-31 14:12:31 -0500  66) 
+24d212fb8 (Maksim Peter Savich 2026-01-31 14:12:31 -0500  67)     # Build with emmake
+24d212fb8 (Maksim Peter Savich 2026-01-31 14:12:31 -0500  68)     # The j flag is for parallel compilation which should help speed up compile jobs later
+d94e6dd4a (Maksim Peter Savich 2026-02-24 17:05:56 -0500  69)     emmake make -C "${BUILD_DIR}/emscripten" -j$(nproc)
+d94e6dd4a (Maksim Peter Savich 2026-02-24 17:05:56 -0500  70) 
+d94e6dd4a (Maksim Peter Savich 2026-02-24 17:05:56 -0500  71)     echo "==> Build complete! <==="
+d94e6dd4a (Maksim Peter Savich 2026-02-24 17:05:56 -0500  72)     ls -lh "${BUILD_DIR}/emscripten"
+89623b7f2 (Maksim Peter Savich 2026-03-12 23:07:25 -0400  73)     fix_permissions
+d94e6dd4a (Maksim Peter Savich 2026-02-24 17:05:56 -0500  74) }
+d94e6dd4a (Maksim Peter Savich 2026-02-24 17:05:56 -0500  75) 
+d94e6dd4a (Maksim Peter Savich 2026-02-24 17:05:56 -0500  76) find_qt6_dir() {
+d94e6dd4a (Maksim Peter Savich 2026-02-24 17:05:56 -0500  77)     find /usr -name Qt6Config.cmake -exec dirname {} \; 2>/dev/null | head -1
+d94e6dd4a (Maksim Peter Savich 2026-02-24 17:05:56 -0500  78) }
+d94e6dd4a (Maksim Peter Savich 2026-02-24 17:05:56 -0500  79) 
+d94e6dd4a (Maksim Peter Savich 2026-02-24 17:05:56 -0500  80) do_build_native() {
+2a3e885ef (Maksim Peter Savich 2026-03-30 09:45:28 -0400  81)     if [ "${NO_QT:-0}" = "1" ]; then
+2a3e885ef (Maksim Peter Savich 2026-03-30 09:45:28 -0400  82)         echo "==> Building natively (Qt excluded) <==="
+2a3e885ef (Maksim Peter Savich 2026-03-30 09:45:28 -0400  83)     else
+2a3e885ef (Maksim Peter Savich 2026-03-30 09:45:28 -0400  84)         echo "==> Building natively with Qt <==="
+2a3e885ef (Maksim Peter Savich 2026-03-30 09:45:28 -0400  85)     fi
+2a3e885ef (Maksim Peter Savich 2026-03-30 09:45:28 -0400  86) 
+2a3e885ef (Maksim Peter Savich 2026-03-30 09:45:28 -0400  87)     if [ -n "${TARGET_MAIN}" ] && [[ "${TARGET_MAIN}" != *_main.cpp ]]; then
+2a3e885ef (Maksim Peter Savich 2026-03-30 09:45:28 -0400  88)         echo "Error: TARGET_MAIN='${TARGET_MAIN}' must end in _main.cpp"
+2a3e885ef (Maksim Peter Savich 2026-03-30 09:45:28 -0400  89)         exit 1
+2a3e885ef (Maksim Peter Savich 2026-03-30 09:45:28 -0400  90)     fi
+d94e6dd4a (Maksim Peter Savich 2026-02-24 17:05:56 -0500  91) 
+d94e6dd4a (Maksim Peter Savich 2026-02-24 17:05:56 -0500  92)     if [ ! -f "${SOURCE_DIR}/CMakeLists.txt" ]; then
+d94e6dd4a (Maksim Peter Savich 2026-02-24 17:05:56 -0500  93)         echo "Error: No CMakeLists.txt found in ${SOURCE_DIR}"
+d94e6dd4a (Maksim Peter Savich 2026-02-24 17:05:56 -0500  94)         exit 1
+d94e6dd4a (Maksim Peter Savich 2026-02-24 17:05:56 -0500  95)     fi
+24d212fb8 (Maksim Peter Savich 2026-01-31 14:12:31 -0500  96) 
+89623b7f2 (Maksim Peter Savich 2026-03-12 23:07:25 -0400  97)     local NATIVE_BUILD_DIR="${BUILD_DIR}/docker-native"
+d94e6dd4a (Maksim Peter Savich 2026-02-24 17:05:56 -0500  98)     local QT6_DIR
+d94e6dd4a (Maksim Peter Savich 2026-02-24 17:05:56 -0500  99)     QT6_DIR="$(find_qt6_dir)"
+d94e6dd4a (Maksim Peter Savich 2026-02-24 17:05:56 -0500 100)     mkdir -p "${NATIVE_BUILD_DIR}"
+d94e6dd4a (Maksim Peter Savich 2026-02-24 17:05:56 -0500 101) 
+d94e6dd4a (Maksim Peter Savich 2026-02-24 17:05:56 -0500 102)     cmake \
+d94e6dd4a (Maksim Peter Savich 2026-02-24 17:05:56 -0500 103)         -S "${SOURCE_DIR}" \
+d94e6dd4a (Maksim Peter Savich 2026-02-24 17:05:56 -0500 104)         -B "${NATIVE_BUILD_DIR}" \
+2a3e885ef (Maksim Peter Savich 2026-03-30 09:45:28 -0400 105)         ${CMAKE_BUILD_TYPE:+-DCMAKE_BUILD_TYPE="${CMAKE_BUILD_TYPE}"} \
+2a3e885ef (Maksim Peter Savich 2026-03-30 09:45:28 -0400 106)         ${CMAKE_EXTRA_FLAGS:+-DCMAKE_CXX_FLAGS="${CMAKE_EXTRA_FLAGS}"} \
+2a3e885ef (Maksim Peter Savich 2026-03-30 09:45:28 -0400 107)         $( [ "${NO_QT:-0}" = "1" ] && echo "-DNO_QT=ON" ) \
+2a3e885ef (Maksim Peter Savich 2026-03-30 09:45:28 -0400 108)         ${TARGET_MAIN:+-DTARGET_MAIN="${TARGET_MAIN}"} \
+d94e6dd4a (Maksim Peter Savich 2026-02-24 17:05:56 -0500 109)         ${QT6_DIR:+-DQt6_DIR="${QT6_DIR}"}
+d94e6dd4a (Maksim Peter Savich 2026-02-24 17:05:56 -0500 110) 
+ad37a699f (Maksim Peter Savich 2026-03-25 13:26:46 -0400 111)     cmake --build "${NATIVE_BUILD_DIR}" --parallel
+d94e6dd4a (Maksim Peter Savich 2026-02-24 17:05:56 -0500 112) 
+d94e6dd4a (Maksim Peter Savich 2026-02-24 17:05:56 -0500 113)     echo "==> Native build complete! <==="
+89623b7f2 (Maksim Peter Savich 2026-03-12 23:07:25 -0400 114)     fix_permissions
+24d212fb8 (Maksim Peter Savich 2026-01-31 14:12:31 -0500 115) }
+24d212fb8 (Maksim Peter Savich 2026-01-31 14:12:31 -0500 116) 
+24d212fb8 (Maksim Peter Savich 2026-01-31 14:12:31 -0500 117) do_serve() {
+2a3e885ef (Maksim Peter Savich 2026-03-30 09:45:28 -0400 118)     do_build_emscripten
+24d212fb8 (Maksim Peter Savich 2026-01-31 14:12:31 -0500 119) 
+d94e6dd4a (Maksim Peter Savich 2026-02-24 17:05:56 -0500 120)     echo "==> Starting emrun server on port ${SERVE_PORT}... <==="
+d94e6dd4a (Maksim Peter Savich 2026-02-24 17:05:56 -0500 121)     echo "==> Access at http://localhost:${SERVE_PORT} <==="
+24d212fb8 (Maksim Peter Savich 2026-01-31 14:12:31 -0500 122) 
+24d212fb8 (Maksim Peter Savich 2026-01-31 14:12:31 -0500 123)     emrun \
+24d212fb8 (Maksim Peter Savich 2026-01-31 14:12:31 -0500 124)         --port "$SERVE_PORT" \
+24d212fb8 (Maksim Peter Savich 2026-01-31 14:12:31 -0500 125)         --hostname 0.0.0.0 \
+24d212fb8 (Maksim Peter Savich 2026-01-31 14:12:31 -0500 126)         --no_browser \
+24d212fb8 (Maksim Peter Savich 2026-01-31 14:12:31 -0500 127)         --serve_after_close \
+d94e6dd4a (Maksim Peter Savich 2026-02-24 17:05:56 -0500 128)         "${BUILD_DIR}/emscripten/index.html"
+24d212fb8 (Maksim Peter Savich 2026-01-31 14:12:31 -0500 129) }
+24d212fb8 (Maksim Peter Savich 2026-01-31 14:12:31 -0500 130) 
+e4a733831 (Maksim Peter Savich 2026-02-23 18:20:34 -0500 131) do_test_emscripten() {
+d94e6dd4a (Maksim Peter Savich 2026-02-24 17:05:56 -0500 132)     echo "==> Building and running tests (Catch2, Emscripten) <==="
+24d212fb8 (Maksim Peter Savich 2026-01-31 14:12:31 -0500 133) 
+24d212fb8 (Maksim Peter Savich 2026-01-31 14:12:31 -0500 134)     if [ ! -f "${SOURCE_DIR}/CMakeLists.txt" ]; then
+24d212fb8 (Maksim Peter Savich 2026-01-31 14:12:31 -0500 135)         echo "Error: No CMakeLists.txt found in ${SOURCE_DIR}"
+24d212fb8 (Maksim Peter Savich 2026-01-31 14:12:31 -0500 136)         exit 1
+24d212fb8 (Maksim Peter Savich 2026-01-31 14:12:31 -0500 137)     fi
+24d212fb8 (Maksim Peter Savich 2026-01-31 14:12:31 -0500 138) 
+d94e6dd4a (Maksim Peter Savich 2026-02-24 17:05:56 -0500 139)     local TEST_BUILD_DIR="${BUILD_DIR}/tests/emscripten"
+24d212fb8 (Maksim Peter Savich 2026-01-31 14:12:31 -0500 140)     mkdir -p "${TEST_BUILD_DIR}"
+24d212fb8 (Maksim Peter Savich 2026-01-31 14:12:31 -0500 141) 
+f40ed3904 (Maksim Peter Savich 2026-02-20 15:52:45 -0500 142)     # Configure for Emscripten specific wasm tests
+24d212fb8 (Maksim Peter Savich 2026-01-31 14:12:31 -0500 143)     emcmake cmake \
+24d212fb8 (Maksim Peter Savich 2026-01-31 14:12:31 -0500 144)         -S "${SOURCE_DIR}" \
+24d212fb8 (Maksim Peter Savich 2026-01-31 14:12:31 -0500 145)         -B "${TEST_BUILD_DIR}" \
+f40ed3904 (Maksim Peter Savich 2026-02-20 15:52:45 -0500 146)         -DBUILD_WASM_TESTS=ON
+24d212fb8 (Maksim Peter Savich 2026-01-31 14:12:31 -0500 147) 
+24d212fb8 (Maksim Peter Savich 2026-01-31 14:12:31 -0500 148)     # Build tests with emmake
+24d212fb8 (Maksim Peter Savich 2026-01-31 14:12:31 -0500 149)     emmake make -C "${TEST_BUILD_DIR}" -j$(nproc)
+24d212fb8 (Maksim Peter Savich 2026-01-31 14:12:31 -0500 150) 
+24d212fb8 (Maksim Peter Savich 2026-01-31 14:12:31 -0500 151)     # Run tests with Node.js
+d94e6dd4a (Maksim Peter Savich 2026-02-24 17:05:56 -0500 152)     echo "==> Running tests <==="
+24d212fb8 (Maksim Peter Savich 2026-01-31 14:12:31 -0500 153)     node "${TEST_BUILD_DIR}/tests.js"
+89623b7f2 (Maksim Peter Savich 2026-03-12 23:07:25 -0400 154)     fix_permissions
+24d212fb8 (Maksim Peter Savich 2026-01-31 14:12:31 -0500 155) }
+24d212fb8 (Maksim Peter Savich 2026-01-31 14:12:31 -0500 156) 
+e4a733831 (Maksim Peter Savich 2026-02-23 18:20:34 -0500 157) do_test_native() {
+d94e6dd4a (Maksim Peter Savich 2026-02-24 17:05:56 -0500 158)     echo "==> Building and running tests (Catch2, native) <==="
+e4a733831 (Maksim Peter Savich 2026-02-23 18:20:34 -0500 159) 
+2a3e885ef (Maksim Peter Savich 2026-03-30 09:45:28 -0400 160)     if [ "${NO_QT:-0}" = "1" ]; then
+2a3e885ef (Maksim Peter Savich 2026-03-30 09:45:28 -0400 161)         echo "==> Building and running tests (Catch2, native, Qt excluded) <==="
+2a3e885ef (Maksim Peter Savich 2026-03-30 09:45:28 -0400 162)     else
+2a3e885ef (Maksim Peter Savich 2026-03-30 09:45:28 -0400 163)         echo "==> Building and running tests (Catch2, native, Qt) <==="
+2a3e885ef (Maksim Peter Savich 2026-03-30 09:45:28 -0400 164)     fi
+2a3e885ef (Maksim Peter Savich 2026-03-30 09:45:28 -0400 165) 
+e4a733831 (Maksim Peter Savich 2026-02-23 18:20:34 -0500 166)     if [ ! -f "${SOURCE_DIR}/CMakeLists.txt" ]; then
+e4a733831 (Maksim Peter Savich 2026-02-23 18:20:34 -0500 167)         echo "Error: No CMakeLists.txt found in ${SOURCE_DIR}"
+e4a733831 (Maksim Peter Savich 2026-02-23 18:20:34 -0500 168)         exit 1
+e4a733831 (Maksim Peter Savich 2026-02-23 18:20:34 -0500 169)     fi
+e4a733831 (Maksim Peter Savich 2026-02-23 18:20:34 -0500 170) 
+89623b7f2 (Maksim Peter Savich 2026-03-12 23:07:25 -0400 171)     local TEST_BUILD_DIR="${BUILD_DIR}/tests/docker-native"
+d94e6dd4a (Maksim Peter Savich 2026-02-24 17:05:56 -0500 172)     local QT6_DIR
+d94e6dd4a (Maksim Peter Savich 2026-02-24 17:05:56 -0500 173)     QT6_DIR="$(find_qt6_dir)"
+e4a733831 (Maksim Peter Savich 2026-02-23 18:20:34 -0500 174)     mkdir -p "${TEST_BUILD_DIR}"
+e4a7

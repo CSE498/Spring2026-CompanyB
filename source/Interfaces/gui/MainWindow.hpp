@@ -16,6 +16,7 @@
 #include <QVBoxLayout>
 #include <memory>
 #include <vector>
+#include <sstream> 
 
 #include "../../core/WorldBase.hpp"
 #include "../../Worlds/InfectiousWorld.hpp"
@@ -104,6 +105,10 @@ private:
     // Replay control
     QAction* mReplayToggleAction;
     bool mIsRunning = true;
+
+    void onReplayRestart();
+    QAction* mReplayRestartAction;
+    std::stringstream mInitialState;
 };
 
 } // namespace cse498
