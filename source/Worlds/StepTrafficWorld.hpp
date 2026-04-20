@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <chrono>
+#include <fstream>
 #include <iostream>
 #include <map>
 #include <queue>
@@ -9,9 +10,9 @@
 #include <thread>
 #include <vector>
 
+#include "../core/AgentData.hpp"
 #include "../core/StepWorldBase.hpp"
 #include "../tools/WeightedSet.hpp"
-#include "TrafficData.hpp"
 
 namespace cse498 {
 
@@ -19,7 +20,8 @@ template <typename SpawnedAgent>
 class StepTrafficWorld : public StepWorldBase<TrafficData> {
   using Agent = StepAgentBase<TrafficData>;
   using AgentPtr = std::shared_ptr<Agent>;
-  // Kind of a dummy design for now, should upgrade later
+  // May want to change this later with e.g an enum of error codes, but since it
+  // isn't being used too heavily this is probably fine for now
   struct WorldErr {
     std::string message = "";
   };
@@ -33,95 +35,54 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
     StepContainer &container;
     StepTrafficWorld &world;
 
-    size_t grass_id{};
-
-    // Now we'll need to have an operator() overload for each Step type.
     // NOTE: all this "typename StepVisitor::VisitRet" stuff (instead of just
     // "VisitRet") is for some reason required when adding "template <typename
     // SpawnedAgent>".
     typename StepVisitor::VisitRet operator()(steps::MovementStep step) {
-      // The simplest step -- the agent just wants to move to a space.
-      if (!world.IsValid(step.loc) || world.IsGrass(step.loc)) {
-        // TODO: return an error here maybe?
-        // not necessarily though, will have to think about it.
-        return {};
+      auto can_move = world.CanMakeMoveAt(agent, step.loc);
+      if (!can_move.has_value()) {
+        return std::unexpected<WorldErr>(can_move.error());
       }
+      if (!can_move.value()) return {};
 
-      WorldPosition pos = agent.GetState().position;
-      size_t old_x = pos.CellX();
-      size_t old_y = pos.CellY();
-      size_t new_x = step.loc.CellX();
-      size_t new_y = step.loc.CellY();
-      Direction new_dir{};
-      if (new_x == old_x) {
-        if (new_y == old_y - 1) {
-          new_dir = Direction::North;
-        } else if (new_y == old_y + 1) {
-          new_dir = Direction::South;
-        } else {
-          return std::unexpected<WorldErr>("invalid move");
-        }
-      } else if (new_y == old_y) {
-        if (new_x == old_x - 1) {
-          new_dir = Direction::West;
-        } else if (new_x == old_x + 1) {
-          new_dir = Direction::East;
-        } else {
-          return std::unexpected<WorldErr>("invalid move");
-        }
-      } else {
-        return std::unexpected<WorldErr>("invalid move");
-      }
-
-      if (world.HorizontalBlockedAt(step.loc) &&
-          (new_dir == Direction::East || new_dir == Direction::West)) {
-        return {};
-      } else if (world.VerticalBlockedAt(step.loc) &&
-                 (new_dir == Direction::North || new_dir == Direction::South)) {
-        return {};
-      }
-
-      if (world.CanCollideWithAgentAt(agent, step.loc)) {
-        return {};
-      }
+      WorldPosition old_pos = agent.GetState().position;
       auto curr_state = agent.GetState();
       curr_state.position = step.loc;
+      curr_state.direction = world.GetNewDirection(old_pos, step.loc).value();
       agent.SetState(curr_state);
 
       return {};
     }
 
     typename StepVisitor::VisitRet operator()(steps::InfoStep step) {
-      // When we get an info step, the agent would like to do something
-      // conditionally (the container handles the branching internally).
-      // It will provide us with the "aspect" about the world, and the
-      // location it wants the info about. In return, we'll "inform" the
-      // container with what has been requested.
       switch (step.aspect) {
         using Aspect = cse498::steps::InfoStep::Aspect;
         case Aspect::LOC_AVAIL: {
-          container.inform(world.IsValid(step.target) &&
-                           !world.IsGrass(step.target));
+          container.inform(
+              world.CanMakeMoveAt(agent, step.target).value_or(false));
           break;
         }
+        // we consider a space to have a capacity of 2, since normally it should
+        // contain at most 2 agents (moving in opposite directions)
         case Aspect::OCCUPANCY_FRAC: {
-          // TEMP (but I don't expect this branch to be used much anyway)
-          container.inform(false);
+          container.inform(static_cast<double>(std::ranges::count_if(
+                               world.agent_set,
+                               [=](AgentPtr const &ptr) {
+                                 return ptr->GetState().position == step.target;
+                               })) /
+                           2.0);
           break;
         }
         case Aspect::OCCUPANCY_RAW: {
-          // TEMP (but I don't expect this branch to be used much anyway)
-          container.inform(false);
+          container.inform(static_cast<int>(
+              std::ranges::count_if(world.agent_set, [=](AgentPtr const &ptr) {
+                return ptr->GetState().position == step.target;
+              })));
           break;
         }
       };
       return {};
     }
-
-    // Note for someone who may want to refactor in the future to not have to
-    // fill fill in overloads for steps we shouldn't reach (like
-    // ConditionalStep), we could either (a) extend the InfoHandler approach for
-    // a defaulted visitor or apply CRTP and have it build in these overloads.
 
     typename StepVisitor::VisitRet operator()(
         [[maybe_unused]] steps::ConditionalStep step) {
@@ -149,13 +110,24 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
   size_t traffic_light_horizontal_id{};  ///< Traffic light allowing horizontal
                                          ///< movement ('-')
 
-  size_t spawn_id{};        ///< ID of cells that spawn agents.
+  // ID of cells that spawn agents.
+  size_t spawn_fast_id{};  // < Id for Fast spawners that uses the fast clock
+  size_t
+      spawn_normal_id{};  // < Id for Normal spawners that uses the normal clock
+  size_t spawn_slow_id{};  // < Id for Slow spawners that uses the Slow clock
+
+  // Containers for the 3 different types of spawners
+  std::vector<WorldPosition>
+      fast_spawner_positions{};  // < fast Spawner location container
+  std::vector<WorldPosition>
+      normal_spawner_positions{};  // < normal Spawner location container
+  std::vector<WorldPosition>
+      slow_spawner_positions{};  // < slow Spawner location container
+
   size_t destination_id{};  ///< ID of cells which are destinations that agents
                             ///< try to reach.
   std::vector<WorldPosition>
       traffic_light_positions{};  ///< Positions of all traffic lights.
-  std::vector<WorldPosition>
-      spawner_positions{};  ///< Positions of all spawner tiles.
   WeightedSet<WorldPosition>
       destination_positions{};  // Weighted set to randomly assign destinations
   std::map<WorldPosition, std::string>
@@ -178,11 +150,32 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
   int traffic_light_clock = 0;
 
   /// @brief The number of turns that pass before a new agent is spawned from
-  /// each spawner with a random destination.
-  static constexpr int spawn_period = 20;
+  /// each spawner with a random destination. This is for the Fast speed
+  static constexpr int fast_spawn_period = 10;
+  /// @brief The number of turns that pass before a new agent is spawned from
+  /// each spawner with a random destination. This is for the Normal speed
+  static constexpr int normal_spawn_period = 20;
+  /// @brief The number of turns that pass before a new agent is spawned from
+  /// each spawner with a random destination. This is for the Slow speed
+  static constexpr int slow_spawn_period = 30;
 
   /// @brief Counts up each turn and gets reset when it reaches spawn_period.
-  int spawn_clock = 0;
+  /// Fast
+  int fast_spawn_clock = 0;
+  /// @brief Counts up each turn and gets reset when it reaches spawn_period.
+  /// Normal
+  int normal_spawn_clock = 0;
+  /// @brief Counts up each turn and gets reset when it reaches spawn_period.
+  /// Slow
+  int slow_spawn_clock = 0;
+
+  // Cyan shades for spawner tile display
+  /// @brief Bright Cyan for the fast spawner
+  inline static const std::string fast_spawn_colour = "\033[96m";
+  /// @brief Reg Cyan for the normal spawner
+  inline static const std::string normal_spawn_colour = "\033[36m";
+  /// @brief Dim Cyan for the slow spawner
+  inline static const std::string slow_spawn_colour = "\033[2;36m";
 
   /// @brief The number of currently-active agents that have been spawned by
   /// spawner tiles. Incremented whenever a spawner spawns something,
@@ -190,15 +183,15 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
   int num_spawned_agents = 0;
   /// @brief Cap on the number of active spawned agents that can exist at a
   /// time, to prevent the world from getting too chaotic.
-  static constexpr int max_spawned_agents = 3;
+  static constexpr int max_spawned_agents = 50;
 
   /// @brief Queue of IDs of despawned agents available for recycling.
   /// Written by Claude.
   std::queue<size_t> despawned_agent_ids{};
 
+ private:
   // Pulled by Claude out of the preexisting constructor — registers cell types
   // and scans the loaded grid for traffic lights, spawners, and destinations.
- private:
   void RegisterCellTypes() {
     road_id = main_grid.AddCellType("road", "Road to drive in", '.');
     grass_id =
@@ -209,8 +202,11 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
     traffic_light_horizontal_id = main_grid.AddCellType(
         "traffic_light_horizontal",
         "Traffic light allowing horizontal (left/right) movement.", '-');
-    spawn_id =
-        main_grid.AddCellType("spawn", "Spawner for driving agents", 'S');
+
+    spawn_fast_id = main_grid.AddCellType("spawn_fast", "Fast spawner", 'F');
+    spawn_normal_id =
+        main_grid.AddCellType("spawn_normal", "Normal spawner", 'N');
+    spawn_slow_id = main_grid.AddCellType("spawn_slow", "Slow spawner", 'S');
     destination_id = main_grid.AddCellType(
         "destination", "Destination for driving agents", 'D');
   }
@@ -223,8 +219,12 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
         WorldPosition pos(x, y);
         if (main_grid[pos] == traffic_light_vertical_id) {
           traffic_light_positions.push_back(pos);
-        } else if (main_grid[pos] == spawn_id) {
-          spawner_positions.push_back(pos);
+        } else if (main_grid[pos] == spawn_fast_id) {
+          fast_spawner_positions.push_back(pos);
+        } else if (main_grid[pos] == spawn_normal_id) {
+          normal_spawner_positions.push_back(pos);
+        } else if (main_grid[pos] == spawn_slow_id) {
+          slow_spawner_positions.push_back(pos);
         }
       }
     }
@@ -281,6 +281,98 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
     return empty;
   }
   ~StepTrafficWorld() = default;
+  /// @brief Return the direction that an agent should face after moving from
+  /// "pos" to "new_pos", or an error if the move is invalid (only moves 1
+  /// square up/down/left/right are valid).
+  /// @param pos Agent's current position
+  /// @param new_pos Position the agent is attempting to move to
+  /// @return Direction from pos to new_pos if move is valid, error otherwise
+  [[nodiscard]] std::expected<Direction, WorldErr> GetNewDirection(
+      WorldPosition pos, WorldPosition new_pos) const {
+    size_t old_x = pos.CellX();
+    size_t old_y = pos.CellY();
+    size_t new_x = new_pos.CellX();
+    size_t new_y = new_pos.CellY();
+    Direction new_dir{};
+    if (new_x == old_x) {
+      if (new_y == old_y - 1) {
+        new_dir = Direction::North;
+      } else if (new_y == old_y + 1) {
+        new_dir = Direction::South;
+      } else {
+        return std::unexpected<WorldErr>("invalid move");
+      }
+    } else if (new_y == old_y) {
+      if (new_x == old_x - 1) {
+        new_dir = Direction::West;
+      } else if (new_x == old_x + 1) {
+        new_dir = Direction::East;
+      } else {
+        return std::unexpected<WorldErr>("invalid move");
+      }
+    } else {
+      return std::unexpected<WorldErr>("invalid move");
+    }
+    return new_dir;
+  }
+  /// @brief Returns a bool signaling whether the agent can move from its
+  /// current position to the new position--or, if the move is invalid, an
+  /// error.
+  /// @note The rules here are a bit complicated so I'll summarize them in
+  /// prose. An agent can move from A to B if:
+  ///
+  /// Either A = B, or B is directly up/down/left/right from A. No diagonal
+  /// moves are allowed and no agent is allowed to move more than 2 steps at at
+  /// time.
+  ///
+  /// B is a valid location (i.e. not out-of-bounds) and not an impassable
+  /// "grass" tile.
+  ///
+  /// The agent isn't trying to move backward (i.e. the opposite of the
+  /// direction it's facing), though this is allowed if the agent is at a dead
+  /// end (grass tiles on all but one side) and has to turn around.
+  ///
+  /// The agent isn't trying to move horizontally/vertically into a traffic
+  /// light that's currently blocking horizontal/vertical moves.
+  ///
+  /// The agent(s) on B must all be facing opposite to the direction that the
+  /// agent would be in if it completed the move. (This is to simulate 2-lane
+  /// roads, where agents can pass each other if they're moving in opposite
+  /// directions, make turns at intersections as long as the street they're
+  /// trying to turn onto only has cars in the opposite-direction lane, and so
+  /// on.)
+  [[nodiscard]] std::expected<bool, WorldErr> CanMakeMoveAt(
+      const Agent &agent, const WorldPosition &new_pos) const {
+    if (!IsValid(new_pos) || IsGrass(new_pos)) {
+      return false;
+    }
+
+    WorldPosition pos = agent.GetState().position;
+    std::expected<Direction, WorldErr> new_dir_ret =
+        GetNewDirection(pos, new_pos);
+    if (!new_dir_ret.has_value()) {
+      return std::unexpected<WorldErr>(new_dir_ret.error());
+    }
+    Direction new_dir = new_dir_ret.value();
+
+    if (new_dir == GetOppositeDirection(agent.GetState().direction) &&
+        !IsDeadEnd(pos)) {
+      return false;
+    }
+
+    if (HorizontalBlockedAt(new_pos) &&
+        (new_dir == Direction::East || new_dir == Direction::West)) {
+      return false;
+    } else if (VerticalBlockedAt(new_pos) &&
+               (new_dir == Direction::North || new_dir == Direction::South)) {
+      return false;
+    }
+
+    if (CanCollideWithAgentAt(new_dir, new_pos)) {
+      return false;
+    }
+    return true;
+  }
 
   [[nodiscard]] bool IsValid(const WorldPosition &pos) const {
     return main_grid.IsValid(pos);
@@ -289,15 +381,28 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
   [[nodiscard]] bool IsGrass(const WorldPosition &pos) const {
     return main_grid.IsValid(pos) && main_grid[pos] == grass_id;
   }
-
+  /// @brief Returns whether the given position has a traffic-light tile which
+  /// is currently blocking horizontal traffic.
   [[nodiscard]] bool HorizontalBlockedAt(const WorldPosition &pos) const {
     return main_grid.IsValid(pos) &&
            main_grid[pos] == traffic_light_vertical_id;
   }
-
+  /// @brief Returns whether the given position has a traffic-light tile which
+  /// is currently blocking vertical traffic.
   [[nodiscard]] bool VerticalBlockedAt(const WorldPosition &pos) const {
     return main_grid.IsValid(pos) &&
            main_grid[pos] == traffic_light_horizontal_id;
+  }
+  /// @brief Returns whether the given position is surrounded by grass on all
+  /// but one side.
+  [[nodiscard]] bool IsDeadEnd(const WorldPosition &pos) const {
+    int grass_count = 0;
+    if (IsGrass(pos.Up())) grass_count++;
+    if (IsGrass(pos.Down())) grass_count++;
+    if (IsGrass(pos.Left())) grass_count++;
+    if (IsGrass(pos.Right())) grass_count++;
+
+    return grass_count == 3;
   }
 
   [[nodiscard]] Direction GetOppositeDirection(const Direction dir) const {
@@ -306,9 +411,9 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
     return static_cast<Direction>((static_cast<int>(dir) + 2) & 3);
   }
 
-  [[nodiscard]] bool CanCollideWithAgentAt(const Agent &agent,
+  [[nodiscard]] bool CanCollideWithAgentAt(const Direction agent_direction,
                                            const WorldPosition &pos) const {
-    Direction opposite = GetOppositeDirection(agent.GetState().direction);
+    Direction opposite = GetOppositeDirection(agent_direction);
     auto is_agent_at_position = [&](const AgentPtr &ptr) {
       return ptr->GetState().is_active && ptr->GetState().position == pos;
     };
@@ -325,8 +430,7 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
       return agent->GetState();
     }
     StepContainer steps = agent->GetTurn();
-    StepVisitor visitor{*agent, steps, *this, grass_id};
-    WorldPosition prev_position = agent->GetState().position;
+    StepVisitor visitor{*agent, steps, *this};
     while (!steps.exhausted()) {
       std::expected<Step, StepErr> step = steps.get_next();
       if (!step.has_value()) {
@@ -352,8 +456,7 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
       --num_spawned_agents;
     }
 
-    // TODO: if position changed: update direction
-    // and update symbol too
+    new_state.symbol = DirectionSymbol(new_state.direction);
 
     return new_state;
   }
@@ -392,33 +495,43 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
     return std::ranges::find_if(agent_set, agent_at) != agent_set.end();
   }
 
-  /// @brief Update the spawn clock by 1 tick. If it's time to spawn more
-  /// agents, go to each spawner without an agent currently on top of it and
+  /// Pulls out common logic for the spawners and simplifies the update spwaners
+  /// go to each spawner without an agent currently on top of it and
   /// spawn a new DrivingAgent with a randomly chosen destination.
-  void UpdateSpawners() {
-    if (++spawn_clock >= spawn_period) {
-      spawn_clock = 0;
-      for (const WorldPosition &pos : spawner_positions) {
-        // Don't spawn on top of an existing agent
-        if (main_grid[pos] == spawn_id && !AgentExistsAt(pos) &&
-            num_spawned_agents < max_spawned_agents) {
-          auto dest = destination_positions.GetRandomElement();
-          if (dest.has_value()) {
-            WorldPosition dest_pos = dest.value();
+  void SpawnFromPositions(const std::vector<WorldPosition> &positions) {
+    for (const WorldPosition &pos : positions) {
+      if (!AgentExistsAt(pos) && num_spawned_agents < max_spawned_agents) {
+        auto dest = destination_positions.GetRandomElement();
+        if (dest.has_value()) {
+          WorldPosition dest_pos = dest.value();
 
-            if (!despawned_agent_ids.empty()) {
-              RecycleDespawnedAgent(pos, dest_pos);
-            } else {
-              TrafficData state = {
-                  dest_pos, pos, Direction::East,
-                  true,     '>', GetDestinationColour(dest_pos)};
-              AddAgent<SpawnedAgent>(state);
-            }
-
-            ++num_spawned_agents;
+          if (!despawned_agent_ids.empty()) {
+            RecycleDespawnedAgent(pos, dest_pos);
+          } else {
+            TrafficData state = {dest_pos, pos, Direction::East,
+                                 true,     '>', GetDestinationColour(dest_pos)};
+            AddAgent<SpawnedAgent>(state);
           }
+          ++num_spawned_agents;
         }
       }
+    }
+  }
+  /// @brief Update the spawn clock by 1 tick. If it's time to spawn more
+  /// agents, Uses the 3 new Timers and idas and containser for the 3 speeds
+  /// of spawners
+  void UpdateSpawners() {
+    if (++fast_spawn_clock >= fast_spawn_period) {
+      fast_spawn_clock = 0;
+      SpawnFromPositions(fast_spawner_positions);
+    }
+    if (++normal_spawn_clock >= normal_spawn_period) {
+      normal_spawn_clock = 0;
+      SpawnFromPositions(normal_spawner_positions);
+    }
+    if (++slow_spawn_clock >= slow_spawn_period) {
+      slow_spawn_clock = 0;
+      SpawnFromPositions(slow_spawner_positions);
     }
   }
 
@@ -504,6 +617,20 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
         if (!col.empty()) colour_grid[y][x] = col;
       }
     }
+
+    // Colour spawner tiles with cyan shades, all displayed as 'S'
+    auto colourSpawners = [&](const std::vector<WorldPosition> &positions,
+                              const std::string &colour) {
+      for (const auto &pos : positions) {
+        size_t x = pos.CellX(), y = pos.CellY();
+        symbol_grid[y][x] = 'S';
+        colour_grid[y][x] = colour;
+      }
+    };
+
+    colourSpawners(fast_spawner_positions, fast_spawn_colour);
+    colourSpawners(normal_spawner_positions, normal_spawn_colour);
+    colourSpawners(slow_spawner_positions, slow_spawn_colour);
 
     // Stamp active agents onto the grid.
     for (const auto &agent_ptr : agent_set) {

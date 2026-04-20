@@ -83,7 +83,7 @@ TEST_CASE("StepContainer basic functionality", "[StepContainer]") {
         // Future improvement -- this mess could be moved out to a custom Catch2
         // matcher
 
-        StepContainer::Node const *checking_node = steps.root->next.get();
+        StepContainer::Node const* checking_node = steps.root->next.get();
 
         // Should see InfoStep
         REQUIRE(checking_node->step.has_value());
@@ -180,7 +180,7 @@ TEST_CASE("StepContainer basic functionality", "[StepContainer]") {
         // Future improvement -- this mess could be moved out to a custom Catch2
         // matcher
 
-        StepContainer::Node const *checking_node = steps.root->next.get();
+        StepContainer::Node const* checking_node = steps.root->next.get();
 
         // Should see InfoStep
         REQUIRE(checking_node->step.has_value());

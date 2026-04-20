@@ -257,7 +257,7 @@ static std::vector<std::vector<char>> createOpenMap() {
 
 TEST_CASE("Test StateGridPosition MoveForward", "[core]") {
   auto map = createOpenMap();
-  cse498::StateGrid grid(5, 5, map);
+  cse498::StateGrid grid(map);
 
   // Moving North decreases Row by 1
   cse498::StateGridPosition pos(2, 2, cse498::Direction::North);
@@ -294,7 +294,7 @@ TEST_CASE("Test StateGridPosition MoveForward", "[core]") {
   std::vector<std::vector<char>> wall_map = {
       {'P', 'P', 'P'}, {'P', 'W', 'P'}, {'P', 'P', 'P'}};
   // Should not be able to move into a space with a wall
-  cse498::StateGrid walled_grid(3, 3, wall_map);
+  cse498::StateGrid walled_grid(wall_map);
   cse498::StateGridPosition pos6(1, 0, cse498::Direction::South);
   CHECK(pos6.MoveForward(walled_grid) == false);
   CHECK(pos6.Col() == 1);
@@ -303,7 +303,7 @@ TEST_CASE("Test StateGridPosition MoveForward", "[core]") {
 
 TEST_CASE("Test StateGridPosition MoveBackward", "[core]") {
   auto map = createOpenMap();
-  cse498::StateGrid grid(5, 5, map);
+  cse498::StateGrid grid(map);
 
   // Moving south should increase Row by 1
   cse498::StateGridPosition pos(2, 2, cse498::Direction::North);
@@ -326,7 +326,7 @@ TEST_CASE("Test StateGridPosition MoveBackward", "[core]") {
 
 TEST_CASE("Test StateGridPosition IsValidForwardMove", "[core]") {
   auto map = createOpenMap();
-  cse498::StateGrid grid(5, 5, map);
+  cse498::StateGrid grid(map);
 
   // Move is valid, but shouldn't change position
   cse498::StateGridPosition pos(2, 2, cse498::Direction::North);
@@ -341,14 +341,14 @@ TEST_CASE("Test StateGridPosition IsValidForwardMove", "[core]") {
   // Another map with a wall
   std::vector<std::vector<char>> wall_map = {{'P', 'W'}, {'P', 'P'}};
   // Should return false for inquiring about moving into a spot with a wall
-  cse498::StateGrid walled_grid(2, 2, wall_map);
+  cse498::StateGrid walled_grid(wall_map);
   cse498::StateGridPosition pos3(0, 0, cse498::Direction::East);
   CHECK(pos3.IsValidForwardMove(walled_grid) == false);
 }
 
 TEST_CASE("Test StateGridPosition IsValidBackwardMove", "[core]") {
   auto map = createOpenMap();
-  cse498::StateGrid grid(5, 5, map);
+  cse498::StateGrid grid(map);
 
   // Move is valid, but shouldn't change position
   cse498::StateGridPosition pos(2, 2, cse498::Direction::North);

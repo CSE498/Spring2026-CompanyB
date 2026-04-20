@@ -34,10 +34,8 @@ static TrafficData MakeTrafficData(WorldPosition pos,
 
 static DiseaseData MakeDiseaseData(WorldPosition pos, HealthState state) {
   return DiseaseData{
-      .infection_probability = 0.0,
-      .infection_state = state,
-      .destination = std::nullopt,
       .position = pos,
+      .health = state,
   };
 }
 

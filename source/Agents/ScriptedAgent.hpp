@@ -231,17 +231,17 @@ public:
       }
       case MagicSym::Value::INFECTED:
         if constexpr (std::is_same_v<DataClass, DiseaseData>) {
-          return Type{data.infection_state == HealthState::INFECTED};
+          return Type{data.health == HealthState::INFECTED};
         }
         break;
       case MagicSym::Value::SUSCEPTIBLE:
         if constexpr (std::is_same_v<DataClass, DiseaseData>) {
-          return Type{data.infection_state == HealthState::SUSCEPTIBLE};
+          return Type{data.health == HealthState::SUSCEPTIBLE};
         }
         break;
       case MagicSym::Value::RECOVERED:
         if constexpr (std::is_same_v<DataClass, DiseaseData>) {
-          return Type{data.infection_state == HealthState::RECOVERED};
+          return Type{data.health == HealthState::RECOVERED};
         }
         break;
       case MagicSym::Value::FACING:

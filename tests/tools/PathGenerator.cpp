@@ -152,6 +152,7 @@ TEST_CASE("PathGenerator AvoidancePath routes around avoid point",
 
   // Check that all points maintain distance from avoid point
   for (const auto& p : result->pointsView()) {
+  for (const auto& p : result->pointsView()) {
     double dist = std::hypot(p.getX() - avoid.getX(), p.getY() - avoid.getY());
     if (dist < radius - 0.1) {
       // Allow small tolerance
@@ -219,6 +220,7 @@ TEST_CASE("PathGenerator RandomWalk handles constrained movement",
   REQUIRE_FALSE(result.empty());
   // All points should be within bounds
   for (const auto& p : result.pointsView()) {
+  for (const auto& p : result.pointsView()) {
     REQUIRE(p.getX() >= -2.1);
     REQUIRE(p.getX() <= 2.1);
     REQUIRE(p.getY() >= -2.1);
@@ -240,6 +242,7 @@ TEST_CASE("PathGenerator SpiralPath creates expanding pattern",
 
   // Check that distances from center increase
   double maxDist = 0.0;
+  for (const auto& p : result.pointsView()) {
   for (const auto& p : result.pointsView()) {
     double dist =
         std::hypot(p.getX() - center.getX(), p.getY() - center.getY());
@@ -270,6 +273,7 @@ TEST_CASE("PathGenerator SetHeuristic changes distance calculation",
   PathGenerator gen;
 
   // Manhattan distance heuristic
+  auto manhattan = [](const Point& a, const Point& b) {
   auto manhattan = [](const Point& a, const Point& b) {
     return std::abs(b.getX() - a.getX()) + std::abs(b.getY() - a.getY());
   };
@@ -367,6 +371,7 @@ TEST_CASE("PathGenerator SpiralPath with zero spacing stays at center",
 
   // All points should remain at center since r = spacing * angle / 2pi = 0
   REQUIRE_FALSE(result.empty());
+  for (const auto& p : result.pointsView()) {
   for (const auto& p : result.pointsView()) {
     REQUIRE_THAT(p.getX(), Catch::Matchers::WithinAbs(center.getX(), 0.01));
     REQUIRE_THAT(p.getY(), Catch::Matchers::WithinAbs(center.getY(), 0.01));
