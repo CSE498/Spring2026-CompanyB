@@ -5928,14 +5928,4 @@
         stroke-width="2"
         stroke-opacity="1"
         stroke-miterlimit="4"
-    /><path
-        stroke-linecap="butt"
-        transform="matrix(0.706014, 0.253068, -0.253068, 0.706014, 184.017987, 122.602)"
-        fill="none"
-        stroke-linejoin="miter"
-        d="M 0.00114636 1.000409 L 752.059674 0.997945 "
-        stroke="#ffffff"
-        stroke-width="2"
-        stroke-opacity="1"
-        stroke-miterlimit="4"
     /></svg>
