@@ -80,7 +80,14 @@ Parser::parse(std::istream &in) {
   }
   m_Syms.PopSymbolScope();
 
-  // Interpreter will steal m_Nodes and m_Syms rather than returning them
+  // Now we'll finalize all nodes
+  for (auto &node : m_Nodes) {
+    TRY(node->Finalize(m_Syms));
+  }
+
+  for (auto &node : m_AgentDefs) {
+    TRY(node->Finalize(m_Syms));
+  }
 
   return std::move(m_AgentDefs);
 }

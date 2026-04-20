@@ -15,12 +15,13 @@ static std::pair<
     std::expected<std::vector<std::unique_ptr<AST::StmtAgentDef>>, InterpErr>>
 parse(std::string const &stmts) {
   Parser p;
-  std::istringstream ss("world traffic;\n" + stmts);
+  std::istringstream ss(stmts);
   auto result = p.parse(ss);
   return {std::move(p), std::move(result)};
 }
 
 const char *BASIC_FUNC_TESTS = R"V0G0N(
+world traffic;
 // Empty function, always returns 10;
 fn ten() : int {
   return 10;
@@ -49,10 +50,6 @@ fn mid(a : int, b : int) : double {
 let middle : double = mid(5, 10);
 
 // Permit recursion
-fn factorial(val : int) {
-  return fact(val, val);
-}
-
 fn fact(val : int, step : int) : int {
   // Error case
   if (step < 0) return 0;
@@ -63,12 +60,17 @@ fn fact(val : int, step : int) : int {
   // Recurive case
   else return fact(val*(step - 1), step - 1);
 }
+
+fn factorial(val : int) : int {
+  return fact(val, val);
+}
+
 )V0G0N";
 
 TEST_CASE("Basic function tests", "[func][parser]") {
-  // auto [p, result] = parse(std::string{BASIC_FUNC_TESTS});
+  auto [p, result] = parse(std::string{BASIC_FUNC_TESTS});
 
-  // CAPTURE(result);
-  // REQUIRE(result.has_value());
-  // REQUIRE(p.m_Nodes.size() == 10);
+  CAPTURE(result);
+  REQUIRE(result.has_value());
+  REQUIRE(p.m_Nodes.size() == 10);
 }

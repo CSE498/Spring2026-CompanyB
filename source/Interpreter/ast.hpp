@@ -17,7 +17,8 @@
 
 namespace cse498 {
 struct AgentWrapper;
-};
+struct SymbolTable;
+}; // namespace cse498
 
 namespace cse498::AST {
 // ----------------- Nodes -------------
@@ -33,6 +34,7 @@ struct Node {
 
   // Should evaluation return nothing?
   virtual std::expected<Types::Type, InterpErr> Accept(AgentWrapper &) = 0;
+  virtual std::expected<void, InterpErr> Finalize(SymbolTable &) = 0;
 
   Node(emplex::Token token) : m_Token(token) {};
   virtual ~Node() = 0;
@@ -50,18 +52,6 @@ struct TypedNode : public Node {
     return TempErr(TempErr::NOT_IMPLEMENTED,
                    "Not sure we're actually doing semantic analysis, so not "
                    "implementing this yet");
-    // if (!m_Type.has_value()) {
-    //   // Resolve the derived class' type
-    //   auto type_res = ResolveType();
-    //   if (!type_res.has_value())
-    //     return type_res.error();
-
-    //   // Note it internally for later calls
-    //   m_Type = type_res.value();
-    // }
-
-    // // Either way now we've got it
-    // return m_Type.value();
   }
 
   TypedNode(emplex::Token token) : Node(token) {};
@@ -77,6 +67,7 @@ struct StmtBlock : public Node {
   }
 
   std::expected<Types::Type, InterpErr> Accept(AgentWrapper &) override;
+  std::expected<void, InterpErr> Finalize(SymbolTable &) override;
 
   StmtBlock(emplex::Token token) : Node(token), m_Body() {};
   StmtBlock(emplex::Token token, std::vector<std::unique_ptr<Node>> &&body)
@@ -89,6 +80,9 @@ struct EmptyNode : public Node {
 
   std::expected<Types::Type, InterpErr> Accept(AgentWrapper &) override {
     return Types::NullType{};
+  };
+  std::expected<void, InterpErr> Finalize(SymbolTable &) override {
+    return {};
   };
 
   EmptyNode(emplex::Token token) : Node(token) {}
@@ -103,6 +97,7 @@ struct ValLiteral : public TypedNode {
   // std::expected<size_t, InterpErr> ResolveType() override;
 
   std::expected<Types::Type, InterpErr> Accept(AgentWrapper &) override;
+  std::expected<void, InterpErr> Finalize(SymbolTable &) override;
 
   // Construct from raw type value
   template <Types::TypeKind T>
@@ -122,6 +117,7 @@ struct ValVariable : public TypedNode {
   // std::expected<size_t, InterpErr> ResolveType() override;
 
   std::expected<Types::Type, InterpErr> Accept(AgentWrapper &) override;
+  std::expected<void, InterpErr> Finalize(SymbolTable &) override;
 
   ValVariable(emplex::Token token, std::shared_ptr<Symbols::SymInfo> symbol)
       : TypedNode(token), m_Symbol(symbol) {}
@@ -134,6 +130,7 @@ struct ExprUnary : public TypedNode {
 
   // std::expected<size_t, InterpErr> ResolveType() override;
   std::expected<Types::Type, InterpErr> Accept(AgentWrapper &) override;
+  std::expected<void, InterpErr> Finalize(SymbolTable &) override;
 
   ExprUnary(emplex::Token token, std::unique_ptr<Node> &&left)
       : TypedNode(token), m_Left(std::move(left)) {};
@@ -146,6 +143,7 @@ struct ExprBinary : public TypedNode {
 
   // std::expected<size_t, InterpErr> ResolveType() override;
   std::expected<Types::Type, InterpErr> Accept(AgentWrapper &) override;
+  std::expected<void, InterpErr> Finalize(SymbolTable &) override;
 
   ExprBinary(emplex::Token token, std::unique_ptr<Node> &&left,
              std::unique_ptr<Node> &&right)
@@ -161,6 +159,7 @@ struct Assign : public TypedNode {
   //   return m_Sym->type.index();
   // }
   std::expected<Types::Type, InterpErr> Accept(AgentWrapper &) override;
+  std::expected<void, InterpErr> Finalize(SymbolTable &) override;
 
   Assign(emplex::Token const &token, std::shared_ptr<Symbols::SymInfo> sym,
          std::unique_ptr<Node> &&value)
@@ -176,6 +175,7 @@ struct StmtAgentDef : public Node {
   std::unique_ptr<Node> m_Turn;
 
   std::expected<Types::Type, InterpErr> Accept(AgentWrapper &) override;
+  std::expected<void, InterpErr> Finalize(SymbolTable &) override;
 
   StmtAgentDef(emplex::Token token, std::unique_ptr<Node> &&init,
                std::unique_ptr<Node> &&turn)
@@ -190,6 +190,7 @@ struct StmtAction : public Node {
   std::unique_ptr<Node> m_Direction;
 
   std::expected<Types::Type, InterpErr> Accept(AgentWrapper &) override;
+  std::expected<void, InterpErr> Finalize(SymbolTable &) override;
 
   StmtAction(emplex::Token token, std::unique_ptr<Node> &&direction)
       : Node(token), m_Direction(std::move(direction)) {}
@@ -203,6 +204,7 @@ struct StmtWhile : public Node {
   std::unique_ptr<Node> m_Body;
 
   std::expected<Types::Type, InterpErr> Accept(AgentWrapper &) override;
+  std::expected<void, InterpErr> Finalize(SymbolTable &) override;
 
   StmtWhile(emplex::Token token, std::unique_ptr<Node> &&condition,
             std::unique_ptr<Node> &&body)
@@ -221,6 +223,7 @@ struct StmtLoopCtl : public Node {
   Action m_Action;
 
   std::expected<Types::Type, InterpErr> Accept(AgentWrapper &) override;
+  std::expected<void, InterpErr> Finalize(SymbolTable &) override;
 
   StmtLoopCtl(emplex::Token token, Action action)
       : Node(token), m_Action(action) {}
@@ -234,6 +237,7 @@ struct StmtIf : public Node {
   std::optional<std::unique_ptr<Node>> m_FBody;
 
   std::expected<Types::Type, InterpErr> Accept(AgentWrapper &) override;
+  std::expected<void, InterpErr> Finalize(SymbolTable &) override;
 
   StmtIf(emplex::Token token, std::unique_ptr<Node> &&condition,
          std::unique_ptr<Node> &&t_body, std::unique_ptr<Node> &&f_body)
@@ -244,6 +248,50 @@ struct StmtIf : public Node {
       : Node(token), m_Condition(std::move(condition)),
         m_TBody(std::move(t_body)), m_FBody({}) {}
   ~StmtIf() = default;
+};
+
+// Function return
+struct StmtReturn : public Node {
+  std::unique_ptr<Node> m_Value;
+
+  std::expected<Types::Type, InterpErr> Accept(AgentWrapper &) override;
+  std::expected<void, InterpErr> Finalize(SymbolTable &) override;
+
+  StmtReturn(emplex::Token token, std::unique_ptr<Node> &&val)
+      : Node(token), m_Value(std::move(val)) {}
+  ~StmtReturn() = default;
+};
+
+// Function
+struct StmtFunc : public Node {
+  std::shared_ptr<Symbols::SymInfo> m_Symbol;
+  std::unique_ptr<Node> m_Body;
+
+  std::expected<Types::Type, InterpErr> Accept(AgentWrapper &) override;
+  std::expected<void, InterpErr> Finalize(SymbolTable &) override;
+
+  StmtFunc(emplex::Token token, std::shared_ptr<Symbols::SymInfo> symbol,
+           std::unique_ptr<Node> &&body)
+      : Node(token), m_Symbol(symbol), m_Body(std::move(body)) {}
+  ~StmtFunc() = default;
+};
+
+// Function call
+struct StmtFuncCall : public Node {
+  std::shared_ptr<Symbols::SymInfo> m_Symbol;
+  std::vector<std::unique_ptr<Node>> m_Args{};
+  std::optional<std::shared_ptr<AST::Node>> m_Body;
+
+  std::expected<Types::Type, InterpErr> Accept(AgentWrapper &) override;
+  std::expected<void, InterpErr> Finalize(SymbolTable &) override;
+
+  void add_node(std::unique_ptr<Node> &&n) {
+    m_Args.emplace_back(std::move(n));
+  }
+
+  StmtFuncCall(emplex::Token token, std::shared_ptr<Symbols::SymInfo> sym)
+      : Node(token), m_Symbol(sym), m_Body({}) {}
+  ~StmtFuncCall() = default;
 };
 
 static std::string IDNodeForTest(Node const *node) {

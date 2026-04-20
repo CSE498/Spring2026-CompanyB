@@ -1,5 +1,6 @@
 #include "Interpreter/SymbolTable.hpp"
 #include "Interpreter/agentlang.hpp"
+#include "Interpreter/ast.hpp"
 #include "Interpreter/errors.hpp"
 #include "Interpreter/macros.hpp"
 
@@ -46,8 +47,8 @@ SymbolTable::GetSym(size_t id) const {
   return m_SymbolInfo.at(id);
 }
 
-[[deprecated]] std::expected<size_t, InterpErr>
-SymbolTable::AddSym(const Token &id_tok, const Token &type_tok) {
+std::expected<size_t, InterpErr> SymbolTable::AddSym(const Token &id_tok,
+                                                     const Token &type_tok) {
   auto type_opt = NameToType(type_tok);
   if (!type_opt) {
     return SymbolErr(SymbolErr::INVALID_TYPE,
@@ -95,12 +96,30 @@ std::expected<size_t, InterpErr> SymbolTable::AddSym(const Token &id_tok,
   TRY_DECL(sym_pair, PrepAdd(id_tok));
   auto [name, idx] = sym_pair;
 
-  m_SymbolInfo.push_back(
-      std::make_shared<SymInfo>(name, id_tok.line_id, std::move(sym)));
+  m_SymbolInfo.push_back(std::make_shared<SymInfo>(
+      name, id_tok.line_id, std::move(sym), m_Funcs.size()));
+
+  m_Funcs.push_back({});
 
   // Functions are not assignable
   m_SymbolInfo.back()->mut = false;
 
   return idx;
 }
+
+std::expected<size_t, InterpErr>
+SymbolTable::AddFunc(std::unique_ptr<AST::Node> &&node) {
+  m_Funcs.push_back(std::move(node));
+  return m_Funcs.size() - 1;
+}
+
+std::expected<std::shared_ptr<AST::Node>, InterpErr>
+SymbolTable::GetFunc(size_t idx) {
+  if (idx >= m_Funcs.size())
+    return SymbolErr(SymbolErr::INVALID_FUNC_IDX,
+                     "Tried to retrieve function out of range");
+
+  return m_Funcs.at(idx);
+}
+
 }; // namespace cse498

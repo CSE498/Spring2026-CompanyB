@@ -1,10 +1,12 @@
 #include "Interpreter/Parser.hpp"
+#include "Interpreter/SymbolTable.hpp"
 #include "Interpreter/agentlang.hpp"
 #include "Interpreter/ast.hpp"
 #include "Interpreter/errors.hpp"
 #include "Interpreter/macros.hpp"
 #include <memory>
 #include <string>
+#include <variant>
 
 namespace cse498 {
 
@@ -109,10 +111,14 @@ std::expected<std::unique_ptr<AST::Node>, InterpErr> Parser::parse_term() {
     return std::make_unique<AST::ValVariable>(next_token, sym);
   }
   case IDs::ID_IDENTIFIER: {
-    auto sym = m_Syms.GetSym(next_token.lexeme);
-    if (!sym.has_value())
-      return sym.error();
-    return std::make_unique<AST::ValVariable>(next_token, sym.value());
+    TRY_DECL(sym, m_Syms.GetSym(next_token.lexeme));
+    if (std::holds_alternative<FuncSym>(sym->sym)) {
+      // Function parse expects to start w/ ID, so rewind one token
+      m_Lexer.Rewind();
+      return parse_func_call();
+    }
+
+    return std::make_unique<AST::ValVariable>(next_token, sym);
   }
   case IDs::ID_LITERAL_BOOL: {
     bool b;

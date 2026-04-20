@@ -23,6 +23,9 @@ Parser::parse_stmt(ParseSetting setting) {
   case IDs::ID_KW_IF:
     // Doesn't expect a semi after
     return parse_if();
+  case IDs::ID_KW_FN:
+    // Doesn't expect a semi after
+    return parse_func();
   case IDs::ID_KW_MOVE:
     res = parse_move();
     break;
@@ -31,6 +34,9 @@ Parser::parse_stmt(ParseSetting setting) {
     break;
   case IDs::ID_IDENTIFIER:
     res = parse_expr();
+    break;
+  case IDs::ID_KW_RETURN:
+    res = parse_return();
     break;
   case IDs::ID_DELIM_SEMICLN: {
     auto use_semi = m_Lexer.Use();

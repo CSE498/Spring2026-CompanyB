@@ -172,10 +172,12 @@ struct VarSym {
 
 struct FuncSym {
   std::vector<std::shared_ptr<SymInfo>> m_Params;
-  // std::unique_ptr<AST::StmtBlock> m_Body;
+  size_t m_BodyIdx;
 
-  FuncSym(std::vector<std::shared_ptr<SymInfo>> &&params)
-      : m_Params(std::move(params)) {};
+  FuncSym() : m_Params({}) {}
+  FuncSym(std::vector<std::shared_ptr<SymInfo>> params) : m_Params(std::move(params)) {};
+  FuncSym(std::vector<std::shared_ptr<SymInfo>> &&params, size_t idx)
+      : m_Params(std::move(params)), m_BodyIdx(idx) {};
 };
 
 struct MagicSym {
@@ -235,6 +237,7 @@ struct SymInfo {
   template <typename T>
   SymInfo(std::string _name, size_t _line_def, T &&_sym)
       : name(_name), line_def(_line_def), sym(std::forward<T>(_sym)) {}
+
   template <typename T>
   SymInfo(std::string _name, size_t _line_def, T &&_sym, bool _mut)
       : name(_name), line_def(_line_def), sym(std::forward<T>(_sym)),

@@ -79,13 +79,15 @@ struct ParseErr : BaseErr {
     ILLEGAL_ASSIGNMENT = 10,
     WORLD_MISMATCH = 11,
     MAGIC_ERR = 12,
+    OUT_OF_FUNC = 13,
+    ILLEGAL_NESTING = 14,
   };
-  static constexpr std::array<std::string_view, 13> m_KindNames = {
+  static constexpr std::array<std::string_view, 15> m_KindNames = {
       "MISSING_TOKEN",   "EXPECTED_STMT",      "OUT_OF_TURN",
       "OUT_OF_INIT",     "OUT_OF_LOOP",        "INVALID_OP_TOKEN",
       "INVALID_LITERAL", "INVALID_TERM",       "INVALID_WORLD",
       "AT_EOF",          "ILLEGAL_ASSIGNMENT", "WORLD_MISMATCH",
-      "MAGIC_ERR"};
+      "MAGIC_ERR",       "OUT_OF_FUNC",        "ILLEGAL_NESTING"};
 
   Kind m_Kind;
   ParseErr(Kind kind)
@@ -100,15 +102,18 @@ struct SymbolErr : public BaseErr {
     UNDEFINED_SYMBOL = 0,
     REDEFINITION = 1,
     INVALID_TYPE = 2,
+    INVALID_FUNC_IDX = 3,
+    NOT_FUNCTION = 4,
   };
-  static constexpr std::array<std::string_view, 3> m_KindNames = {
-      "UNDEFINED_SYMBOL", "REDEFINITION", "INVALID_TYPE"};
+  static constexpr std::array<std::string_view, 5> m_KindNames = {
+      "UNDEFINED_SYMBOL", "REDEFINITION", "INVALID_TYPE", "INVALID_FUNC_IDX",
+      "NOT_FUNCTION"};
 
   Kind m_Kind;
   SymbolErr(Kind kind)
       : BaseErr(Name("SymbolErr", m_KindNames[kind])), m_Kind(kind) {}
   SymbolErr(Kind kind, std::string const &msg)
-      : BaseErr(Name("SymolErr", m_KindNames[kind], msg)), m_Kind(kind) {}
+      : BaseErr(Name("SymbolErr", m_KindNames[kind], msg)), m_Kind(kind) {}
 };
 
 struct RuntimeErr : BaseErr {
@@ -125,14 +130,18 @@ struct RuntimeErr : BaseErr {
     IMMUTABLE_ERR = 8,
     TOO_FEW_ARGS = 9,
     TOO_MANY_ARGS = 10,
+    MISSING_RETURN = 11,
+    IMPOSSIBLE_STATE = 12,
+    UNRESOLVED_FUNCTION = 13,
   };
-  static constexpr std::array<std::string_view, 11> m_KindNames = {
+  static constexpr std::array<std::string_view, 14> m_KindNames = {
       "TYPE_MISMATCH",         "EMPTY_INTERP_WRAPPER",
       "UNSUPPORTED_OP",        "NOT_BOOL_CONV",
       "ENCOUNTERED_AGENT_DEF", "INVALID_MOVE_ARG",
       "TOO_MANY_MOVES",        "MAGIC_ERR",
       "IMMUTABLE_ERR",         "TOO_FEW_ARGS",
-      "TOO_MANY_ARGS"};
+      "TOO_MANY_ARGS",         "MISSING_RETURN",
+      "IMPOSSIBLE_STATE",      "UNRESOLVED_FUNCTION"};
 
   Kind m_Kind;
   RuntimeErr(Kind kind)
