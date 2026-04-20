@@ -90,6 +90,8 @@ public:
 
   ScriptedAgent &SetInit(std::unique_ptr<Node> init) {
     mInit = std::move(init);
+    mCurrentTurn = StepContainer{}; 
+    mAgentWrapper->Evaluate(*mInit);
     return *this;
   }
 
