@@ -1,8 +1,8 @@
 #include "Tile.hpp"
 
 namespace cse498 {
-Tile::Tile(int row, int column, char symbol, bool canTraverse,
-           const std::string& name, const MetaData& metaData)
+Tile::Tile(size_t row, size_t column, char symbol, bool canTraverse,
+           const std::string &name, const MetaData &metaData)
     : row(row),
       column(column),
       symbol(symbol),
@@ -11,38 +11,32 @@ Tile::Tile(int row, int column, char symbol, bool canTraverse,
       metadata(metaData),
       agent(nullptr) {}
 
-bool Tile::addAgent(const std::shared_ptr<Agent>& newAgent) {
+[[nodiscard]] bool Tile::addAgent(std::unique_ptr<Agent> &newAgent) {
   // Reject null
-  if (!newAgent) return false;
+  assert(newAgent);
 
-  // Reject if occupied
+  // Reject if occupied, caller keeps ownership
   if (agent) return false;
 
-  agent = newAgent;
+  agent = std::move(newAgent);
   return true;
 }
 
-bool Tile::removeAgent() {
+[[nodiscard]] bool Tile::removeAgent() {
   if (!agent) return false;
   agent.reset();
   return true;
 }
 
-std::shared_ptr<Agent> Tile::getAgent() const { return agent; }
+std::unique_ptr<Agent> Tile::releaseAgent() { return std::move(agent); }
 
-bool Tile::hasAgent() const { return static_cast<bool>(agent); }
+[[nodiscard]] Agent *Tile::getAgent() const { return agent.get(); }
 
-bool Tile::getCanTraverse() const { return canTraverse; }
+[[nodiscard]] bool Tile::hasAgent() const { return static_cast<bool>(agent); }
 
 void Tile::setCanTraverse(bool traversability) { canTraverse = traversability; }
 
-int Tile::getRow() const { return row; }
+[[nodiscard]] const std::string &Tile::getName() const { return name; }
 
-int Tile::getColumn() const { return column; }
-
-char Tile::getSymbol() const { return symbol; }
-
-const std::string& Tile::getName() const { return name; }
-
-const MetaData& Tile::getMetaData() const { return metadata; }
+[[nodiscard]] const MetaData &Tile::getMetaData() const { return metadata; }
 }  // namespace cse498

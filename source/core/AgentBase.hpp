@@ -29,14 +29,14 @@ class AgentBase : public Entity {
   char symbol = '*';
 
  public:
-  AgentBase(size_t id, const std::string &name, const WorldBase &world)
+  AgentBase(size_t id, const std::string& name, const WorldBase& world)
       : Entity(id, name, world) {}
   ~AgentBase() = default;  // Already virtual from Entity
 
   // Accessors
 
   [[nodiscard]] char GetSymbol() const { return symbol; }
-  AgentBase &SetSymbol(char in) {
+  AgentBase& SetSymbol(char in) {
     symbol = in;
     return *this;
   }
@@ -54,12 +54,12 @@ class AgentBase : public Entity {
   // -- Action management --
 
   /// Test if agent already has a specified action.
-  [[nodiscard]] bool HasAction(const std::string &action_name) const {
+  [[nodiscard]] bool HasAction(const std::string& action_name) const {
     return action_map.count(action_name);
   }
 
   /// Return an action ID *if* that action exists, otherwise return zero.
-  [[nodiscard]] size_t GetActionID(const std::string &action_name) const {
+  [[nodiscard]] size_t GetActionID(const std::string& action_name) const {
     auto it = action_map.find(action_name);
     if (it == action_map.end()) return 0;
     return it->second;
@@ -80,7 +80,7 @@ class AgentBase : public Entity {
   //////////////////////////////////////////////////////////////////////////
 
   /// Provide info about an action that this agent can take.
-  virtual AgentBase &AddAction(const std::string &action_name,
+  virtual AgentBase& AddAction(const std::string& action_name,
                                size_t action_id) {
     assert(!HasAction(action_name));  // Cannot add existing action name.
     action_map[action_name] = action_id;
@@ -93,7 +93,7 @@ class AgentBase : public Entity {
   /// @return ID of the action to perform; (0 is always "no action")
   /// @note Agents can use World API to query for more info (e.g., items,
   /// agents, or cell info)
-  [[nodiscard]] virtual size_t SelectAction(const WorldGrid &grid) = 0;
+  [[nodiscard]] virtual size_t SelectAction(const WorldGrid& grid) = 0;
 
   /// Provide the result of this agent's most recent action.
   void SetActionResult(int result) { action_result = result; }
@@ -104,8 +104,8 @@ class AgentBase : public Entity {
   /// "enemy"
   /// @note: For DEVELOPERS - you may want more info provided with
   /// notifications.
-  virtual void Notify(const std::string & /*message*/,
-                      const std::string & /*msg_type*/ = "none") {}
+  virtual void Notify(const std::string& /*message*/,
+                      const std::string& /*msg_type*/ = "none") {}
 };
 
 }  // End of namespace cse498
