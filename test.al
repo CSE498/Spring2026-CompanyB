@@ -21,9 +21,18 @@ let square_walker : car {
 
 let right_walker : car {
     init : {
-        __spawn__ = make_point(4,5);
+        __spawn__ = make_point(1, 1);
+	__destination__ = make_point(10, 10);
     };
     turn : {
-       move(right);
+    	let x : int = get_x(__position__);
+	let y : int = get_y(__position__);
+	let d_x : int = get_x(__destination__);
+	let d_y : int = get_y(__destination__);
+
+	if (x < d_x) move(right);
+	else if (x > d_y) move(left);
+	else if (y < d_y) move(up);
+	else if (y > d_y) move(down);
     };
 };

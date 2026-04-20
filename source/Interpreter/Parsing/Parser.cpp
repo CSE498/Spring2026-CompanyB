@@ -8,6 +8,7 @@
 #include "Interpreter/macros.hpp"
 #include <expected>
 #include <memory>
+#include <print>
 #include <variant>
 #include <vector>
 
@@ -60,9 +61,9 @@ Parser::parse(std::istream &in) {
           return RuntimeErr(RuntimeErr::TOO_MANY_ARGS);
 
         if (!std::holds_alternative<Point>(args.at(0)))
-          return RuntimeErr(RuntimeErr::TYPE_MISMATCH);
+          return RuntimeErr(RuntimeErr::TYPE_MISMATCH, "get_x got wrong type");
 
-        return std::get<Point>(args.at(0)).X();
+        return static_cast<int>(std::get<Point>(args.at(0)).X());
       });
   FuncSym preload_gety(
       [](std::vector<Type> &&args) -> std::expected<Type, InterpErr> {
@@ -73,9 +74,9 @@ Parser::parse(std::istream &in) {
           return RuntimeErr(RuntimeErr::TOO_MANY_ARGS);
 
         if (!std::holds_alternative<Point>(args.at(0)))
-          return RuntimeErr(RuntimeErr::TYPE_MISMATCH);
+          return RuntimeErr(RuntimeErr::TYPE_MISMATCH, "get_y got wrong type");
 
-        return std::get<Point>(args.at(0)).Y();
+        return static_cast<int>(std::get<Point>(args.at(0)).Y());
       });
 
   TRY(m_Syms.AddSym("preload_addone", std::move(preload_addone)));
@@ -84,9 +85,9 @@ Parser::parse(std::istream &in) {
   TRY(m_Syms.AddSym("get_y", std::move(preload_gety)));
 
   // Put in the universal magic vals
-  TRY((m_Syms.AddSym("__destination__", Value::DESTINATION)));
   TRY((m_Syms.AddSym("__spawn__", Value::SPAWN)));
   TRY((m_Syms.AddSym("__position__", Value::POSITION)));
+  TRY((m_Syms.AddSym("__destination__", Value::DESTINATION)));
 
   /*
   We first need to check that the first statement configures the world

@@ -77,7 +77,6 @@ class ScriptedAgent : public StepAgentBase<DataClass> {
   std::unique_ptr<Node> mTurn;
   bool mCurrentlyInInit = false; //< Whether we are currently parsing init
 
-
   std::unique_ptr<AgentWrapper> mAgentWrapper;
 
   StepContainer mCurrentTurn;
@@ -93,7 +92,7 @@ public:
 
   ScriptedAgent &SetInit(std::unique_ptr<Node> init) {
     mInit = std::move(init);
-    mCurrentTurn = StepContainer{}; 
+    mCurrentTurn = StepContainer{};
     mCurrentlyInInit = true;
     mAgentWrapper->Evaluate(*mInit);
     mCurrentlyInInit = false;
@@ -167,23 +166,27 @@ public:
                           TypeVariantToName(val_result)));
 
         auto data = mAgentBase.GetState();
+
         data.destination = std::get<Point>(val_result);
+
         mAgentBase.SetState(data);
+
+        if (!mAgentBase.GetState().destination.has_value())
+          std::terminate();
+
         break;
       }
       case Value::SPAWN: {
         if (!std::holds_alternative<Point>(val_result))
-          return RuntimeErr(
-              RuntimeErr::TYPE_MISMATCH,
-              std::format("Attempted to set magic value "
-                          "__spawn__ to non-point type '{}'",
-                          TypeVariantToName(val_result)));
+          return RuntimeErr(RuntimeErr::TYPE_MISMATCH,
+                            std::format("Attempted to set magic value "
+                                        "__spawn__ to non-point type '{}'",
+                                        TypeVariantToName(val_result)));
         if (!mAgentBase.mCurrentlyInInit)
-          return RuntimeErr(
-              RuntimeErr::SPAWN_OUTSIDE_INIT,
-              std::format("Attempted to set magic value "
-                          "__spawn__ outside of init"));
-                                  auto data = mAgentBase.GetState();
+          return RuntimeErr(RuntimeErr::SPAWN_OUTSIDE_INIT,
+                            std::format("Attempted to set magic value "
+                                        "__spawn__ outside of init"));
+        auto data = mAgentBase.GetState();
         data.position = std::get<Point>(val_result);
         mAgentBase.SetState(data);
         break;
@@ -225,10 +228,14 @@ public:
       case MagicSym::Value::DESTINATION: {
         auto ret = data.destination;
         if (!ret.has_value())
-          return NullType{};
+          return RuntimeErr(RuntimeErr::MAGIC_ERR, "Destination unset!");
+        // return NullType{};
         else
           return Type{ret.value()};
       }
+      // case MagicSym::Value::SPAWN: {
+      // 	auto ret = data.spawn;
+      // };
       case MagicSym::Value::INFECTED:
         if constexpr (std::is_same_v<DataClass, DiseaseData>) {
           return Type{data.health == HealthState::INFECTED};

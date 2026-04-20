@@ -11,8 +11,8 @@
 #include <memory>
 #include <thread>
 
-#include "core/AgentData.hpp"
 #include "Step.hpp"
+#include "core/AgentData.hpp"
 #include "core/StepWorldBase.hpp"
 
 // clang-format off
@@ -79,7 +79,7 @@ namespace cse498 {
         VisitRet operator()(steps::MovementStep step) {
           // The simplest step -- the agent just wants to move to a space.
           // FILL IN: Implement logic actually changing agent's position.
-          data = TrafficData{};
+          // data = TrafficData{};
           data.position = step.loc;
           return {};
         }
@@ -213,4 +213,4 @@ namespace cse498 {
     }
     };
 // clang-format on
-}  // End of namespace cse498
+} // End of namespace cse498
