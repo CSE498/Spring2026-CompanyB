@@ -21,11 +21,12 @@ class StillAgent : public StepAgentBase<TrafficData> {
 
 // Helps create deterministic tests, by allowing an agents next move to be set
 // directly
-class ScriptedAgent : public StepAgentBase<TrafficData> {
+class ScriptedTestAgent : public StepAgentBase<TrafficData> {
   std::optional<WorldPosition> next_{};
 
  public:
-  ScriptedAgent(TrafficData d, size_t id) : StepAgentBase<TrafficData>(d, id) {}
+  ScriptedTestAgent(TrafficData d, size_t id)
+      : StepAgentBase<TrafficData>(d, id) {}
   void SetNextMove(std::optional<WorldPosition> p) { next_ = p; }
   [[nodiscard]] StepContainer GetTurn() override {
     StepContainer c{};
@@ -35,7 +36,7 @@ class ScriptedAgent : public StepAgentBase<TrafficData> {
   void SetGoal([[maybe_unused]] WorldPosition p) override {}
 };
 
-// StillAgent is the world's default agent type. ScriptedAgent is used where
+// StillAgent is the world's default agent type. ScriptedTestAgent is used where
 // a specific move sequence is needed.
 using TestWorld = StepTrafficWorld<StillAgent>;
 
@@ -178,7 +179,7 @@ TEST_CASE("GetOppositeDirection", "[StepTrafficWorld][helpers]") {
 TEST_CASE("DoAction", "[StepTrafficWorld][do_action]") {
   SECTION("inactive agent: position unchanged, still inactive") {
     TestWorld tw{kMinimal};
-    auto a = std::make_shared<ScriptedAgent>(
+    auto a = std::make_shared<ScriptedTestAgent>(
         Make(WorldPosition{2, 1}, {}, Direction::East, false), 0);
     a->SetNextMove(WorldPosition{3, 1});
     TrafficData r = tw.DoAction(a);
@@ -187,12 +188,12 @@ TEST_CASE("DoAction", "[StepTrafficWorld][do_action]") {
   }
   SECTION("empty StepContainer: agent stays put") {
     TestWorld tw{kMinimal};
-    auto a = std::make_shared<ScriptedAgent>(Make(WorldPosition{2, 1}), 0);
+    auto a = std::make_shared<ScriptedTestAgent>(Make(WorldPosition{2, 1}), 0);
     CHECK(tw.DoAction(a).position == WorldPosition{2, 1});
   }
   SECTION("valid road move: position and direction updated") {
     TestWorld tw{kMinimal};
-    auto a = std::make_shared<ScriptedAgent>(
+    auto a = std::make_shared<ScriptedTestAgent>(
         Make(WorldPosition{2, 1}, {}, Direction::East), 0);
     a->SetNextMove(WorldPosition{3, 1});
     TrafficData r = tw.DoAction(a);
@@ -201,7 +202,7 @@ TEST_CASE("DoAction", "[StepTrafficWorld][do_action]") {
   }
   SECTION("move into grass: silently ignored") {
     TestWorld tw{kMinimal};
-    auto a = std::make_shared<ScriptedAgent>(
+    auto a = std::make_shared<ScriptedTestAgent>(
         Make(WorldPosition{2, 1}, {}, Direction::North), 0);
     a->SetNextMove(WorldPosition{2, 0});  // row 0 is all '#'
     CHECK(tw.DoAction(a).position == WorldPosition{2, 1});
@@ -210,28 +211,28 @@ TEST_CASE("DoAction", "[StepTrafficWorld][do_action]") {
     // Moving opposite to the current facing direction is not a valid action as
     // it would let agents reverse without turning, breaking road simulation.
     TestWorld tw{kLine};
-    auto a = std::make_shared<ScriptedAgent>(
+    auto a = std::make_shared<ScriptedTestAgent>(
         Make(WorldPosition{2, 1}, {}, Direction::East), 0);
     a->SetNextMove(WorldPosition{1, 1});  // west while facing east
     CHECK(tw.DoAction(a).position == WorldPosition{2, 1});
   }
   SECTION("diagonal move rejected") {
     TestWorld tw{kMinimal};
-    auto a = std::make_shared<ScriptedAgent>(
+    auto a = std::make_shared<ScriptedTestAgent>(
         Make(WorldPosition{2, 1}, {}, Direction::East), 0);
     a->SetNextMove(WorldPosition{3, 2});
     CHECK(tw.DoAction(a).position == WorldPosition{2, 1});
   }
   SECTION("vertical light blocks east move (initial ALLOW_VERTICAL phase)") {
     TestWorld tw{kMinimal};
-    auto a = std::make_shared<ScriptedAgent>(
+    auto a = std::make_shared<ScriptedTestAgent>(
         Make(WorldPosition{3, 1}, {}, Direction::East), 0);
     a->SetNextMove(WorldPosition{4, 1});  // into '|'
     CHECK(tw.DoAction(a).position == WorldPosition{3, 1});
   }
   SECTION("vertical light allows south move") {
     TestWorld tw{kVertApproach};
-    auto a = std::make_shared<ScriptedAgent>(
+    auto a = std::make_shared<ScriptedTestAgent>(
         Make(WorldPosition{2, 1}, {}, Direction::South), 0);
     a->SetNextMove(WorldPosition{2, 2});
     TrafficData r = tw.DoAction(a);
@@ -240,14 +241,14 @@ TEST_CASE("DoAction", "[StepTrafficWorld][do_action]") {
   }
   SECTION("horizontal light blocks south move") {
     TestWorld tw{kHorizApproach};
-    auto a = std::make_shared<ScriptedAgent>(
+    auto a = std::make_shared<ScriptedTestAgent>(
         Make(WorldPosition{1, 1}, {}, Direction::South), 0);
     a->SetNextMove(WorldPosition{1, 2});  // into '-'
     CHECK(tw.DoAction(a).position == WorldPosition{1, 1});
   }
   SECTION("horizontal light allows east move") {
     TestWorld tw{std::vector<std::string>{"#####", "#.-.#", "#####"}};
-    auto a = std::make_shared<ScriptedAgent>(
+    auto a = std::make_shared<ScriptedTestAgent>(
         Make(WorldPosition{1, 1}, {}, Direction::East), 0);
     a->SetNextMove(WorldPosition{2, 1});
     CHECK(tw.DoAction(a).position == WorldPosition{2, 1});
@@ -257,7 +258,7 @@ TEST_CASE("DoAction", "[StepTrafficWorld][do_action]") {
     // RunAgents skips inactive agents on subsequent ticks.
     TestWorld tw{kTiny};
     WorldPosition dest{2, 1};
-    auto a = std::make_shared<ScriptedAgent>(
+    auto a = std::make_shared<ScriptedTestAgent>(
         Make(WorldPosition{1, 1}, dest, Direction::East), 0);
     a->SetNextMove(dest);
     TrafficData r = tw.DoAction(a);
@@ -267,7 +268,7 @@ TEST_CASE("DoAction", "[StepTrafficWorld][do_action]") {
   SECTION("symbol updated to match new direction after move") {
     TestWorld tw{
         std::vector<std::string>{"#####", "##.##", "#...#", "##.##", "#####"}};
-    auto a = std::make_shared<ScriptedAgent>(
+    auto a = std::make_shared<ScriptedTestAgent>(
         Make(WorldPosition{2, 2}, {}, Direction::South), 0);
     a->SetNextMove(WorldPosition{2, 3});
     CHECK(tw.DoAction(a).symbol == 'v');
@@ -301,7 +302,7 @@ TEST_CASE("UpdateWorld — traffic lights", "[StepTrafficWorld][update]") {
   SECTION("period-1 ticks: light unchanged, east move still blocked") {
     TestWorld tw{kMinimal};
     for (int i = 0; i < 2; ++i) tw.UpdateWorld();
-    auto a = std::make_shared<ScriptedAgent>(
+    auto a = std::make_shared<ScriptedTestAgent>(
         Make(WorldPosition{3, 1}, {}, Direction::East), 0);
     a->SetNextMove(WorldPosition{4, 1});
     CHECK(tw.DoAction(a).position == WorldPosition{3, 1});
@@ -309,7 +310,7 @@ TEST_CASE("UpdateWorld — traffic lights", "[StepTrafficWorld][update]") {
   SECTION("after 3 ticks: light flips, east move succeeds") {
     TestWorld tw{kMinimal};
     for (int i = 0; i < 3; ++i) tw.UpdateWorld();
-    auto a = std::make_shared<ScriptedAgent>(
+    auto a = std::make_shared<ScriptedTestAgent>(
         Make(WorldPosition{3, 1}, {}, Direction::East), 0);
     a->SetNextMove(WorldPosition{4, 1});
     CHECK(tw.DoAction(a).position == WorldPosition{4, 1});
@@ -317,7 +318,7 @@ TEST_CASE("UpdateWorld — traffic lights", "[StepTrafficWorld][update]") {
   SECTION("after 6 ticks: light back to original, east move blocked again") {
     TestWorld tw{kMinimal};
     for (int i = 0; i < 6; ++i) tw.UpdateWorld();
-    auto a = std::make_shared<ScriptedAgent>(
+    auto a = std::make_shared<ScriptedTestAgent>(
         Make(WorldPosition{3, 1}, {}, Direction::East), 0);
     a->SetNextMove(WorldPosition{4, 1});
     CHECK(tw.DoAction(a).position == WorldPosition{3, 1});
@@ -342,7 +343,7 @@ TEST_CASE("UpdateWorld — spawners", "[StepTrafficWorld][update]") {
 TEST_CASE("RunAgents", "[StepTrafficWorld][run_agents]") {
   SECTION("inactive agent position not changed by RunAgents") {
     TestWorld tw{kMinimal};
-    auto& a = tw.AddAgent<ScriptedAgent>(
+    auto& a = tw.AddAgent<ScriptedTestAgent>(
         Make(WorldPosition{2, 1}, {}, Direction::East, false));
     WorldPosition before = a.GetState().position;
     tw.RunAgents();
@@ -350,11 +351,12 @@ TEST_CASE("RunAgents", "[StepTrafficWorld][run_agents]") {
   }
   SECTION("active agent with move step updates its position") {
     TestWorld tw{kMinimal};
-    auto& a = tw.AddAgent<ScriptedAgent>(
+    auto& a = tw.AddAgent<ScriptedTestAgent>(
         Make(WorldPosition{2, 1}, {}, Direction::East));
     // AddAgent returns a StepAgentBase reference, need to cast back to
-    // ScriptedAgent to call SetNextMove before RunAgents processes the turn.
-    static_cast<ScriptedAgent&>(a).SetNextMove(WorldPosition{3, 1});
+    // ScriptedTestAgent to call SetNextMove before RunAgents processes the
+    // turn.
+    static_cast<ScriptedTestAgent&>(a).SetNextMove(WorldPosition{3, 1});
     tw.RunAgents();
     CHECK(a.GetState().position == WorldPosition{3, 1});
   }
