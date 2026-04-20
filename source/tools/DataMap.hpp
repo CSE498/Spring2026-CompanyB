@@ -10,6 +10,7 @@
 #include <any>
 #include <cassert>
 #include <expected>
+#include <functional>
 #include <string>
 #include <unordered_map>
 
@@ -18,9 +19,20 @@ namespace cse498 {
 class DataMap {
  private:
   using MapType = std::unordered_map<std::string, std::any>;
-  MapType mData;
+  MapType mData{};
 
  public:
+  class Error {
+   public:
+    enum class ErrorType {
+      KeyNotFound,
+      TypeMismatch,
+    };
+
+    ErrorType errorType;
+    std::string description;
+  };
+
   /// Iterator class that wraps the underlying unordered_map iterator.
   class Iterator {
    private:
@@ -52,7 +64,7 @@ class DataMap {
       return *this;
     }
     Iterator operator++(int) {
-      Iterator tmp = *this;
+      Iterator tmp{*this};
       ++mIt;
       return tmp;
     }
@@ -115,7 +127,7 @@ class DataMap {
       return *this;
     }
     ConstIterator operator++(int) {
-      ConstIterator tmp = *this;
+      ConstIterator tmp{*this};
       ++mIt;
       return tmp;
     }
@@ -168,29 +180,6 @@ class DataMap {
   }  //< Returns a const iterator to the end of the map
 
   /**
-   * Map-style access. Inserts an empty std::any when the key does not exist.
-   * @param name The key to access.
-   * @return A mutable reference to the stored std::any value.
-   */
-  std::any& operator[](const std::string& name) {
-    if (mData.find(name) == mData.end()) {
-      mData[name] = std::any();
-    }
-    return mData[name];
-  }
-
-  /**
-   * Const map-style access.
-   * @param name The key to access.
-   * @return A const reference to the stored std::any value.
-   */
-  [[nodiscard]] const std::any& operator[](const std::string& name) const {
-    auto it = mData.find(name);
-    assert(it != mData.end() && "DataMap::operator[] const: key not found");
-    return it->second;
-  }
-
-  /**
    * Associates the given value with the specified key. If the key already
    * exists, its value is overwritten.
    * @tparam V The type of the value to store.
@@ -203,43 +192,58 @@ class DataMap {
   }
 
   /**
-   * Returns the value associated with the given key if it exists and can be
-   * cast to the specified type; otherwise, returns an error message.
+   * Returns the value associated with the given key if it exists and the stored
+   * value's type exactly matches V; otherwise, returns an Error.
+   *
+   * This function does not perform implicit or explicit type conversions (ex. a
+   * stored int will not satisfy Get<double>()).
+   *
    * @tparam V The expected type of the value.
    * @param name The key associated with the value.
-   * @return The value if the key exists and the type matches; otherwise, an
-   * error
+   * @return The value if the key exists and the type matches; otherwise an
+   * Error with details about the failure.
    */
   template <typename V>
-  [[nodiscard]] std::expected<V, std::string> Get(
-      const std::string& name) const {
+  [[nodiscard]] std::expected<V, Error> Get(const std::string& name) const {
     auto it = mData.find(name);
     if (it == mData.end()) {
-      return std::unexpected("Key not found");
+      return std::unexpected(
+          Error{Error::ErrorType::KeyNotFound, "Key not found: " + name});
     }
     if (it->second.type() != typeid(V)) {
-      return std::unexpected("Type mismatch for key");
+      return std::unexpected(
+          Error{Error::ErrorType::TypeMismatch,
+                "Type mismatch for key: " + name +
+                    " (stored type: " + it->second.type().name() +
+                    ", requested type: " + typeid(V).name() + ")"});
     }
     return std::any_cast<V>(it->second);
   }
 
   /**
-   * Returns a reference to the stored value of the specified type.
+   * Returns a reference wrapper to the stored value of the specified type or
+   * std::unexpected on failure.
    * @tparam V The expected type of the value.
    * @param name The key associated with the value.
-   * @return A reference to the value if the key exists and the type matches;
-   * otherwise
+   * @return A reference wrapper to the value if the key exists and the type
+   * matches; otherwise an Error with details about the failure.
    */
   template <typename V>
-  [[nodiscard]] V& GetRef(const std::string& name) {
+  [[nodiscard]] std::expected<std::reference_wrapper<V>, Error> GetRef(
+      const std::string& name) {
     auto it = mData.find(name);
-    assert(
-        it != mData.end() &&
-        "DataMap::GetRef(): key not found (check for typo or initialization)");
-    auto* p = std::any_cast<V>(&it->second);
-    assert(p != nullptr &&
-           "DataMap::GetRef(): stored value cannot be cast to requested type");
-    return *p;
+    if (it == mData.end()) {
+      return std::unexpected(
+          Error{Error::ErrorType::KeyNotFound, "Key not found: " + name});
+    }
+    if (it->second.type() != typeid(V)) {
+      return std::unexpected(
+          Error{Error::ErrorType::TypeMismatch,
+                "Type mismatch for key: " + name +
+                    " (stored type: " + it->second.type().name() +
+                    ", requested type: " + typeid(V).name() + ")"});
+    }
+    return std::ref(*std::any_cast<V>(&it->second));
   }
 
   /**

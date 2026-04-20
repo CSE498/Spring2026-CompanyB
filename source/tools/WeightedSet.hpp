@@ -2,6 +2,7 @@
 #pragma once
 #include <cassert>
 #include <cstddef>
+#include <functional>
 #include <iostream>
 #include <memory>
 #include <optional>
@@ -13,6 +14,12 @@
 #include "Random.hpp"
 
 namespace cse498 {
+// this code taken from an example on cppreference
+// https://en.cppreference.com/w/cpp/language/constraints.html
+template <typename T>
+concept Hashable = requires(T a) {
+  { std::hash<T>{}(a) } -> std::convertible_to<std::size_t>;
+};
 /*
   The initial boilerplate setup (constructors, CopyTree(), assign and
   move operators, basic getters (namely size(), empty(), total_weight()), and
@@ -41,7 +48,7 @@ namespace cse498 {
  * contains one element of weight 1 and one of weight 2, the first will be
  * selected with 1/3 probability and the second with 2/3 probability.
  */
-template <typename T>
+template <Hashable T>
 class WeightedSet {
  private:
   /** @brief A node in the binary-tree structure used in WeightedSet. */
@@ -77,7 +84,6 @@ class WeightedSet {
   };
 
   std::unique_ptr<Node> root_{};  ///< Root of the tree
-  std::random_device rd_{};       ///< Random device.
 
   /**
    * @brief Xoshiro random number generator.
@@ -85,7 +91,7 @@ class WeightedSet {
    * generate a random number, including in GetRandomElement which is a const
    * function.
    */
-  mutable cse498::Random rng_{rd_()};
+  mutable cse498::Random rng_{std::random_device{}()};
   /**
    * @brief Maps elements to their nodes in the tree.
    * @remark Keys are elements stored in the WeightedSet; values are non-owning
@@ -388,6 +394,27 @@ class WeightedSet {
    *         or deleting elements. The only guarantee is that the length of the
    * interval will be equal to the weight of the element--which is needed for
    * GetRandomElement to work properly.
+   *
+   * To illustrate how the indexing works (the code in the while loop
+   * below--keeping this comment here, not there, to avoid cluttering the code)
+   * here's an example tree where each element has weight 1 (converted from a
+   * diagram drawn by hand to ASCII art by Claude):
+   *
+   *          [3,4)
+   *         /     \
+   *   [0,3)/       \[4,7)
+   *       /         \
+   *   [1,2)        [5,6)
+   *   /   \        /   \
+   * [0,1) [2,3)  [4,5) [6,7)
+   *
+   * The set has a total weight of 7, so the set of possible indices is [0, 7).
+   * The element in the topmost node has weight 1, the left subtree has total
+   * weight 3, and so does the right subtree, so [0, 7) gets divided into the
+   * intervals [0, 3), [3, 4), and [4, 7). Indices in the first interval
+   * correspond to elements in the left subtree, indices in the middle interval
+   * correspond to the element in the topmost node, and indices in the right
+   * interval correspond to elements in the right subtree.
    */
   [[nodiscard]] std::optional<T> GetElementAt(const double index) const {
     Node* current_node = root_.get();
@@ -397,16 +424,6 @@ class WeightedSet {
     }
     double lower_bound = 0;
     while (current_node != nullptr) {
-      /**
-       * On the first iteration of this loop, we divide the whole interval [0,
-       * total weight] into 3 subintervals: [0, left subtree weight), [left
-       * subtree weight, left subtree weight + root weight), and [left subtree
-       * weight + root weight, total weight). Note that the middle interval has
-       * length equal to the weight of the root. If the index is in the middle
-       * interval, we just return the root. If in the first interval: we enter
-       * the left subtree and continue from there, dividing up that interval in
-       * the same way. Same idea for the third interval and the right subtree.
-       */
       double current_node_interval_lower =
           lower_bound + LeftSubtreeWeight(current_node);
       double current_node_interval_upper =
@@ -433,7 +450,7 @@ class WeightedSet {
     if (!root_) {
       return std::nullopt;
     }
-    return GetElementAt(rng_.nextDouble(0, total_weight()));
+    return GetElementAt(rng_.nextReal(0.0, total_weight()));
   }
 
   /**
@@ -480,6 +497,11 @@ class WeightedSet {
      */
     element_to_node_.erase(element);
     return std::make_optional(removed_value);
+  }
+
+  void Clear() noexcept {
+    root_ = nullptr;
+    element_to_node_.clear();
   }
 
   /** @brief Returns the total number of elements in the set. */

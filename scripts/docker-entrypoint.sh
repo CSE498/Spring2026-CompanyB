@@ -37,10 +37,15 @@ show_help() {
     echo "  SERVE_PORT         Port for emrun server (default: 8080)"
     echo "  SOURCE_DIR         Source directory (default: /app/source)"
     echo "  BUILD_DIR          Build directory (default: /app/build)"
+    echo "  NO_QT              Set to 1 to exclude Qt and GUI sources (native and dev only)"
+    echo "  TARGET_MAIN        Entry point file to build (searches source/ then demo/)"
+    echo "                     Default: simple_main.cpp (native), web_main.cpp (emscripten)"
+    echo "  CMAKE_BUILD_TYPE   Passed directly to cmake (e.g. Debug, Release)"
+    echo "  CMAKE_EXTRA_FLAGS  Extra C++ flags passed to cmake"
     echo
 }
 
-do_build-emscripten() {
+do_build_emscripten() {
     echo "==> Building with Emscripten <==="
 
     if [ ! -f "${SOURCE_DIR}/CMakeLists.txt" ]; then
@@ -54,7 +59,10 @@ do_build-emscripten() {
     emcmake cmake \
         -S "${SOURCE_DIR}" \
         -B "${BUILD_DIR}/emscripten" \
-        -DCMAKE_RUNTIME_OUTPUT_DIRECTORY="${BUILD_DIR}/emscripten"
+        -DCMAKE_RUNTIME_OUTPUT_DIRECTORY="${BUILD_DIR}/emscripten" \
+        ${CMAKE_BUILD_TYPE:+-DCMAKE_BUILD_TYPE="${CMAKE_BUILD_TYPE}"} \
+        ${CMAKE_EXTRA_FLAGS:+-DCMAKE_CXX_FLAGS="${CMAKE_EXTRA_FLAGS}"} \
+        ${TARGET_MAIN:+-DTARGET_MAIN="${TARGET_MAIN}"}
 
     # Build with emmake
     # The j flag is for parallel compilation which should help speed up compile jobs later
@@ -70,7 +78,16 @@ find_qt6_dir() {
 }
 
 do_build_native() {
-    echo "==> Building natively with Qt <==="
+    if [ "${NO_QT:-0}" = "1" ]; then
+        echo "==> Building natively (Qt excluded) <==="
+    else
+        echo "==> Building natively with Qt <==="
+    fi
+
+    if [ -n "${TARGET_MAIN}" ] && [[ "${TARGET_MAIN}" != *_main.cpp ]]; then
+        echo "Error: TARGET_MAIN='${TARGET_MAIN}' must end in _main.cpp"
+        exit 1
+    fi
 
     if [ ! -f "${SOURCE_DIR}/CMakeLists.txt" ]; then
         echo "Error: No CMakeLists.txt found in ${SOURCE_DIR}"
@@ -85,6 +102,10 @@ do_build_native() {
     cmake \
         -S "${SOURCE_DIR}" \
         -B "${NATIVE_BUILD_DIR}" \
+        ${CMAKE_BUILD_TYPE:+-DCMAKE_BUILD_TYPE="${CMAKE_BUILD_TYPE}"} \
+        ${CMAKE_EXTRA_FLAGS:+-DCMAKE_CXX_FLAGS="${CMAKE_EXTRA_FLAGS}"} \
+        $( [ "${NO_QT:-0}" = "1" ] && echo "-DNO_QT=ON" ) \
+        ${TARGET_MAIN:+-DTARGET_MAIN="${TARGET_MAIN}"} \
         ${QT6_DIR:+-DQt6_DIR="${QT6_DIR}"}
 
     cmake --build "${NATIVE_BUILD_DIR}" --parallel
@@ -94,7 +115,7 @@ do_build_native() {
 }
 
 do_serve() {
-    do_build-emscripten
+    do_build_emscripten
 
     echo "==> Starting emrun server on port ${SERVE_PORT}... <==="
     echo "==> Access at http://localhost:${SERVE_PORT} <==="
@@ -136,6 +157,12 @@ do_test_emscripten() {
 do_test_native() {
     echo "==> Building and running tests (Catch2, native) <==="
 
+    if [ "${NO_QT:-0}" = "1" ]; then
+        echo "==> Building and running tests (Catch2, native, Qt excluded) <==="
+    else
+        echo "==> Building and running tests (Catch2, native, Qt) <==="
+    fi
+
     if [ ! -f "${SOURCE_DIR}/CMakeLists.txt" ]; then
         echo "Error: No CMakeLists.txt found in ${SOURCE_DIR}"
         exit 1
@@ -150,6 +177,7 @@ do_test_native() {
         -S "${SOURCE_DIR}" \
         -B "${TEST_BUILD_DIR}" \
         -DBUILD_TESTS=ON \
+        $( [ "${NO_QT:-0}" = "1" ] && echo "-DNO_QT=ON" ) \
         ${QT6_DIR:+-DQt6_DIR="${QT6_DIR}"}
 
     cmake --build "${TEST_BUILD_DIR}" --parallel
@@ -167,7 +195,7 @@ do_clean() {
 # Main command handler
 case "${1:-build}" in
     build-emscripten)
-        do_build-emscripten
+        do_build_emscripten
         ;;
     build-native)
         do_build_native
