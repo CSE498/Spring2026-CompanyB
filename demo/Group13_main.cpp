@@ -17,7 +17,7 @@
 #include <thread>
 #include <vector>
 
-#include "../source/Agents/dummyStepPacingAgent.hpp"
+#include "../source/Agents/ScriptedAgent.hpp"
 #include "../source/Agents/SwarmingAgent.hpp"
 #include "../source/Worlds/InfectiousWorld.hpp"
 
@@ -292,26 +292,17 @@ int RunInfectiousDemo() {
   // AGENTS
   // =========================================================================
 
-  // Passability predicate passed to every StepPacingAgent so BFS can
-  // navigate around building walls toward Olin Health when infected.
-  auto passable = [&world](WorldPosition p) {
-    const auto& g = world.GetGrid();
-    return g.IsValid(p) && g[p] != world.GetWallID();
-  };
-
-  // add one resident pacer and wire its BFS predicate in one call.
-  auto add_pacer = [&](WorldPosition pos, bool horiz = false) -> StepPacingAgent& {
-    auto& a = world.AddAgent<StepPacingAgent>(DiseaseData{pos});
-    if (horiz) a.SetHorizontal();
-    return a.SetPassable(passable);
+  // Add one resident scripted agent at the given position.
+  auto add_pacer = [&](WorldPosition pos) -> ScriptedAgent<DiseaseData>& {
+    return world.AddAgent<ScriptedAgent<DiseaseData>>(DiseaseData{pos});
   };
 
  
   add_pacer(WorldPosition{ 7,  6});           // Wells Hall
-  add_pacer(WorldPosition{20,  7}, true);     // MSU Union 
+  add_pacer(WorldPosition{20,  7});           // MSU Union
   add_pacer(WorldPosition{37,  6});           // Berkey Hall
   add_pacer(WorldPosition{ 5, 24});           // Engineering Building
-  add_pacer(WorldPosition{22, 23}, true);     // Brody Hall
+  add_pacer(WorldPosition{22, 23});           // Brody Hall
   add_pacer(WorldPosition{52,  6});           // Shaw Hall dorm
 
   // Swarming agents
