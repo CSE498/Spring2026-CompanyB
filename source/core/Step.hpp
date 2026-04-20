@@ -75,7 +75,7 @@ struct _InfoHandler {
   _InfoHandler(F f)
       : funcs({pick_handler<typename std::tuple_element<
                                 0, typename FuncInfo::FuncInfo<F>::args>::type,
-                            Ts>(f)...}){};
+                            Ts>(f)...}) {};
 
   template <typename S>
   std::expected<bool, StepErr> operator()(S s) {
@@ -155,12 +155,12 @@ struct StepContainer {
   // Root is an "empty" node so that "last" can always be bound
   std::unique_ptr<Node> root = std::make_unique<Node>();
   // This is *non owning* and a shared_ptr doesn't make sense
-  Node *last = root.get();
+  Node* last = root.get();
 
   // When iterating, the "indexing" ptr needs no mutation
-  Node const *cur_node = root.get();
+  Node const* cur_node = root.get();
   // Need one node prior to handle infostep stuff
-  Node const *prev_node = nullptr;
+  Node const* prev_node = nullptr;
 
   std::stack<Node const *> next_stack;
 
