@@ -165,7 +165,7 @@ void MainWindow::onFileNew() {
 
 void MainWindow::onFileOpen() {
     const QString path = QFileDialog::getOpenFileName(
-        this, "Open File", QString(), ("All Files (*.*)"));
+        this, "Open File", QString(), "Text Files (*.txt *.al *.sim);;All Files (*.*)");
     if (path.isEmpty()) return;
 
     std::ifstream input(path.toStdString());
@@ -173,27 +173,60 @@ void MainWindow::onFileOpen() {
         QMessageBox::warning(this, "Open Failed", "Could not open file.");
         return;
     }
-    mWorld.GetGrid().Load(input);
 
-    std::string line, log;
-    bool inLog = false;
+    std::vector<std::string> worldLines;
+    QStringList logLines;
+    std::vector<std::string> graphLines;
+
+    enum Section { NONE, WORLD, LOG, GRAPH };
+    Section current = NONE;
+
+    std::string line;
     while (std::getline(input, line)) {
-        if (line == "--- AGENT LOG ---") { inLog = true; continue; }
-        if (inLog) log += line + "\n";
+        if (line == "--- WORLD ---") {
+            current = WORLD;
+            continue;
+        }
+        if (line == "--- COMMAND LOG ---") {
+            current = LOG;
+            continue;
+        }
+        if (line == "--- GRAPH DATA ---") {
+            current = GRAPH;
+            continue;
+        }
+
+        switch (current) {
+        case WORLD:
+            if (!line.empty()) worldLines.push_back(line);
+            break;
+        case LOG:
+            logLines << QString::fromStdString(line);
+            break;
+        case GRAPH:
+            graphLines.push_back(line);
+            break;
+        default:
+            break;
+        }
     }
 
-    mGraphicsScene->clear();
-    setImageGrid();
+    if (!worldLines.empty()) {
+        mWorld.GetGrid().Load(worldLines);
+        mGraphicsScene->clear();
+        setImageGrid();
+    }
 
-    if (!log.empty())
-        mCommandLog->setPlainText(QString::fromStdString(log));
+    mCommandLog->setPlainText(logLines.join("\n"));
+
+    // parse graphLines here and update mMainGraph
 
     statusBar()->showMessage(QString("Opened: %1").arg(path), TIMEOUT);
 }
 
 void MainWindow::onFileSave() {
     const QString path = QFileDialog::getSaveFileName(
-        this, "Save File", QString(), "Text Files (*.txt);;All Files (*.*)");
+        this, "Save File", QString(), "Text Files (*.txt *.al *.sim);;All Files (*.*)");
     if (path.isEmpty()) return;
 
     std::ofstream output(path.toStdString());
@@ -202,8 +235,18 @@ void MainWindow::onFileSave() {
         return;
     }
 
+    output << "--- WORLD ---\n";
     mWorld.GetGrid().Print(output);
-    output << mCommandLog->toPlainText().toStdString();
+
+    output << "--- COMMAND LOG ---\n";
+    output << mCommandLog->toPlainText().toStdString() << "\n";
+
+    output << "--- GRAPH DATA ---\n";
+    // write real graph/tick data here
+    // example placeholders:
+    output << "tick=" << 123 << "\n";
+    output << "mode=" << mMode << "\n";
+
     statusBar()->showMessage(QString("File Saved: %1").arg(path), TIMEOUT);
 }
 
