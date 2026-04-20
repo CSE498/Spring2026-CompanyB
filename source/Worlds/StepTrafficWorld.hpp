@@ -272,7 +272,12 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
     return empty;
   }
   ~StepTrafficWorld() = default;
-
+  /// @brief Return the direction that an agent should face after moving from
+  /// "pos" to "new_pos", or an error if the move is invalid (only moves 1
+  /// square up/down/left/right are valid).
+  /// @param pos Agent's current position
+  /// @param new_pos Position the agent is attempting to move to
+  /// @return Direction from pos to new_pos if move is valid, error otherwise
   [[nodiscard]] std::expected<Direction, WorldErr> GetNewDirection(
       WorldPosition pos, WorldPosition new_pos) const {
     size_t old_x = pos.CellX();
@@ -301,7 +306,32 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
     }
     return new_dir;
   }
-  // TODO: explain everything that's going on here
+  /// @brief Returns a bool signaling whether the agent can move from its
+  /// current position to the new position--or, if the move is invalid, an
+  /// error.
+  /// @note The rules here are a bit complicated so I'll summarize them in
+  /// prose. An agent can move from A to B if:
+  ///
+  /// Either A = B, or B is directly up/down/left/right from A. No diagonal
+  /// moves are allowed and no agent is allowed to move more than 2 steps at at
+  /// time.
+  ///
+  /// B is a valid location (i.e. not out-of-bounds) and not an impassable
+  /// "grass" tile.
+  ///
+  /// The agent isn't trying to move backward (i.e. the opposite of the
+  /// direction it's facing), though this is allowed if the agent is at a dead
+  /// end (grass tiles on all but one side) and has to turn around.
+  ///
+  /// The agent isn't trying to move horizontally/vertically into a traffic
+  /// light that's currently blocking horizontal/vertical moves.
+  ///
+  /// The agent(s) on B must all be facing opposite to the direction that the
+  /// agent would be in if it completed the move. (This is to simulate 2-lane
+  /// roads, where agents can pass each other if they're moving in opposite
+  /// directions, make turns at intersections as long as the street they're
+  /// trying to turn onto only has cars in the opposite-direction lane, and so
+  /// on.)
   [[nodiscard]] std::expected<bool, WorldErr> CanMakeMoveAt(
       const Agent &agent, const WorldPosition &new_pos) const {
     if (!IsValid(new_pos) || IsGrass(new_pos)) {
@@ -342,17 +372,20 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
   [[nodiscard]] bool IsGrass(const WorldPosition &pos) const {
     return main_grid.IsValid(pos) && main_grid[pos] == grass_id;
   }
-
+  /// @brief Returns whether the given position has a traffic-light tile which
+  /// is currently blocking horizontal traffic.
   [[nodiscard]] bool HorizontalBlockedAt(const WorldPosition &pos) const {
     return main_grid.IsValid(pos) &&
            main_grid[pos] == traffic_light_vertical_id;
   }
-
+  /// @brief Returns whether the given position has a traffic-light tile which
+  /// is currently blocking vertical traffic.
   [[nodiscard]] bool VerticalBlockedAt(const WorldPosition &pos) const {
     return main_grid.IsValid(pos) &&
            main_grid[pos] == traffic_light_horizontal_id;
   }
-
+  /// @brief Returns whether the given position is surrounded by grass on all
+  /// but one side.
   [[nodiscard]] bool IsDeadEnd(const WorldPosition &pos) const {
     int grass_count = 0;
     if (IsGrass(pos.Up())) grass_count++;
