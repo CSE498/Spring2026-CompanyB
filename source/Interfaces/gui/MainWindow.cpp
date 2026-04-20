@@ -1,4 +1,5 @@
 #include "MainWindow.hpp"
+#include "StartScreen.h"
 
 #include <QApplication>
 #include <QFileDialog>
@@ -89,6 +90,10 @@ void MainWindow::setMenuBar() {
     mSaveFileAction->setStatusTip("Save the current file");
     connect(mSaveFileAction, &QAction::triggered, this, &MainWindow::onFileSave);
 
+    mBackToMenuAction = new QAction(QIcon::fromTheme("go-home"), ("&Back to Main Menu"), this);
+    mBackToMenuAction->setStatusTip("Return to the main menu");
+    connect(mBackToMenuAction, &QAction::triggered, this, &MainWindow::onBackToMainMenu);
+
     mExitAction = new QAction(QIcon::fromTheme("application-exit"), ("E&xit"), this);
     mExitAction->setShortcut(QKeySequence::Quit);
     mExitAction->setStatusTip("Exit the application");
@@ -97,6 +102,8 @@ void MainWindow::setMenuBar() {
     mFileMenu->addAction(mNewFileAction);
     mFileMenu->addAction(mOpenFileAction);
     mFileMenu->addAction(mSaveFileAction);
+    mFileMenu->addSeparator();
+    mFileMenu->addAction(mBackToMenuAction);
     mFileMenu->addSeparator();
     mFileMenu->addAction(mExitAction);
 
@@ -254,6 +261,18 @@ void MainWindow::onFileExit() { close(); }
 
 void MainWindow::onHelpAbout() {
     QMessageBox::about(this, "About", "<b>Group 21 Demo</b>");
+}
+
+void MainWindow::onBackToMainMenu() {
+    if (mTimer) {
+        mTimer->stop();
+    }
+
+    auto* startScreen = new StartScreen(mImagePaths, mTileSize, mAgentImagePath);
+    startScreen->setAttribute(Qt::WA_DeleteOnClose);
+    startScreen->show();
+
+    close();
 }
 
 void MainWindow::logCommand(const QString& message) {

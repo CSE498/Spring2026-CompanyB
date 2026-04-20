@@ -58,11 +58,10 @@ private:
     void onFileSave();
     void onFileExit();
     void onHelpAbout();
+    void onBackToMainMenu();
 
     void startSimulation();
     void onTick();
-
-
 
     // Timer
     QTimer* mTimer = nullptr;
@@ -84,6 +83,7 @@ private:
     QAction* mSaveFileAction;
     QAction* mExitAction;
     QAction* mAboutAction;
+    QAction* mBackToMenuAction;
 
     QToolBar* mToolBar;
 
