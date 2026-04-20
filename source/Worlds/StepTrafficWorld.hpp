@@ -20,7 +20,8 @@ template <typename SpawnedAgent>
 class StepTrafficWorld : public StepWorldBase<TrafficData> {
   using Agent = StepAgentBase<TrafficData>;
   using AgentPtr = std::shared_ptr<Agent>;
-  // Kind of a dummy design for now, should upgrade later
+  // May want to change this later with e.g an enum of error codes, but since it
+  // isn't being used too heavily this is probably fine for now
   struct WorldErr {
     std::string message = "";
   };
@@ -34,7 +35,6 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
     StepContainer &container;
     StepTrafficWorld &world;
 
-    // Now we'll need to have an operator() overload for each Step type.
     // NOTE: all this "typename StepVisitor::VisitRet" stuff (instead of just
     // "VisitRet") is for some reason required when adding "template <typename
     // SpawnedAgent>".
@@ -62,14 +62,22 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
               world.CanMakeMoveAt(agent, step.target).value_or(false));
           break;
         }
+        // we consider a space to have a capacity of 2, since normally it should
+        // contain at most 2 agents (moving in opposite directions)
         case Aspect::OCCUPANCY_FRAC: {
-          // TEMP (but I don't expect this branch to be used much anyway)
-          container.inform(false);
+          container.inform(static_cast<double>(std::ranges::count_if(
+                               world.agent_set,
+                               [=](AgentPtr const &ptr) {
+                                 return ptr->GetState().position == step.target;
+                               })) /
+                           2.0);
           break;
         }
         case Aspect::OCCUPANCY_RAW: {
-          // TEMP (but I don't expect this branch to be used much anyway)
-          container.inform(false);
+          container.inform(static_cast<int>(
+              std::ranges::count_if(world.agent_set, [=](AgentPtr const &ptr) {
+                return ptr->GetState().position == step.target;
+              })));
           break;
         }
       };
