@@ -279,7 +279,7 @@ int RunInfectiousDemo() {
   // --- Disease parameters ---
   world.SetTransmissionRate(0.50);
   world.SetInfectionRadius(2.5);
-  world.SetTreatmentDuration(3);    // 3 ticks inside Olin = recovered
+  world.SetTreatmentDuration(40);    // 40 ticks inside Olin = recovered
   world.SetImmunityDuration(50);    // 50 ticks immunity after recovery
   world.SetFallbackRecoveryTicks(100); // swarming agents auto-recover after 100 infection ticks
 

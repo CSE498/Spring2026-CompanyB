@@ -215,6 +215,17 @@ class InfectiousWorld : public SimWorldBase<DiseaseData> {
           [&](auto&& step) {
             using S = std::decay_t<decltype(step)>;
 
+            // Returns true if any other agent already occupies the given cell.
+            auto cell_occupied = [&](WorldPosition pos) {
+              for (const auto& a : agent_set) {
+                if (a == agent) continue;
+                WorldPosition ap = a->GetState().position;
+                if (ap.CellX() == pos.CellX() && ap.CellY() == pos.CellY())
+                  return true;
+              }
+              return false;
+            };
+
             if constexpr (std::is_same_v<S, MovementStep>) {
               WorldPosition new_pos = step.loc;
               WorldPosition old_pos = state.position;
@@ -224,7 +235,8 @@ class InfectiousWorld : public SimWorldBase<DiseaseData> {
                              (state.health != HealthState::INFECTED);
               if (main_grid.IsValid(new_pos) &&
                   main_grid[new_pos] != wall_id &&
-                  !blocked) {
+                  !blocked &&
+                  !cell_occupied(new_pos)) {
                 state.position = new_pos;
               }
             } else if constexpr (std::is_same_v<S, InfoStep>) {
@@ -237,7 +249,8 @@ class InfectiousWorld : public SimWorldBase<DiseaseData> {
                                (state.health != HealthState::INFECTED);
                 bool avail = main_grid.IsValid(target) &&
                              main_grid[target] != wall_id &&
-                             !blocked;
+                             !blocked &&
+                             !cell_occupied(target);
                 turn.inform(avail);
               }
             }
