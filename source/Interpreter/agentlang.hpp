@@ -213,6 +213,7 @@ struct MagicSym {
     case Value::FACING:
       return "facing";
     };
+    return "ERROR";
   }
 
   MagicSym(Value value) : m_Value(value) {}
