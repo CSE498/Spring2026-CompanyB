@@ -1,0 +1,366 @@
+* The what
+** What is a "step"?
+- The idea of a "step" represents a simple portion of an agent's "turn" -- thus, a sequence of one or more steps makes up an agent's turn.
+- A "step" should be internalized as a "step" in a recipe, or a "step" in a lego manual -- a simple action that is part of a larger sequence.
+** What kinds of steps are there?
+Throughout development, we consistently see three needs for step types:
+- Movement :: Exactly what it sounds like -- an agent desires to move.
+- Conditional :: Often an agent wants simply to tell the world "if X is true, do this, otherwise do that", but don't need to have that information themself.
+- Recon :: Certain agent types want to gather information about the world and other agents.
+** Overview of features
+*** ~Step~ Variant
+We represent the polymorphic type ~Step~ as a variant of the ~StepKind~ types (simply just classes which represent some kind of step). Reaching for a ~variant~ here rather than a typical inheritence structure gives us:
+- No overhead of the vtable for step creation and processing
+- No need to carry around pointers to steps (and thus largely giving us value semantics)
+- Simplified implementation of type-dependent dependent behavior (via ~std::visit~)
+The ~Step~ type is simply an alias to the variant of the ~StepKind~ types, hence it has all features present in the standard ~variant~. Each ~StepKind~ type serves _purely_ as a dataclass, and we lean on value semantics to interact with them. As such, beyond creating and adding steps to the ~StepContainer~, we never change/modify them.
+**** ~MovementStep~
+Expresses an agent's desire to move to a given location.
+***** Members
+- ~cse498::WorldPosition loc~ :: The position the agent would like to move to.
+***** Construction example
+#+begin_src cpp
+MovementStep my_move{WorldPosition{1, 1}};
+#+end_src
+**** ~InfoStep~
+Expresses the information which an agent would like to be provided to the succeeding ~ConditionalStep~. Serves no purpose other than to gather information for a later condition.
+***** Members
+- ~Aspect aspect~ :: Expresses what information about the world is desired
+- ~cse498::WorldPosition target~ :: The position which the information is to be relevant to
+***** Step-specific types
+- ~Aspect~ :: An enum expressing what /about/ the world the agent would like to be put into the following condition. Has the following states:
+  - ~OCCUPANCY_RAW~ :: How many agents are currently occupying the space at ~target~? This might be a lane, or a building.
+    - Information type :: Integer
+  - ~OCCUPANCY_FRAC~ :: What fraction of the space at ~target~ is currently occupied?
+    - Information type :: Double
+  - ~LOC_AVAIL~ :: Would this agent currently be able to move to ~target~?
+    - Information type :: Boolean
+***** Construction example
+#+begin_src cpp
+// Is the position (2, 2) available?
+WorldPosition target{2, 2};
+InfoStep my_info_request{InfoStep::Aspect::LOC_AVAIL, target};
+#+end_src
+**** ~ConditionalStep~
+Represents a decision that will be made when the ~StepContainer~ is evaluated -- mainly acting as a wrapper around a condition function. When a ~ConditionalStep~ is added to the ~StepContainer~, it needs:
+- An ~InfoStep~ directly prior (to provide information to the condition)
+- A condition (more on this in a sec)
+- A ~true~ branch, and optionally a ~false~ branch
+***** Members
+- ~InfoHandler condition~ :: For construction, just a functor which returns a ~bool~ for one of the world information types.
+***** Step-specific types
+- ~InfoHandler~ :: This acts to wrap a lambda provided for a specific type of world information -- one of ~double~, ~bool~, or ~int~. Since world information is represented as a variant of those types, when we call ~std::visit~ the visitor needs an overload for each valid variant type. Hence, this object is heavily templated to create a functor which inserts a default call (returning an unexpected) for all types except for the type which is input to the provided lambda.
+  - All of the complexity of the default overloads is contained within to make using this from the outside as easy as possible. If it helps understanding, this can be thought of as just a struct which has your provided lambda for one information type overload of the call operator, and all other overloads are defaulted.
+***** Construction example
+#+begin_src cpp
+// Want the true branch taken if the input integer is less than 10
+ConditionalStep my_conditional_step{[] (int i) { return i < 10; }};
+#+end_src
+**** ~ReconStep~
+A yet unimplemented (but planned) step which expresses an agent's intent to have information given to it at the end of its current turn. This will eventually serve the purpose of information gathering and sharing (vs the ~InfoStep~ which is just to represent information to go into a ~ConditionalStep~).
+*** ~StepContainer~
+This is the full sequence of zero or more steps through which an agent expresses their turn. Both agents and worlds interact with this: the agent to construct their turn, and the world to execute the agent's turn. The usage is intended to be as straightforward on both sides as possible, so please reach out if you find it confusing or difficult to interact with.
+
+The container handles accessing the steps sequentially, even handling evaluating conditional branches.
+**** Methods
+- ~bool empty()~ :: Return whether the container is empty (agnostic of exhaustion).
+- ~bool exhausted()~ :: Return whether the container has completed evaluation
+- ~void add_step(StepKind &&s)~ :: Add the step ~s~ into the container. ~StepKind~ accepts any ~step~.
+- ~void add_step(InfoStep&&, ConditionalStep&&, BranchLike &&t, BranchLike &&f)~ :: Add a conditional step into the container, with the given ~InfoStep~ expressing the info passed into the condition. ~BranchLike~ accepts either a ~StepContainer~ or a ~StepKind~.
+  - Overload ~void add_step(InfoStep&&, ConditionalStep&&, BranchLike&&)~ is provided to insert only a true branch. A ~ConditionalStep~ evaluating ~false~ with an empty ~false~ branch just skips to the next sequential step.
+- ~std::expected<Step, StepErr> get_next()~  :: Returns the next sequential step if available, otherwise returns an unexpected ~StepErr~.
+- ~void inform(InfoType const &info)~ :: Takes in and stores the world information that has been requested from an ~InfoStep~ (and /potentially/ later a ~ReconStep~)
+*** Misc.
+- ~InfoType~ :: A ~std::variant~ which holds world information. Currently can take the types ~int~, ~double~, ~bool~
+- ~StepErr~ :: Represents an unexpected value. Contains an enum value ~kind~ expressing the kind of failure/error, and a ~std::string~ further explaining the failure mode if necessary. The ~kind~ field can take the following states:
+  - ~WRONG_TYPE~ :: The ~StepContainer~ was given a value through ~.inform()~ which did not match the type expected by the ~ConditionalStep~'s condition
+  - ~HANDLER_NOT_SET~ :: A ~ConditionalStep~ was reached with an unset ~InfoHandler~
+  - ~STEPS_EXHAUSTED~ :: The method ~.get_next()~ was called on an exhausted ~StepContainer~
+  - ~MISSING_BRANCH~ :: A ~ConditionalStep~ evaluated ~true~ but does not have a ~true~ branch to follow
+* Functors, visitors, and ~std::visit~
+In case it's needed, we'll do a quick once over on some topics for ~std::visit~, touching back on some stuff we've covered prior in the class. If you feel comfortable with some or all of these topics, feel free to skip about! And, if you need any clarification, /do not hesitate to reach out!/
+** Functors
+#+begin_comment
+This section will largely just re-cover concepts learned in the lambda lesson a few weeks ago. If you felt strong on that, you can skip ahead, but I would at minimum recommend checking out the =Functions with state= section.
+#+end_comment
+As we learned in class when going over C++'s lambda, the compiler actually generates something called a "functor" when we write out a lambda. As we learned this "functor" is just a fancy word for a struct which defines ~operator()~ for zero or more types -- this definition works again for us, so we'll stick with it. What I want to clarify here is that these functors can actually be extended, in some cases giving us some really interesting design flexibility!
+*** Defining ~operator()~
+As we saw in the lambda class, all we have to do to make our object callable, say with one parameter of type ~T~ and returning type ~Ret~, is to define ~Ret operator()(T t) { ... }~. Let's look at a quick example:
+#+begin_src cpp
+struct MyFunctor {
+  bool operator()(int i){
+    return i % 2 == 0;
+  }
+};
+#+end_src
+In this very minimal example, we've defined a functor which, when called with a single integer, returns a boolean representing whether that integer is even. Let's take a look:
+#+begin_src cpp
+// Default-initialize a MyFunctor
+MyFunctor functor{};
+
+// Invoke functor
+bool is_even = functor(2); // = true
+#+end_src
+And that's that! But, this is not the main draw of these functors from a design sense, so let's keep moving.
+*** Overloading ~operator()~
+As you might imagine, just as with anything else, we can in fact define multiple ~operator()~ overloads. For us, this means we can actually use a functor to act almost as a "collection" of functions, each offering a call for a certain type (or set of types). Let's extend ~MyFunctor~ from before to add more functionality:
+#+begin_src cpp
+struct MyFunctor {
+  bool operator()(int i){
+    return i % 2 == 0;
+  }
+
+  bool operator()(std::string s){
+    return std::stoi(s) % 2 == 0;
+  }
+};
+#+end_src
+Now we have an overload to handle a string, and returning whether the integer in the string is even. Now invoking becomes:
+#+begin_src cpp
+MyFunctor functor{};
+
+bool is_even_int = functor(2);
+bool is_even_str = functor("2");
+// Both should be true
+#+end_src
+And... done -- we've now got two possible calls with this functor. As you might imagine, we can extend this pretty far, giving us some fun design flexibility :)
+*** Functions with state
+/Functional programming enjoyers turn away now.../
+
+We can use the fact that these functors are just regular objects to introduce state into a function call. Often, this is "undesirable", but soon you will see why it is actually quite desirable. All that's relevant currently is that since these functors are regular objects, and the ~operator()~ overloads are really just member methods, we can make use of member variables, allowing us to hold state from invocation to invocation *(as long as we are invoking _the same functor_)*. For a quick example just of this functionality, let's create a functor which has access to and modifies a vector:
+#+begin_src cpp
+#include <vector>
+#include <print>
+
+struct MyStatefulFunctor {
+    std::vector<int> &vec;
+
+    void operator()(int i) {
+        vec.push_back(i);
+    };
+};
+#+end_src
+So, as we see, when we instantiate this functor we'll need to provide a reference to a vector of integers. Then, when we invoke it with an integer, it will push back that integer. Let's see this in use:
+#+begin_src cpp
+int main() {
+    // Our vector which we will allow our functor to modify
+    std::vector<int> my_vec{};
+
+    // Construct a MyStatefulFunctor which will push back integers
+    MyStatefulFunctor push_back_functor{my_vec};
+
+    std::println("Vector size: {}  (should be 0)", my_vec.size());
+
+    // Invoke functor to push back a new integer
+    push_back_functor(100);
+
+    std::println("Vector size: {}  (should be 1)", my_vec.size());
+    std::println("Vector 1st element: {}", my_vec.at(0));
+}
+#+end_src
+And that's it -- we've added state to our functor! If you're not convinced and what to see it for yourself (or want to play with it), here's this example in godbolt: https://godbolt.org/z/TvMjrqv6E
+
+While this example is not how you might do something like this in reality, all we care about right now is just seeing the ease with which we can create these invocable objects which hold state -- this will be /very/ useful soon.
+** Visitors
+I won't be able to do this section justice myself, so here are some resources that have helped me in the past:
+- What is the visitor pattern? :: https://refactoring.guru/design-patterns/visitor#:~:text=The%20Visitor%20pattern%20lets%20you,business%20logic%20of%20auxiliary%20behaviors.
+- What does multiple dispatch look like in C++? :: https://dzone.com/articles/double-dispatch-in-c
+  - This also has some material on ~std::variant~, so it is definitely worth a deeper read if you want to solidify that.
+** Visitors & ~std::visit~
+
+* World Usage Example
+Usage within the context of one of the simulation worlds is designed to be as straightforward as is reasonable. We'll need 3 main things:
+- A way of getting a ~StepContainer~ to evaluate (this is the ~.GetTurn()~ method on the ~StepAgentBase~)
+- A loop in which we sequentially evaluate the steps
+- A visitor which takes a ~Step~ variant and does what's needed with the actual underlying step
+So we'll start by throwing together our visitor (applying the =functors= section earlier), and then we'll see how the actual processing step within the world might look.
+** Basic setup
+We'll define an extremely simple world on a small grid
+#+begin_src cpp
+#include <array>
+#include <optional>
+#include <vector>
+
+struct StepAgentBase;
+
+class SimpleWorld {
+  constexpr size_t HEIGHT = 5;
+  constexpr size_t WIDTH = 5;
+
+  using World = std::array<std::array<std::optional<size_t>, WIDTH>, HEIGHT>;
+
+  std::vector<StepAgentBase> agents;
+
+  World world;
+  
+  // Not going to fill this in
+  struct WorldErr {
+    // ...
+  };
+  
+  // This is the visitor section
+  struct StepVisitor {
+    // ...
+  };
+
+  // ...
+
+  // This is the evaluation section
+  void do_turns();
+};
+#+end_src
+Note that is supposed to be an illustrative but not totally complete example -- see =Group-11-PolishedClasses= for an example which can compile.
+** Visitor
+The valid step types and what we need to do with them are:
+- ~MovementStep~ :: Move the agent to that position if possible
+- ~InfoStep~ :: Call ~.inform()~ on the ~StepContainer~ and pass in the requested world information
+So putting these together, we can fill in the ~StepVisitor~ above
+#+begin_src cpp
+// This is "zoomed in" to the definition in the introduction -- this is still defined within SimpleWorld
+struct StepVisitor {
+  // We do want to represent failure, but don't need to represent
+  // any output, so we'll define & alias our return as such:
+  using VisitRet = std::expected<void, WorldErr>;
+  
+  // We'll want to modify the agent and the container, so we'll hold on to
+  // some references for them. You'll have to do the same for any other
+  // non-variant external context desired.
+  AgentBase &agent;
+  StepContainer &container;
+  World &world;
+  
+  // Now we'll need to have an operator() overload for each Step type.
+  VisitRet operator()(steps::MovementStep step) {
+    // The simplest step -- the agent just wants to move to a space.
+    if (!world[step.loc.x][step.loc.y].has_value()) {
+      // Then the position is available
+      // FILL IN: logic to change the agent's position
+    }
+    return {};
+  }
+  
+  VisitRet operator()(steps::InfoStep step) {
+    // When we get an info step, the agent would like to do something
+    // conditionally (the container handles the branching internally).
+    // It will provide us with the "aspect" about the world, and the
+    // location it wants the info about. In return, we'll "inform" the
+    // container with what has been requested.
+    switch (step.aspect) {
+      using Aspect = cse498::steps::InfoStep::Aspect;
+    case Aspect::LOC_AVAIL: {
+      // Is the location available? We'll inform the world with a bool
+      // FILL IN: Implement logic actually generating this value
+      container.inform(false);
+      break;
+    }
+    case Aspect::OCCUPANCY_FRAC: {
+      // What fraction of the location referred to is occupied? We'll
+      // inform the world with a double in [0, 1]
+      // We only have 25 spaces in our example, so it'll just be (# agents) / (# spaces)
+      container.inform(agents.size() / (WIDTH * HEIGHT));
+      break;
+    }
+    case Aspect::OCCUPANCY_RAW: {
+      // How many agents are in/at the location referred to? We'll inform
+      // the world with a integer
+      // In our example this would just be the number of agents in the world
+      container.inform(agents.size());
+      break;
+    }
+    };
+    return {};
+  }
+
+  // Note for someone who may want to refactor in the future to not have to fill
+  // fill in overloads for steps we shouldn't reach (like ConditionalStep), we
+  // could either (a) extend the InfoHandler approach for a defaulted visitor or
+  // apply CRTP and have it build in these overloads.
+  
+  
+  VisitRet operator()([[maybe_unused]] steps::ConditionalStep step) {
+    // The compiler needs this, but this should never be reached. A
+    // better solution is forthcoming, for now just leave empty.
+    return {};
+  }
+  
+  VisitRet operator()([[maybe_unused]] steps::ReconStep step) {
+    // The compiler needs this, but this should (for now) never be
+    // reached. A better solution is forthcoming, for now just leave empty.
+    return {};
+  }
+};
+#+end_src
+The biggest thing to note is that we're now making use of that "Functions with state" material from before by having the visitor be instantiated with a reference to an agent, container, and world. If desired, this visitor /could/ be defined outside of the ~SimpleWorld~ class, and then simply take in a reference to the world for a more expansive level of access.
+** Evaluation
+Here we just want to define the main loop in which we'll process each agent's turn.
+#+begin_src cpp
+void do_turns() {
+  for (StepAgentBase &agent : this->agents) {
+    StepContainer steps = agent.GetTurn();
+
+    // Instantiate visitor w/ context
+    StepVisitor visitor{agent, steps, this->world};
+
+    // Evaluate the steps
+    while (!steps.exhausted()) {
+      std::expected<Step, StepErr> step = steps.get_next();
+      if (!step.has_value()) {
+	// Handle error retrieving step
+      }
+
+      StepVisitor::VisitRet step_result = std::visit(visitor, step.value());
+
+      if (!step_result.has_value()) {
+	// Handle error
+      }
+    }
+
+    // Do whatever is needed after the agent's turn
+  };
+}
+#+end_src
+* Agent Usage Example
+~Step~ usage on the agent side is even more straightforward -- it just serves as a semantic way to build an agent's turn.
+
+The driving idea that needs to be internalized here is that the ~StepContainer~ is just a "translation" between your own internal turn-generation logic and a uniform action representation. To show this, I'll pull out a simple example from ~Group-11-PolishedClasses~ and ~ScriptedAgent.hpp~. The internal turn-generation approach for this simple agent is just to walk in a square. We track a ~step_index~, and choose a direction from =down/right/up/left= based on ~step_index % 4~. All that's relevant to ~Step~ here is that it just serves to take our turn generation logic and build it into an actionable turn for the world to execute:
+#+begin_src cpp
+StepContainer GetTurn() override {
+  WorldPosition pos = GetState().pos;
+  StepContainer container{};
+  
+  switch (step_index % 4) {
+  case 0:
+    container.add_step(MovementStep{pos.Down()});
+    break;
+  case 1:
+    container.add_step(MovementStep{pos.Right()});
+    break;
+  case 2:
+    container.add_step(MovementStep{pos.Up()});
+    break;
+  case 3:
+    container.add_step(MovementStep{pos.Left()});
+    break;
+  }
+  
+  step_index++;
+  return container;
+}
+#+end_src
+** Conditional Example
+Here we'll take a quick look at an example usage of the ~ConditionalStep~. 
+
+Say we want our agent wants to move to the left (further into the space) if the space it's currently in is under 50% occupancy, otherwise it wants to go to the right (leaving the space). We'll need to create an ~InfoStep~ which requests ~Aspect::OCCUPANCY_FRAC~ at point ~agent.pos()~, a condition function which returns true if our predicate is satisfied, and the moves corresponding to each outcome:
+#+begin_src cpp
+StepContainer GetTurn() override {
+  WorldPosition pos = GetState().pos;
+  StepContianer container{};
+
+  container.add_step(InfoStep{Aspect::OCCUPANCY_FRAC, pos}, // The info for the condition
+		     ConditionalStep{[](double occupancy){ return (occupancy < 0.5); }}, // The condition
+		     MovementStep{pos.Left()}, // True branch/step
+		     MovementStep{pos.Right()}); // False branch/step
+
+  return container;
+}
+#+end_src
