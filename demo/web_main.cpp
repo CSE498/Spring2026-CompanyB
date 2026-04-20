@@ -23,12 +23,36 @@ using namespace cse498;
 
 // Globals kept alive for the duration of the page
 enum class ActiveSim { NONE, TRAFFIC, VIRUS };
+enum class SimState  { STOPPED, PLAYING, PAUSED };
 
 static ActiveSim active_sim = ActiveSim::NONE;
+static SimState  sim_state  = SimState::STOPPED;
 static std::shared_ptr<WebCanvas> GameCanvas;
 static std::unique_ptr<TrafficWorld> traffic_world;
 static std::unique_ptr<InfectiousWorld> virus_world;
 static std::unordered_map<std::string, std::shared_ptr<WebElement>> elements{};
+
+void SetupVirusWorld();
+
+auto handle_sim_state = [](SimState next) {
+    switch (next) {
+        case SimState::PLAYING:
+            sim_state = SimState::PLAYING;
+            break;
+        case SimState::PAUSED:
+            if (sim_state == SimState::PLAYING) sim_state = SimState::PAUSED;
+            break;
+        case SimState::STOPPED:
+            sim_state = SimState::STOPPED;
+            // Reset the active world to its initial state
+            if (active_sim == ActiveSim::TRAFFIC) {
+                traffic_world = std::make_unique<TrafficWorld>("assets/grids/DemoWorld.grid");
+            } else if (active_sim == ActiveSim::VIRUS) {
+                SetupVirusWorld();
+            }
+            break;
+    }
+};
 
 void DrawTrafficSim() {
     GameCanvas->Clear();
@@ -76,8 +100,10 @@ void DrawTrafficSim() {
         GameCanvas->SetFillColor({255, 80, 80}).DrawCircle(cx, cy, radius, true);
     }
 
-    traffic_world->RunAgents();
-    traffic_world->UpdateWorld();
+    if (sim_state == SimState::PLAYING) {
+        traffic_world->RunAgents();
+        traffic_world->UpdateWorld();
+    }
 }
 
 void DrawVirusSim() {
@@ -135,8 +161,10 @@ void DrawVirusSim() {
         }
     }
 
-    virus_world->RunAgents();
-    virus_world->UpdateWorld();
+    if (sim_state == SimState::PLAYING) {
+        virus_world->RunAgents();
+        virus_world->UpdateWorld();
+    }
 }
 
 void SetupVirusWorld() {
@@ -268,9 +296,9 @@ std::shared_ptr<WebElement> SimulationLayout(ActiveSim sim, std::function<void()
                     {"border-radius", "20px"},
                 },
                 .children = {
-                    UIItem<WebButton>("", WebOptions{ .id = "start-btn", .classes={"button"} })->SetOnClick(btn_lambda),
-                    UIItem<WebButton>("", WebOptions{ .id = "pause-btn", .classes={"button"} })->SetOnClick(btn_lambda),
-                    UIItem<WebButton>("", WebOptions{ .id = "stop-btn", .classes={"button"} })->SetOnClick(btn_lambda),
+                    UIItem<WebButton>("", WebOptions{ .id = "start-btn", .classes={"button"} })->SetOnClick([]{ handle_sim_state(SimState::PLAYING); }),
+                    UIItem<WebButton>("", WebOptions{ .id = "pause-btn", .classes={"button"} })->SetOnClick([]{ handle_sim_state(SimState::PAUSED); }),
+                    UIItem<WebButton>("", WebOptions{ .id = "stop-btn",  .classes={"button"} })->SetOnClick([]{ handle_sim_state(SimState::STOPPED); }),
                     // Using SetOnFileUpload with a custom lambda
                     UIItem<WebButton>("", WebOptions{ .id = "upload-btn", .classes={"button"} })->SetOnFileUpload([](const std::string& file_content) {
                         std::println("SUCCESS! File uploaded to C++ backend. Length: {} characters.", file_content.length());
@@ -356,6 +384,7 @@ void load_menu_layout() {
 void load_traffic_layout() {
     std::println("Loading traffic simulation");
     active_sim = ActiveSim::TRAFFIC;
+    sim_state  = SimState::STOPPED;
     traffic_world = std::make_unique<TrafficWorld>("assets/grids/DemoWorld.grid");
     set_active_layout(SimulationLayout(ActiveSim::TRAFFIC, load_traffic_layout, load_menu_layout));
 }
@@ -363,6 +392,7 @@ void load_traffic_layout() {
 void load_virus_layout() {
     std::println("Loading virus simulation");
     active_sim = ActiveSim::VIRUS;
+    sim_state  = SimState::STOPPED;
     SetupVirusWorld();
     set_active_layout(SimulationLayout(ActiveSim::VIRUS, load_virus_layout, load_menu_layout));
 }
