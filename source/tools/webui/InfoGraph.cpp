@@ -1,12 +1,20 @@
-#include "InfoGraph.hpp"
 
+/**
+ * @class InfoGraph
+ * @brief A canvas-based graph for visualizing simulation data over time.
+ * @author Fatima Saad
+ * Stores data points, renders charts, and supports scrolling through
+ * historical values.
+ */
+#include "InfoGraph.hpp"
+#include "WebOptions.hpp" 
 #include <algorithm>
 #include <string>
 
 namespace cse498 {
-
+/// @brief Initialize graph with default styling and dimensions.
 InfoGraph::InfoGraph(int width, int height, const std::string& id)
-    : WebCanvas(width, height, id) {
+    : WebCanvas(width, height, WebOptions{.id = id}) {
   SetBackgroundColor({245, 245, 245});
   SetPenColor({30, 30, 30});
   SetFillColor({30, 30, 30});
@@ -18,6 +26,16 @@ double InfoGraph::GetMaxValue(const DataSeries& values) const {
   if (values.empty()) return 1.0;
   const double max_val = *std::max_element(values.begin(), values.end());
   return max_val <= 0.0 ? 1.0 : max_val;
+}
+
+InfoGraph::DataSeries InfoGraph::GetVisibleData() const {
+  if (data_.empty()) return {};
+
+  const size_t end_index =
+      std::min(view_start_index_ + kVisiblePoints, data_.size());
+
+  return DataSeries(data_.begin() + static_cast<long>(view_start_index_),
+                    data_.begin() + static_cast<long>(end_index));
 }
 
 void InfoGraph::DrawAxes(double max_value, const std::string& title) {
@@ -46,6 +64,14 @@ void InfoGraph::DrawAxes(double max_value, const std::string& title) {
   SetFillColor({20, 20, 20});
   DrawText("0", 20, y0 + 5);
   DrawText(std::to_string(static_cast<int>(max_value)), 20, y1 + 5);
+
+  if (!data_.empty()) {
+    const size_t end_index =
+        std::min(view_start_index_ + kVisiblePoints, data_.size());
+    DrawText("Ticks " + std::to_string(view_start_index_) + " - " +
+                 std::to_string(end_index - 1),
+             x1 - 140, y0 + 20);
+  }
 }
 
 void InfoGraph::DrawLineChart(const DataSeries& values,
@@ -128,19 +154,55 @@ void InfoGraph::DrawBarChart(const DataSeries& values,
   }
 }
 
-void InfoGraph::AddDataPoint(double value, const std::string& title) {
-  data_.push_back(value);
 
-  if (data_.size() > kMaxPoints) {
-    data_.erase(data_.begin());
-  }
-
-  DrawLineChart(data_, title);
-}
 
 void InfoGraph::ClearData() {
   data_.clear();
+  view_start_index_ = 0;
   Clear();
+}
+
+void InfoGraph::ScrollLeft() {
+  if (view_start_index_ > 0) {
+    --view_start_index_;
+  }
+  DrawLineChart(GetVisibleData(), current_title_);
+}
+
+// void InfoGraph::ScrollRight() {
+//   if (view_start_index_ + kVisiblePoints < data_.size()) {
+//     ++view_start_index_;
+//   }
+//   DrawLineChart(GetVisibleData(), current_title_);
+// }
+void InfoGraph::ScrollRight() {
+  if (view_start_index_ + kVisiblePoints < data_.size()) {
+    ++view_start_index_;
+  }
+  // If we've reached the latest data, snap auto-scroll back on
+  if (view_start_index_ + kVisiblePoints >= data_.size()) {
+    auto_scroll_ = true;
+  }
+  DrawLineChart(GetVisibleData(), current_title_);
+}
+void InfoGraph::SetAutoScroll(bool enabled) {
+  auto_scroll_ = enabled;
+  if (auto_scroll_ && data_.size() > kVisiblePoints) {
+    view_start_index_ = data_.size() - kVisiblePoints;
+  }
+  DrawLineChart(GetVisibleData(), current_title_);
+}
+void InfoGraph::AddDataPoint(double value, const std::string& title) {
+  current_title_ = title;
+  data_.push_back(value);
+  if (auto_scroll_ && data_.size() > kVisiblePoints) {
+    view_start_index_ = data_.size() - kVisiblePoints;
+  }
+  if (chart_type_ == ChartType::Bar) {
+    DrawBarChart(GetVisibleData(), current_title_);
+  } else {
+    DrawLineChart(GetVisibleData(), current_title_);
+  }
 }
 
 }  // namespace cse498
