@@ -173,11 +173,21 @@ struct VarSym {
 struct FuncSym {
   std::vector<std::shared_ptr<SymInfo>> m_Params;
   size_t m_BodyIdx;
+  std::optional<
+      std::function<std::expected<Type, InterpErr>(std::vector<Type> &&)>>
+      m_PreloadFunc = {};
 
   FuncSym() : m_Params({}) {}
-  FuncSym(std::vector<std::shared_ptr<SymInfo>> params) : m_Params(std::move(params)) {};
+  FuncSym(std::vector<std::shared_ptr<SymInfo>> params)
+      : m_Params(std::move(params)) {};
   FuncSym(std::vector<std::shared_ptr<SymInfo>> &&params, size_t idx)
       : m_Params(std::move(params)), m_BodyIdx(idx) {};
+
+  template <typename Func>
+    requires std::is_convertible_v<Func,
+                                   std::function<std::expected<Type, InterpErr>(
+                                       std::vector<Type> &&)>>
+  FuncSym(Func f) : m_Params({}), m_BodyIdx(0), m_PreloadFunc(f) {}
 };
 
 struct MagicSym {
@@ -198,8 +208,8 @@ struct MagicSym {
     return (m_Value == Value::DESTINATION);
   };
 
-  operator std::string() const {
-    switch (m_Value) {
+  static std::string ToStr(Value m) {
+    switch (m) {
     case Value::POSITION:
       return "position";
     case Value::DESTINATION:

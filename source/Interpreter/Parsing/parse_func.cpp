@@ -90,23 +90,37 @@ std::expected<std::unique_ptr<AST::Node>, InterpErr> Parser::parse_func_call() {
       std::make_unique<AST::StmtFuncCall>(func_id, func_sym);
 
   size_t arg_index = 0;
-  while (!m_Lexer.Is(IDs::ID_DELIM_PAREN_CLOSE)) {
-    if (arg_index >= func_sym_data.m_Params.size())
-      return TempErr(TempErr::NOT_IMPLEMENTED,
-                     "TODO: Put in ParseErr for too many args (vs runtime)");
+  if (!func_sym_data.m_PreloadFunc.has_value()) {
+    while (!m_Lexer.Is(IDs::ID_DELIM_PAREN_CLOSE)) {
+      if (arg_index >= func_sym_data.m_Params.size())
+        return TempErr(TempErr::NOT_IMPLEMENTED,
+                       "TODO: Put in ParseErr for too many args (vs runtime)");
 
-    TRY_DECL_M(arg, parse_expr());
+      TRY_DECL_M(arg, parse_expr());
 
-    // Arg is the value to set the params to, and we have the param symbols
-    // so this is actuall y just assiugnment!!
-    emplex::Token tok = arg->m_Token;
-    func_call->add_node(std::make_unique<AST::Assign>(
-        tok, func_sym_data.m_Params.at(arg_index), std::move(arg)));
-    // func_call->add_node(std::move(arg));
+      // Arg is the value to set the params to, and we have the param symbols
+      // so this is actuall y just assiugnment!!
+      emplex::Token tok = arg->m_Token;
+      func_call->add_node(std::make_unique<AST::Assign>(
+          tok, func_sym_data.m_Params.at(arg_index), std::move(arg)));
+      // func_call->add_node(std::move(arg));
 
-    // Consume remaining comma unless next is paren close
-    if (!m_Lexer.Is(IDs::ID_DELIM_PAREN_CLOSE)) {
-      TRY(m_Lexer.UseIf(IDs::ID_DELIM_COMMA));
+      // Consume remaining comma unless next is paren close
+      if (!m_Lexer.Is(IDs::ID_DELIM_PAREN_CLOSE)) {
+        TRY(m_Lexer.UseIf(IDs::ID_DELIM_COMMA));
+      }
+    }
+  } else {
+    // Preloaded
+    while (!m_Lexer.Is(IDs::ID_DELIM_PAREN_CLOSE)) {
+      TRY_DECL_M(arg, parse_expr());
+
+      func_call->add_node(std::move(arg));
+
+      // Consume remaining comma unless next is paren close
+      if (!m_Lexer.Is(IDs::ID_DELIM_PAREN_CLOSE)) {
+        TRY(m_Lexer.UseIf(IDs::ID_DELIM_COMMA));
+      }
     }
   }
 

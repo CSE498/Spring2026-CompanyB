@@ -244,7 +244,7 @@ public:
       return RuntimeErr(RuntimeErr::MAGIC_ERR,
                         std::format("Could not match requested magic value "
                                     "'__{}__' to dataclass for getting",
-                                    std::string{m}));
+                                    MagicSym::ToStr(m.m_Value)));
     }
 
     std::expected<Type, InterpErr> operator()(FuncSym f) {
@@ -393,6 +393,19 @@ public:
                         "Function has invalid symbol");
 
     FuncSym f = std::get<FuncSym>(node.m_Symbol->sym);
+
+    if (f.m_PreloadFunc.has_value()) {
+      // Handling a preload function
+
+      // Gather arguments
+      std::vector<Type> args{};
+      for (auto [index, arg] : std::views::enumerate(node.m_Args)) {
+        TRY_DECL(arg_res, arg->Accept(*mAgentWrapper));
+        args.emplace_back(arg_res);
+      }
+
+      return std::invoke(f.m_PreloadFunc.value(), std::move(args));
+    }
 
     if (f.m_Params.size() < node.m_Args.size())
       return RuntimeErr(RuntimeErr::TOO_FEW_ARGS);

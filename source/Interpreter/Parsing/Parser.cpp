@@ -1,4 +1,5 @@
 #include "Interpreter/Parser.hpp"
+#include "Interpreter/Evaluation/OpVisits.hpp"
 #include "Interpreter/Lexing/lexer-gen.hpp"
 #include "Interpreter/agentlang.hpp"
 #include "Interpreter/ast.hpp"
@@ -7,6 +8,7 @@
 #include "Interpreter/macros.hpp"
 #include <expected>
 #include <memory>
+#include <variant>
 #include <vector>
 
 namespace cse498 {
@@ -22,9 +24,68 @@ Parser::parse(std::istream &in) {
 
   using Value = agentlang::Symbols::MagicSym::Value;
 
+  m_Syms.PushSymbolScope();
+
+  // Preload special function(s)
+  FuncSym preload_addone(
+      [](std::vector<Type> &&args) -> std::expected<Type, InterpErr> {
+        if (args.size() < 1)
+          return RuntimeErr(RuntimeErr::TOO_FEW_ARGS);
+        else if (args.size() > 1)
+          return RuntimeErr(RuntimeErr::TOO_FEW_ARGS);
+
+        return evaluate_binary(IDs::ID_OP_ADD, args.at(0), 1);
+      });
+
+  FuncSym preload_makepoint(
+      [](std::vector<Type> &&args) -> std::expected<Type, InterpErr> {
+        // TODO : These checks can be pulled out
+        if (args.size() < 2)
+          return RuntimeErr(RuntimeErr::TOO_FEW_ARGS);
+        else if (args.size() > 2)
+          return RuntimeErr(RuntimeErr::TOO_FEW_ARGS);
+
+        if (!std::holds_alternative<int>(args.at(0)) ||
+            !std::holds_alternative<int>(args.at(1)))
+          return RuntimeErr(RuntimeErr::TYPE_MISMATCH);
+
+        return Point{std::get<int>(args.at(0)), std::get<int>(args.at(1))};
+      });
+  FuncSym preload_getx(
+      [](std::vector<Type> &&args) -> std::expected<Type, InterpErr> {
+        // TODO : These checks can be pulled out
+        if (args.size() < 1)
+          return RuntimeErr(RuntimeErr::TOO_FEW_ARGS);
+        else if (args.size() > 1)
+          return RuntimeErr(RuntimeErr::TOO_FEW_ARGS);
+
+        if (!std::holds_alternative<Point>(args.at(0)))
+          return RuntimeErr(RuntimeErr::TYPE_MISMATCH);
+
+        return std::get<Point>(args.at(0)).X();
+      });
+  FuncSym preload_gety(
+      [](std::vector<Type> &&args) -> std::expected<Type, InterpErr> {
+        // TODO : These checks can be pulled out
+        if (args.size() < 1)
+          return RuntimeErr(RuntimeErr::TOO_FEW_ARGS);
+        else if (args.size() > 1)
+          return RuntimeErr(RuntimeErr::TOO_FEW_ARGS);
+
+        if (!std::holds_alternative<Point>(args.at(0)))
+          return RuntimeErr(RuntimeErr::TYPE_MISMATCH);
+
+        return std::get<Point>(args.at(0)).Y();
+      });
+
+  TRY(m_Syms.AddSym("preload_addone", std::move(preload_addone)));
+  TRY(m_Syms.AddSym("make_point", std::move(preload_makepoint)));
+  TRY(m_Syms.AddSym("get_x", std::move(preload_getx)));
+  TRY(m_Syms.AddSym("get_y", std::move(preload_gety)));
+
   // Put in the universal magic vals
-  TRY(m_Syms.AddSym("__position__", Value::POSITION));
-  TRY(m_Syms.AddSym("__destination__", Value::DESTINATION));
+  TRY((m_Syms.AddSym("__destination__", Value::DESTINATION)));
+  TRY((m_Syms.AddSym("__position__", Value::POSITION)));
 
   /*
   We first need to check that the first statement configures the world
@@ -68,8 +129,8 @@ Parser::parse(std::istream &in) {
   if (!token_res.has_value())
     return token_res.error();
 
-  // Now we parse every remaining statement
   m_Syms.PushSymbolScope();
+  // Now we parse every remaining statement
   while (m_Lexer.Any()) {
     auto stmt_res = parse_stmt();
     if (!stmt_res.has_value()) {

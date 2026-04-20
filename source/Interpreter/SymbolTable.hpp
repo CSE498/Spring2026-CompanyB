@@ -60,6 +60,7 @@ public:
   std::expected<size_t, InterpErr> AddSym(const Token &, Type);
 
   // Function
+  std::expected<size_t, InterpErr> AddSym(std::string const&, FuncSym &&);
   std::expected<size_t, InterpErr> AddSym(const Token &, FuncSym &&);
   std::expected<size_t, InterpErr> AddFunc(std::unique_ptr<AST::Node> &&);
   std::expected<std::shared_ptr<AST::Node>, InterpErr> GetFunc(size_t);

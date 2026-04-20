@@ -95,6 +95,21 @@ std::expected<size_t, InterpErr> SymbolTable::AddSym(std::string id,
   m_SymbolInfo.push_back(std::make_shared<SymInfo>(name, 0, sym, sym.CanMut()));
   return m_SymbolInfo.size() - 1;
 }
+std::expected<size_t, InterpErr> SymbolTable::AddSym(std::string const &id,
+                                                     FuncSym &&sym) {
+  TRY_DECL(sym_pair, PrepAdd(id));
+  auto [name, idx] = sym_pair;
+
+  m_SymbolInfo.push_back(
+      std::make_shared<SymInfo>(name, 0, std::move(sym), m_Funcs.size()));
+
+  m_Funcs.push_back({});
+
+  // Functions are not assignable
+  m_SymbolInfo.back()->mut = false;
+
+  return idx;
+}
 std::expected<size_t, InterpErr> SymbolTable::AddSym(const Token &id_tok,
                                                      FuncSym &&sym) {
   TRY_DECL(sym_pair, PrepAdd(id_tok));
