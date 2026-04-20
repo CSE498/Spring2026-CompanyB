@@ -33,7 +33,7 @@ TEST_CASE("PathGenerator ShortestPath finds direct path", "[pathgenerator]") {
   Point start{0.0, 0.0};
   Point goal{10.0, 0.0};
 
-  auto canMove = [](const Point &) { return true; };
+  auto canMove = [](const Point&) { return true; };
   auto result = gen.ShortestPath(start, goal, canMove);
 
   REQUIRE(result.has_value());
@@ -52,7 +52,7 @@ TEST_CASE("PathGenerator ShortestPath returns nullopt when blocked",
   Point start{0.0, 0.0};
   Point goal{10.0, 0.0};
 
-  auto canMove = [](const Point &) { return false; };
+  auto canMove = [](const Point&) { return false; };
   auto result = gen.ShortestPath(start, goal, canMove);
 
   REQUIRE_FALSE(result.has_value());
@@ -64,7 +64,7 @@ TEST_CASE("PathGenerator ShortestPath returns nullopt for invalid start",
   Point start{0.0, 0.0};
   Point goal{10.0, 0.0};
 
-  auto canMove = [&](const Point &p) {
+  auto canMove = [&](const Point& p) {
     return !(p.getX() == start.getX() && p.getY() == start.getY());
   };
   auto result = gen.ShortestPath(start, goal, canMove);
@@ -78,7 +78,7 @@ TEST_CASE("PathGenerator ShortestPath returns nullopt for invalid goal",
   Point start{0.0, 0.0};
   Point goal{10.0, 0.0};
 
-  auto canMove = [&](const Point &p) {
+  auto canMove = [&](const Point& p) {
     return !(p.getX() == goal.getX() && p.getY() == goal.getY());
   };
   auto result = gen.ShortestPath(start, goal, canMove);
@@ -93,7 +93,7 @@ TEST_CASE("PathGenerator ShortestPath finds path around obstacle",
   Point goal{10.0, 0.0};
 
   // Block direct path at x=5
-  auto canMove = [](const Point &p) {
+  auto canMove = [](const Point& p) {
     return !(p.getX() >= 4.5 && p.getX() <= 5.5 && p.getY() >= -1.0 &&
              p.getY() <= 1.0);
   };
@@ -147,13 +147,13 @@ TEST_CASE("PathGenerator AvoidancePath routes around avoid point",
   Point avoid{5.0, 0.0};
   double radius = 2.0;
 
-  auto canMove = [](const Point &) { return true; };
+  auto canMove = [](const Point&) { return true; };
   auto result = gen.AvoidancePath(start, goal, avoid, radius, canMove);
 
   REQUIRE(result.has_value());
 
   // Check that all points maintain distance from avoid point
-  for (const auto &p : result->pointsView()) {
+  for (const auto& p : result->pointsView()) {
     double dist = std::hypot(p.getX() - avoid.getX(), p.getY() - avoid.getY());
     if (dist < radius - 0.1) {
       // Allow small tolerance
@@ -170,7 +170,7 @@ TEST_CASE("PathGenerator AvoidancePath returns nullopt when impossible",
   Point avoid{5.0, 0.0};
   double radius = 20.0;  // Huge radius blocks everything
 
-  auto canMove = [](const Point &) { return true; };
+  auto canMove = [](const Point&) { return true; };
   auto result = gen.AvoidancePath(start, goal, avoid, radius, canMove);
 
   // Both start and goal are within the avoidance zone (dist=5 < radius=20)
@@ -182,7 +182,7 @@ TEST_CASE("PathGenerator RandomWalk at invalid start returns start only",
   PathGenerator gen;
   Point start{0.0, 0.0};
 
-  auto canMove = [](const Point &) { return false; };
+  auto canMove = [](const Point&) { return false; };
   auto result = gen.RandomWalk(start, 10, canMove);
 
   REQUIRE(result.size() == 1);
@@ -196,7 +196,7 @@ TEST_CASE("PathGenerator RandomWalk generates exploration path",
   Point start{0.0, 0.0};
   size_t steps = 10;
 
-  auto canMove = [](const Point &) { return true; };
+  auto canMove = [](const Point&) { return true; };
   auto result = gen.RandomWalk(start, steps, canMove);
 
   REQUIRE_FALSE(result.empty());
@@ -213,7 +213,7 @@ TEST_CASE("PathGenerator RandomWalk handles constrained movement",
   size_t steps = 10;
 
   // Only allow movement in small area
-  auto canMove = [](const Point &p) {
+  auto canMove = [](const Point& p) {
     return p.getX() >= -2.0 && p.getX() <= 2.0 && p.getY() >= -2.0 &&
            p.getY() <= 2.0;
   };
@@ -222,7 +222,7 @@ TEST_CASE("PathGenerator RandomWalk handles constrained movement",
 
   REQUIRE_FALSE(result.empty());
   // All points should be within bounds
-  for (const auto &p : result.pointsView()) {
+  for (const auto& p : result.pointsView()) {
     REQUIRE(p.getX() >= -2.1);
     REQUIRE(p.getX() <= 2.1);
     REQUIRE(p.getY() >= -2.1);
@@ -244,7 +244,7 @@ TEST_CASE("PathGenerator SpiralPath creates expanding pattern",
 
   // Check that distances from center increase
   double maxDist = 0.0;
-  for (const auto &p : result.pointsView()) {
+  for (const auto& p : result.pointsView()) {
     double dist =
         std::hypot(p.getX() - center.getX(), p.getY() - center.getY());
     REQUIRE(dist >= maxDist - 0.1);  // Allow small fluctuation
@@ -274,7 +274,7 @@ TEST_CASE("PathGenerator SetHeuristic changes distance calculation",
   PathGenerator gen;
 
   // Manhattan distance heuristic
-  auto manhattan = [](const Point &a, const Point &b) {
+  auto manhattan = [](const Point& a, const Point& b) {
     return std::abs(b.getX() - a.getX()) + std::abs(b.getY() - a.getY());
   };
 
@@ -282,7 +282,7 @@ TEST_CASE("PathGenerator SetHeuristic changes distance calculation",
 
   Point start{0.0, 0.0};
   Point goal{3.0, 4.0};
-  auto canMove = [](const Point &) { return true; };
+  auto canMove = [](const Point&) { return true; };
 
   auto result = gen.ShortestPath(start, goal, canMove);
   REQUIRE(result.has_value());
@@ -301,7 +301,7 @@ TEST_CASE("PathGenerator handles same start and goal", "[pathgenerator]") {
   Point start{5.0, 5.0};
   Point goal{5.0, 5.0};
 
-  auto canMove = [](const Point &) { return true; };
+  auto canMove = [](const Point&) { return true; };
   auto result = gen.ShortestPath(start, goal, canMove);
 
   REQUIRE(result.has_value());
@@ -318,7 +318,7 @@ TEST_CASE("PathGenerator works with different step sizes", "[pathgenerator]") {
 
   Point start{0.0, 0.0};
   Point goal{1.0, 0.0};
-  auto canMove = [](const Point &) { return true; };
+  auto canMove = [](const Point&) { return true; };
 
   auto result = gen.ShortestPath(start, goal, canMove);
 
@@ -334,7 +334,7 @@ TEST_CASE("PathGenerator EuclideanDistance computes correct distance",
   Point start{0.0, 0.0};
   Point goal{3.0, 4.0};
 
-  auto canMove = [](const Point &) { return true; };
+  auto canMove = [](const Point&) { return true; };
   auto result = gen.ShortestPath(start, goal, canMove);
 
   REQUIRE(result.has_value());
@@ -347,7 +347,7 @@ TEST_CASE("PathGenerator RandomWalk with zero steps returns start only",
   PathGenerator gen;
   Point start{3.0, 7.0};
 
-  auto canMove = [](const Point &) { return true; };
+  auto canMove = [](const Point&) { return true; };
   auto result = gen.RandomWalk(start, 0, canMove);
 
   REQUIRE(result.size() == 1);
@@ -378,7 +378,7 @@ TEST_CASE("PathGenerator SpiralPath with zero spacing stays at center",
 
   // All points should remain at center since r = spacing * angle / 2pi = 0
   REQUIRE_FALSE(result.empty());
-  for (const auto &p : result.pointsView()) {
+  for (const auto& p : result.pointsView()) {
     REQUIRE_THAT(p.getX(), Catch::Matchers::WithinAbs(center.getX(), 0.01));
     REQUIRE_THAT(p.getY(), Catch::Matchers::WithinAbs(center.getY(), 0.01));
   }
@@ -391,7 +391,7 @@ TEST_CASE("PathGenerator AvoidancePath with zero radius finds normal path",
   Point goal{5.0, 0.0};
   Point avoid{2.5, 0.0};
 
-  auto canMove = [](const Point &) { return true; };
+  auto canMove = [](const Point&) { return true; };
   auto result = gen.AvoidancePath(start, goal, avoid, 0.0, canMove);
 
   // radius=0 only excludes the exact avoid point, path should still be found
