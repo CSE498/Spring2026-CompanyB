@@ -159,7 +159,6 @@ void InfoGraph::DrawBarChart(const DataSeries& values,
 void InfoGraph::ClearData() {
   data_.clear();
   view_start_index_ = 0;
-  // Clear();
 }
 
 void InfoGraph::ScrollLeft() {

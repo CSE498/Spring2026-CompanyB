@@ -74,6 +74,7 @@ auto handle_sim_state = [](SimState next) {
             }
             count = 0;
             line_graph->ClearData();
+            line_graph->DrawLineChart(std::vector<double> {}, "Cleared");
             break;
     }
 };
