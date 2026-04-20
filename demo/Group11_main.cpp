@@ -6,15 +6,13 @@
 
 // Include the modules that we will be using.
 #include "Agents/ScriptedAgent.hpp"
-#include "Worlds/Group11DummyData.hpp"
-#include "Worlds/Group11TestWorld.hpp"
+#include "Worlds/ScriptingTestWorld.hpp"
 
 using namespace cse498;
 
 int main() {
-  Group11TestWorld world;
-  world.AddAgent<ScriptedAgent<Group11DummyData>>(
-      Group11DummyData(WorldPosition{3, 7}));
+  ScriptingTestWorld world;
+
 
   world.Run();
 }

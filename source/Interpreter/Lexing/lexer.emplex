@@ -1,0 +1,80 @@
+# This is an auto-generated Emplex configuration file.
+
+# Configuration settings (lines starting with ':' are config options)
+:out_filename lexer-gen.hpp
+:lexer_name Lexer
+:token_name Token
+:dfa_name DFA
+:inc_guards EMPLEX_LEXER_HPP_INCLUDE_
+:name_space emplex
+:use_token_lexemes 1
+:use_token_line_num 1
+:use_token_column 1
+
+# Token names and regular expressions
+# Keywords
+# Types
+KW_BOOL "bool"
+KW_INT "int"
+KW_DOUBLE "double"
+KW_STR "str"
+KW_POINT "point"
+KW_DIRECTION_T "direction"
+KW_CAR "car"
+KW_STUDENT "student"
+# Worlds
+KW_WORLD "world"
+KW_TRAFFIC "traffic"
+KW_INFECTION "infection"
+# Loop ctl
+KW_BREAK "break"
+KW_CONTINUE "continue"
+# Other keywords
+KW_LET "let"
+KW_INIT "init"
+KW_TURN "turn"
+KW_WHILE "while"
+KW_IF "if"
+KW_FN "fn"
+KW_RETURN "return"
+#KW_ELSE_IF "else if"
+KW_ELSE "else"
+KW_MOVE "move"
+# Delimiters
+DELIM_PAREN_OPEN "("
+DELIM_PAREN_CLOSE ")"
+DELIM_CLY_OPEN "{"
+DELIM_CLY_CLOSE "}"
+DELIM_SQR_OPEN "["
+DELIM_SQR_CLOSE "]"
+DELIM_SEMICLN ";"
+DELIM_CLN ":"
+DELIM_COMMA ","
+# Operators
+# Keep OP_MINUS as the first and OP_ADD as the last
+OP_MINUS "-"
+OP_LNOT "!"
+OP_MULT "*"
+OP_DIVIDE "/"
+OP_REM "%"
+OP_ASSIGN "="
+CMP_EQ "=="
+CMP_NEQ "!="
+CMP_LT "<"
+CMP_LEQ "<="
+CMP_GT ">"
+CMP_GEQ ">="
+OP_ADD "+"
+# Literals
+LITERAL_DBL ([0-9]*\.[0-9]+)|([0-9]+\.)
+LITERAL_INT [0-9]*
+LITERAL_STR (\"([^"\n]|\\["nt])*\")|('([^'\n]|\\['nt])**')
+LITERAL_DIR (left)|(right)|(up)|(down)
+LITERAL_BOOL (true)|(false)
+# Magic values
+MAGIC_VAL __[a-zA-Z0-9_]+__
+ILLEGAL_STRING (\"([^"\n]|\\\")*$)|('([^'\n]|\\')*$)
+# Identifier
+IDENTIFIER [a-zA-Z][a-zA-Z0-9_]*
+-WHITESPACE \s
+-COMMENT "//".*

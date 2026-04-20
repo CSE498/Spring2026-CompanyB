@@ -2,10 +2,10 @@
 
 #include <stdlib.h>
 
+#include <sstream>
 #include <type_traits>
 #include <variant>
 
-#include "Worlds/Group11DummyData.hpp"
 #include "AgentData.hpp"
 
 namespace Concepts {
@@ -42,7 +42,12 @@ concept UniqueTypes = all_unique<Ts...>();
  * after discussing with both world groups
  */
 template <typename T>
-concept IsDataClass = IsOneOf<T, cse498::Group11DummyData, cse498::TrafficData, cse498::DiseaseData>;
+concept IsDataClass = IsOneOf<T, cse498::TrafficData, cse498::DiseaseData>;
+
+/** @brief Requires given type to have operator<<(std::stringstream&) defined.
+ */
+template <typename T>
+concept Printable = requires(T t) { std::stringstream() << t; };
 
 }  // namespace Concepts
 
@@ -61,12 +66,11 @@ namespace StaticUtil {
  * @return size_t
  */
 
-template <typename... VariantTypes, std::variant<VariantTypes...> Variant,
-          typename TargetType, size_t idx = 0>
-  requires Concepts::UniqueTypes<VariantTypes...>
+template <typename Variant, typename TargetType, size_t idx = 0>
+  requires requires(Variant v) { std::variant_size_v<Variant>; }
 constexpr size_t variant_index() {
-  if constexpr (std::is_same_v<TargetType, std::variant_alternative_t<
-                                               idx, decltype(Variant)>>) {
+  if constexpr (std::is_same_v<TargetType,
+                               std::variant_alternative_t<idx, Variant>>) {
     return idx;
   } else {
     return variant_index<Variant, TargetType, idx + 1>();

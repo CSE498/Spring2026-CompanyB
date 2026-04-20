@@ -36,7 +36,7 @@ struct StepErr {
 
   StepErr() = delete;
   StepErr(Kind in_kind) : kind(in_kind), msg("") {};
-  StepErr(Kind in_kind, std::string const &in_msg)
+  StepErr(Kind in_kind, std::string const& in_msg)
       : kind(in_kind), msg(in_msg) {};
 };
 
@@ -113,7 +113,7 @@ struct InfoStep {
   InfoStep(Aspect in_aspect, WorldPosition in_pos)
       : aspect(in_aspect), target(in_pos) {};
 
-  bool operator==(InfoStep const &other) const {
+  bool operator==(InfoStep const& other) const {
     return (other.aspect == aspect) && (other.target == target);
   }
 };
@@ -121,7 +121,7 @@ struct InfoStep {
 struct ConditionalStep {
   InfoHandler condition;
 
-  bool operator==([[maybe_unused]] ConditionalStep const &other) const {
+  bool operator==([[maybe_unused]] ConditionalStep const& other) const {
     // TODO: Decide how to compare functors
     return true;
   }
@@ -129,7 +129,7 @@ struct ConditionalStep {
 
 struct ReconStep {
   // TODO (probably gonna scrap)
-  bool operator==([[maybe_unused]] ReconStep const &other) const {
+  bool operator==([[maybe_unused]] ReconStep const& other) const {
     return false;
   }
 };
@@ -156,7 +156,7 @@ struct StepContainer {
     Node() : step({}), next(nullptr), left(nullptr), right(nullptr) {}
 
     template <StepKind S>
-    Node(S &&s)
+    Node(S&& s)
         : step(std::move(s)), next(nullptr), left(nullptr), right(nullptr) {}
   };
 
