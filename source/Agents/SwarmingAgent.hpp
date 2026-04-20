@@ -113,6 +113,13 @@ class SwarmingAgent : public StepAgentBase<SwarmData> {
    * @param exclude Optional neighbor to ignore.
    * @return Best neighboring cell by Manhattan distance.
    */
+  // Picks the neighbor with the smallest Manhattan distance to `target`,
+  // preferring cells not in `recent_positions` so the agent naturally
+  // routes around walls and dead ends rather than pounding the same cell.
+  // If `exclude` is set, that cell is skipped (used to find a distinct
+  // "second choice" after already picking a primary). If every neighbor is
+  // in recent history, we fall back to the closest cell overall so the
+  // agent keeps swarming instead of freezing.
   WorldPosition best_neighbor(WorldPosition const& pos,
                               WorldPosition const& target,
                               std::optional<WorldPosition> exclude) {

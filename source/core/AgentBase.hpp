@@ -1,32 +1,14 @@
-/**
- * This file is part of the Fall 2026, CSE 498, section 2, course project.
- * @brief A base class interface for all agent types.
- * @note Status: PROPOSAL
- **/
-
 #pragma once
 
-#include <cassert>
-#include <string>
-#include <unordered_map>
-
-#include "Entity.hpp"
-#include "ItemBase.hpp"
-#include "Location.hpp"
-#include "WorldGrid.hpp"
+#include "Step.hpp"
 
 namespace cse498 {
+using cse498::steps::StepContainer;
 
-class AgentBase : public Entity {
+template <typename DataClass>
+class AgentBase {
  protected:
-  /// A map of names to IDs for each available action
-  std::unordered_map<std::string, size_t> action_map;
-
-  /// Action results are a 0 for failure); Success is any non-zero value,
-  /// which may provide more info about the type of success.
-  int action_result = 1;
-
-  char symbol = '*';
+  DataClass m_Data;
 
  public:
   AgentBase(size_t id, const std::string& name, const WorldBase& world)
@@ -108,4 +90,4 @@ class AgentBase : public Entity {
                       const std::string& /*msg_type*/ = "none") {}
 };
 
-}  // End of namespace cse498
+};  // namespace cse498
