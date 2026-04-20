@@ -431,7 +431,6 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
     }
     StepContainer steps = agent->GetTurn();
     StepVisitor visitor{*agent, steps, *this};
-    WorldPosition prev_position = agent->GetState().position;
     while (!steps.exhausted()) {
       std::expected<Step, StepErr> step = steps.get_next();
       if (!step.has_value()) {
