@@ -5,6 +5,7 @@
 #include <fstream>
 #include <functional>
 #include <iostream>
+#include <ranges>
 #include <sstream>
 #include <string>
 #include <utility>
@@ -86,15 +87,18 @@ class DataFileManager {
     std::ofstream file(path);
     if (!file.is_open()) return false;
 
-    for (size_t i = 0; i < m_columnNames.size(); ++i) {
-      file << m_columnNames[i] << (i == m_columnNames.size() - 1 ? "" : ",");
+    // Uses ranges for clearer looping
+    for (const auto& [i, name] : std::views::enumerate(m_columnNames)) {
+      file << name
+           << (static_cast<size_t>(i) == m_columnNames.size() - 1 ? "" : ",");
     }
     file << "\n";
 
     // Write Data Rows from 2D Table
     for (const auto& row : m_table) {
-      for (size_t i = 0; i < row.size(); ++i) {
-        file << row[i] << (i == row.size() - 1 ? "" : ",");
+      // Uses ranges for clearer looping
+      for (const auto& [i, value] : std::views::enumerate(row)) {
+        file << value << (static_cast<size_t>(i) == row.size() - 1 ? "" : ",");
       }
       file << "\n";
     }

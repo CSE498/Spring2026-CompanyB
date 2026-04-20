@@ -53,4 +53,9 @@
 .idea
 
 # Generated docs from Doxygen
-/docs
+/docs/html/
+/docs/latex/
+/docs/xml/
+/docs/man/
+/docs/rtf/
+/docs/generated/
