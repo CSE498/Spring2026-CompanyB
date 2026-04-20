@@ -51,7 +51,7 @@ Parser::parse(std::istream &in) {
             !std::holds_alternative<int>(args.at(1)))
           return RuntimeErr(RuntimeErr::TYPE_MISMATCH);
 
-        return Point{std::get<int>(args.at(0)), std::get<int>(args.at(1))};
+        return PointTy{std::get<int>(args.at(0)), std::get<int>(args.at(1))};
       });
   FuncSym preload_getx(
       [](std::vector<Type> &&args) -> std::expected<Type, InterpErr> {
@@ -61,10 +61,10 @@ Parser::parse(std::istream &in) {
         else if (args.size() > 1)
           return RuntimeErr(RuntimeErr::TOO_MANY_ARGS);
 
-        if (!std::holds_alternative<Point>(args.at(0)))
+        if (!std::holds_alternative<PointTy>(args.at(0)))
           return RuntimeErr(RuntimeErr::TYPE_MISMATCH, "get_x got wrong type");
 
-        return static_cast<int>(std::get<Point>(args.at(0)).X());
+        return static_cast<int>(std::get<PointTy>(args.at(0)).X());
       });
   FuncSym preload_gety(
       [](std::vector<Type> &&args) -> std::expected<Type, InterpErr> {
@@ -74,10 +74,10 @@ Parser::parse(std::istream &in) {
         else if (args.size() > 1)
           return RuntimeErr(RuntimeErr::TOO_MANY_ARGS);
 
-        if (!std::holds_alternative<Point>(args.at(0)))
+        if (!std::holds_alternative<PointTy>(args.at(0)))
           return RuntimeErr(RuntimeErr::TYPE_MISMATCH, "get_y got wrong type");
 
-        return static_cast<int>(std::get<Point>(args.at(0)).Y());
+        return static_cast<int>(std::get<PointTy>(args.at(0)).Y());
       });
 
   TRY(m_Syms.AddSym("preload_addone", std::move(preload_addone)));

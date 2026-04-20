@@ -17,7 +17,7 @@ struct EmptyDataclass {};
 using namespace cse498;
 using namespace agentlang::Types;
 using DirectionType = agentlang::Types::Dir;
-using TypeTuple = std::tuple<bool, int, double, str, Point, DirectionType>;
+using TypeTuple = std::tuple<bool, int, double, str, PointTy, DirectionType>;
 
 using EvalRet = std::expected<Type, InterpErr>;
 using namespace matchers;

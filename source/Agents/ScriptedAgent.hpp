@@ -161,7 +161,7 @@ class ScriptedAgent : public StepAgentBase<DataClass> {
       switch (m.m_Value) {
         case Value::DESTINATION: {
           // Ensure val_result is a point
-          if (!std::holds_alternative<Point>(val_result))
+          if (!std::holds_alternative<PointTy>(val_result))
             return RuntimeErr(
                 RuntimeErr::TYPE_MISMATCH,
                 std::format("Attempted to set magic value "
@@ -170,7 +170,7 @@ class ScriptedAgent : public StepAgentBase<DataClass> {
 
           auto data = mAgentBase.GetState();
 
-          data.destination = std::get<Point>(val_result);
+          data.destination = std::get<PointTy>(val_result);
 
           mAgentBase.SetState(data);
 
@@ -179,7 +179,7 @@ class ScriptedAgent : public StepAgentBase<DataClass> {
           break;
         }
         case Value::SPAWN: {
-          if (!std::holds_alternative<Point>(val_result))
+          if (!std::holds_alternative<PointTy>(val_result))
             return RuntimeErr(RuntimeErr::TYPE_MISMATCH,
                               std::format("Attempted to set magic value "
                                           "__spawn__ to non-point type '{}'",
@@ -189,7 +189,7 @@ class ScriptedAgent : public StepAgentBase<DataClass> {
                               std::format("Attempted to set magic value "
                                           "__spawn__ outside of init"));
           auto data = mAgentBase.GetState();
-          data.position = std::get<Point>(val_result);
+          data.position = std::get<PointTy>(val_result);
           mAgentBase.SetState(data);
           break;
         }
