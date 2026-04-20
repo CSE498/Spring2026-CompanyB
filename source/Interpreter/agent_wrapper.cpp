@@ -1,5 +1,6 @@
 #include "Agents/ScriptedAgent.hpp"
 #include "Interpreter/agentlang.hpp"
+#include "Interpreter/ast.hpp"
 #include "core/AgentData.hpp"
 
 namespace cse498 {
@@ -36,7 +37,6 @@ std::expected<Type, InterpErr> AgentWrapper::Visit(AST::Assign &node) {
 }
 
 std::expected<Type, InterpErr> AgentWrapper::Visit(AST::StmtAgentDef &node) {
-
   return templ_visit(*this, node);
 }
 
@@ -55,12 +55,21 @@ std::expected<Type, InterpErr> AgentWrapper::Visit(AST::StmtLoopCtl &node) {
 }
 
 std::expected<Type, InterpErr> AgentWrapper::Visit(AST::StmtIf &node) {
+  return templ_visit(*this, node);
+}
 
+std::expected<Type, InterpErr> AgentWrapper::Visit(AST::StmtReturn &node) {
   return templ_visit(*this, node);
 }
 
 std::expected<Type, InterpErr> AgentWrapper::Visit(AST::ValLiteral &node) {
+  return templ_visit(*this, node);
+}
 
+std::expected<Type, InterpErr> AgentWrapper::Visit(AST::StmtFunc &node) {
+  return templ_visit(*this, node);
+}
+std::expected<Type, InterpErr> AgentWrapper::Visit(AST::StmtFuncCall &node) {
   return templ_visit(*this, node);
 }
 

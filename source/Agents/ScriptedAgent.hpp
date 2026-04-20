@@ -47,6 +47,9 @@ struct AgentWrapper {
   std::expected<Type, InterpErr> Visit(AST::StmtWhile &);
   std::expected<Type, InterpErr> Visit(AST::StmtLoopCtl &);
   std::expected<Type, InterpErr> Visit(AST::StmtIf &);
+  std::expected<Type, InterpErr> Visit(AST::StmtReturn &);
+  std::expected<Type, InterpErr> Visit(AST::StmtFuncCall &);
+  std::expected<Type, InterpErr> Visit(AST::StmtFunc &);
   std::expected<Type, InterpErr> Visit(AST::ValLiteral &);
   std::expected<Type, InterpErr> Visit(AST::ValVariable &);
 
@@ -136,7 +139,7 @@ public:
                         TypeVariantToName(val_result),
                         TypeVariantToName(v.m_Type)));
 
-      mSymPtr->sym = val_result;
+      mSymPtr->sym = VarSym(val_result);
       return val_result;
     }
 
@@ -159,6 +162,7 @@ public:
         auto data = mAgentBase.GetState();
         data.position = std::get<Point>(val_result);
         mAgentBase.SetState(data);
+        break;
       }
       default:
         return RuntimeErr(RuntimeErr::MAGIC_ERR,
@@ -363,6 +367,58 @@ public:
     }
 
     return NullType{};
+  }
+  std::expected<Type, InterpErr> Visit(AST::StmtFunc &node) {
+    return RuntimeErr(RuntimeErr::IMPOSSIBLE_STATE,
+                      "Function definition node was visited");
+  }
+  std::expected<Type, InterpErr> Visit(AST::StmtReturn &node) {
+    TRY_DECL(retval, node.m_Value->Accept(*mAgentWrapper));
+    mCurrentRetval = retval;
+    return LoopControlErr(LoopControlErr::RETURN);
+  }
+  std::expected<Type, InterpErr> Visit(AST::StmtFuncCall &node) {
+    if (!node.m_Body.has_value())
+      return RuntimeErr(RuntimeErr::UNRESOLVED_FUNCTION,
+                        "Function has lingering unresolved call");
+
+    if (!std::holds_alternative<FuncSym>(node.m_Symbol->sym))
+      return RuntimeErr(RuntimeErr::UNRESOLVED_FUNCTION,
+                        "Function has invalid symbol");
+
+    FuncSym f = std::get<FuncSym>(node.m_Symbol->sym);
+
+    if (f.m_Params.size() < node.m_Args.size())
+      return RuntimeErr(RuntimeErr::TOO_FEW_ARGS);
+
+    else if (f.m_Params.size() > node.m_Args.size())
+      return RuntimeErr(RuntimeErr::TOO_MANY_ARGS);
+
+    // Set args
+    for (auto [index, arg] : std::views::enumerate(node.m_Args)) {
+      auto &param = f.m_Params.at(index);
+      if (!std::holds_alternative<VarSym>(param->sym))
+        return RuntimeErr(RuntimeErr::IMPOSSIBLE_STATE,
+                          "Function parameter has non-variable symbol type");
+
+      TRY(arg->Accept(*mAgentWrapper));
+    }
+
+    // RIGHT HERE
+    std::expected<Type, InterpErr> func_res =
+        node.m_Body.value()->Accept(*mAgentWrapper);
+
+    if (!func_res.has_value() &&
+        (func_res.error().Is<LoopControlErr>(LoopControlErr::RETURN))) {
+      assert(mCurrentRetval.has_value());
+      auto retval_tmp = mCurrentRetval.value();
+      mCurrentRetval = {};
+      return retval_tmp;
+    } else if (!func_res.has_value()) {
+      return func_res.error();
+    } else {
+      return RuntimeErr(RuntimeErr::MISSING_RETURN);
+    }
   }
   std::expected<Type, InterpErr> Visit(AST::ValLiteral &node) {
     return node.m_Val;
