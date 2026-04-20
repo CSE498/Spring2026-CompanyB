@@ -69,6 +69,9 @@ class MainWindow : public QMainWindow {
   void startSimulation();
   void onTick();
 
+  // Replay control
+  void onReplayToggle();
+
   // Timer
   QTimer* mTimer = nullptr;
   int mTickInterval = 300;
@@ -109,6 +112,10 @@ class MainWindow : public QMainWindow {
   // Command Log
   QTextEdit* mCommandLog;
   QVBoxLayout* mSidePanelLayout;
+
+  // Replay control
+  QAction* mReplayToggleAction;
+  bool mIsRunning = true;
 };
 
 }  // namespace cse498
