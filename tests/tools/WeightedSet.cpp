@@ -329,6 +329,35 @@ TEST_CASE("WeightedSet deletion", "[weighted_set]") {
   }
 }
 
+TEST_CASE("WeightedSet clear", "[weighted_set]") {
+  cse498::WeightedSet<int> ws;
+  FillSetWithInts(ws, 1, 3, true);
+
+  CHECK(ws.total_weight() == 6.0);
+
+  CHECK(ws.Contains(1));
+  CHECK(ws.Contains(2));
+  CHECK(ws.Contains(3));
+
+  ws.Clear();
+
+  CHECK(ws.total_weight() == 0);
+
+  CHECK_FALSE(ws.Contains(1));
+  CHECK_FALSE(ws.Contains(2));
+  CHECK_FALSE(ws.Contains(3));
+
+  // just to make sure that clearing the set leaves it in a valid state
+  // where we can go on to add more elements
+  FillSetWithInts(ws, 1, 3, true);
+
+  CHECK(ws.total_weight() == 6.0);
+
+  CHECK(ws.Contains(1));
+  CHECK(ws.Contains(2));
+  CHECK(ws.Contains(3));
+}
+
 // Written by Claude
 TEST_CASE("WeightedSet random selection frequencies", "[weighted_set]") {
   cse498::WeightedSet<int> ws;
