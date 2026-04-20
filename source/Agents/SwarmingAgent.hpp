@@ -30,8 +30,8 @@ concept IsSwarmData = Concepts::IsOneOf<T, TrafficData, DiseaseData>;
  *
  * For TrafficData, the agent approaches its optional destination while avoiding
  * immediate backtracking through a short position history. For DiseaseData, it
- * emits random neighboring movement steps and leaves infection state transitions
- * to InfectiousWorld.
+ * emits random neighboring movement steps and leaves infection state
+ * transitions to InfectiousWorld.
  *
  * @tparam SwarmData Either TrafficData or DiseaseData.
  */
@@ -177,7 +177,8 @@ class SwarmingAgent : public StepAgentBase<SwarmData> {
    * @return StepContainer for the traffic world.
    */
   [[nodiscard]] StepContainer TrafficGetTurn()
-      requires(std::is_same_v<SwarmData, TrafficData>) {
+    requires(std::is_same_v<SwarmData, TrafficData>)
+  {
     StepContainer container{};
 
     if (!this->mData.is_active) {
@@ -225,7 +226,7 @@ class SwarmingAgent : public StepAgentBase<SwarmData> {
         [](bool is_available) -> std::expected<bool, cse498::steps::StepErr> {
           return is_available;
         })};
-        
+
     container.add_step(std::move(query), std::move(is_open),
                        cse498::steps::MovementStep{primary},
                        cse498::steps::MovementStep{backup});
@@ -241,7 +242,8 @@ class SwarmingAgent : public StepAgentBase<SwarmData> {
    * @return StepContainer containing one random MovementStep.
    */
   [[nodiscard]] StepContainer InfectionGetTurn()
-      requires(std::is_same_v<SwarmData, DiseaseData>) {
+    requires(std::is_same_v<SwarmData, DiseaseData>)
+  {
     // Behavior in each state:
     // SUSCEPTIBLE:
     // Move randomly
@@ -277,7 +279,8 @@ class SwarmingAgent : public StepAgentBase<SwarmData> {
    * @param swarm_away true to flee from the goal, false to approach it.
    */
   void SetSwarmAway(bool swarm_away)
-      requires(std::is_same_v<SwarmData, TrafficData>) {
+    requires(std::is_same_v<SwarmData, TrafficData>)
+  {
     auto state = this->GetState();
     state.swarm_away = swarm_away;
     this->SetState(state);
@@ -288,7 +291,8 @@ class SwarmingAgent : public StepAgentBase<SwarmData> {
    * @param active true if the agent should emit movement steps.
    */
   void SetActive(bool active)
-      requires(std::is_same_v<SwarmData, TrafficData>) {
+    requires(std::is_same_v<SwarmData, TrafficData>)
+  {
     auto state = this->GetState();
     state.is_active = active;
     this->SetState(state);

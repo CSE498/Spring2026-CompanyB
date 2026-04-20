@@ -40,7 +40,7 @@ class StepPacingAgent : public StepAgentBase<DiseaseData> {
 
   /// Cached BFS result and cursor.
   std::vector<WorldPosition> m_bfs_path;
-  size_t                     m_bfs_idx{0};
+  size_t m_bfs_idx{0};
 
   /// Destination the current path was computed for.
   WorldPosition m_bfs_target{};
@@ -51,21 +51,19 @@ class StepPacingAgent : public StepAgentBase<DiseaseData> {
   /// True while we are navigating via BFS (cleared when pacing resumes).
   bool m_bfs_active{false};
 
-
-
   /// Compact a WorldPosition into a single integer for use as a map key.
   [[nodiscard]] static size_t encode(WorldPosition p) noexcept {
     return (static_cast<size_t>(p.CellX()) << 16) |
-            static_cast<size_t>(p.CellY());
+           static_cast<size_t>(p.CellY());
   }
 
   /// BFS from @p start to @p goal using m_passable as the walkability test.
-  [[nodiscard]] std::vector<WorldPosition>
-  ComputeBFS(WorldPosition start, WorldPosition goal) const {
+  [[nodiscard]] std::vector<WorldPosition> ComputeBFS(
+      WorldPosition start, WorldPosition goal) const {
     if (start == goal || !m_passable) return {};
 
-    std::queue<WorldPosition>                  frontier;
-    std::unordered_map<size_t, WorldPosition>  came_from;
+    std::queue<WorldPosition> frontier;
+    std::unordered_map<size_t, WorldPosition> came_from;
 
     frontier.push(start);
     came_from[encode(start)] = start;
@@ -102,8 +100,14 @@ class StepPacingAgent : public StepAgentBase<DiseaseData> {
       : StepAgentBase<DiseaseData>(data, id) {}
   ~StepPacingAgent() override = default;
 
-  StepPacingAgent& SetHorizontal() { vertical = false; return *this; }
-  StepPacingAgent& SetVertical()   { vertical = true;  return *this; }
+  StepPacingAgent& SetHorizontal() {
+    vertical = false;
+    return *this;
+  }
+  StepPacingAgent& SetVertical() {
+    vertical = true;
+    return *this;
+  }
 
   /// Supply the walkability predicate used by the BFS.  Must be called once
   /// after the agent is added to the world (before the simulation starts).
@@ -125,22 +129,20 @@ class StepPacingAgent : public StepAgentBase<DiseaseData> {
     if (mData.destination.has_value() &&
         (mData.health == HealthState::INFECTED ||
          mData.health == HealthState::RECOVERED)) {
-
       WorldPosition dest = mData.destination.value();
 
       // Conditions that require a fresh BFS computation:
       //   1. First time in BFS mode or destination changed.
       //   2. Path has been fully consumed.
       //   3. Our last submitted step was blocked (agent didn't advance).
-      bool dest_changed   = !m_bfs_active || !(m_bfs_target == dest);
+      bool dest_changed = !m_bfs_active || !(m_bfs_target == dest);
       bool path_exhausted = (m_bfs_idx >= m_bfs_path.size());
-      bool step_blocked   =  m_bfs_active &&
-                             (m_bfs_idx > 0) &&
-                             !(pos == m_bfs_last_step);
+      bool step_blocked =
+          m_bfs_active && (m_bfs_idx > 0) && !(pos == m_bfs_last_step);
 
       if (dest_changed || path_exhausted || step_blocked) {
-        m_bfs_path   = ComputeBFS(pos, dest);
-        m_bfs_idx    = 0;
+        m_bfs_path = ComputeBFS(pos, dest);
+        m_bfs_idx = 0;
         m_bfs_target = dest;
         m_bfs_active = true;
       }
@@ -157,7 +159,6 @@ class StepPacingAgent : public StepAgentBase<DiseaseData> {
       return StepContainer{};
     }
 
-    
     m_bfs_active = false;  // reset so BFS re-initialises next infection
 
     // If our last move was blocked (position unchanged), flip direction.
@@ -165,9 +166,8 @@ class StepPacingAgent : public StepAgentBase<DiseaseData> {
       reverse = !reverse;
     }
 
-    WorldPosition target =
-        vertical ? (reverse ? pos.Up() : pos.Down())
-                 : (reverse ? pos.Left() : pos.Right());
+    WorldPosition target = vertical ? (reverse ? pos.Up() : pos.Down())
+                                    : (reverse ? pos.Left() : pos.Right());
 
     last_target = target;
 

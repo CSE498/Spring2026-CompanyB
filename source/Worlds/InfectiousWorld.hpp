@@ -39,8 +39,8 @@ namespace cse498 {
  *
  * The world owns a grid, a set of StepAgentBase<DiseaseData> agents, optional
  * quarantine/treatment zones, and infection parameters. Each UpdateWorld() tick
- * advances health timers, applies proximity-based infection spread, and notifies
- * an optional observer.
+ * advances health timers, applies proximity-based infection spread, and
+ * notifies an optional observer.
  */
 class InfectiousWorld : public SimWorldBase<DiseaseData> {
   using Base = SimWorldBase<DiseaseData>;
@@ -120,9 +120,8 @@ class InfectiousWorld : public SimWorldBase<DiseaseData> {
     size_t idx = agent.GetId();
     Surface::ShapeID sid =
         surface.AddCircle(Circle(PosToPoint(agent.GetState().position), 0.0));
-   
-    if (idx >= agent_surface_ids.size())
-      agent_surface_ids.resize(idx + 1);
+
+    if (idx >= agent_surface_ids.size()) agent_surface_ids.resize(idx + 1);
     agent_surface_ids[idx] = sid;
     surface_to_agent_idx[sid] = idx;
   }
@@ -145,8 +144,8 @@ class InfectiousWorld : public SimWorldBase<DiseaseData> {
    * @brief Apply proximity-based infection spread for the current tick.
    *
    * Agent circles are first synchronized to their current grid positions.
-   * Infected agents then query nearby surface entries and may infect susceptible
-   * agents within infection_radius according to transmission_rate.
+   * Infected agents then query nearby surface entries and may infect
+   * susceptible agents within infection_radius according to transmission_rate.
    */
   void SpreadInfection() {
     // Sync every agent's registered circle to its current position
@@ -165,8 +164,8 @@ class InfectiousWorld : public SimWorldBase<DiseaseData> {
 
       // QueryRadius returns ShapeIDs of all shapes within infection_radius.
       // This includes quarantine box IDs and other agents — filter both.
-      auto nearby = surface.QueryRadius(
-          PosToPoint(src.position), infection_radius);
+      auto nearby =
+          surface.QueryRadius(PosToPoint(src.position), infection_radius);
 
       for (Surface::ShapeID sid : nearby) {
         if (quarantine_surface_ids.contains(sid)) continue;  // skip zone shapes
@@ -185,8 +184,8 @@ class InfectiousWorld : public SimWorldBase<DiseaseData> {
 
     for (size_t id : newly_infected) {
       DiseaseData state = agent_set[id]->GetState();
-      state.health           = HealthState::INFECTED;
-      state.ticks_in_state   = 0;
+      state.health = HealthState::INFECTED;
+      state.ticks_in_state = 0;
       state.quarantine_ticks = 0;
       if (has_clinic) state.destination = clinic_entrance;
       agent_set[id]->SetState(state);
@@ -208,20 +207,20 @@ class InfectiousWorld : public SimWorldBase<DiseaseData> {
           // Count time specifically inside the clinic zone.
           state.quarantine_ticks++;
           if (state.quarantine_ticks >= treatment_duration) {
-            state.health           = HealthState::RECOVERED;
-            state.ticks_in_state   = 0;
+            state.health = HealthState::RECOVERED;
+            state.ticks_in_state = 0;
             state.quarantine_ticks = 0;
-            state.destination = has_recovery_exit
-                                    ? std::optional<WorldPosition>{recovery_exit}
-                                    : std::optional<WorldPosition>{};
+            state.destination =
+                has_recovery_exit ? std::optional<WorldPosition>{recovery_exit}
+                                  : std::optional<WorldPosition>{};
           }
         } else if (fallback_recovery_ticks > 0 &&
                    state.ticks_in_state >= fallback_recovery_ticks) {
           // Fallback: agent never reached Olin — recover in place.
-          state.health           = HealthState::RECOVERED;
-          state.ticks_in_state   = 0;
+          state.health = HealthState::RECOVERED;
+          state.ticks_in_state = 0;
           state.quarantine_ticks = 0;
-          state.destination      = {};
+          state.destination = {};
         }
 
       } else if (state.health == HealthState::RECOVERED) {
@@ -234,7 +233,7 @@ class InfectiousWorld : public SimWorldBase<DiseaseData> {
         if (immunity_duration > 0) {
           state.ticks_in_state++;
           if (state.ticks_in_state >= immunity_duration) {
-            state.health         = HealthState::SUSCEPTIBLE;
+            state.health = HealthState::SUSCEPTIBLE;
             state.ticks_in_state = 0;
           }
         }
@@ -311,11 +310,8 @@ class InfectiousWorld : public SimWorldBase<DiseaseData> {
                   IsInQuarantine(old_pos) && !IsInQuarantine(new_pos);
               bool exit_blocked =
                   leaving_qtn && (state.health == HealthState::INFECTED);
-              if (main_grid.IsValid(new_pos) &&
-                  main_grid[new_pos] != wall_id &&
-                  !entry_blocked &&
-                  !exit_blocked &&
-                  !cell_occupied(new_pos)) {
+              if (main_grid.IsValid(new_pos) && main_grid[new_pos] != wall_id &&
+                  !entry_blocked && !exit_blocked && !cell_occupied(new_pos)) {
                 state.position = new_pos;
               }
             } else if constexpr (std::is_same_v<S, InfoStep>) {
@@ -331,10 +327,8 @@ class InfectiousWorld : public SimWorldBase<DiseaseData> {
                 bool exit_blocked =
                     leaving_qtn && (state.health == HealthState::INFECTED);
                 bool avail = main_grid.IsValid(target) &&
-                             main_grid[target] != wall_id &&
-                             !entry_blocked &&
-                             !exit_blocked &&
-                             !cell_occupied(target);
+                             main_grid[target] != wall_id && !entry_blocked &&
+                             !exit_blocked && !cell_occupied(target);
                 turn.inform(avail);
               }
             }
@@ -350,8 +344,8 @@ class InfectiousWorld : public SimWorldBase<DiseaseData> {
    * @brief Advance the infectious world by one tick.
    *
    * Timers run before spread so agents infected during this tick keep
-   * ticks_in_state == 0 until the next UpdateWorld() call. The optional observer
-   * is called after health and spread updates finish.
+   * ticks_in_state == 0 until the next UpdateWorld() call. The optional
+   * observer is called after health and spread updates finish.
    */
   void UpdateWorld() override {
     tick_count++;
@@ -364,7 +358,8 @@ class InfectiousWorld : public SimWorldBase<DiseaseData> {
    * @brief Register a callback invoked at the end of every tick.
    * @param observer Function receiving this world after each UpdateWorld().
    */
-  void RegisterTickObserver(std::function<void(const InfectiousWorld&)> observer) {
+  void RegisterTickObserver(
+      std::function<void(const InfectiousWorld&)> observer) {
     tick_observer = std::move(observer);
   }
 
@@ -377,8 +372,8 @@ class InfectiousWorld : public SimWorldBase<DiseaseData> {
     if (id >= agent_set.size())
       throw std::out_of_range("InfectAgent: agent id out of range");
     DiseaseData state = agent_set[id]->GetState();
-    state.health           = HealthState::INFECTED;
-    state.ticks_in_state   = 0;
+    state.health = HealthState::INFECTED;
+    state.ticks_in_state = 0;
     state.quarantine_ticks = 0;
     if (has_clinic) state.destination = clinic_entrance;
     agent_set[id]->SetState(state);
@@ -434,8 +429,8 @@ class InfectiousWorld : public SimWorldBase<DiseaseData> {
    * @return Number of agents in HealthState::INFECTED.
    */
   [[nodiscard]] size_t GetInfectedCount() const {
-    return static_cast<size_t>(std::ranges::count_if(
-        agent_set, [](const auto& ptr) {
+    return static_cast<size_t>(
+        std::ranges::count_if(agent_set, [](const auto& ptr) {
           return ptr->GetState().health == HealthState::INFECTED;
         }));
   }
@@ -445,8 +440,8 @@ class InfectiousWorld : public SimWorldBase<DiseaseData> {
    * @return Number of agents in HealthState::RECOVERED.
    */
   [[nodiscard]] size_t GetRecoveredCount() const {
-    return static_cast<size_t>(std::ranges::count_if(
-        agent_set, [](const auto& ptr) {
+    return static_cast<size_t>(
+        std::ranges::count_if(agent_set, [](const auto& ptr) {
           return ptr->GetState().health == HealthState::RECOVERED;
         }));
   }
@@ -456,8 +451,8 @@ class InfectiousWorld : public SimWorldBase<DiseaseData> {
    * @return Number of agents in HealthState::SUSCEPTIBLE.
    */
   [[nodiscard]] size_t GetSusceptibleCount() const {
-    return static_cast<size_t>(std::ranges::count_if(
-        agent_set, [](const auto& ptr) {
+    return static_cast<size_t>(
+        std::ranges::count_if(agent_set, [](const auto& ptr) {
           return ptr->GetState().health == HealthState::SUSCEPTIBLE;
         }));
   }
@@ -497,7 +492,9 @@ class InfectiousWorld : public SimWorldBase<DiseaseData> {
    * @brief Set fallback recovery delay for infected agents outside treatment.
    * @param ticks Number of infected ticks before recovery; zero disables it.
    */
-  void SetFallbackRecoveryTicks(size_t ticks) { fallback_recovery_ticks = ticks; }
+  void SetFallbackRecoveryTicks(size_t ticks) {
+    fallback_recovery_ticks = ticks;
+  }
 
   /**
    * @brief Configure the destination assigned to newly infected agents.

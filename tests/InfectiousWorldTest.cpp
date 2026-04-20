@@ -46,7 +46,8 @@ TEST_CASE("InfectiousWorld: InfectAgent updates state", "[InfectiousWorld]") {
   CHECK(world.GetSusceptibleCount() == 0);
 }
 
-TEST_CASE("InfectiousWorld: InfectAgent invalid id throws", "[InfectiousWorld]") {
+TEST_CASE("InfectiousWorld: InfectAgent invalid id throws",
+          "[InfectiousWorld]") {
   InfectiousWorld world(8, 6);
   CHECK_THROWS_AS(world.InfectAgent(0), std::out_of_range);
 }
@@ -75,7 +76,6 @@ TEST_CASE("InfectiousWorld: spread applies after timers for this tick",
 
 TEST_CASE("InfectiousWorld: newly spread infection clock starts next tick",
           "[InfectiousWorld]") {
-  
   InfectiousWorld world(6, 4);
   world.SetTransmissionRate(1.0);
   world.SetInfectionRadius(5.0);
@@ -95,9 +95,7 @@ TEST_CASE("InfectiousWorld: newly spread infection clock starts next tick",
   CHECK(world.GetAgentHealth(1) == HealthState::RECOVERED);
 }
 
-
 // Quarantine-zone (Olin) recovery
-
 
 TEST_CASE("InfectiousWorld: quarantine zone heals infected agents",
           "[InfectiousWorld]") {
@@ -119,8 +117,9 @@ TEST_CASE("InfectiousWorld: quarantine zone heals infected agents",
   CHECK(world.GetAgentHealth(0) == HealthState::RECOVERED);
 }
 
-TEST_CASE("InfectiousWorld: agent outside quarantine does not recover via treatment",
-          "[InfectiousWorld]") {
+TEST_CASE(
+    "InfectiousWorld: agent outside quarantine does not recover via treatment",
+    "[InfectiousWorld]") {
   InfectiousWorld world(10, 8);
   world.SetTreatmentDuration(2);
 
@@ -134,9 +133,7 @@ TEST_CASE("InfectiousWorld: agent outside quarantine does not recover via treatm
   CHECK(world.GetAgentHealth(0) == HealthState::INFECTED);
 }
 
-
 // Fallback recovery (swarming agents that miss Olin)
-
 
 TEST_CASE("InfectiousWorld: fallback recovery after N infection ticks",
           "[InfectiousWorld]") {
@@ -167,9 +164,7 @@ TEST_CASE("InfectiousWorld: fallback disabled by default (ticks = 0)",
   CHECK(world.GetAgentHealth(0) == HealthState::INFECTED);
 }
 
-
 // Immunity after recovery
-
 
 TEST_CASE("InfectiousWorld: immunity period after fallback recovery",
           "[InfectiousWorld]") {
@@ -212,7 +207,8 @@ TEST_CASE("InfectiousWorld: recovered agent can be re-infected after immunity",
   world.AddAgent<ScriptedAgent<DiseaseData>>(at(3, 2));  // target
   world.InfectAgent(0);
 
-  // Tick 1: patient zero ticks_in_state=1 (< 2, stays infected); spread infects agent 1.
+  // Tick 1: patient zero ticks_in_state=1 (< 2, stays infected); spread infects
+  // agent 1.
   world.UpdateWorld();
   REQUIRE(world.GetAgentHealth(1) == HealthState::INFECTED);
 
