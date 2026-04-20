@@ -5,7 +5,7 @@
     zoomAndPan="magnify"
     viewBox="0 0 750 749.999995"
     height="1000"
-    preserveAspectRatio="xMidYMid meet"
+    preserveAspectRatio="none"
     version="1.0"
 ><rect
         x="-75"

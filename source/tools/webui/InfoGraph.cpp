@@ -49,19 +49,19 @@ void InfoGraph::DrawAxes(double max_value, const std::string& title) {
   const double x1 = width - kRightMargin;
   const double y1 = kTopMargin;
 
-  SetPenColor({40, 40, 40});
+  SetPenColor({255, 255, 255});
   SetLineWidth(2.0);
   DrawLine({x0, y0}, {x1, y0});
   DrawLine({x0, y0}, {x0, y1});
 
   if (!title.empty()) {
-    SetFillColor({20, 20, 20});
+    SetFillColor({255, 255, 255});
     SetFont("18px Arial");
     DrawText(title, x0, 24);
   }
 
   SetFont("14px Arial");
-  SetFillColor({20, 20, 20});
+  SetFillColor({255, 255, 255});
   DrawText("0", 20, y0 + 5);
   DrawText(std::to_string(static_cast<int>(max_value)), 20, y1 + 5);
 
