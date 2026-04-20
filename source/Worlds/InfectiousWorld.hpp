@@ -229,13 +229,17 @@ class InfectiousWorld : public SimWorldBase<DiseaseData> {
             if constexpr (std::is_same_v<S, MovementStep>) {
               WorldPosition new_pos = step.loc;
               WorldPosition old_pos = state.position;
-              bool entering_qtn = !IsInQuarantine(old_pos) &&
-                                   IsInQuarantine(new_pos);
-              bool blocked = entering_qtn &&
-                             (state.health != HealthState::INFECTED);
+              // Non-infected agents cannot enter the quarantine zone.
+              bool entering_qtn  = !IsInQuarantine(old_pos) && IsInQuarantine(new_pos);
+              bool entry_blocked = entering_qtn && (state.health != HealthState::INFECTED);
+              // Any infected agent — scripted or swarming — cannot leave until
+              // treatment is complete (quarantine_ticks >= treatment_duration).
+              bool leaving_qtn  = IsInQuarantine(old_pos) && !IsInQuarantine(new_pos);
+              bool exit_blocked = leaving_qtn && (state.health == HealthState::INFECTED);
               if (main_grid.IsValid(new_pos) &&
                   main_grid[new_pos] != wall_id &&
-                  !blocked &&
+                  !entry_blocked &&
+                  !exit_blocked &&
                   !cell_occupied(new_pos)) {
                 state.position = new_pos;
               }
@@ -243,13 +247,14 @@ class InfectiousWorld : public SimWorldBase<DiseaseData> {
               // Respond to LOC_AVAIL queries so agents can use ConditionalSteps
               if (step.aspect == InfoStep::Aspect::LOC_AVAIL) {
                 WorldPosition target = step.target;
-                bool entering_qtn = !IsInQuarantine(state.position) &&
-                                     IsInQuarantine(target);
-                bool blocked = entering_qtn &&
-                               (state.health != HealthState::INFECTED);
+                bool entering_qtn  = !IsInQuarantine(state.position) && IsInQuarantine(target);
+                bool entry_blocked = entering_qtn && (state.health != HealthState::INFECTED);
+                bool leaving_qtn   = IsInQuarantine(state.position) && !IsInQuarantine(target);
+                bool exit_blocked  = leaving_qtn && (state.health == HealthState::INFECTED);
                 bool avail = main_grid.IsValid(target) &&
                              main_grid[target] != wall_id &&
-                             !blocked &&
+                             !entry_blocked &&
+                             !exit_blocked &&
                              !cell_occupied(target);
                 turn.inform(avail);
               }
