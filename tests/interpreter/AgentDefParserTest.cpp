@@ -3,163 +3,177 @@
  * @brief Tests for agent definition parsing (parse_agent_def).
  * @author Devansh Tayal
  */
+#include <array>
 #include <catch2/catch_test_macros.hpp>
+#include <expected>
+#include <sstream>
+#include <string>
+#include <string_view>
+#include <vector>
 
 #include "Interpreter/Parser.hpp"
 #include "Interpreter/ast.hpp"
 #include "Interpreter/errors.hpp"
-
 #include "interpreter-tests.hpp"
 
-#include <sstream>
-#include <string>
+using cse498::InterpErr;
+using cse498::ParseErr;
+using cse498::Parser;
+using cse498::AST::StmtAgentDef;
+using cse498::AST::StmtBlock;
 
-using namespace cse498;
-using namespace cse498::AST;
+using ParseResult =
+    std::expected<std::vector<std::unique_ptr<StmtAgentDef>>, InterpErr>;
 
-static std::pair<
-    Parser,
-    std::expected<std::vector<std::unique_ptr<StmtAgentDef>>, InterpErr>>
-parse(std::string const &script) {
+struct ParseOutput {
+  Parser parser;
+  ParseResult result;
+};
+
+static ParseOutput parse(std::string_view script) {
   Parser p;
-  std::istringstream ss(script);
+  std::istringstream ss{std::string(script)};
   auto result = p.parse(ss);
   return {std::move(p), std::move(result)};
 }
 
-const char *CAR_MISMATCH = R"V0G0N(
+static StmtAgentDef& require_one_agent_def(ParseResult& result) {
+  REQUIRE(result.has_value());
+  auto& defs = result.value();
+  REQUIRE(defs.size() == 1);
+  return *defs.front();
+}
+
+static void require_init_and_turn_blocks(StmtAgentDef& def) {
+  REQUIRE(dynamic_cast<StmtBlock*>(def.m_Init.get()) != nullptr);
+  REQUIRE(dynamic_cast<StmtBlock*>(def.m_Turn.get()) != nullptr);
+}
+
+constexpr std::string_view kStudentAgentInTrafficWorld = R"V0G0N(
 world traffic;
 let agent : student {
     init : { };
     turn : { };
 };
 )V0G0N";
-TEST_CASE("AgentDef: Car cannot be instantiated in infection",
-          "[parser][agent-def]") {
-  auto [p, result] = parse(std::string{CAR_MISMATCH});
 
-  CAPTURE(result);
-  REQUIRE_FALSE(result.has_value());
-  CHECK(result.error().Is<ParseErr>(ParseErr::WORLD_MISMATCH));
-}
-const char *STUDENT_MISMATCH = R"V0G0N(
+constexpr std::string_view kCarAgentInInfectionWorld = R"V0G0N(
 world infection;
 let agent : car {
     init : { };
     turn : { };
 };
 )V0G0N";
-TEST_CASE("AgentDef: Student cannot be instantiated in traffic",
-          "[parser][agent-def]") {
-  auto [p, result] = parse(std::string{STUDENT_MISMATCH});
 
-  CAPTURE(result);
-  REQUIRE_FALSE(result.has_value());
-  CHECK(result.error().Is<ParseErr>(ParseErr::WORLD_MISMATCH));
-}
+constexpr std::string_view kEmptyInitAndTurn = R"V0G0N(
+world infection;
+let walker : student {
+  init : { };
+  turn : { };
+};
+)V0G0N";
 
-TEST_CASE("AgentDef: empty init and turn are allowed", "[parser][agent-def]") {
-  auto [p, result] = parse("world infection;\n"
-                           "let walker : student {\n"
-                           "  init : { };\n"
-                           "  turn : { };\n"
-                           "};");
+constexpr std::string_view kGoalAndDestination = R"V0G0N(
+world traffic;
+let driver : car {
+  init : {
+    let goal : int = 1;
+  };
+  turn : {
+    let destination : int = 2;
+  };
+};
+)V0G0N";
 
-  CAPTURE(result);
-  REQUIRE(result.has_value());
-  auto &defs = result.value();
-  REQUIRE(defs.size() == 1);
+constexpr std::string_view kMoveInInit = R"V0G0N(
+world infection;
+let walker : student {
+  init : move(up);
+  turn : { };
+};
+)V0G0N";
 
-  auto *root = dynamic_cast<StmtAgentDef *>(defs[0].get());
-  REQUIRE(root);
-  auto *init = dynamic_cast<StmtBlock *>(root->m_Init.get());
-  REQUIRE(init);
-  auto *turn = dynamic_cast<StmtBlock *>(root->m_Turn.get());
-  REQUIRE(turn);
-}
+constexpr std::string_view kMoveInTurn = R"V0G0N(
+world infection;
+let walker : student {
+  init : { };
+  turn : {
+    move(up);
+  };
+};
+)V0G0N";
 
-TEST_CASE("AgentDef: goal/destination identifiers allowed in both contexts",
-          "[parser][agent-def]") {
-  auto [p, result] = parse("world traffic;\n"
-                           "let driver : car {\n"
-                           "  init : {\n"
-                           "    let goal : int = 1;\n"
-                           "  };\n"
-                           "  turn : {\n"
-                           "    let destination : int = 2;\n"
-                           "  };\n"
-                           "};");
+constexpr std::string_view kInitSymbolsVisibleInTurn = R"V0G0N(
+world infection;
+let square_walker : student {
+  init : {
+    let step_idx : int = 0;
+  };
+  turn : {
+    step_idx;
+  };
+};
+)V0G0N";
 
-  CAPTURE(result);
-  REQUIRE(result.has_value());
-  auto &defs = result.value();
-  REQUIRE(defs.size() == 1);
+struct ErrorCase {
+  std::string_view name;
+  std::string_view script;
+  ParseErr::Kind expected;
+};
 
-  auto *root = dynamic_cast<StmtAgentDef *>(defs[0].get());
-  REQUIRE(root);
-  auto *init = dynamic_cast<StmtBlock *>(root->m_Init.get());
-  REQUIRE(init);
-  auto *turn = dynamic_cast<StmtBlock *>(root->m_Turn.get());
-  REQUIRE(turn);
-}
+constexpr std::array<ErrorCase, 2> kErrorCases{{
+    ErrorCase{"car cannot be instantiated in infection",
+              kCarAgentInInfectionWorld, ParseErr::WORLD_MISMATCH},
+    ErrorCase{"student cannot be instantiated in traffic",
+              kStudentAgentInTrafficWorld, ParseErr::WORLD_MISMATCH},
+}};
 
-TEST_CASE("AgentDef: move in init is an error", "[parser][agent-def]") {
-  auto [p, result] = parse("world infection;\n"
-                           "let walker : student {\n"
-                           "  init : move(up);\n"
-                           "  turn : { };\n"
-                           "};");
+struct SuccessCase {
+  std::string_view name;
+  std::string_view script;
+};
 
-  REQUIRE_FALSE(result.has_value());
-  REQUIRE(std::holds_alternative<ParseErr>(result.error()));
-  CHECK(std::get<ParseErr>(result.error()).m_Kind == ParseErr::OUT_OF_TURN);
+constexpr std::array<SuccessCase, 4> kSuccessCases{{
+    SuccessCase{"empty init and turn are allowed", kEmptyInitAndTurn},
+    SuccessCase{"goal/destination identifiers are allowed",
+                kGoalAndDestination},
+    SuccessCase{"move in turn parses", kMoveInTurn},
+    SuccessCase{"symbols from init are visible in turn",
+                kInitSymbolsVisibleInTurn},
+}};
 
-  REQUIRE(p.m_AgentDefs.empty());
-}
+// https://github.com/catchorg/Catch2/blob/devel/docs/other-macros.md
+TEST_CASE("AgentDef parser", "[parser][agent-def]") {
+  SECTION("rejects invalid world/agent combinations") {
+    for (auto const& tc : kErrorCases) {
+      DYNAMIC_SECTION(tc.name) {
+        auto out = parse(tc.script);
 
-TEST_CASE("AgentDef: move in turn parses", "[parser][agent-def]") {
-  auto [p, result] = parse("world infection;\n"
-                           "let walker : student {\n"
-                           "  init : { };\n"
-                           "  turn : {\n"
-                           "    move(up);\n"
-                           "  };\n"
-                           "};");
+        REQUIRE_FALSE(out.result.has_value());
+        CHECK(out.result.error().Is<ParseErr>(tc.expected));
+      }
+    }
+  }
 
-  CAPTURE(result);
-  REQUIRE(result.has_value());
-  auto &defs = result.value();
-  REQUIRE(defs.size() == 1);
+  SECTION("accepts valid agent definitions") {
+    for (auto const& tc : kSuccessCases) {
+      DYNAMIC_SECTION(tc.name) {
+        auto out = parse(tc.script);
 
-  auto *root = dynamic_cast<StmtAgentDef *>(defs[0].get());
-  REQUIRE(root);
-  auto *init = dynamic_cast<StmtBlock *>(root->m_Init.get());
-  REQUIRE(init);
-  auto *turn = dynamic_cast<StmtBlock *>(root->m_Turn.get());
-  REQUIRE(turn);
-}
+        auto& def = require_one_agent_def(out.result);
+        require_init_and_turn_blocks(def);
+      }
+    }
+  }
 
-TEST_CASE("AgentDef: symbols from init are visible in turn",
-          "[parser][agent-def]") {
-  auto [p, result] = parse("world infection;\n"
-                           "let square_walker : student {\n"
-                           "  init : {\n"
-                           "    let step_idx : int = 0;\n"
-                           "  };\n"
-                           "  turn : {\n"
-                           "    step_idx;\n"
-                           "  };\n"
-                           "};");
+  SECTION("move in init is an error") {
+    auto out = parse(kMoveInInit);
 
-  CAPTURE(result);
-  REQUIRE(result.has_value());
-  auto &defs = result.value();
-  REQUIRE(defs.size() == 1);
+    REQUIRE_FALSE(out.result.has_value());
+    REQUIRE(std::holds_alternative<ParseErr>(out.result.error()));
+    CHECK(std::get<ParseErr>(out.result.error()).m_Kind ==
+          ParseErr::OUT_OF_TURN);
 
-  auto *root = dynamic_cast<StmtAgentDef *>(defs[0].get());
-  REQUIRE(root);
-  auto *init = dynamic_cast<StmtBlock *>(root->m_Init.get());
-  REQUIRE(init);
-  auto *turn = dynamic_cast<StmtBlock *>(root->m_Turn.get());
-  REQUIRE(turn);
+    REQUIRE(out.parser.m_AgentDefs.empty());
+  }
 }
