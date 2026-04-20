@@ -153,6 +153,7 @@ elseif(DEFINED EMSCRIPTEN)
 
     # Exclude all entry points then add back the selected one
     list(FILTER SOURCES EXCLUDE REGEX ".*_main\\.cpp$")
+    list(FILTER SOURCES EXCLUDE REGEX ".*/webui/web_entry\\.cpp$")
     # Default to web_main.cpp for Emscripten builds if no target was specified
     if(TARGET_MAIN STREQUAL "simple_main.cpp")
         set(TARGET_MAIN "web_main.cpp")

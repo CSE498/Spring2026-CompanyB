@@ -1,0 +1,613 @@
+.
+├── assets
+│   ├── images
+│   │   ├── BottomBorder.png
+│   │   ├── contour-map.svg
+│   │   ├── exit.svg
+│   │   ├── map2.svg
+│   │   ├── map.svg
+│   │   ├── pause.svg
+│   │   ├── save.svg
+│   │   ├── start.svg
+│   │   ├── stop.svg
+│   │   ├── TopBorder.png
+│   │   └── upload.svg
+│   └── README.md
+├── BUILD-SYSTEM.md
+├── demo
+│   ├── sample_demo_main.cpp
+│   └── web_main.cpp
+├── docker-compose.yml
+├── docker-entrypoint.sh
+├── Dockerfile
+├── doxyfile
+├── file_tree.txt
+├── group_specific_content
+│   ├── example_agreement.md
+│   ├── Group-11
+│   │   ├── docs
+│   │   │   ├── action_map.md
+│   │   │   ├── behaviortree.md
+│   │   │   ├── function_set.md
+│   │   │   ├── module_vision.md
+│   │   │   ├── path_generator.md
+│   │   │   ├── video_script.md
+│   │   │   └── world_path.md
+│   │   └── group_11_agreement.md
+│   ├── Group-12
+│   │   ├── CSE 498 Video Scripts.pdf
+│   │   ├── Group-12-agreement.md
+│   │   └── GroupSpecs.md
+│   ├── Group-13
+│   │   ├── CompB-Team13-Agreement.pdf
+│   │   ├── CompB-Team13-Specifications.pdf
+│   │   ├── example_surface_usage.cpp
+│   │   ├── Group-13videoScript.pdf
+│   │   ├── SurfaceClass-Group13-VideoOverview-Script
+│   │   ├── teamPDFTXTfiles
+│   │   │   ├── CompB-Team13-Agreement.pdf
+│   │   │   ├── CompB-Team13-Specifications.pdf
+│   │   │   ├── Group-13videoScript.pdf
+│   │   │   └── videolinkGroup13.txt
+│   │   └── videolinkGroup13.txt
+│   ├── Group-19
+│   │   ├── Class Specifications & Module Proposal.pdf
+│   │   ├── demo_script.md
+│   │   ├── Team Agreement for Group 19.pdf
+│   │   └── Videos
+│   │       ├── StateGrid, Anurag Senapaty.mp4
+│   │       └── VideoLink.txt
+│   ├── Group-20
+│   │   ├── Group_Agreement.md
+│   │   └── Team 20B - Class System Design Specs Report.pdf
+│   ├── Group-21
+│   │   ├── ClassWriteups_ModuleProposal.md
+│   │   └── TeamAgreement.md
+│   └── Group-22
+│       ├── group-22-class-description.pdf
+│       ├── Initial Classes and Video Script.pdf
+│       └── Team_Agreement_22.pdf
+├── LICENSE
+├── Makefile
+├── README.md
+├── scripts
+│   ├── docker-build.sh
+│   └── docker-entrypoint.sh
+├── source
+│   ├── Agents
+│   │   └── PacingAgent.hpp
+│   ├── CMakeLists.txt
+│   ├── core
+│   │   ├── AgentBase.hpp
+│   │   ├── Entity.hpp
+│   │   ├── InterfaceBase.hpp
+│   │   ├── ItemBase.hpp
+│   │   ├── Location.hpp
+│   │   ├── WorldBase.hpp
+│   │   ├── WorldGrid.hpp
+│   │   └── WorldPosition.hpp
+│   ├── Interfaces
+│   │   └── TrashInterface.hpp
+│   ├── Makefile
+│   ├── simple_main.cpp
+│   ├── tools
+│   │   ├── ActionMap.hpp
+│   │   ├── AnnotationSet.cpp
+│   │   ├── AnnotationSet.hpp
+│   │   ├── BehaviorTree
+│   │   │   ├── ActionNode.hpp
+│   │   │   ├── BehaviorTree.hpp
+│   │   │   ├── CompositeNode.hpp
+│   │   │   ├── DecoratorNode.hpp
+│   │   │   ├── InvertNode.hpp
+│   │   │   ├── LeafNode.hpp
+│   │   │   ├── Node.hpp
+│   │   │   ├── RepeatNode.hpp
+│   │   │   ├── SelectNode.hpp
+│   │   │   └── SequenceNode.hpp
+│   │   ├── Box.cpp
+│   │   ├── Box.hpp
+│   │   ├── Circle.hpp
+│   │   ├── DataFileManager.hpp
+│   │   ├── DataMap.hpp
+│   │   ├── ExpressionParser.cpp
+│   │   ├── ExpressionParser.hpp
+│   │   ├── FunctionSet.hpp
+│   │   ├── io_utils.hpp
+│   │   ├── PathGenerator.cpp
+│   │   ├── PathGenerator.hpp
+│   │   ├── Point.cpp
+│   │   ├── Point.hpp
+│   │   ├── Random.hpp
+│   │   ├── RobinHoodMap.hpp
+│   │   ├── Scheduler.hpp
+│   │   ├── StateGrid
+│   │   │   ├── StateGrid.cpp
+│   │   │   ├── StateGrid.hpp
+│   │   │   ├── Tile.cpp
+│   │   │   └── Tile.hpp
+│   │   ├── StateGridPosition.hpp
+│   │   ├── Surface.hpp
+│   │   ├── TagManager.cpp
+│   │   ├── TagManager.hpp
+│   │   ├── webui
+│   │   │   ├── index.html
+│   │   │   ├── InfoGraph.cpp
+│   │   │   ├── InfoGraph.hpp
+│   │   │   ├── menu.html
+│   │   │   ├── style.css
+│   │   │   ├── WebButton.cpp
+│   │   │   ├── WebButton.h
+│   │   │   ├── WebCanvas.cpp
+│   │   │   ├── WebCanvas.hpp
+│   │   │   ├── WebElement.hpp
+│   │   │   ├── web_entry.cpp
+│   │   │   ├── WebImage.cpp
+│   │   │   ├── WebImage.hpp
+│   │   │   ├── WebLayout.cpp
+│   │   │   ├── WebLayout.hpp
+│   │   │   ├── WebOptions.hpp
+│   │   │   ├── WebStyle.hpp
+│   │   │   ├── WebTextbox.cpp
+│   │   │   └── WebTextbox.hpp
+│   │   ├── WeightedSet.hpp
+│   │   ├── WorldPath.cpp
+│   │   └── WorldPath.hpp
+│   └── Worlds
+│       └── MazeWorld.hpp
+├── tests
+│   ├── core
+│   │   └── WorldPosition.cpp
+│   ├── Makefile
+│   ├── test_io_utils.cpp
+│   ├── tools
+│   │   ├── ActionMap.cpp
+│   │   ├── AnnotationSetTest.cpp
+│   │   ├── BehaviorTree.cpp
+│   │   ├── BoxTest.cpp
+│   │   ├── CircleTest.cpp
+│   │   ├── DataFileManager.cpp
+│   │   ├── DataMapTest.cpp
+│   │   ├── ExpressionParserTest.cpp
+│   │   ├── FunctionSet.cpp
+│   │   ├── PathGenerator.cpp
+│   │   ├── PointTest.cpp
+│   │   ├── Random.cpp
+│   │   ├── RobinHoodMapTest.cpp
+│   │   ├── SchedulerTest.cpp
+│   │   ├── StateGridPositionTest.cpp
+│   │   ├── StateGridTest.cpp
+│   │   ├── SurfaceTest.cpp
+│   │   ├── TagManagerTest.cpp
+│   │   ├── WeightedSet.cpp
+│   │   └── WorldPath.cpp
+│   └── wasm
+│       └── tools
+│           └── webui
+│               ├── test_WebButton.cpp
+│               ├── test_WebCanvas.cpp
+│               ├── test_WebChildren.cpp
+│               ├── test_WebImage.cpp
+│               ├── test_WebLayout.cpp
+│               ├── test_WebStyle.cpp
+│               └── test_WebTextbox.cpp
+└── third-party
+    ├── Catch
+    │   ├── appveyor.yml
+    │   ├── artwork
+    │   │   ├── catch2-c-logo.png
+    │   │   ├── catch2-hand-logo.png
+    │   │   └── catch2-logo-small.png
+    │   ├── BUILD.bazel
+    │   ├── CMake
+    │   │   ├── Catch2Config.cmake.in
+    │   │   ├── catch2.pc.in
+    │   │   ├── Findcodecov.cmake
+    │   │   ├── FindGcov.cmake
+    │   │   ├── FindLcov.cmake
+    │   │   ├── llvm-cov-wrapper
+    │   │   └── MiscFunctions.cmake
+    │   ├── CMakeLists.txt
+    │   ├── codecov.yml
+    │   ├── CODE_OF_CONDUCT.md
+    │   ├── conanfile.py
+    │   ├── contrib
+    │   │   ├── CatchAddTests.cmake
+    │   │   ├── Catch.cmake
+    │   │   ├── gdbinit
+    │   │   ├── lldbinit
+    │   │   └── ParseAndAddCatchTests.cmake
+    │   ├── docs
+    │   │   ├── assertions.md
+    │   │   ├── benchmarks.md
+    │   │   ├── ci-and-misc.md
+    │   │   ├── cmake-integration.md
+    │   │   ├── command-line.md
+    │   │   ├── commercial-users.md
+    │   │   ├── configuration.md
+    │   │   ├── contributing.md
+    │   │   ├── deprecations.md
+    │   │   ├── event-listeners.md
+    │   │   ├── generators.md
+    │   │   ├── limitations.md
+    │   │   ├── list-of-examples.md
+    │   │   ├── logging.md
+    │   │   ├── matchers.md
+    │   │   ├── opensource-users.md
+    │   │   ├── other-macros.md
+    │   │   ├── own-main.md
+    │   │   ├── Readme.md
+    │   │   ├── release-notes.md
+    │   │   ├── release-process.md
+    │   │   ├── reporters.md
+    │   │   ├── slow-compiles.md
+    │   │   ├── test-cases-and-sections.md
+    │   │   ├── test-fixtures.md
+    │   │   ├── tostring.md
+    │   │   ├── tutorial.md
+    │   │   └── why-catch.md
+    │   ├── examples
+    │   │   ├── 000-CatchMain.cpp
+    │   │   ├── 010-TestCase.cpp
+    │   │   ├── 020-TestCase-1.cpp
+    │   │   ├── 020-TestCase-2.cpp
+    │   │   ├── 030-Asn-Require-Check.cpp
+    │   │   ├── 100-Fix-Section.cpp
+    │   │   ├── 110-Fix-ClassFixture.cpp
+    │   │   ├── 120-Bdd-ScenarioGivenWhenThen.cpp
+    │   │   ├── 200-Rpt-CatchMain.cpp
+    │   │   ├── 207-Rpt-TeamCityReporter.cpp
+    │   │   ├── 210-Evt-EventListeners.cpp
+    │   │   ├── 231-Cfg-OutputStreams.cpp
+    │   │   ├── 300-Gen-OwnGenerator.cpp
+    │   │   ├── 301-Gen-MapTypeConversion.cpp
+    │   │   ├── 302-Gen-Table.cpp
+    │   │   ├── 310-Gen-VariablesInGenerators.cpp
+    │   │   ├── 311-Gen-CustomCapture.cpp
+    │   │   └── CMakeLists.txt
+    │   ├── include
+    │   │   ├── catch.hpp
+    │   │   ├── catch_with_main.hpp
+    │   │   ├── external
+    │   │   │   └── clara.hpp
+    │   │   ├── internal
+    │   │   │   ├── benchmark
+    │   │   │   │   ├── catch_benchmark.hpp
+    │   │   │   │   ├── catch_benchmarking_all.hpp
+    │   │   │   │   ├── catch_chronometer.hpp
+    │   │   │   │   ├── catch_clock.hpp
+    │   │   │   │   ├── catch_constructor.hpp
+    │   │   │   │   ├── catch_environment.hpp
+    │   │   │   │   ├── catch_estimate.hpp
+    │   │   │   │   ├── catch_execution_plan.hpp
+    │   │   │   │   ├── catch_optimizer.hpp
+    │   │   │   │   ├── catch_outlier_classification.hpp
+    │   │   │   │   ├── catch_sample_analysis.hpp
+    │   │   │   │   └── detail
+    │   │   │   │       ├── catch_analyse.hpp
+    │   │   │   │       ├── catch_benchmark_function.hpp
+    │   │   │   │       ├── catch_complete_invoke.hpp
+    │   │   │   │       ├── catch_estimate_clock.hpp
+    │   │   │   │       ├── catch_measure.hpp
+    │   │   │   │       ├── catch_repeat.hpp
+    │   │   │   │       ├── catch_run_for_at_least.hpp
+    │   │   │   │       ├── catch_stats.cpp
+    │   │   │   │       ├── catch_stats.hpp
+    │   │   │   │       └── catch_timing.hpp
+    │   │   │   ├── catch_approx.cpp
+    │   │   │   ├── catch_approx.h
+    │   │   │   ├── catch_assertionhandler.cpp
+    │   │   │   ├── catch_assertionhandler.h
+    │   │   │   ├── catch_assertioninfo.h
+    │   │   │   ├── catch_assertionresult.cpp
+    │   │   │   ├── catch_assertionresult.h
+    │   │   │   ├── catch_capture.hpp
+    │   │   │   ├── catch_capture_matchers.cpp
+    │   │   │   ├── catch_capture_matchers.h
+    │   │   │   ├── catch_clara.h
+    │   │   │   ├── catch_commandline.cpp
+    │   │   │   ├── catch_commandline.h
+    │   │   │   ├── catch_common.cpp
+    │   │   │   ├── catch_common.h
+    │   │   │   ├── catch_compiler_capabilities.h
+    │   │   │   ├── catch_config.cpp
+    │   │   │   ├── catch_config.hpp
+    │   │   │   ├── catch_config_uncaught_exceptions.hpp
+    │   │   │   ├── catch_console_colour.cpp
+    │   │   │   ├── catch_console_colour.h
+    │   │   │   ├── catch_context.cpp
+    │   │   │   ├── catch_context.h
+    │   │   │   ├── catch_debug_console.cpp
+    │   │   │   ├── catch_debug_console.h
+    │   │   │   ├── catch_debugger.cpp
+    │   │   │   ├── catch_debugger.h
+    │   │   │   ├── catch_decomposer.cpp
+    │   │   │   ├── catch_decomposer.h
+    │   │   │   ├── catch_default_main.hpp
+    │   │   │   ├── catch_enforce.cpp
+    │   │   │   ├── catch_enforce.h
+    │   │   │   ├── catch_enum_values_registry.cpp
+    │   │   │   ├── catch_enum_values_registry.h
+    │   │   │   ├── catch_errno_guard.cpp
+    │   │   │   ├── catch_errno_guard.h
+    │   │   │   ├── catch_exception_translator_registry.cpp
+    │   │   │   ├── catch_exception_translator_registry.h
+    │   │   │   ├── catch_external_interfaces.h
+    │   │   │   ├── catch_fatal_condition.cpp
+    │   │   │   ├── catch_fatal_condition.h
+    │   │   │   ├── catch_generators.cpp
+    │   │   │   ├── catch_generators_generic.hpp
+    │   │   │   ├── catch_generators.hpp
+    │   │   │   ├── catch_generators_specific.hpp
+    │   │   │   ├── catch_impl.hpp
+    │   │   │   ├── catch_interfaces_capture.cpp
+    │   │   │   ├── catch_interfaces_capture.h
+    │   │   │   ├── catch_interfaces_config.cpp
+    │   │   │   ├── catch_interfaces_config.h
+    │   │   │   ├── catch_interfaces_enum_values_registry.h
+    │   │   │   ├── catch_interfaces_exception.cpp
+    │   │   │   ├── catch_interfaces_exception.h
+    │   │   │   ├── catch_interfaces_generatortracker.h
+    │   │   │   ├── catch_interfaces_registry_hub.cpp
+    │   │   │   ├── catch_interfaces_registry_hub.h
+    │   │   │   ├── catch_interfaces_reporter.cpp
+    │   │   │   ├── catch_interfaces_reporter.h
+    │   │   │   ├── catch_interfaces_runner.cpp
+    │   │   │   ├── catch_interfaces_runner.h
+    │   │   │   ├── catch_interfaces_tag_alias_registry.h
+    │   │   │   ├── catch_interfaces_testcase.cpp
+    │   │   │   ├── catch_interfaces_testcase.h
+    │   │   │   ├── catch_leak_detector.cpp
+    │   │   │   ├── catch_leak_detector.h
+    │   │   │   ├── catch_list.cpp
+    │   │   │   ├── catch_list.h
+    │   │   │   ├── catch_matchers.cpp
+    │   │   │   ├── catch_matchers_exception.cpp
+    │   │   │   ├── catch_matchers_exception.hpp
+    │   │   │   ├── catch_matchers_floating.cpp
+    │   │   │   ├── catch_matchers_floating.h
+    │   │   │   ├── catch_matchers_generic.cpp
+    │   │   │   ├── catch_matchers_generic.hpp
+    │   │   │   ├── catch_matchers.h
+    │   │   │   ├── catch_matchers_string.cpp
+    │   │   │   ├── catch_matchers_string.h
+    │   │   │   ├── catch_matchers_vector.h
+    │   │   │   ├── catch_message.cpp
+    │   │   │   ├── catch_message.h
+    │   │   │   ├── catch_meta.hpp
+    │   │   │   ├── catch_objc_arc.hpp
+    │   │   │   ├── catch_objc.hpp
+    │   │   │   ├── catch_option.hpp
+    │   │   │   ├── catch_output_redirect.cpp
+    │   │   │   ├── catch_output_redirect.h
+    │   │   │   ├── catch_platform.h
+    │   │   │   ├── catch_polyfills.cpp
+    │   │   │   ├── catch_polyfills.hpp
+    │   │   │   ├── catch_preprocessor.hpp
+    │   │   │   ├── catch_random_number_generator.cpp
+    │   │   │   ├── catch_random_number_generator.h
+    │   │   │   ├── catch_reenable_warnings.h
+    │   │   │   ├── catch_registry_hub.cpp
+    │   │   │   ├── catch_reporter_registrars.hpp
+    │   │   │   ├── catch_reporter_registry.cpp
+    │   │   │   ├── catch_reporter_registry.h
+    │   │   │   ├── catch_result_type.cpp
+    │   │   │   ├── catch_result_type.h
+    │   │   │   ├── catch_run_context.cpp
+    │   │   │   ├── catch_run_context.h
+    │   │   │   ├── catch_section.cpp
+    │   │   │   ├── catch_section.h
+    │   │   │   ├── catch_section_info.cpp
+    │   │   │   ├── catch_section_info.h
+    │   │   │   ├── catch_session.cpp
+    │   │   │   ├── catch_session.h
+    │   │   │   ├── catch_singletons.cpp
+    │   │   │   ├── catch_singletons.hpp
+    │   │   │   ├── catch_startup_exception_registry.cpp
+    │   │   │   ├── catch_startup_exception_registry.h
+    │   │   │   ├── catch_stream.cpp
+    │   │   │   ├── catch_stream.h
+    │   │   │   ├── catch_string_manip.cpp
+    │   │   │   ├── catch_string_manip.h
+    │   │   │   ├── catch_stringref.cpp
+    │   │   │   ├── catch_stringref.h
+    │   │   │   ├── catch_suppress_warnings.h
+    │   │   │   ├── catch_tag_alias_autoregistrar.cpp
+    │   │   │   ├── catch_tag_alias_autoregistrar.h
+    │   │   │   ├── catch_tag_alias.cpp
+    │   │   │   ├── catch_tag_alias.h
+    │   │   │   ├── catch_tag_alias_registry.cpp
+    │   │   │   ├── catch_tag_alias_registry.h
+    │   │   │   ├── catch_test_case_info.cpp
+    │   │   │   ├── catch_test_case_info.h
+    │   │   │   ├── catch_test_case_registry_impl.cpp
+    │   │   │   ├── catch_test_case_registry_impl.h
+    │   │   │   ├── catch_test_case_tracker.cpp
+    │   │   │   ├── catch_test_case_tracker.h
+    │   │   │   ├── catch_test_registry.cpp
+    │   │   │   ├── catch_test_registry.h
+    │   │   │   ├── catch_test_spec.cpp
+    │   │   │   ├── catch_test_spec.h
+    │   │   │   ├── catch_test_spec_parser.cpp
+    │   │   │   ├── catch_test_spec_parser.h
+    │   │   │   ├── catch_text.h
+    │   │   │   ├── catch_timer.cpp
+    │   │   │   ├── catch_timer.h
+    │   │   │   ├── catch_tostring.cpp
+    │   │   │   ├── catch_tostring.h
+    │   │   │   ├── catch_to_string.hpp
+    │   │   │   ├── catch_totals.cpp
+    │   │   │   ├── catch_totals.h
+    │   │   │   ├── catch_uncaught_exceptions.cpp
+    │   │   │   ├── catch_uncaught_exceptions.h
+    │   │   │   ├── catch_user_interfaces.h
+    │   │   │   ├── catch_version.cpp
+    │   │   │   ├── catch_version.h
+    │   │   │   ├── catch_wildcard_pattern.cpp
+    │   │   │   ├── catch_wildcard_pattern.h
+    │   │   │   ├── catch_windows_h_proxy.h
+    │   │   │   ├── catch_xmlwriter.cpp
+    │   │   │   └── catch_xmlwriter.h
+    │   │   └── reporters
+    │   │       ├── catch_reporter_automake.hpp
+    │   │       ├── catch_reporter_bases.cpp
+    │   │       ├── catch_reporter_bases.hpp
+    │   │       ├── catch_reporter_compact.cpp
+    │   │       ├── catch_reporter_compact.h
+    │   │       ├── catch_reporter_console.cpp
+    │   │       ├── catch_reporter_console.h
+    │   │       ├── catch_reporter_junit.cpp
+    │   │       ├── catch_reporter_junit.h
+    │   │       ├── catch_reporter_listening.cpp
+    │   │       ├── catch_reporter_listening.h
+    │   │       ├── catch_reporter_sonarqube.hpp
+    │   │       ├── catch_reporter_tap.hpp
+    │   │       ├── catch_reporter_teamcity.hpp
+    │   │       ├── catch_reporter_xml.cpp
+    │   │       └── catch_reporter_xml.h
+    │   ├── LICENSE.txt
+    │   ├── misc
+    │   │   ├── appveyorBuildConfigurationScript.bat
+    │   │   ├── appveyorMergeCoverageScript.py
+    │   │   ├── appveyorTestRunScript.bat
+    │   │   ├── CMakeLists.txt
+    │   │   ├── coverage-helper.cpp
+    │   │   └── installOpenCppCoverage.ps1
+    │   ├── projects
+    │   │   ├── CMakeLists.txt
+    │   │   ├── ExtraTests
+    │   │   │   ├── CMakeLists.txt
+    │   │   │   ├── ToDo.txt
+    │   │   │   ├── X01-PrefixedMacros.cpp
+    │   │   │   ├── X02-DisabledMacros.cpp
+    │   │   │   ├── X03-DisabledExceptions-DefaultHandler.cpp
+    │   │   │   ├── X04-DisabledExceptions-CustomHandler.cpp
+    │   │   │   ├── X10-FallbackStringifier.cpp
+    │   │   │   ├── X11-DisableStringification.cpp
+    │   │   │   ├── X12-CustomDebugBreakMacro.cpp
+    │   │   │   ├── X20-BenchmarkingMacros.cpp
+    │   │   │   └── X90-WindowsHeaderInclusion.cpp
+    │   │   ├── SelfTest
+    │   │   │   ├── Baselines
+    │   │   │   │   ├── automake.std.approved.txt
+    │   │   │   │   ├── compact.sw.approved.txt
+    │   │   │   │   ├── console.std.approved.txt
+    │   │   │   │   ├── console.swa4.approved.txt
+    │   │   │   │   ├── console.sw.approved.txt
+    │   │   │   │   ├── junit.sw.approved.txt
+    │   │   │   │   ├── sonarqube.sw.approved.txt
+    │   │   │   │   └── xml.sw.approved.txt
+    │   │   │   ├── CompileTimePerfTests
+    │   │   │   │   ├── 100.tests.cpp
+    │   │   │   │   ├── 10.tests.cpp
+    │   │   │   │   └── All.tests.cpp
+    │   │   │   ├── IntrospectiveTests
+    │   │   │   │   ├── CmdLine.tests.cpp
+    │   │   │   │   ├── Details.tests.cpp
+    │   │   │   │   ├── GeneratorsImpl.tests.cpp
+    │   │   │   │   ├── InternalBenchmark.tests.cpp
+    │   │   │   │   ├── PartTracker.tests.cpp
+    │   │   │   │   ├── RandomNumberGeneration.tests.cpp
+    │   │   │   │   ├── StringManip.tests.cpp
+    │   │   │   │   ├── String.tests.cpp
+    │   │   │   │   ├── Tag.tests.cpp
+    │   │   │   │   ├── ToString.tests.cpp
+    │   │   │   │   └── Xml.tests.cpp
+    │   │   │   ├── Misc
+    │   │   │   │   ├── invalid-test-names.input
+    │   │   │   │   ├── plain-old-tests.input
+    │   │   │   │   └── special-characters-in-file.input
+    │   │   │   ├── SurrogateCpps
+    │   │   │   │   ├── catch_console_colour.cpp
+    │   │   │   │   ├── catch_debugger.cpp
+    │   │   │   │   ├── catch_interfaces_reporter.cpp
+    │   │   │   │   ├── catch_option.cpp
+    │   │   │   │   ├── catch_stream.cpp
+    │   │   │   │   ├── catch_test_case_tracker.cpp
+    │   │   │   │   ├── catch_test_spec.cpp
+    │   │   │   │   └── catch_xmlwriter.cpp
+    │   │   │   ├── TestMain.cpp
+    │   │   │   ├── TimingTests
+    │   │   │   │   └── Sleep.tests.cpp
+    │   │   │   ├── UsageTests
+    │   │   │   │   ├── Approx.tests.cpp
+    │   │   │   │   ├── BDD.tests.cpp
+    │   │   │   │   ├── Benchmark.tests.cpp
+    │   │   │   │   ├── Class.tests.cpp
+    │   │   │   │   ├── Compilation.tests.cpp
+    │   │   │   │   ├── Condition.tests.cpp
+    │   │   │   │   ├── Decomposition.tests.cpp
+    │   │   │   │   ├── EnumToString.tests.cpp
+    │   │   │   │   ├── Exception.tests.cpp
+    │   │   │   │   ├── Generators.tests.cpp
+    │   │   │   │   ├── Matchers.tests.cpp
+    │   │   │   │   ├── Message.tests.cpp
+    │   │   │   │   ├── Misc.tests.cpp
+    │   │   │   │   ├── ToStringByte.tests.cpp
+    │   │   │   │   ├── ToStringChrono.tests.cpp
+    │   │   │   │   ├── ToStringGeneral.tests.cpp
+    │   │   │   │   ├── ToStringOptional.tests.cpp
+    │   │   │   │   ├── ToStringPair.tests.cpp
+    │   │   │   │   ├── ToStringTuple.tests.cpp
+    │   │   │   │   ├── ToStringVariant.tests.cpp
+    │   │   │   │   ├── ToStringVector.tests.cpp
+    │   │   │   │   ├── ToStringWhich.tests.cpp
+    │   │   │   │   ├── Tricky.tests.cpp
+    │   │   │   │   └── VariadicMacros.tests.cpp
+    │   │   │   └── WarnAboutNoTests.cmake
+    │   │   ├── TestScripts
+    │   │   │   └── testRandomOrder.py
+    │   │   └── XCode
+    │   │       └── OCTest
+    │   │           ├── catch_objc_impl.mm
+    │   │           ├── OCTest
+    │   │           │   ├── CatchOCTestCase.h
+    │   │           │   ├── CatchOCTestCase.mm
+    │   │           │   ├── Main.mm
+    │   │           │   ├── OCTest.1
+    │   │           │   ├── OCTest.mm
+    │   │           │   ├── TestObj.h
+    │   │           │   └── TestObj.m
+    │   │           └── OCTest.xcodeproj
+    │   │               ├── project.pbxproj
+    │   │               └── project.xcworkspace
+    │   │                   ├── contents.xcworkspacedata
+    │   │                   └── xcshareddata
+    │   │                       └── IDEWorkspaceChecks.plist
+    │   ├── README.md
+    │   ├── scripts
+    │   │   ├── approvalTests.py
+    │   │   ├── approve.py
+    │   │   ├── benchmarkCompile.py
+    │   │   ├── benchmarkRunner.py
+    │   │   ├── developBuild.py
+    │   │   ├── embedClara.py
+    │   │   ├── embed.py
+    │   │   ├── extractFeaturesFromReleaseNotes.py
+    │   │   ├── fixWhitespace.py
+    │   │   ├── generateSingleHeader.py
+    │   │   ├── majorRelease.py
+    │   │   ├── minorRelease.py
+    │   │   ├── patchRelease.py
+    │   │   ├── releaseCommon.py
+    │   │   ├── releaseNotes.py
+    │   │   ├── scriptCommon.py
+    │   │   ├── updateDocumentToC.py
+    │   │   └── updateWandbox.py
+    │   ├── single_include
+    │   │   └── catch2
+    │   │       ├── catch.hpp
+    │   │       ├── catch_reporter_automake.hpp
+    │   │       ├── catch_reporter_sonarqube.hpp
+    │   │       ├── catch_reporter_tap.hpp
+    │   │       └── catch_reporter_teamcity.hpp
+    │   ├── src
+    │   │   └── catch_with_main.cpp
+    │   ├── third_party
+    │   │   └── clara.hpp
+    │   └── WORKSPACE
+    ├── emscripten-test-libs
+    │   └── pre.js
+    └── README.md
+
+68 directories, 543 files
