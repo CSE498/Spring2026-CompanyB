@@ -18,6 +18,7 @@
 #include "core/ItemBase.hpp"
 #include "Agents/DrivingAgent.hpp"
 #include "Agents/PacingAgent.hpp"
+#include "InfoGraph.hpp"
 
 using namespace cse498;
 
@@ -30,7 +31,28 @@ static SimState  sim_state  = SimState::STOPPED;
 static std::shared_ptr<WebCanvas> GameCanvas;
 static std::unique_ptr<TrafficWorld> traffic_world;
 static std::unique_ptr<InfectiousWorld> virus_world;
+
+// static std::shared_ptr<InfoGraph> bar_graph = std::make_shared<InfoGraph>(700, 280, "bar-graph");
+static std::shared_ptr<InfoGraph> line_graph = nullptr;
 static std::unordered_map<std::string, std::shared_ptr<WebElement>> elements{};
+
+static double t = 0.0;
+static int count = 0;
+// static std::vector<double> bar_data{8, 4, 10, 6, 12};
+
+void UpdateGraphs() {
+  if (line_graph) {
+    line_graph->AddDataPoint(count, "Counting Test");
+    count++;
+  }
+}
+
+std::shared_ptr<WebElement> GameInfoCanvas(WebOptions options) {
+  auto gameInfo = UIItem<InfoGraph>(500, 500, options);
+  line_graph = gameInfo;
+  line_graph->SetAutoScroll(true);
+  return gameInfo;
+}
 
 void SetupVirusWorld();
 
@@ -50,6 +72,8 @@ auto handle_sim_state = [](SimState next) {
             } else if (active_sim == ActiveSim::VIRUS) {
                 SetupVirusWorld();
             }
+            count = 0;
+            line_graph->ClearData();
             break;
     }
 };
@@ -103,6 +127,7 @@ void DrawTrafficSim() {
     if (sim_state == SimState::PLAYING) {
         traffic_world->RunAgents();
         traffic_world->UpdateWorld();
+        UpdateGraphs();
     }
 }
 
@@ -164,6 +189,7 @@ void DrawVirusSim() {
     if (sim_state == SimState::PLAYING) {
         virus_world->RunAgents();
         virus_world->UpdateWorld();
+        UpdateGraphs();
     }
 }
 
@@ -214,34 +240,13 @@ void set_active_layout(std::shared_ptr<WebElement>&& layout) {
 // Here, we choose to take our options for the canvas as a parameter
 // So the function can be treated as a component with the caller specifying
 // attributes like ID, styles, CSS classes etc.
-std::shared_ptr<WebElement> GameInfoCanvas(WebOptions options) {
-    // UIItem is just syntax sugar for make_shared that creates a shared pointer
-    auto gameInfo = UIItem<WebCanvas>(500, 500, options);
+// std::shared_ptr<WebElement> GameInfoCanvas(WebOptions options) {
+//     // UIItem is just syntax sugar for make_shared that creates a shared pointer
+//     // auto gameInfo = UIItem<WebCanvas>(500, 500, options);
 
-    // We can set properties on our WebCanvas using methods defined on it
-    gameInfo->SetBackgroundColor({85, 85, 85})
-        .SetFillColor({255, 255, 255})
-        .DrawRect(10, 10, 480, 480, true)
-        .SetPenColor({0, 0, 0})
-        .DrawLine({40, 40}, {40, 450})
-        .DrawLine({40, 450}, {450, 450});
 
-    // Draw our data points
-    for (int i = 0; i < 41; i++) {
-        gameInfo->SetFillColor({0, 0, 100})
-            .SetFont("8px Arial")
-            .DrawLine({(i * 10) + 40, 445}, {(i * 10) + 40, 455})
-            .DrawText(std::to_string(i), (i * 10) + 37, 470);
-        gameInfo->SetFillColor({0, 0, 100})
-            .SetFont("8px Arial")
-            .DrawLine({35, 450 - (i * 10)}, {45, 450 - (i * 10)})
-            .DrawText(std::to_string(i), 20, 453 - (i * 10));
-        gameInfo->SetFillColor({150, 0, 0})
-            .DrawLine({(i * 10) + 40, 450}, {(i * 10) + 40, 450 - (i * 10)});
-    }
-
-    return gameInfo;
-}
+//     return gameInfo;
+// }
 
 // Here we create a function that creates the layout for the simulation screen
 // It takes a lambda as a parameter

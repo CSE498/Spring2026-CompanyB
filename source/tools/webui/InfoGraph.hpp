@@ -19,7 +19,7 @@ class InfoGraph : public WebCanvas {
  public:
   using DataSeries = std::vector<double>;
 
-  InfoGraph(int width, int height, const std::string& id);
+  InfoGraph(int width, int height, const WebOptions& options = {});
 /// @brief Draw a line chart from a set of values.
   void DrawLineChart(const DataSeries& values,
                      const std::string& title = "");

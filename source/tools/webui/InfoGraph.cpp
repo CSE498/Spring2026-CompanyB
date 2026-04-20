@@ -7,14 +7,14 @@
  * historical values.
  */
 #include "InfoGraph.hpp"
-#include "WebOptions.hpp" 
+#include "WebOptions.hpp"
 #include <algorithm>
 #include <string>
 
 namespace cse498 {
 /// @brief Initialize graph with default styling and dimensions.
-InfoGraph::InfoGraph(int width, int height, const std::string& id)
-    : WebCanvas(width, height, WebOptions{.id = id}) {
+InfoGraph::InfoGraph(int width, int height, const WebOptions& options)
+    : WebCanvas(width, height, options) {
   SetBackgroundColor({245, 245, 245});
   SetPenColor({30, 30, 30});
   SetFillColor({30, 30, 30});
@@ -159,7 +159,7 @@ void InfoGraph::DrawBarChart(const DataSeries& values,
 void InfoGraph::ClearData() {
   data_.clear();
   view_start_index_ = 0;
-  Clear();
+  // Clear();
 }
 
 void InfoGraph::ScrollLeft() {
