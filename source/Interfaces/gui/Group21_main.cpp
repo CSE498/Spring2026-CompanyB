@@ -15,7 +15,7 @@ int main(int argc, char *argv[])
     "images/spawn_temp.png",  // spawn
     "images/destination_temp.png",  // destination};
      };
-    const int tileSize = 64;
+    const int tileSize = 15;
     const QString agentImagePath = "images/agent.png";
 
     cse498::StartScreen startScreen(backgroundImagePaths, tileSize, agentImagePath);
