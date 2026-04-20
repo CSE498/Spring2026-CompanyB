@@ -73,7 +73,10 @@ class ScriptedAgent : public StepAgentBase<DataClass> {
 
   // TODO: Actuall fill these out
   std::unique_ptr<Node> mInit;
+
   std::unique_ptr<Node> mTurn;
+  bool mCurrentlyInInit = false; //< Whether we are currently parsing init
+
 
   std::unique_ptr<AgentWrapper> mAgentWrapper;
 
@@ -91,7 +94,9 @@ public:
   ScriptedAgent &SetInit(std::unique_ptr<Node> init) {
     mInit = std::move(init);
     mCurrentTurn = StepContainer{}; 
+    mCurrentlyInInit = true;
     mAgentWrapper->Evaluate(*mInit);
+    mCurrentlyInInit = false;
     return *this;
   }
 
@@ -120,12 +125,12 @@ public:
     std::unique_ptr<AgentWrapper> &mAgentWrapper;
     std::unique_ptr<Node> &mVal;
     std::shared_ptr<SymInfo> &mSymPtr;
-    StepAgentBase<DataClass> &mAgentBase;
+    ScriptedAgent<DataClass> &mAgentBase;
 
     SymAssignVisitor(std::unique_ptr<AgentWrapper> &_AgentWrapper,
                      std::unique_ptr<Node> &_Val,
                      std::shared_ptr<SymInfo> &_SymPtr,
-                     StepAgentBase<DataClass> &_AgentBase)
+                     ScriptedAgent<DataClass> &_AgentBase)
         : mAgentWrapper(_AgentWrapper), mVal(_Val), mSymPtr(_SymPtr),
           mAgentBase(_AgentBase) {};
 
@@ -163,6 +168,23 @@ public:
 
         auto data = mAgentBase.GetState();
         data.destination = std::get<Point>(val_result);
+        mAgentBase.SetState(data);
+        break;
+      }
+      case Value::SPAWN: {
+        if (!std::holds_alternative<Point>(val_result))
+          return RuntimeErr(
+              RuntimeErr::TYPE_MISMATCH,
+              std::format("Attempted to set magic value "
+                          "__spawn__ to non-point type '{}'",
+                          TypeVariantToName(val_result)));
+        if (!mAgentBase.mCurrentlyInInit)
+          return RuntimeErr(
+              RuntimeErr::SPAWN_OUTSIDE_INIT,
+              std::format("Attempted to set magic value "
+                          "__spawn__ outside of init"));
+                                  auto data = mAgentBase.GetState();
+        data.position = std::get<Point>(val_result);
         mAgentBase.SetState(data);
         break;
       }

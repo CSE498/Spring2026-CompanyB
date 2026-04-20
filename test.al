@@ -2,9 +2,28 @@ world traffic;
 
 let square_walker : car {
     init : {
-        let have_moved : bool = false;
+        let a : int = 0;
+        __spawn__ = make_point(3,7);
     };
     turn : {
-        __destination__ = make_point(1,5);
+        if ((a % 4) == 0) {
+            move(down);
+        } else if ((a%4) == 1) {
+            move(right);
+        } else if ((a%4) == 2) {
+            move(up);
+        } else {
+            move(left);
+        }
+        a = a + 1;
+    };
+};
+
+let right_walker : car {
+    init : {
+        __spawn__ = make_point(4,5);
+    };
+    turn : {
+       move(right);
     };
 };

@@ -206,7 +206,7 @@ struct MagicSym {
   bool CanMut() {
     // Return whether the current value is a mutable magic val
     // Only one can be for now
-    return (m_Value == Value::DESTINATION);
+    return (m_Value == Value::DESTINATION || m_Value == Value::SPAWN);
   };
 
   static std::string ToStr(Value m) {

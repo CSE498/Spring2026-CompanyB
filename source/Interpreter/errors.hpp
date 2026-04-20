@@ -134,6 +134,7 @@ struct RuntimeErr : BaseErr {
     IMPOSSIBLE_STATE = 12,
     UNRESOLVED_FUNCTION = 13,
     VALUE_ERR = 14,
+    SPAWN_OUTSIDE_INIT = 15,
   };
   static constexpr std::array<std::string_view, 15> m_KindNames = {
       "TYPE_MISMATCH",         "EMPTY_INTERP_WRAPPER",

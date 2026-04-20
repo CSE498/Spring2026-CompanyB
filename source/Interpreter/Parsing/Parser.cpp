@@ -85,6 +85,7 @@ Parser::parse(std::istream &in) {
 
   // Put in the universal magic vals
   TRY((m_Syms.AddSym("__destination__", Value::DESTINATION)));
+  TRY((m_Syms.AddSym("__spawn__", Value::SPAWN)));
   TRY((m_Syms.AddSym("__position__", Value::POSITION)));
 
   /*
