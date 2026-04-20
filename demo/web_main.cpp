@@ -19,6 +19,7 @@
 #include "Agents/DrivingAgent.hpp"
 #include "Agents/PacingAgent.hpp"
 #include "InfoGraph.hpp"
+#include "WebTextboxOutputManager.hpp"
 
 using namespace cse498;
 
@@ -31,6 +32,24 @@ static SimState  sim_state  = SimState::STOPPED;
 static std::shared_ptr<WebCanvas> GameCanvas;
 static std::unique_ptr<TrafficWorld> traffic_world;
 static std::unique_ptr<InfectiousWorld> virus_world;
+static std::shared_ptr<WebTextbox> log_textbox;
+static std::unique_ptr<WebTextboxOutputManager> logger;
+
+// Per-sim event tracking so we can emit logs when things change.
+static size_t last_traffic_agent_count = 0;
+static std::vector<int> last_virus_health;  // per-agent state snapshot
+static size_t sim_tick = 0;  // incremented each advance step
+
+static size_t GetActiveTick() { return sim_tick; }
+
+void LogSim(const std::string& entity, const std::string& msg, const std::string& tag = "info") {
+    if (!logger) return;
+    std::string line = "Tick " + std::to_string(GetActiveTick()) + ": [" + entity + "] " + msg;
+    logger->LogTagged(tag, line);
+}
+
+void LogInfo(const std::string& entity, const std::string& msg)  { LogSim(entity, msg, "info"); }
+void LogError(const std::string& entity, const std::string& msg) { LogSim(entity, msg, "error"); }
 
 // static std::shared_ptr<InfoGraph> bar_graph = std::make_shared<InfoGraph>(700, 280, "bar-graph");
 static std::shared_ptr<InfoGraph> line_graph = nullptr;
@@ -60,21 +79,29 @@ auto handle_sim_state = [](SimState next) {
     switch (next) {
         case SimState::PLAYING:
             sim_state = SimState::PLAYING;
+            LogSim("World", "Simulation started", "start");
             break;
         case SimState::PAUSED:
-            if (sim_state == SimState::PLAYING) sim_state = SimState::PAUSED;
+            if (sim_state == SimState::PLAYING) {
+                sim_state = SimState::PAUSED;
+                LogSim("World", "Simulation paused", "pause");
+            }
             break;
         case SimState::STOPPED:
             sim_state = SimState::STOPPED;
+            sim_tick  = 0;
             // Reset the active world to its initial state
             if (active_sim == ActiveSim::TRAFFIC) {
                 traffic_world = std::make_unique<TrafficWorld>("assets/grids/DemoWorld.grid");
+                last_traffic_agent_count = 0;
             } else if (active_sim == ActiveSim::VIRUS) {
                 SetupVirusWorld();
+                last_virus_health.clear();
             }
             count = 0;
             line_graph->ClearData();
             line_graph->DrawLineChart(std::vector<double> {}, "Cleared");
+            LogSim("World", "Simulation stopped and reset", "stop");
             break;
     }
 };
@@ -128,7 +155,14 @@ void DrawTrafficSim() {
     if (sim_state == SimState::PLAYING) {
         traffic_world->RunAgents();
         traffic_world->UpdateWorld();
+        sim_tick++;
         UpdateGraphs();
+
+        size_t n = traffic_world->GetNumAgents();
+        for (size_t id = last_traffic_agent_count; id < n; ++id) {
+            LogSim("Agent " + std::to_string(id), "Spawned", "info");
+        }
+        last_traffic_agent_count = n;
     }
 }
 
@@ -190,7 +224,25 @@ void DrawVirusSim() {
     if (sim_state == SimState::PLAYING) {
         virus_world->RunAgents();
         virus_world->UpdateWorld();
+        sim_tick++;
         UpdateGraphs();
+
+        size_t n = virus_world->GetNumAgents();
+        if (last_virus_health.size() != n) last_virus_health.assign(n, -1);
+        for (size_t id = 0; id < n; ++id) {
+            int cur = static_cast<int>(virus_world->GetAgentHealth(id));
+            if (cur != last_virus_health[id]) {
+                const char* label = "";
+                switch (virus_world->GetAgentHealth(id)) {
+                    case InfectiousWorld::HealthState::SUSCEPTIBLE: label = "became susceptible"; break;
+                    case InfectiousWorld::HealthState::INFECTED:    label = "infected"; break;
+                    case InfectiousWorld::HealthState::RECOVERED:   label = "recovered"; break;
+                }
+                LogSim("Agent " + std::to_string(id), label,
+                       virus_world->GetAgentHealth(id) == InfectiousWorld::HealthState::INFECTED ? "error" : "info");
+                last_virus_health[id] = cur;
+            }
+        }
     }
 }
 
@@ -236,18 +288,6 @@ void SetupVirusWorld() {
 void set_active_layout(std::shared_ptr<WebElement>&& layout) {
     elements["active_layout"] = layout;
 }
-
-// This is a web component that returns a canvas
-// Here, we choose to take our options for the canvas as a parameter
-// So the function can be treated as a component with the caller specifying
-// attributes like ID, styles, CSS classes etc.
-// std::shared_ptr<WebElement> GameInfoCanvas(WebOptions options) {
-//     // UIItem is just syntax sugar for make_shared that creates a shared pointer
-//     // auto gameInfo = UIItem<WebCanvas>(500, 500, options);
-
-
-//     return gameInfo;
-// }
 
 // Here we create a function that creates the layout for the simulation screen
 // It takes a lambda as a parameter
@@ -326,11 +366,11 @@ std::shared_ptr<WebElement> SimulationLayout(ActiveSim sim, std::function<void()
                         .children = {
                             // Our graph canvas
                             gameInfo,
-                            UIItem<WebTextbox>(TextStyle(), WebOptions{
+                            (log_textbox = UIItem<WebTextbox>(TextStyle(), WebOptions{
                                 .id = "top-textbox",
                                 .classes = { "textbox" },
                                 .style = {{ "flex", "3" }}
-                            })->SetText("Info"),
+                            })),
                         }
                         // Notice that the fluent API style also lets us call WebLayout's methods
                         // while including it as a parameter to the function call
@@ -384,6 +424,8 @@ void load_menu_layout() {
     std::println("Loading menu layout");
     active_sim = ActiveSim::NONE;
     GameCanvas.reset();
+    logger.reset();
+    log_textbox.reset();
     set_active_layout(MenuLayout());
 }
 
@@ -391,16 +433,24 @@ void load_traffic_layout() {
     std::println("Loading traffic simulation");
     active_sim = ActiveSim::TRAFFIC;
     sim_state  = SimState::STOPPED;
+    sim_tick   = 0;
     traffic_world = std::make_unique<TrafficWorld>("assets/grids/DemoWorld.grid");
+    last_traffic_agent_count = 0;
     set_active_layout(SimulationLayout(ActiveSim::TRAFFIC, load_traffic_layout, load_menu_layout));
+    logger = std::make_unique<WebTextboxOutputManager>(log_textbox);
+    LogSim("World", "Traffic simulation loaded. Press start to begin.", "info");
 }
 
 void load_virus_layout() {
     std::println("Loading virus simulation");
     active_sim = ActiveSim::VIRUS;
     sim_state  = SimState::STOPPED;
+    sim_tick   = 0;
     SetupVirusWorld();
+    last_virus_health.clear();
     set_active_layout(SimulationLayout(ActiveSim::VIRUS, load_virus_layout, load_menu_layout));
+    logger = std::make_unique<WebTextboxOutputManager>(log_textbox);
+    LogSim("World", "Virus simulation loaded. Press start to begin.", "info");
 }
 
 void MainLoop() {

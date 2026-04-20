@@ -161,42 +161,37 @@ elseif(DEFINED EMSCRIPTEN)
   # Exclude Qt GUI files (Qt can't be compiled by emcc)
   list(FILTER SOURCES EXCLUDE REGEX ".*/Interfaces/gui/.*")
 
-    # Exclude all entry points then add back the selected one
-    list(FILTER SOURCES EXCLUDE REGEX ".*_main\\.cpp$")
-    list(FILTER SOURCES EXCLUDE REGEX ".*/webui/web_entry\\.cpp$")
-    # Default to web_main.cpp for Emscripten builds if no target was specified
-    if(TARGET_MAIN STREQUAL "simple_main.cpp")
-        set(TARGET_MAIN "web_main.cpp")
-    endif()
-    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${TARGET_MAIN}")
-        list(APPEND SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/${TARGET_MAIN}")
-    elseif(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../demo/${TARGET_MAIN}")
-        list(APPEND SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/../demo/${TARGET_MAIN}")
-    else()
-        message(FATAL_ERROR "TARGET_MAIN '${TARGET_MAIN}' not found in source/ or demo/")
-    endif()
+  # Exclude all entry points then add back the selected one
+  list(FILTER SOURCES EXCLUDE REGEX ".*_main\\.cpp$")
+  list(FILTER SOURCES EXCLUDE REGEX ".*/webui/web_entry\\.cpp$")
+  # Default to web_main.cpp for Emscripten builds if no target was specified
+  if(TARGET_MAIN STREQUAL "simple_main.cpp")
+    set(TARGET_MAIN "web_main.cpp")
+  endif()
+  if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${TARGET_MAIN}")
+    list(APPEND SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/${TARGET_MAIN}")
+  elseif(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../demo/${TARGET_MAIN}")
+    list(APPEND SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/../demo/${TARGET_MAIN}")
+  else()
+    message(FATAL_ERROR "TARGET_MAIN '${TARGET_MAIN}' not found in source/ or demo/")
+  endif()
 
   add_executable(index ${SOURCES})
   set_target_properties(index PROPERTIES SUFFIX ".js")
   target_include_directories(index PRIVATE ${HEADER_DIRS})
   target_link_libraries(index PRIVATE range-v3 nlohmann_json::nlohmann_json)
 
-<<<<<<< HEAD
-    # Emscripten compile options
-    target_compile_options(index PRIVATE
+  # Emscripten compile options
+  target_compile_options(index PRIVATE
         -O2
         -Wall
         # -g
         # -fno-inline
     )
 
-    # Emscripten link options
-    target_link_options(index PRIVATE
-        # -g
-=======
   # Emscripten link options
   target_link_options(index PRIVATE
->>>>>>> Group-20
+        # -g
         -sALLOW_MEMORY_GROWTH=1
         -sMAXIMUM_MEMORY=1gb
         -sEXPORTED_RUNTIME_METHODS=ccall,cwrap
@@ -213,41 +208,41 @@ elseif(DEFINED EMSCRIPTEN)
         COPYONLY
     )
 
-    configure_file(
+  configure_file(
         ${CMAKE_CURRENT_SOURCE_DIR}/tools/webui/menu.html
         ${CMAKE_BINARY_DIR}/menu.html
         COPYONLY
     )
 
-    configure_file(
+  configure_file(
         ${CMAKE_CURRENT_SOURCE_DIR}/tools/webui/style.css
         ${CMAKE_BINARY_DIR}/style.css
         COPYONLY
     )
 
-    set(ASSETS_SOURCE_DIR "/app/assets")
-    set(ASSETS_BUILD_DIR "${CMAKE_BINARY_DIR}/assets")
-    add_custom_target(copy_assets
+  set(ASSETS_SOURCE_DIR "/app/assets")
+  set(ASSETS_BUILD_DIR "${CMAKE_BINARY_DIR}/assets")
+  add_custom_target(copy_assets
         COMMAND ${CMAKE_COMMAND} -E copy_directory_if_different
             "${ASSETS_SOURCE_DIR}"
             "${ASSETS_BUILD_DIR}"
         COMMENT "Copying assets directory"
     )
-    add_dependencies(index copy_assets)
+  add_dependencies(index copy_assets)
 
 
 else()
-    # Native build
-    list(FILTER SOURCES EXCLUDE REGEX ".*/tools/webui/.*")
-    # Exclude all entry points then add back the selected one
-    list(FILTER SOURCES EXCLUDE REGEX ".*_main\\.cpp$")
-    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${TARGET_MAIN}")
-        list(APPEND SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/${TARGET_MAIN}")
-    elseif(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../demo/${TARGET_MAIN}")
-        list(APPEND SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/../demo/${TARGET_MAIN}")
-    else()
-        message(FATAL_ERROR "TARGET_MAIN '${TARGET_MAIN}' not found in source/ or demo/")
-    endif()
+  # Native build
+  list(FILTER SOURCES EXCLUDE REGEX ".*/tools/webui/.*")
+  # Exclude all entry points then add back the selected one
+  list(FILTER SOURCES EXCLUDE REGEX ".*_main\\.cpp$")
+  if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${TARGET_MAIN}")
+    list(APPEND SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/${TARGET_MAIN}")
+  elseif(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../demo/${TARGET_MAIN}")
+    list(APPEND SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/../demo/${TARGET_MAIN}")
+  else()
+    message(FATAL_ERROR "TARGET_MAIN '${TARGET_MAIN}' not found in source/ or demo/")
+  endif()
 
   if(NO_QT)
     # Skip Qt entirely and exclude GUI sources

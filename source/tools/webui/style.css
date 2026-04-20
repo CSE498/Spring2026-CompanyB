@@ -24,6 +24,21 @@ body {
     box-sizing: border-box;
 }
 
+#top-textbox {
+    background: #363636 !important;
+    border: 6px solid #1a1a1a !important;
+    border-radius: 18px;
+    padding: 0.75em 1em;
+    font-family: "Menlo", "Consolas", "Courier New", monospace;
+    font-size: 14px;
+    line-height: 1.5;
+    color: #e5e5e5;
+}
+
+#top-textbox span {
+    display: inline-block;
+}
+
 #game-area {
     position: relative !important;
     flex: 0 0 auto;
@@ -101,7 +116,16 @@ body {
     color: #ce9178;
 }
 .log-error {
-    color: #f44336;
+    color: #f87171;
+}
+.log-start {
+    color: #4ade80;
+}
+.log-pause {
+    color: #fbbf24;
+}
+.log-stop {
+    color: #ef4444;
 }
 
 #traffic-btn,
