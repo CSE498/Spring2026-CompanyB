@@ -10,8 +10,8 @@
 namespace cse498 {
 
 class DemoInfectionAgent : public StepAgentBase<DiseaseData> {
- public:
-  DemoInfectionAgent(const DiseaseData& data, std::size_t id,
+public:
+  DemoInfectionAgent(const DiseaseData &data, std::size_t id,
                      uint64_t initialTick = 0)
       : StepAgentBase<DiseaseData>(data, id, LogLevel::Normal, initialTick) {}
 
@@ -24,22 +24,22 @@ class DemoInfectionAgent : public StepAgentBase<DiseaseData> {
   }
 };
 
-static const char* HealthStateName(HealthState state) {
+static const char *HealthStateName(HealthState state) {
   switch (state) {
-    case HealthState::SUSCEPTIBLE:
-      return "SUSCEPTIBLE";
-    case HealthState::INFECTED:
-      return "INFECTED";
-    case HealthState::RECOVERED:
-      return "RECOVERED";
+  case HealthState::SUSCEPTIBLE:
+    return "SUSCEPTIBLE";
+  case HealthState::INFECTED:
+    return "INFECTED";
+  case HealthState::RECOVERED:
+    return "RECOVERED";
   }
   return "UNKNOWN";
 }
 
-static void PrintAgentStates(const std::vector<DemoInfectionAgent>& agents,
-                             const std::string& title) {
+static void PrintAgentStates(const std::vector<DemoInfectionAgent> &agents,
+                             const std::string &title) {
   std::cout << title << '\n';
-  for (const auto& agent : agents) {
+  for (const auto &agent : agents) {
     const DiseaseData state = agent.GetState();
     std::cout << "  agent " << agent.getId() << " => "
               << HealthStateName(state.infection_state)
@@ -48,21 +48,19 @@ static void PrintAgentStates(const std::vector<DemoInfectionAgent>& agents,
   }
 }
 
-}  // namespace cse498
+} // namespace cse498
 
 int main() {
   using namespace cse498;
   namespace fs = std::filesystem;
 
   std::vector<DemoInfectionAgent> liveAgents;
-  liveAgents.emplace_back(
-      DiseaseData{0.20, HealthState::SUSCEPTIBLE, std::nullopt,
-                  WorldPosition{0, 0}},
-      1, 0);
-  liveAgents.emplace_back(
-      DiseaseData{0.85, HealthState::INFECTED, std::nullopt,
-                  WorldPosition{1, 0}},
-      2, 0);
+  liveAgents.emplace_back(DiseaseData{0.20, HealthState::SUSCEPTIBLE,
+                                      std::nullopt, WorldPosition{0, 0}},
+                          1, 0);
+  liveAgents.emplace_back(DiseaseData{0.85, HealthState::INFECTED, std::nullopt,
+                                      WorldPosition{1, 0}},
+                          2, 0);
 
   // Record two simulation ticks using one-hot disease-state JSON in details.
   DiseaseData a1Tick1 = liveAgents[0].GetState();
@@ -84,7 +82,8 @@ int main() {
     return 1;
   }
 
-  const fs::path replayFile = fs::current_path() / "logs" / "simulation_log.json";
+  const fs::path replayFile =
+      fs::current_path() / "logs" / "simulation_log.json";
   if (!fs::exists(replayFile)) {
     std::cerr << "Expected replay file missing: " << replayFile << '\n';
     return 1;
@@ -94,17 +93,15 @@ int main() {
 
   // Start with intentionally different states, then replay from file.
   std::vector<DemoInfectionAgent> replayAgents;
-  replayAgents.emplace_back(
-      DiseaseData{0.01, HealthState::SUSCEPTIBLE, std::nullopt,
-                  WorldPosition{9, 9}},
-      1, 0);
-  replayAgents.emplace_back(
-      DiseaseData{0.01, HealthState::SUSCEPTIBLE, std::nullopt,
-                  WorldPosition{9, 8}},
-      2, 0);
+  replayAgents.emplace_back(DiseaseData{0.01, HealthState::SUSCEPTIBLE,
+                                        std::nullopt, WorldPosition{9, 9}},
+                            1, 0);
+  replayAgents.emplace_back(DiseaseData{0.01, HealthState::SUSCEPTIBLE,
+                                        std::nullopt, WorldPosition{9, 8}},
+                            2, 0);
 
-  std::vector<DemoInfectionAgent*> replayPointers{&replayAgents[0],
-                                                  &replayAgents[1]};
+  std::vector<DemoInfectionAgent *> replayPointers{&replayAgents[0],
+                                                   &replayAgents[1]};
   Logger<DemoInfectionAgent> replayLogger;
   const auto replayLoadResult =
       replayLogger.BeginReplay(replayFile.string(), replayPointers);
@@ -113,18 +110,21 @@ int main() {
     return 1;
   }
 
-  // Simulate world ticks: SetState uses replay mode and applies state from mStates.
+  // Simulate world ticks: SetState uses replay mode and applies state from
+  // mStates.
   for (uint64_t tick = 0; tick <= 2; ++tick) {
-    replayAgents[0].SetState(replayAgents[0].GetState(), LogLevel::Normal, tick);
-    replayAgents[1].SetState(replayAgents[1].GetState(), LogLevel::Normal, tick);
+    replayAgents[0].SetState(replayAgents[0].GetState(), LogLevel::Normal,
+                             tick);
+    replayAgents[1].SetState(replayAgents[1].GetState(), LogLevel::Normal,
+                             tick);
   }
 
   std::cout << '\n';
   PrintAgentStates(replayAgents, "Replay agents (after ticks 0..2):");
 
-  const bool ok = replayAgents[0].GetState().infection_state == HealthState::RECOVERED &&
-                  replayAgents[1].GetState().infection_state == HealthState::RECOVERED;
+  const bool ok =
+      replayAgents[0].GetState().infection_state == HealthState::RECOVERED &&
+      replayAgents[1].GetState().infection_state == HealthState::RECOVERED;
   std::cout << "\nReplay verification: " << (ok ? "PASS" : "FAIL") << '\n';
   return ok ? 0 : 1;
 }
-
