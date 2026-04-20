@@ -1,4 +1,8 @@
-// PointClass.hpp
+/**
+ * @file Point.hpp
+ * @brief Two-dimensional point and vector utility type.
+ */
+
 #pragma once
 
 #include <algorithm>  // for std::max
@@ -10,76 +14,146 @@
 
 namespace cse498 {
 
-// this block creates a function to safely compare doubles
+/// Absolute tolerance used by tol_equal().
 constexpr double EPSILON = 1e-9;
+
+/// Relative tolerance used by tol_equal().
 constexpr double RELATIVE_TOLERANCE = 1e-12;
+
+/**
+ * @brief Compare two floating-point values with absolute and relative error.
+ * @param a First value.
+ * @param b Second value.
+ * @return true if a and b are equal within the configured tolerances.
+ */
 inline bool tol_equal(double a, double b) {
   return std::abs(a - b) <=
          EPSILON + RELATIVE_TOLERANCE * std::max(std::abs(a), std::abs(b));
 }
 
+/**
+ * @brief Two-dimensional point and vector value.
+ *
+ * Point stores x and y coordinates as doubles and provides common vector math,
+ * transforms, interpolation, and arithmetic operators used by the Group 13
+ * geometry and infectious-world code.
+ */
 class Point {
  private:
-  double x{0.0}, y{0.0};
+  /// X coordinate.
+  double x{0.0};
+
+  /// Y coordinate.
+  double y{0.0};
 
  public:
-  // default constructor
+  /**
+   * @brief Construct the origin point (0, 0).
+   */
   Point() = default;
 
-  // parameterized constructor
+  /**
+   * @brief Construct a point from x and y coordinates.
+   * @param X X coordinate.
+   * @param Y Y coordinate.
+   */
   Point(double X, double Y) : x(X), y(Y) {}
 
-  // getters to get value of x and y
+  /**
+   * @brief Get the x coordinate.
+   * @return X coordinate.
+   */
   constexpr double getX() const { return x; }
+
+  /**
+   * @brief Get the y coordinate.
+   * @return Y coordinate.
+   */
   constexpr double getY() const { return y; }
 
-  // setters to set value of x and y
+  /**
+   * @brief Set the x coordinate.
+   * @param x_value New x coordinate.
+   * @return Reference to this point for chaining.
+   */
   Point& setX(double x_value) {
     x = x_value;
     return *this;
   }
+
+  /**
+   * @brief Set the y coordinate.
+   * @param y_value New y coordinate.
+   * @return Reference to this point for chaining.
+   */
   Point& setY(double y_value) {
     y = y_value;
     return *this;
   }
 
-  // operators
-  // addition (+=)
+  /**
+   * @brief Add another point component-wise.
+   * @param other Point whose coordinates will be added.
+   * @return Reference to this point.
+   */
   constexpr Point& operator+=(const Point& other) {
     x += other.x;
     y += other.y;
     return *this;
   }
 
-  // subtraction (-=)
+  /**
+   * @brief Subtract another point component-wise.
+   * @param other Point whose coordinates will be subtracted.
+   * @return Reference to this point.
+   */
   constexpr Point& operator-=(const Point& other) {
     x -= other.x;
     y -= other.y;
     return *this;
   }
 
-  // 3. Geometry: dot and cross product, magnitude, normalize(return unit
-  // vector),
+  /**
+   * @brief Compute the dot product with another point.
+   * @param other Other vector.
+   * @return Scalar dot product.
+   */
   [[nodiscard]] constexpr double dot(const Point& other) const {
     return ((x * other.getX()) + (y * other.getY()));
   }
 
+  /**
+   * @brief Compute Euclidean vector magnitude.
+   * @return Length from origin to this point.
+   */
   [[nodiscard]] double magnitude() const { return std::sqrt(x * x + y * y); }
 
-  // 4. Transforms: rotate, scale
+  /**
+   * @brief Scale this point in place.
+   * @param scalar Scalar multiplier.
+   * @return Reference to this point.
+   */
   constexpr Point& scale(double scalar) {
     x = x * scalar;
     y = y * scalar;
     return *this;
   }
 
-  // Returns a scaled copy without mutating the original.
+  /**
+   * @brief Create a scaled copy without mutating this point.
+   * @param scalar Scalar multiplier.
+   * @return Scaled point.
+   */
   [[nodiscard]] Point scaled(double scalar) const {
     Point copy = *this;
     return copy.scale(scalar);
   }
 
-  // normalize -- returns error on zero vector instead of silently doing nothing
+  /**
+   * @brief Normalize a point treated as a vector from the origin.
+   * @param p Point/vector to normalize.
+   * @return Unit vector, or an error string for an effectively zero vector.
+   */
   [[nodiscard]] static std::expected<Point, std::string> normalize(
       const Point& p) {
     double mag = p.magnitude();
@@ -88,7 +162,13 @@ class Point {
     return Point(p.getX() / mag, p.getY() / mag);
   }
 
-  // rotate
+  /**
+   * @brief Rotate this point around a pivot.
+   * @param deg Rotation angle in degrees.
+   * @param pivot Pivot point; defaults to the origin.
+   * @param counter_clockwise true for counterclockwise, false for clockwise.
+   * @return Reference to this point.
+   */
   Point& rotate(double deg, const Point& pivot = {0, 0},
                 bool counter_clockwise = true) {
     // Skip rotation if angle is effectively zero
@@ -110,90 +190,142 @@ class Point {
     return *this;
   }
 
-  // Returns a rotated copy without mutating the original.
+  /**
+   * @brief Create a rotated copy without mutating this point.
+   * @param deg Rotation angle in degrees.
+   * @param pivot Pivot point; defaults to the origin.
+   * @param ccw true for counterclockwise, false for clockwise.
+   * @return Rotated point.
+   */
   [[nodiscard]] Point rotated(double deg, const Point& pivot = {0, 0},
                               bool ccw = true) const {
     Point copy = *this;
     return copy.rotate(deg, pivot, ccw);
   }
 
-  // 2D cross product -- useful for finding area of the parallelogram
-  // area of triangle, possibly torque
-  // 2D cross product yields a fake "k" in ijk system
-  // my method will return a scalar, not a point vector
+  /**
+   * @brief Compute the 2-D cross product as a scalar.
+   * @param other Other vector.
+   * @return Scalar z-component of the 3-D cross product.
+   */
   [[nodiscard]] constexpr double cross_product(const Point& other) const {
     return (x * other.y) - (y * other.x);
   }
 
-  // Additional geometric operations
-
-  // Squared length.
+  /**
+   * @brief Compute squared vector length.
+   * @return x*x + y*y.
+   */
   [[nodiscard]] constexpr double lengthSq() const { return x * x + y * y; }
 
-  // Distance to another point.
+  /**
+   * @brief Compute Euclidean distance to another point.
+   * @param other Other point.
+   * @return Distance between the points.
+   */
   [[nodiscard]] double distanceTo(const Point& other) const {
     return std::sqrt(distanceSqTo(other));
   }
 
-  // Squared distance to another point.
+  /**
+   * @brief Compute squared Euclidean distance to another point.
+   * @param other Other point.
+   * @return Squared distance between the points.
+   */
   [[nodiscard]] double distanceSqTo(const Point& other) const {
     double dx = x - other.x;
     double dy = y - other.y;
     return dx * dx + dy * dy;
   }
 
-  // Return a new point translate.
+  /**
+   * @brief Create a translated copy of this point.
+   * @param delta Translation delta.
+   * @return Translated point.
+   */
   [[nodiscard]] Point translated(const Point& delta) const {
     return Point(x + delta.x, y + delta.y);
   }
 
-  // Return a perpendicular vector.
+  /**
+   * @brief Return the left-hand perpendicular vector.
+   * @return Point(-y, x).
+   */
   [[nodiscard]] Point perpendicular() const { return Point(-y, x); }
 
-  // Angle of the vector.
+  /**
+   * @brief Compute this vector's angle from the positive x-axis.
+   * @return Angle in radians from std::atan2(y, x).
+   */
   [[nodiscard]] double angle() const { return std::atan2(y, x); }
 
-  // Linear interpolation.
+  /**
+   * @brief Linearly interpolate from this point to another.
+   * @param other Endpoint.
+   * @param t Interpolation factor.
+   * @return Interpolated point.
+   */
   [[nodiscard]] Point lerp(const Point& other, double t) const {
     return Point(x + (other.x - x) * t, y + (other.y - y) * t);
   }
 
-  // Construct a point from polar coordinates.
+  /**
+   * @brief Construct a point from polar coordinates.
+   * @param r Radius.
+   * @param theta Angle in radians.
+   * @return Cartesian point.
+   */
   static Point fromPolar(double r, double theta) {
     return Point(r * std::cos(theta), r * std::sin(theta));
   }
 };
 
+/**
+ * @brief Stream a point as `(x, y)`.
+ * @param os Output stream.
+ * @param p Point to print.
+ * @return Reference to os.
+ */
 inline std::ostream& operator<<(std::ostream& os, const Point& p) {
   return os << "(" << p.getX() << ", " << p.getY() << ")";
 }
 
-// The addition "operators"
+/// @brief Add two points component-wise.
 Point operator+(const Point& lhs, const Point& rhs);
+/// @brief Add a scalar to both point coordinates.
 Point operator+(const Point& lhs, double rhs);
+/// @brief Add a scalar to both point coordinates.
 Point operator+(double lhs, const Point& rhs);
 
-// The subtraction "operators"
+/// @brief Subtract two points component-wise.
 Point operator-(const Point& lhs, const Point& rhs);
+/// @brief Subtract a scalar from both point coordinates.
 Point operator-(const Point& lhs, double rhs);
+/// @brief Subtract point coordinates from a scalar.
 Point operator-(double lhs, const Point& rhs);
 
-// The product "operators"
+/// @brief Multiply two points component-wise.
 Point operator*(const Point& lhs, const Point& rhs);
+/// @brief Multiply both point coordinates by a scalar.
 Point operator*(const Point& lhs, double rhs);
+/// @brief Multiply both point coordinates by a scalar.
 Point operator*(double lhs, const Point& rhs);
 
-// The equality "operators"
+/// @brief Compare two points with tolerant coordinate equality.
 bool operator==(const Point& lhs, const Point& rhs);
+/// @brief Compare both point coordinates to a scalar.
 bool operator==(const Point& lhs, double rhs);
+/// @brief Compare both point coordinates to a scalar.
 bool operator==(double lhs, const Point& rhs);
 
-// The unequal "operators"
+/// @brief Compare two points with tolerant coordinate inequality.
 bool operator!=(const Point& lhs, const Point& rhs);
+/// @brief Compare point coordinates to a scalar for inequality.
 bool operator!=(const Point& lhs, double rhs);
+/// @brief Compare point coordinates to a scalar for inequality.
 bool operator!=(double lhs, const Point& rhs);
 
-// dot product
+/// @brief Free-function dot product.
 double dot(const Point& A, const Point& B);
 
 }  // namespace cse498

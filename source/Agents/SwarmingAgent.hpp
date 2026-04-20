@@ -16,20 +16,41 @@
 
 namespace cse498 {
 
+/**
+ * @brief Concept for state types supported by SwarmingAgent.
+ *
+ * SwarmingAgent currently supports traffic and infectious-disease data because
+ * those state objects provide the fields its movement logic reads and updates.
+ */
 template <typename T>
 concept IsSwarmData = Concepts::IsOneOf<T, TrafficData, DiseaseData>;
 
+/**
+ * @brief Step-based agent that greedily moves toward goals or wanders locally.
+ *
+ * For TrafficData, the agent approaches its optional destination while avoiding
+ * immediate backtracking through a short position history. For DiseaseData, it
+ * emits random neighboring movement steps and leaves infection state transitions
+ * to InfectiousWorld.
+ *
+ * @tparam SwarmData Either TrafficData or DiseaseData.
+ */
 template <IsSwarmData SwarmData>
 class SwarmingAgent : public StepAgentBase<SwarmData> {
  private:
+  /// Random generator used to choose among candidate neighboring cells.
   std::mt19937 rng{std::random_device{}()};
 
-  // Rolling history of the most recent cells the agent has occupied. Used
-  // to bias detours toward unexplored neighbors so the agent doesn't ping-
-  // pong between two cells when it can't take its preferred greedy step.
+  /// Number of recent cells retained for loop-avoidance.
   static constexpr std::size_t kHistorySize = 6;
+
+  /// Recent positions used to avoid short movement loops.
   std::deque<WorldPosition> recent_positions;
 
+  /**
+   * @brief Add a position to the rolling movement history.
+   * @param pos Position to record.
+   */
   void record_position(WorldPosition const& pos) {
     // skip duplicates so a stationary agent doesn't flush the history with
     // copies of the same cell
@@ -42,12 +63,21 @@ class SwarmingAgent : public StepAgentBase<SwarmData> {
     }
   }
 
+  /**
+   * @brief Check whether a position is in the recent movement history.
+   * @param p Position to search for.
+   * @return true if p appears in recent_positions.
+   */
   [[nodiscard]] bool in_recent(WorldPosition const& p) const {
     return std::find(recent_positions.begin(), recent_positions.end(), p) !=
            recent_positions.end();
   }
 
-  // Returns a random neighboring position (up/down/left/right)
+  /**
+   * @brief Choose a random cardinal neighbor, preferring non-recent cells.
+   * @param pos Current position.
+   * @return Neighboring position selected from up, down, left, or right.
+   */
   WorldPosition get_random_neighbor(WorldPosition& pos) {
     std::array<WorldPosition, 4> neighbors{pos.Up(), pos.Down(), pos.Left(),
                                            pos.Right()};
@@ -70,13 +100,19 @@ class SwarmingAgent : public StepAgentBase<SwarmData> {
     return candidates[dist(rng)];
   }
 
-  // Picks the neighbor with the smallest Manhattan distance to `target`,
-  // preferring cells not in `recent_positions` so the agent naturally
-  // routes around walls and dead ends rather than pounding the same cell.
-  // If `exclude` is set, that cell is skipped (used to find a distinct
-  // "second choice" after already picking a primary). If every neighbor is
-  // in recent history, we fall back to the closest cell overall so the
-  // agent keeps swarming instead of freezing.
+  /**
+   * @brief Pick the cardinal neighbor closest to a target.
+   *
+   * The search prefers cells that are not in recent_positions so the agent can
+   * route around walls and dead ends instead of repeatedly choosing the same
+   * blocked cell. If exclude is set, that cell is skipped so callers can choose
+   * a distinct backup after picking a primary movement.
+   *
+   * @param pos Current position.
+   * @param target Desired destination.
+   * @param exclude Optional neighbor to ignore.
+   * @return Best neighboring cell by Manhattan distance.
+   */
   WorldPosition best_neighbor(WorldPosition const& pos,
                               WorldPosition const& target,
                               std::optional<WorldPosition> exclude) {
@@ -111,9 +147,18 @@ class SwarmingAgent : public StepAgentBase<SwarmData> {
   }
 
  public:
+  /**
+   * @brief Construct a swarming agent with initial state and stable ID.
+   * @param data Initial state object.
+   * @param id Stable ID assigned by the world.
+   */
   SwarmingAgent(SwarmData data, size_t id)
       : StepAgentBase<SwarmData>(data, id) {}
 
+  /**
+   * @brief Dispatch to the movement policy for the active data type.
+   * @return StepContainer describing the agent's requested turn.
+   */
   [[nodiscard]] StepContainer GetTurn() override {
     if constexpr (std::is_same_v<SwarmData, TrafficData>) {
       return TrafficGetTurn();
@@ -122,6 +167,15 @@ class SwarmingAgent : public StepAgentBase<SwarmData> {
     }
   }
 
+  /**
+   * @brief Build a traffic movement turn.
+   *
+   * Inactive agents emit no steps. Agents without a destination wander
+   * randomly. Agents with a destination request an availability check for a
+   * primary movement and provide a backup movement if the primary is blocked.
+   *
+   * @return StepContainer for the traffic world.
+   */
   [[nodiscard]] StepContainer TrafficGetTurn()
       requires(std::is_same_v<SwarmData, TrafficData>) {
     StepContainer container{};
@@ -178,6 +232,14 @@ class SwarmingAgent : public StepAgentBase<SwarmData> {
     return container;
   }
 
+  /**
+   * @brief Build an infectious-world movement turn.
+   *
+   * Infection state changes are handled by InfectiousWorld. The agent only
+   * chooses a neighboring movement target for this tick.
+   *
+   * @return StepContainer containing one random MovementStep.
+   */
   [[nodiscard]] StepContainer InfectionGetTurn()
       requires(std::is_same_v<SwarmData, DiseaseData>) {
     // Behavior in each state:
@@ -198,10 +260,10 @@ class SwarmingAgent : public StepAgentBase<SwarmData> {
     return container;
   }
 
-  // Following 3 functions are helper functions to set aspects of the agent's
-  // state
-
-  // Helper function to set the agent's destination
+  /**
+   * @brief Set the destination field when the data type supports it.
+   * @param goal Target world position.
+   */
   void SetGoal(WorldPosition goal) override {
     if constexpr (requires { this->mData.destination; }) {
       auto state = this->GetState();
@@ -210,8 +272,10 @@ class SwarmingAgent : public StepAgentBase<SwarmData> {
     }
   }
 
-  // Helper function to set whether the agent is swarming away or towards the
-  // goal
+  /**
+   * @brief Set traffic swarming direction when supported by TrafficData.
+   * @param swarm_away true to flee from the goal, false to approach it.
+   */
   void SetSwarmAway(bool swarm_away)
       requires(std::is_same_v<SwarmData, TrafficData>) {
     auto state = this->GetState();
@@ -219,7 +283,10 @@ class SwarmingAgent : public StepAgentBase<SwarmData> {
     this->SetState(state);
   }
 
-  // Helper function to set whether the agent is active or not
+  /**
+   * @brief Enable or disable a traffic agent.
+   * @param active true if the agent should emit movement steps.
+   */
   void SetActive(bool active)
       requires(std::is_same_v<SwarmData, TrafficData>) {
     auto state = this->GetState();
