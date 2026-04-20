@@ -10,9 +10,9 @@
 #include <utility>
 #include <variant>
 
+#include "../tools/FuncInfo.hpp"
 #include "WorldPosition.hpp"
 #include "core.hpp"
-#include "tools/FuncInfo.hpp"
 
 namespace cse498 {
 namespace steps {
@@ -75,7 +75,7 @@ struct _InfoHandler {
   _InfoHandler(F f)
       : funcs({pick_handler<typename std::tuple_element<
                                 0, typename FuncInfo::FuncInfo<F>::args>::type,
-                            Ts>(f)...}){};
+                            Ts>(f)...}) {}
 
   template <typename S>
   std::expected<bool, StepErr> operator()(S s) {

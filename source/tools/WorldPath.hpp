@@ -36,14 +36,33 @@ class WorldPath {
   /// Tolerance for floating-point comparisons in geometry helpers.
   static constexpr double kDefaultEps = 1e-9;
 
+  /// @brief Construct an empty path.
   constexpr WorldPath() noexcept = default;
 
+  /// @brief Mutable iterator to the first point.
   constexpr auto begin() noexcept { return points_.begin(); }
+
+  /// @brief Mutable iterator one past the last point.
   constexpr auto end() noexcept { return points_.end(); }
+
+  /// @brief Const iterator to the first point.
   constexpr auto begin() const noexcept { return points_.begin(); }
+
+  /// @brief Const iterator one past the last point.
   constexpr auto end() const noexcept { return points_.end(); }
 
+  /**
+   * @brief Unchecked mutable indexed access.
+   * @param i Point index.
+   * @return Mutable reference to the requested point.
+   */
   constexpr Point& operator[](std::size_t i) noexcept { return points_[i]; }
+
+  /**
+   * @brief Unchecked const indexed access.
+   * @param i Point index.
+   * @return Const reference to the requested point.
+   */
   constexpr const Point& operator[](std::size_t i) const noexcept {
     return points_[i];
   }
@@ -71,38 +90,89 @@ class WorldPath {
     return points_[i];
   }
 
+  /**
+   * @brief Checked mutable indexed access.
+   * @param i Point index.
+   * @return Pointer to the point, or nullptr when i is out of range.
+   */
   [[nodiscard]] constexpr Point* get(std::size_t i) noexcept {
     return i < points_.size() ? &points_[i] : nullptr;
   }
 
+  /**
+   * @brief Checked const indexed access.
+   * @param i Point index.
+   * @return Pointer to the point, or nullptr when i is out of range.
+   */
   [[nodiscard]] constexpr const Point* get(std::size_t i) const noexcept {
     return i < points_.size() ? &points_[i] : nullptr;
   }
 
+  /**
+   * @brief Access the first point.
+   * @return Mutable reference to the first point.
+   * @pre Path must not be empty.
+   */
   [[nodiscard]] constexpr Point& front() noexcept {
     assert(!points_.empty());
     return points_.front();
   }
+
+  /**
+   * @brief Access the first point.
+   * @return Const reference to the first point.
+   * @pre Path must not be empty.
+   */
   [[nodiscard]] constexpr const Point& front() const noexcept {
     assert(!points_.empty());
     return points_.front();
   }
+
+  /**
+   * @brief Access the last point.
+   * @return Mutable reference to the last point.
+   * @pre Path must not be empty.
+   */
   [[nodiscard]] constexpr Point& back() noexcept {
     assert(!points_.empty());
     return points_.back();
   }
+
+  /**
+   * @brief Access the last point.
+   * @return Const reference to the last point.
+   * @pre Path must not be empty.
+   */
   [[nodiscard]] constexpr const Point& back() const noexcept {
     assert(!points_.empty());
     return points_.back();
   }
 
+  /**
+   * @brief Check whether the path has no points.
+   * @return true if size() == 0.
+   */
   [[nodiscard]] constexpr bool empty() const noexcept {
     return points_.empty();
   }
+
+  /**
+   * @brief Get the number of stored points.
+   * @return Point count.
+   */
   [[nodiscard]] constexpr std::size_t size() const noexcept {
     return points_.size();
   }
+
+  /**
+   * @brief Reserve storage for at least n points.
+   * @param n Requested capacity.
+   */
   constexpr void reserve(std::size_t n) { points_.reserve(n); }
+
+  /**
+   * @brief Remove all points from the path.
+   */
   constexpr void clear() noexcept { points_.clear(); }
 
   /**

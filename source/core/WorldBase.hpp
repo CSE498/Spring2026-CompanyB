@@ -35,7 +35,7 @@ class WorldBase {
   /// Helper function that is run whenever a new agent is created.
   /// @note Override this function to provide agents with actions or other
   /// setup.
-  virtual void ConfigAgent(AgentBase & /* agent */) {}
+  virtual void ConfigAgent(AgentBase& /* agent */) {}
 
  public:
   WorldBase() = default;
@@ -62,13 +62,13 @@ class WorldBase {
   }
 
   /// Return a reference to an Agent with a given ID.
-  [[nodiscard]] AgentBase &GetAgent(size_t id) {
+  [[nodiscard]] AgentBase& GetAgent(size_t id) {
     assert(id < agent_set.size());
     return *agent_set[id];
   }
 
   /// Return a CONST reference to an Agent with a given ID.
-  [[nodiscard]] const AgentBase &GetAgent(size_t id) const {
+  [[nodiscard]] const AgentBase& GetAgent(size_t id) const {
     assert(id < agent_set.size());
     return *agent_set[id];
   }
@@ -90,10 +90,10 @@ class WorldBase {
   /// @param agent_name The name of this agent
   /// @return A reference to the newly created agent
   template <typename AGENT_T>
-  AGENT_T &AddAgent(std::string agent_name = "None") {
+  AGENT_T& AddAgent(std::string agent_name = "None") {
     auto agent_ptr =
         std::make_unique<AGENT_T>(agent_set.size(), agent_name, *this);
-    AGENT_T &agent_ref = *agent_ptr;
+    AGENT_T& agent_ref = *agent_ptr;
     ConfigAgent(*agent_ptr);
     if (agent_ptr->Initialize() == false) {
       std::cerr << "Failed to initialize agent '" << agent_name << "'."
@@ -111,13 +111,13 @@ class WorldBase {
   /// @param action The id of the action to take
   /// @return The result of this action (usually 0/1 to indicate success)
   /// @note Thus function must be overridden in any derived world.
-  virtual int DoAction(AgentBase &agent, size_t action_id) = 0;
+  virtual int DoAction(AgentBase& agent, size_t action_id) = 0;
 
   /// @brief Step through each agent giving them a chance to take an action.
   /// @note Override function to control execution order of agents.
   /// @note Override function to control which grid each agent receives.
   virtual void RunAgents() {
-    for (const auto &agent_ptr : agent_set) {
+    for (const auto& agent_ptr : agent_set) {
       size_t action_id = agent_ptr->SelectAction(main_grid);
       int result = DoAction(*agent_ptr, action_id);
       agent_ptr->SetActionResult(result);
@@ -148,18 +148,18 @@ class WorldBase {
   // Provide a vector of IDs for other agents that the input agent is aware of.
   // (If not overridden, return ALL agents.)
   virtual std::vector<size_t> GetKnownAgents(
-      [[maybe_unused]] const AgentBase &agent) const {
+      [[maybe_unused]] const AgentBase& agent) const {
     std::vector<size_t> out_ids;
-    for (const agent_ptr_t &ptr : agent_set) out_ids.push_back(ptr->GetID());
+    for (const agent_ptr_t& ptr : agent_set) out_ids.push_back(ptr->GetID());
     return out_ids;
   }
 
   // Provide a vector of IDs for items that the input agent is aware of.
   // (If not overridden, return ALL items.)
   std::vector<size_t> GetKnownItems(
-      [[maybe_unused]] const AgentBase &agent) const {
+      [[maybe_unused]] const AgentBase& agent) const {
     std::vector<size_t> out_ids;
-    for (const item_ptr_t &ptr : item_set) out_ids.push_back(ptr->GetID());
+    for (const item_ptr_t& ptr : item_set) out_ids.push_back(ptr->GetID());
     return out_ids;
   }
 };
