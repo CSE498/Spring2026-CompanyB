@@ -88,7 +88,7 @@ void StartScreen::onVirusClicked()   { launchMainWindow(2); }
 
 void StartScreen::launchMainWindow(int mode) {
     if (mode == 1) {
-         mWorld = std::make_unique<cse498::TrafficWorld>();
+         mWorld = std::make_unique<cse498::TrafficWorld>("demo/DemoWorld.grid");
     } else {
         auto iw = std::make_unique<cse498::InfectiousWorld>(20, 15);
         iw->SetTransmissionRate(0.4);

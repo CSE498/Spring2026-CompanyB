@@ -30,6 +30,7 @@ namespace cse498
         int mTileSize{32}; // default tile size
         ImageManager mImageManager;
         std::vector<QGraphicsItem *> mAgentItems;
+        std::vector<QGraphicsItem *> mGridItems;
 
     public:
         ImageGrid() = delete;

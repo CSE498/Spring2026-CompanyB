@@ -7,13 +7,13 @@ int main(int argc, char *argv[])
     app.setApplicationName("Group 21 Demo");
     app.setApplicationVersion("1.0");
 
-    const std::vector<QString> backgroundImagePaths = {    "images/test1.png",  // Unknown
-    "images/test1.png",  // road
-    "images/test2.png",  // grass
-    "images/test1.png",  // traffic_light_vertical
-    "images/test1.png",  // traffic_light_horizontal
-    "images/test1.png",  // spawn
-    "images/test2.png",  // destination};
+    const std::vector<QString> backgroundImagePaths = {
+    "images/road_temp.png",  // road
+    "images/grass_temp.png",  // grass
+    "images/traffic_light_v_temp.png",  // traffic_light_vertical
+    "images/traffic_light_h_temp.png",  // traffic_light_horizontal
+    "images/spawn_temp.png",  // spawn
+    "images/destination_temp.png",  // destination};
      };
     const int tileSize = 64;
     const QString agentImagePath = "images/agent.png";
