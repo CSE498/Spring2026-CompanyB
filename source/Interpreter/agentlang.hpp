@@ -28,7 +28,7 @@ struct ValVariable;
 namespace agentlang::Types {
 
 // Alias so that the internal "point" and the type "point" match
-using Point = WorldPosition;
+using PointTy = WorldPosition;
 using str = std::string;
 
 enum class Dir {
@@ -43,12 +43,12 @@ struct Car {};
 struct Student {};
 struct NullType {};
 using Type =
-    std::variant<bool, int, double, str, Point, Dir, Car, Student, NullType>;
+    std::variant<bool, int, double, str, PointTy, Dir, Car, Student, NullType>;
 
 // Concept satisfied if T is a valid agentlang type
 template <typename T>
-concept TypeKind = Concepts::IsOneOf<T, bool, int, double, str, Point, Dir, Car,
-                                     Student, NullType>;
+concept TypeKind = Concepts::IsOneOf<T, bool, int, double, str, PointTy, Dir,
+                                     Car, Student, NullType>;
 static const std::array<std::string_view, 9> TYPE_NAMES = {
     "bool",      "int", "double",  "str", "point",
     "direction", "car", "student", "null"};
@@ -66,7 +66,7 @@ inline std::string_view TypeVariantToName(const Type &t) {
 inline std::optional<Type> NameToType(const emplex::Token &type_tok) {
   static const std::unordered_map<std::string, Type> type_map = {
       {"bool", bool{}}, {"int", int{}},         {"double", double{}},
-      {"str", str{}},   {"point", Point{}},     {"direction", Dir{}},
+      {"str", str{}},   {"point", PointTy{}},   {"direction", Dir{}},
       {"car", Car{}},   {"student", Student{}},
   };
 

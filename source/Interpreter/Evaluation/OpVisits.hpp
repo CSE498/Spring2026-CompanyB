@@ -87,11 +87,11 @@ struct OpVisitor {
       }
       case IDs::ID_OP_ADD: {
         STATIC_CHECKED_OP(l + r);
-        STATIC_CHECKED_OP(Point(l.X() + r.X(), l.Y() + r.Y()));
+        STATIC_CHECKED_OP(PointTy(l.X() + r.X(), l.Y() + r.Y()));
       }
       case IDs::ID_OP_MINUS: {
         STATIC_CHECKED_OP(l - r);
-        STATIC_CHECKED_OP(Point(l.X() - r.X(), l.Y() - r.Y()));
+        STATIC_CHECKED_OP(PointTy(l.X() - r.X(), l.Y() - r.Y()));
       }
       case IDs::ID_OP_DIVIDE: {
         STATIC_CHECKED_OP(l / r);
