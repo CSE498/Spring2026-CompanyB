@@ -112,6 +112,16 @@ void MainWindow::setMenuBar() {
     mAboutAction->setStatusTip("Show information about this application");
     connect(mAboutAction, &QAction::triggered, this, &MainWindow::onHelpAbout);
     mHelpMenu->addAction(mAboutAction);
+
+    // Toolbar
+    mToolBar = addToolBar("Simulation");
+    mToolBar->setMovable(false);
+
+    mReplayToggleAction = new QAction("⏸ Pause", this);
+    mReplayToggleAction->setShortcut(QKeySequence(Qt::Key_Space));
+    mReplayToggleAction->setStatusTip("Pause or resume the simulation");
+    connect(mReplayToggleAction, &QAction::triggered, this, &MainWindow::onReplayToggle);
+    mToolBar->addAction(mReplayToggleAction);
 }
 
 void MainWindow::setMainWidget() {
@@ -277,6 +287,21 @@ void MainWindow::onBackToMainMenu() {
 
 void MainWindow::logCommand(const QString& message) {
     mCommandLog->append(message);
+}
+
+void MainWindow::onReplayToggle() {
+    if (mIsRunning) {
+        mTimer->stop();
+        mReplayToggleAction->setText("▶ Play");
+        statusBar()->showMessage("Simulation paused", TIMEOUT);
+        logCommand("[System] Simulation paused.");
+    } else {
+        mTimer->start(mTickInterval);
+        mReplayToggleAction->setText("⏸ Pause");
+        statusBar()->showMessage("Simulation resumed", TIMEOUT);
+        logCommand("[System] Simulation resumed.");
+    }
+    mIsRunning = !mIsRunning;
 }
 
 } // namespace cse498
