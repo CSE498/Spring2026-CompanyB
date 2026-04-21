@@ -1,9 +1,9 @@
 #include <emscripten.h>
+#include <emscripten/val.h>
 
 #include <catch2/catch_test_macros.hpp>
 
 #include "tools/webui/WebImage.hpp"
-#include <emscripten/val.h>
 
 struct SetupMockDOMWebImage {
   SetupMockDOMWebImage() {
@@ -30,24 +30,29 @@ struct SetupMockDOMWebImage {
   }
 };
 
-/// @brief Utility for testing images. 
-/// `complete` and `naturalWidth` are read-only in image elements in DOM, this makes them writeable for an image element
+/// @brief Utility for testing images.
+/// `complete` and `naturalWidth` are read-only in image elements in DOM, this
+/// makes them writeable for an image element
 void patch_image_writable(emscripten::val elem) {
   emscripten::val descriptor_complete = emscripten::val::object();
   descriptor_complete.set("value", true);
-  descriptor_complete.set("writable", true); // Make it writable for your test
-  emscripten::val::global("Object").call<void>("defineProperty", elem, emscripten::val("complete"), descriptor_complete);
+  descriptor_complete.set("writable", true);  // Make it writable for your test
+  emscripten::val::global("Object").call<void>(
+      "defineProperty", elem, emscripten::val("complete"), descriptor_complete);
 
   emscripten::val descriptor_naturalWidth = emscripten::val::object();
   descriptor_naturalWidth.set("value", 0);
-  descriptor_naturalWidth.set("writable", true); // Make it writable for your test
-  emscripten::val::global("Object").call<void>("defineProperty", elem, emscripten::val("naturalWidth"), descriptor_naturalWidth);
+  descriptor_naturalWidth.set("writable",
+                              true);  // Make it writable for your test
+  emscripten::val::global("Object").call<void>("defineProperty", elem,
+                                               emscripten::val("naturalWidth"),
+                                               descriptor_naturalWidth);
 }
 
 TEST_CASE("WebImage constructor creates image with correct properties",
           "[WebImage]") {
   SetupMockDOMWebImage mock;
-  cse498::WebImage img("assets/test.png", "A test image", { .id = "test-img-1" });
+  cse498::WebImage img("assets/test.png", "A test image", {.id = "test-img-1"});
 
   REQUIRE(img.GetId() == "test-img-1");
   REQUIRE(img.GetSource() == "assets/test.png");
@@ -59,7 +64,7 @@ TEST_CASE("WebImage constructor creates image with correct properties",
 TEST_CASE("WebImage SetSource changes and properly updates the image source",
           "[WebImage]") {
   SetupMockDOMWebImage mock;
-  cse498::WebImage img("initial.png", "Initial image", { .id = "test-img-2" });
+  cse498::WebImage img("initial.png", "Initial image", {.id = "test-img-2"});
 
   img.SetSource("new_image.png");
 
@@ -72,7 +77,7 @@ TEST_CASE("WebImage SetSource changes and properly updates the image source",
 
 TEST_CASE("WebImage SetSize updates dimensions correctly", "[WebImage]") {
   SetupMockDOMWebImage mock;
-  cse498::WebImage img("test.png", "Size test image", { .id = "test-img-3" });
+  cse498::WebImage img("test.png", "Size test image", {.id = "test-img-3"});
 
   img.SetSize(200, 150);
 
@@ -88,7 +93,7 @@ TEST_CASE("WebImage SetSize updates dimensions correctly", "[WebImage]") {
 TEST_CASE("WebImage GetSize returns correct dimensions and updates properly",
           "[WebImage]") {
   SetupMockDOMWebImage mock;
-  cse498::WebImage img("test.png", "GetSize test image", { .id = "test-img-4" });
+  cse498::WebImage img("test.png", "GetSize test image", {.id = "test-img-4"});
 
   img.SetSize(300, 250);
   auto [width, height] = img.GetSize();
@@ -105,7 +110,7 @@ TEST_CASE("WebImage GetSize returns correct dimensions and updates properly",
 
 TEST_CASE("WebImage SetPosition updates position correctly", "[WebImage]") {
   SetupMockDOMWebImage mock;
-  cse498::WebImage img("test.png", "Position test image", { .id = "test-img-5" });
+  cse498::WebImage img("test.png", "Position test image", {.id = "test-img-5"});
 
   img.SetPosition(100, 50);
   auto [x, y] = img.GetPosition();
@@ -122,7 +127,7 @@ TEST_CASE("WebImage SetPosition updates position correctly", "[WebImage]") {
 
 TEST_CASE("WebImage SetAlt updates alt text properly", "[WebImage]") {
   SetupMockDOMWebImage mock;
-  cse498::WebImage img("test.png", "Initial alt text", { .id = "test-img-6" });
+  cse498::WebImage img("test.png", "Initial alt text", {.id = "test-img-6"});
 
   img.SetAlt("A test image");
 
@@ -135,8 +140,8 @@ TEST_CASE("WebImage SetAlt updates alt text properly", "[WebImage]") {
 
 TEST_CASE("WebImage handles multiple property changes", "[WebImage]") {
   SetupMockDOMWebImage mock;
-  cse498::WebImage img("original.png",
-                       "Multi-property test image", { .id = "test-img-7" });
+  cse498::WebImage img("original.png", "Multi-property test image",
+                       {.id = "test-img-7"});
 
   img.SetSource("updated.png");
   img.SetSize(400, 300);
@@ -152,18 +157,18 @@ TEST_CASE("WebImage handles multiple property changes", "[WebImage]") {
   REQUIRE(img.GetAlt() == "Updated image");
 }
 
-TEST_CASE("WebImage IsLoaded returns false for unloaded images",
-          "[WebImage]") {
+TEST_CASE("WebImage IsLoaded returns false for unloaded images", "[WebImage]") {
   SetupMockDOMWebImage mock;
-  cse498::WebImage img("test.png", "Loading test image", { .id = "test-img-loading" });
+  cse498::WebImage img("test.png", "Loading test image",
+                       {.id = "test-img-loading"});
 
   REQUIRE(img.IsLoaded() == false);
 }
 
 TEST_CASE("WebImage SetSize with zero values", "[WebImage]") {
   SetupMockDOMWebImage mock;
-  cse498::WebImage img("test.png",
-                       "Zero size test image", { .id = "test-img-zero-size" });
+  cse498::WebImage img("test.png", "Zero size test image",
+                       {.id = "test-img-zero-size"});
 
   img.SetSize(0, 0);
 
@@ -173,7 +178,7 @@ TEST_CASE("WebImage SetSize with zero values", "[WebImage]") {
 
 TEST_CASE("WebImage handles empty strings", "[WebImage]") {
   SetupMockDOMWebImage mock;
-  cse498::WebImage img("", "Empty source test", { .id = "test-img-empty" });
+  cse498::WebImage img("", "Empty source test", {.id = "test-img-empty"});
 
   REQUIRE(img.GetSource() == "");
 
@@ -186,8 +191,8 @@ TEST_CASE(
     "true but naturalWidth = 0",
     "[WebImage]") {
   SetupMockDOMWebImage mock;
-  cse498::WebImage img("bad-path.png",
-                       "Error test image", { .id = "test-img-has-error" });
+  cse498::WebImage img("bad-path.png", "Error test image",
+                       {.id = "test-img-has-error"});
 
   // Since there are no setters for these properties, manually edit the mock
   // element and simulate a failed load
@@ -200,7 +205,7 @@ TEST_CASE(
   elem.set("naturalWidth", 0);
 
   auto result = img.HasError();
-  
+
   REQUIRE_FALSE(result.has_value());
   REQUIRE(result.error().find("bad-path.png") != std::string::npos);
 }
@@ -210,8 +215,8 @@ TEST_CASE(
     "image",
     "[WebImage]") {
   SetupMockDOMWebImage mock;
-  cse498::WebImage img("good-image.png",
-                       "Loaded ok test image", { .id = "test-img-loaded-ok" });
+  cse498::WebImage img("good-image.png", "Loaded ok test image",
+                       {.id = "test-img-loaded-ok"});
 
   // Since there are no setters for these properties, manually edit the mock
   // element and simulate a successful load
@@ -231,7 +236,7 @@ TEST_CASE(
 
 TEST_CASE("WebImage SetSize respects SizeUnit enum", "[WebImage]") {
   SetupMockDOMWebImage mock;
-  cse498::WebImage img("test.png", "Unit test image", { .id = "test-img-units" });
+  cse498::WebImage img("test.png", "Unit test image", {.id = "test-img-units"});
 
   img.SetSize(50, 25, cse498::SizeUnit::percent);
   REQUIRE(img.GetWidth() == 50);
@@ -248,8 +253,8 @@ TEST_CASE("WebImage SetSize respects SizeUnit enum", "[WebImage]") {
 
 TEST_CASE("WebImage SetSize supports fractional dimensions", "[WebImage]") {
   SetupMockDOMWebImage mock;
-  cse498::WebImage img("test.png",
-                       "Fractional size test image", { .id = "test-img-fractional" });
+  cse498::WebImage img("test.png", "Fractional size test image",
+                       {.id = "test-img-fractional"});
 
   img.SetSize(150.5, 75.25);
   REQUIRE(img.GetWidth() == 150.5);
@@ -258,8 +263,8 @@ TEST_CASE("WebImage SetSize supports fractional dimensions", "[WebImage]") {
 
 TEST_CASE("WebImage SetSize supports all SizeUnit values", "[WebImage]") {
   SetupMockDOMWebImage mock;
-  cse498::WebImage img("test.png",
-                      "All units test image", { .id = "test-img-all-units" });
+  cse498::WebImage img("test.png", "All units test image",
+                       {.id = "test-img-all-units"});
 
   img.SetSize(100, 50, cse498::SizeUnit::px);
   REQUIRE(img.GetWidth() == 100);
@@ -289,8 +294,8 @@ TEST_CASE("WebImage SetSize supports all SizeUnit values", "[WebImage]") {
 TEST_CASE("WebImage IsLoaded returns true when complete and naturalWidth > 0",
           "[WebImage]") {
   SetupMockDOMWebImage mock;
-  cse498::WebImage img("test.png",
-                        "Loaded true test image", { .id = "test-img-loaded-true" });
+  cse498::WebImage img("test.png", "Loaded true test image",
+                       {.id = "test-img-loaded-true"});
 
   emscripten::val document = emscripten::val::global("document");
   emscripten::val elem = document.call<emscripten::val>(
@@ -309,7 +314,8 @@ TEST_CASE(
     "it",
     "[WebImage]") {
   SetupMockDOMWebImage mock;
-  cse498::WebImage img("test.png", "Visible test image", { .id = "test-img-loaded-true" });
+  cse498::WebImage img("test.png", "Visible test image",
+                       {.id = "test-img-loaded-true"});
 
   img.SetVisible(false);
   REQUIRE(img.GetVisible() == false);

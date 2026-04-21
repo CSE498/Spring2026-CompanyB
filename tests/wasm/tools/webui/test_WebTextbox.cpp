@@ -51,7 +51,7 @@ std::string GenerateGarbage(size_t length) {
 
 TEST_CASE("WebTextbox: New UI & Memory Features", "[features]") {
   SetupMockDOMWebTextbox mock;
-  WebTextbox box(TextStyle(), { .id = "feature_box" });
+  WebTextbox box(TextStyle(), {.id = "feature_box"});
 
   // 1. Test Clear()
   box.SetText("Initialize Data");
@@ -82,7 +82,7 @@ TEST_CASE("WebTextbox: New UI & Memory Features", "[features]") {
 
 TEST_CASE("WebTextbox: The Naughty String List", "[edge_case]") {
   SetupMockDOMWebTextbox mock;
-  WebTextbox box(TextStyle(), { .id = "naughty_box" });
+  WebTextbox box(TextStyle(), {.id = "naughty_box"});
 
   std::vector<std::string> naughty_strings = {"",
                                               "undefined",
@@ -117,7 +117,7 @@ TEST_CASE("WebTextbox: The Naughty String List", "[edge_case]") {
 
 TEST_CASE("WebTextbox: Numeric Extremes", "[limits]") {
   SetupMockDOMWebTextbox mock;
-  WebTextbox box(TextStyle(), { .id = "limit_box" });
+  WebTextbox box(TextStyle(), {.id = "limit_box"});
   TextStyle style;
 
   // Swapped from integer limits to their literal string px equivalents to avoid
@@ -135,7 +135,7 @@ TEST_CASE("WebTextbox: Numeric Extremes", "[limits]") {
 
 TEST_CASE("WebTextbox: High-Volume Fuzzing (10,000 Iterations)", "[fuzz]") {
   SetupMockDOMWebTextbox mock;
-  WebTextbox fuzzer(TextStyle(), { .id = "fuzz_target" });
+  WebTextbox fuzzer(TextStyle(), {.id = "fuzz_target"});
   srand(12345);
 
   for (int i = 0; i < 10000; ++i) {
@@ -149,7 +149,7 @@ TEST_CASE("WebTextbox: High-Volume Fuzzing (10,000 Iterations)", "[fuzz]") {
 
 TEST_CASE("WebTextbox: The Memory Stress Test", "[memory]") {
   SetupMockDOMWebTextbox mock;
-  WebTextbox heavyBox(TextStyle(), { .id = "heavy_box" });
+  WebTextbox heavyBox(TextStyle(), {.id = "heavy_box"});
 
   // Temporarily increase limit for the stress test
   size_t massive_size = 10 * 1024 * 1024;   // 10MB
@@ -166,7 +166,7 @@ TEST_CASE("WebTextbox: The Memory Stress Test", "[memory]") {
 
 TEST_CASE("WebTextbox: Templates and Lambdas", "[webui]") {
   SetupMockDOMWebTextbox mock;
-  cse498::WebTextbox box(TextStyle(), { .id = "test_box" });
+  cse498::WebTextbox box(TextStyle(), {.id = "test_box"});
 
   // Testing the Template
   REQUIRE_NOTHROW(box.AppendValue<int>(404));
@@ -183,15 +183,16 @@ TEST_CASE("WebTextbox: Templates and Lambdas", "[webui]") {
 
 TEST_CASE("WebTextbox: Span Pruning & Line Formatting", "[ui_spans]") {
   SetupMockDOMWebTextbox mock;
-  WebTextbox logger(TextStyle(), { .id = "logger_box" });
+  WebTextbox logger(TextStyle(), {.id = "logger_box"});
 
   SECTION("SetMaxLines limits DOM nodes without crashing JSDOM") {
     logger.SetMaxLines(3);
 
     // Inject 10 lines. If our pruning logic failed or threw DOM errors,
     // JSDOM would crash the test suite here.
-    for(int i = 0; i < 10; ++i) {
-        REQUIRE_NOTHROW(logger.AppendLine("Log line " + std::to_string(i), "INFO"));
+    for (int i = 0; i < 10; ++i) {
+      REQUIRE_NOTHROW(
+          logger.AppendLine("Log line " + std::to_string(i), "INFO"));
     }
   }
 
@@ -201,7 +202,8 @@ TEST_CASE("WebTextbox: Span Pruning & Line Formatting", "[ui_spans]") {
     // Validates that EscapeHTML sanitizes the payload before injection
     REQUIRE_NOTHROW(logger.AppendStyledLine(malicious, "danger-text"));
 
-    // The C++ raw text buffer should retain the exact text for logging/reading parity
+    // The C++ raw text buffer should retain the exact text for logging/reading
+    // parity
     std::string current_text = logger.GetText().value();
     REQUIRE(current_text.find(malicious) != std::string::npos);
   }
@@ -209,7 +211,7 @@ TEST_CASE("WebTextbox: Span Pruning & Line Formatting", "[ui_spans]") {
 
 TEST_CASE("WebTextbox: C++20 Concepts and Constexpr checks", "[modern_cpp]") {
   SetupMockDOMWebTextbox mock;
-  WebTextbox box(TextStyle(), { .id = "concepts_box" });
+  WebTextbox box(TextStyle(), {.id = "concepts_box"});
 
   SECTION("AppendValue accepts std::floating_point types via C++20 Concepts") {
     REQUIRE_NOTHROW(box.AppendValue(3.14159));

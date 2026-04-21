@@ -16,11 +16,11 @@ using emscripten::val;
 namespace cse498 {
 
 WebLayout::WebLayout(const WebOptions& options) : WebElement("div", options) {
-  #ifdef DEBUG_LOG_WEB_ELEMENTS
+#ifdef DEBUG_LOG_WEB_ELEMENTS
   if (!id.empty()) {
     std::printf("WebLayout #%s constructed\n", id.c_str());
   }
-  #endif
+#endif
 
   dom_element["style"].set("display", "flex");
 

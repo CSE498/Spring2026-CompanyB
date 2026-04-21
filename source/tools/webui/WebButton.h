@@ -3,8 +3,8 @@
 #include <emscripten/val.h>
 
 #include <functional>
-#include <string>
 #include <memory>
+#include <string>
 
 #include "WebElement.hpp"
 

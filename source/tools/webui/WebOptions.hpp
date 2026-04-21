@@ -29,7 +29,8 @@ struct WebOptions {
 
 /**
  * @brief Helper function to create shared pointers to WebComponents.
- * Equivalent to std::make_shared but provides a cleaner syntax for declarative UI.
+ * Equivalent to std::make_shared but provides a cleaner syntax for declarative
+ * UI.
  */
 template <typename T, typename... Args>
 std::shared_ptr<T> UIItem(Args&&... args) {

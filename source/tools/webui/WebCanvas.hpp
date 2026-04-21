@@ -10,11 +10,11 @@
 #include <emscripten/val.h>
 
 #include <functional>
+#include <memory>
 #include <string>
 #include <tuple>
 #include <utility>
 #include <vector>
-#include <memory>
 
 #include "WebElement.hpp"
 
@@ -84,7 +84,7 @@ class WebCanvas : public WebElement {
   /**
    * @brief Reapplies all tracked C++ state to the 2D context
    **/
-  WebCanvas&ApplyState();
+  WebCanvas& ApplyState();
 
   /**
    * @brief Converts an RGB tuple to a CSS rgb() string
@@ -135,7 +135,8 @@ class WebCanvas : public WebElement {
    * @param x The starting point as (x, y).
    * @param y The ending point as (x, y).
    **/
-  WebCanvas& DrawLine(std::pair<double, double> start, std::pair<double, double> end);
+  WebCanvas& DrawLine(std::pair<double, double> start,
+                      std::pair<double, double> end);
 
   /**
    * @brief Draw a rectangle on the canvas.
@@ -145,8 +146,8 @@ class WebCanvas : public WebElement {
    * @param height The height of the rectangle. Must be non-negative.
    * @param filled If true, fill the rectangle; otherwise, stroke the outline.
    **/
-  WebCanvas& DrawRect(double x_top_l, double y_top_l, double width, double height,
-                bool filled = true);
+  WebCanvas& DrawRect(double x_top_l, double y_top_l, double width,
+                      double height, bool filled = true);
 
   /**
    * @brief Draw a circle on the canvas.
@@ -164,7 +165,7 @@ class WebCanvas : public WebElement {
    * @param filled If true, fill the polygon; otherwise, stroke the outline.
    **/
   WebCanvas& DrawPolygon(const std::vector<std::pair<double, double>>& points,
-                   bool filled = true);
+                         bool filled = true);
 
   /**
    * @brief Draw text on the canvas at the given position using the current
@@ -192,8 +193,8 @@ class WebCanvas : public WebElement {
    * @param width The width to draw the image.
    * @param height The height to draw the image.
    **/
-  WebCanvas& DrawImage(const std::string& path, double x, double y, double width,
-                 double height);
+  WebCanvas& DrawImage(const std::string& path, double x, double y,
+                       double width, double height);
 
   /**
    * @brief Set the stroke color used for lines and shape outlines.

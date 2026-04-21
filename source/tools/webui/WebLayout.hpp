@@ -22,8 +22,9 @@ namespace cse498 {
 /**
  * @brief Manages a flex container in the DOM for laying out WebElement
  * children.
- * 
- * Note: `std::enable_shared_from_this` allows us to use fluent interface style APIs with shared pointers
+ *
+ * Note: `std::enable_shared_from_this` allows us to use fluent interface style
+ * APIs with shared pointers
  */
 class WebLayout : public WebElement {
  private:
@@ -47,12 +48,12 @@ class WebLayout : public WebElement {
   WebLayout& operator=(const WebLayout&) = delete;
 
   ~WebLayout() {
-    #ifdef DEBUG_LOG_WEB_ELEMENTS
+#ifdef DEBUG_LOG_WEB_ELEMENTS
     if (!id.empty()) {
       std::printf("WebLayout #%s destructed\n", id.c_str());
-    }
-    else std::printf("WebLayout destructed\n");
-    #endif
+    } else
+      std::printf("WebLayout destructed\n");
+#endif
   }
 
   /**
@@ -77,7 +78,8 @@ class WebLayout : public WebElement {
    */
   [[nodiscard]] size_t GetNumChildren() const;
 
-  [[nodiscard]] bool ContainsChild(const std::shared_ptr<WebElement>& elem) const;
+  [[nodiscard]] bool ContainsChild(
+      const std::shared_ptr<WebElement>& elem) const;
 
   /**
    * @brief Sets the flex-direction CSS property of the layout container.

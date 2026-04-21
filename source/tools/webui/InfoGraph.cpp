@@ -7,9 +7,11 @@
  * historical values.
  */
 #include "InfoGraph.hpp"
-#include "WebOptions.hpp"
+
 #include <algorithm>
 #include <string>
+
+#include "WebOptions.hpp"
 
 namespace cse498 {
 /// @brief Initialize graph with default styling and dimensions.
@@ -153,8 +155,6 @@ void InfoGraph::DrawBarChart(const DataSeries& values,
     DrawRect(x, y, w, scaled_height, true);
   }
 }
-
-
 
 void InfoGraph::ClearData() {
   data_.clear();

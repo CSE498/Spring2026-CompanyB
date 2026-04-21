@@ -9,8 +9,8 @@
 #include <emscripten/val.h>
 
 #include <expected>
-#include <string>
 #include <memory>
+#include <string>
 
 #include "WebElement.hpp"
 
@@ -58,8 +58,8 @@ class WebImage : public WebElement {
    * @param alt_text Alternative text for accessibility
    * @param options Optional WebOptions to apply to the image.
    **/
-  WebImage(const std::string& src,
-           const std::string& alt_text, const WebOptions& options = {});
+  WebImage(const std::string& src, const std::string& alt_text,
+           const WebOptions& options = {});
 
   /// Destructor that removes the image element from the DOM
   ~WebImage();

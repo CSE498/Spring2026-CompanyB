@@ -13,19 +13,32 @@ using namespace emscripten;
 namespace cse498 {
 
 /**
- * @brief Internal helper to sanitize user input to prevent HTML injection (XSS).
+ * @brief Internal helper to sanitize user input to prevent HTML injection
+ * (XSS).
  */
 static std::string EscapeHTML(const std::string& data) {
   std::string buffer;
   buffer.reserve(data.size());
-  for(size_t pos = 0; pos != data.size(); ++pos) {
-    switch(data[pos]) {
-      case '&':  buffer.append("&amp;");       break;
-      case '\"': buffer.append("&quot;");      break;
-      case '\'': buffer.append("&apos;");      break;
-      case '<':  buffer.append("&lt;");        break;
-      case '>':  buffer.append("&gt;");        break;
-      default:   buffer.append(&data[pos], 1); break;
+  for (size_t pos = 0; pos != data.size(); ++pos) {
+    switch (data[pos]) {
+      case '&':
+        buffer.append("&amp;");
+        break;
+      case '\"':
+        buffer.append("&quot;");
+        break;
+      case '\'':
+        buffer.append("&apos;");
+        break;
+      case '<':
+        buffer.append("&lt;");
+        break;
+      case '>':
+        buffer.append("&gt;");
+        break;
+      default:
+        buffer.append(&data[pos], 1);
+        break;
     }
   }
   return buffer;
@@ -89,7 +102,7 @@ WebTextbox& WebTextbox::SetText(const std::string& text) {
  * @brief Appends text and automatically pushes the scrollbar to the bottom.
  * If the total string exceeds max_length_, the oldest characters are discarded.
  */
-WebTextbox& WebTextbox::AppendText(const std::string &text) {
+WebTextbox& WebTextbox::AppendText(const std::string& text) {
   if (IsHeadless()) {
     mock_text_content_ += text;
     if (mock_text_content_.length() > max_length_) {
@@ -135,7 +148,7 @@ std::expected<std::string, std::string> WebTextbox::GetText() const {
  * @brief Translates the C++ TextStyle struct into direct CSS property
  * modifications.
  */
-WebTextbox& WebTextbox::SetStyle(const TextStyle &style) {
+WebTextbox& WebTextbox::SetStyle(const TextStyle& style) {
   if (IsHeadless()) return *this;
 
   val css = dom_element["style"];
@@ -150,7 +163,7 @@ WebTextbox& WebTextbox::SetStyle(const TextStyle &style) {
 /**
  * @brief Allows the UI team to apply a pre-defined CSS class to the element.
  */
-WebTextbox& WebTextbox::SetClass(const std::string &css_class) {
+WebTextbox& WebTextbox::SetClass(const std::string& css_class) {
   if (IsHeadless()) return *this;
   dom_element.set("className", css_class);
   return *this;
@@ -202,7 +215,7 @@ WebTextbox& WebTextbox::SetMaxLength(size_t length) {
  * new text.
  */
 WebTextbox& WebTextbox::TransformText(
-    const std::function<std::string(const std::string &)> &transform_fn) {
+    const std::function<std::string(const std::string&)>& transform_fn) {
   auto current_text = GetText();
 
   // Check our value semantics to ensure we actually have text
@@ -214,7 +227,8 @@ WebTextbox& WebTextbox::TransformText(
 }
 
 /**
- * @brief Sets the maximum number of lines (spans) the DOM will hold before deleting old ones.
+ * @brief Sets the maximum number of lines (spans) the DOM will hold before
+ * deleting old ones.
  */
 WebTextbox& WebTextbox::SetMaxLines(size_t lines) {
   max_lines_ = std::max<size_t>(1, lines);
@@ -224,11 +238,13 @@ WebTextbox& WebTextbox::SetMaxLines(size_t lines) {
 /**
  * @brief Appends a distinct DOM span element for granular line-by-line styling.
  */
-WebTextbox& WebTextbox::AppendLine(const std::string& text, const std::string& log_level) {
+WebTextbox& WebTextbox::AppendLine(const std::string& text,
+                                   const std::string& log_level) {
   if (IsHeadless()) {
     mock_text_content_ += text + "\n";
     if (mock_text_content_.length() > max_length_) {
-      mock_text_content_ = mock_text_content_.substr(mock_text_content_.length() - max_length_);
+      mock_text_content_ =
+          mock_text_content_.substr(mock_text_content_.length() - max_length_);
     }
     return *this;
   }
@@ -247,7 +263,8 @@ WebTextbox& WebTextbox::AppendLine(const std::string& text, const std::string& l
   dom_element.call<void>("appendChild", br);
 
   // Active memory pruning
-  while (dom_element["childNodes"]["length"].as<int>() > static_cast<int>(max_lines_ * 2)) {
+  while (dom_element["childNodes"]["length"].as<int>() >
+         static_cast<int>(max_lines_ * 2)) {
     dom_element["firstChild"].call<void>("remove");
     dom_element["firstChild"].call<void>("remove");
   }
@@ -257,14 +274,17 @@ WebTextbox& WebTextbox::AppendLine(const std::string& text, const std::string& l
 }
 
 /**
- * @brief Appends a new line of text wrapped in a styled span, sanitized for XSS.
+ * @brief Appends a new line of text wrapped in a styled span, sanitized for
+ * XSS.
  */
-WebTextbox& WebTextbox::AppendStyledLine(const std::string& text, const std::string& css_class) {
+WebTextbox& WebTextbox::AppendStyledLine(const std::string& text,
+                                         const std::string& css_class) {
   // 1. Sanitize both inputs to prevent Cross-Site Scripting (XSS)
   std::string safe_text = EscapeHTML(text);
   std::string safe_class = EscapeHTML(css_class);
 
-  // 2. Update the internal C++ raw text buffer so GetText() and Catch2 tests don't break
+  // 2. Update the internal C++ raw text buffer so GetText() and Catch2 tests
+  // don't break
   AppendText(text + "\n");
   return *this;
 }

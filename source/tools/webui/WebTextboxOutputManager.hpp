@@ -29,10 +29,14 @@ class WebTextboxOutputManager : public IOutputManager {
 
   static const char* LevelTag(LogLevel level) noexcept {
     switch (level) {
-      case LogLevel::Normal:  return "INFO";
-      case LogLevel::Verbose: return "WARN";
-      case LogLevel::Debug:   return "ERROR";
-      case LogLevel::Silent:  return "INFO";
+      case LogLevel::Normal:
+        return "INFO";
+      case LogLevel::Verbose:
+        return "WARN";
+      case LogLevel::Debug:
+        return "ERROR";
+      case LogLevel::Silent:
+        return "INFO";
     }
     return "INFO";
   }

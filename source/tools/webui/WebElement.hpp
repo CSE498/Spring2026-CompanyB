@@ -10,6 +10,7 @@
 // #include <stdexcept>
 
 #include <emscripten/val.h>
+
 #include "WebOptions.hpp"
 
 namespace cse498 {
@@ -17,7 +18,7 @@ class WebElement : public std::enable_shared_from_this<WebElement> {
  protected:
   /// @brief Handle to the DOM element
   emscripten::val dom_element = emscripten::val::null();
-  
+
   /// @brief ID of the DOM element
   std::string id = "";
 
@@ -28,38 +29,38 @@ class WebElement : public std::enable_shared_from_this<WebElement> {
   /**
    * @brief Get shared pointer to the WebElement
    */
-  std::shared_ptr<WebElement> GetSharedPtr() {
-    return shared_from_this();
-  }
+  std::shared_ptr<WebElement> GetSharedPtr() { return shared_from_this(); }
 
-  operator std::shared_ptr<WebElement>() {
-    return shared_from_this();
-  }
+  operator std::shared_ptr<WebElement>() { return shared_from_this(); }
 
   /**
    * @brief Create an element with the given tag and options in the DOM
    * @param tag The HTML tag name (e.g. "div", "span")
-   * @param options The WebOptions object containing ID, CSS properties and classes (optional)
+   * @param options The WebOptions object containing ID, CSS properties and
+   * classes (optional)
    */
   WebElement(const std::string& tag = "div", const WebOptions& options = {}) {
-    // Set id 
+    // Set id
     id = options.id;
 
     emscripten::val document = emscripten::val::global("document");
 
     // Create the element in the DOM
     if (!id.empty()) {
-      emscripten::val existing = document.call<emscripten::val>("getElementById", id);
+      emscripten::val existing =
+          document.call<emscripten::val>("getElementById", id);
 
       // if (!existing.isNull() && !existing.isUndefined()) {
-      //   throw std::runtime_error("Element with ID '" + id + "' already exists in the DOM");
+      //   throw std::runtime_error("Element with ID '" + id + "' already exists
+      //   in the DOM");
       // }
 
       assert((existing.isNull() || existing.isUndefined()) &&
-            "Element with this ID already exists in the DOM");
+             "Element with this ID already exists in the DOM");
     }
 
-    dom_element = document.call<emscripten::val>("createElement", std::string(tag));
+    dom_element =
+        document.call<emscripten::val>("createElement", std::string(tag));
 
     if (!id.empty()) dom_element.set("id", id);
 
@@ -119,8 +120,6 @@ class WebElement : public std::enable_shared_from_this<WebElement> {
    * @brief Returns the emscripten::val for the DOM Element
    * @return The DOM Element emscripten::val
    */
-  [[nodiscard]] emscripten::val& GetDOMElement() {
-    return dom_element;
-  }
+  [[nodiscard]] emscripten::val& GetDOMElement() { return dom_element; }
 };
 }  // namespace cse498

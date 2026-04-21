@@ -15,8 +15,7 @@ using emscripten::val;
 
 namespace cse498 {
 
-WebImage::WebImage(const std::string& src,
-                   const std::string& alt_text,
+WebImage::WebImage(const std::string& src, const std::string& alt_text,
                    const WebOptions& options)
     : WebElement("img", options), src_(src), alt_(alt_text) {
   dom_element.set("src", src_);
@@ -26,8 +25,7 @@ WebImage::WebImage(const std::string& src,
   dom_element["style"].set("position", std::string("absolute"));
 }
 
-WebImage::~WebImage() {
-}
+WebImage::~WebImage() {}
 
 WebImage& WebImage::SetSource(const std::string& new_src) {
   assert(!new_src.empty() && "Image source path cannot be empty");
@@ -55,7 +53,7 @@ WebImage& WebImage::SetAlt(const std::string& alt_text) {
 WebImage& WebImage::SetVisible(bool is_visible) {
   visible_ = is_visible;
   dom_element["style"].set("display",
-                            std::string(is_visible ? "block" : "none"));
+                           std::string(is_visible ? "block" : "none"));
   return *this;
 }
 

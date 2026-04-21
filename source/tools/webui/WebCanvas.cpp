@@ -27,7 +27,7 @@ namespace cse498 {
 WebCanvas::WebCanvas(int width, int height, const WebOptions& options)
     : WebElement("canvas", options), width(width), height(height) {
   ctx = dom_element.call<val>("getContext",
-                                 std::string("2d"));  // Save the context
+                              std::string("2d"));  // Save the context
   transform_matrix =
       ctx.call<val>("getTransform");  // Save the transform matrix
   Resize(width, height);              // Set the size of the canvas
@@ -74,8 +74,8 @@ WebCanvas& WebCanvas::ApplyState() {
 }
 
 WebCanvas& WebCanvas::Clear() {
-    ctx.call<void>("clearRect", 0, 0, width, height);
-    return *this;
+  ctx.call<void>("clearRect", 0, 0, width, height);
+  return *this;
 }
 
 WebCanvas& WebCanvas::SetBackgroundColor(RGB rgb) {
@@ -89,7 +89,7 @@ WebCanvas& WebCanvas::SetBackgroundColor(RGB rgb) {
 }
 
 WebCanvas& WebCanvas::DrawLine(std::pair<double, double> start,
-                         std::pair<double, double> end) {
+                               std::pair<double, double> end) {
   ctx.call<void>("beginPath");
   ctx.call<void>("moveTo", start.first, start.second);
   ctx.call<void>("lineTo", end.first, end.second);
@@ -97,8 +97,8 @@ WebCanvas& WebCanvas::DrawLine(std::pair<double, double> start,
   return *this;
 }
 
-WebCanvas& WebCanvas::DrawRect(double x_top_l, double y_top_l, double w, double h,
-                         bool filled) {
+WebCanvas& WebCanvas::DrawRect(double x_top_l, double y_top_l, double w,
+                               double h, bool filled) {
   assert(w >= 0 && "Rectangle width must be non-negative");
   assert(h >= 0 && "Rectangle height must be non-negative");
   if (filled) {
@@ -109,7 +109,8 @@ WebCanvas& WebCanvas::DrawRect(double x_top_l, double y_top_l, double w, double 
   return *this;
 }
 
-WebCanvas& WebCanvas::DrawCircle(double x, double y, double radius, bool filled) {
+WebCanvas& WebCanvas::DrawCircle(double x, double y, double radius,
+                                 bool filled) {
   assert(radius >= 0 && "Circle radius must be non-negative");
   ctx.call<void>("beginPath");
   ctx.call<void>("arc", x, y, radius, 0,
@@ -176,8 +177,8 @@ WebCanvas& WebCanvas::LoadImage(const std::string& path) {
 }
 
 // Still requires the macro. So I am keeping this function the same.
-WebCanvas& WebCanvas::DrawImage(const std::string& path, double x, double y, double w,
-                          double h) {
+WebCanvas& WebCanvas::DrawImage(const std::string& path, double x, double y,
+                                double w, double h) {
   EM_ASM(
       {
         if (!window._imageCache) window._imageCache = {};
