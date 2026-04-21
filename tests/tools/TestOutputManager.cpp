@@ -336,16 +336,14 @@ TEST_CASE(
 
 TEST_CASE("WriteActionEvents accumulates across calls", "[OutputManager]") {
   OutputManager manager(LogLevel::Normal);
-  manager.WriteActionEvents(
-      {{{"agentId", "a"},
-        {"actionType", "m"},
-        {"logLevel", static_cast<int>(LogLevel::Normal)},
-        {"timestamp", 1ULL}}});
-  manager.WriteActionEvents(
-      {{{"agentId", "b"},
-        {"actionType", "t"},
-        {"logLevel", static_cast<int>(LogLevel::Normal)},
-        {"timestamp", 2ULL}}});
+  manager.WriteActionEvents({{{"agentId", "a"},
+                              {"actionType", "m"},
+                              {"logLevel", static_cast<int>(LogLevel::Normal)},
+                              {"timestamp", 1ULL}}});
+  manager.WriteActionEvents({{{"agentId", "b"},
+                              {"actionType", "t"},
+                              {"logLevel", static_cast<int>(LogLevel::Normal)},
+                              {"timestamp", 2ULL}}});
   const auto& buf = manager.GetBufferedLog();
   REQUIRE(buf["action_events"].size() == 2);
 }
@@ -361,11 +359,10 @@ TEST_CASE("Buffered action events survive failed Flush", "[OutputManager]") {
   const std::string badPath = (blocker / "actions.json").string();
   OutputManager manager(LogLevel::Normal);
   REQUIRE(manager.SetOutputFile(badPath));
-  manager.WriteActionEvents(
-      {{{"agentId", "a"},
-        {"actionType", "b"},
-        {"logLevel", static_cast<int>(LogLevel::Normal)},
-        {"timestamp", 1ULL}}});
+  manager.WriteActionEvents({{{"agentId", "a"},
+                              {"actionType", "b"},
+                              {"logLevel", static_cast<int>(LogLevel::Normal)},
+                              {"timestamp", 1ULL}}});
   REQUIRE_FALSE(manager.Flush());
   const auto& buf = manager.GetBufferedLog();
   REQUIRE(buf["action_events"].size() == 1);

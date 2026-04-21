@@ -62,8 +62,7 @@ class IOutputManager {
 
   /// @brief Queues action events in memory; disk write happens on Flush().
   /// @param events Action events to append to the pending queue.
-  virtual void WriteActionEvents(
-      const std::vector<nlohmann::json>& events) = 0;
+  virtual void WriteActionEvents(const std::vector<nlohmann::json>& events) = 0;
 };
 
 }  // namespace cse498
