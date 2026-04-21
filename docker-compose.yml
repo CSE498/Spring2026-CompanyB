@@ -59,11 +59,13 @@ services:
       - ./source:/app/source:ro
       - ./build:/app/build
       - ./tests:/app/tests:ro
+      - ./images:/app/images:ro
       - ./scripts/docker-entrypoint.sh:/app/docker-entrypoint.sh:ro
     environment:
       - HOST_UID=${HOST_UID}
       - HOST_GID=${HOST_GID}
       - NO_QT=${NO_QT:-0}
+      - QT_QPA_PLATFORM=offscreen
     command: test-native
 
   # Build and serve with emrun web server

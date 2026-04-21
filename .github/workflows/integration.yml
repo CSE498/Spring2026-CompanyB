@@ -62,9 +62,12 @@ jobs:
 
       - name: Run Tests
         env:
-          # Headless mode
           QT_QPA_PLATFORM: offscreen
-        run: make test
+          XDG_RUNTIME_DIR: /tmp/xdg-runtime
+          DBUS_SESSION_BUS_ADDRESS: unix:path=/dev/null
+        run: |
+          mkdir -p "$XDG_RUNTIME_DIR" && chmod 700 "$XDG_RUNTIME_DIR"
+          make test
 
   emscripten-test:
     runs-on: ubuntu-latest

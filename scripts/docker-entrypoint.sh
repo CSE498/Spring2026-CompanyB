@@ -9,6 +9,17 @@ export GNUTLS_CPUID_OVERRIDE=0x1
 export CC=/usr/bin/gcc
 export CXX=/usr/bin/g++
 
+# Qt refuses XDG_RUNTIME_DIR not owned by the running user, which causes
+# QApplication to hang during init. Give each user their own dir.
+export XDG_RUNTIME_DIR="/tmp/xdg-runtime-$(id -u)"
+mkdir -p "${XDG_RUNTIME_DIR}"
+chmod 700 "${XDG_RUNTIME_DIR}"
+
+# Qt (via libQt6DBus) tries to auto-launch dbus-daemon for a session bus and
+# hangs indefinitely when none is available in the container. Point at a
+# non-existent socket so the connect fails fast.
+export DBUS_SESSION_BUS_ADDRESS="unix:path=/dev/null"
+
 # Restore build directory ownership to the host user
 fix_permissions() {
     if [ -n "${HOST_UID}" ] && [ "${HOST_UID}" != "0" ]; then
