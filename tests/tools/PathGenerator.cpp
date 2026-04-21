@@ -165,7 +165,7 @@ TEST_CASE("PathGenerator AvoidancePath returns nullopt when impossible",
   Point start{0.0, 0.0};
   Point goal{10.0, 0.0};
   Point avoid{5.0, 0.0};
-  double radius = 20.0; // Huge radius blocks everything
+  double radius = 20.0;  // Huge radius blocks everything
 
   auto result = gen.AvoidancePath(start, goal, avoid, radius);
 
@@ -234,14 +234,14 @@ TEST_CASE("PathGenerator SpiralPath creates expanding pattern",
   auto result = gen.SpiralPath(center, spacing, turns);
 
   REQUIRE_FALSE(result.empty());
-  REQUIRE(result.size() > turns * 4); // At least several points per turn
+  REQUIRE(result.size() > turns * 4);  // At least several points per turn
 
   // Check that distances from center increase
   double maxDist = 0.0;
   for (const auto &p : result.pointsView()) {
     double dist =
         std::hypot(p.getX() - center.getX(), p.getY() - center.getY());
-    REQUIRE(dist >= maxDist - 0.1); // Allow small fluctuation
+    REQUIRE(dist >= maxDist - 0.1);  // Allow small fluctuation
     maxDist = std::max(maxDist, dist);
   }
 }
@@ -285,7 +285,7 @@ TEST_CASE("PathGenerator SetHeuristic changes distance calculation",
   REQUIRE_THAT(result->back().getX(), Catch::Matchers::WithinRel(goal.getX()));
   REQUIRE_THAT(result->back().getY(), Catch::Matchers::WithinRel(goal.getY()));
   REQUIRE(result->totalLength() >=
-          5.0); // Euclidean distance is 5 (3-4-5 triangle)
+          5.0);  // Euclidean distance is 5 (3-4-5 triangle)
 }
 TEST_CASE("PathGenerator handles same start and goal", "[pathgenerator]") {
   PathGenerator gen;
@@ -327,7 +327,7 @@ TEST_CASE("PathGenerator EuclideanDistance computes correct distance",
 
   REQUIRE(result.has_value());
   // The total length should be approximately the Euclidean distance
-  REQUIRE(result->totalLength() >= 5.0); // 3-4-5 triangle
+  REQUIRE(result->totalLength() >= 5.0);  // 3-4-5 triangle
 }
 
 TEST_CASE("PathGenerator RandomWalk with zero steps returns start only",
