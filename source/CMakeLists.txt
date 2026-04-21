@@ -198,7 +198,7 @@ elseif(DEFINED EMSCRIPTEN)
         -lembind
         # Embed grid files into the WASM virtual filesystem so C++ ifstream can open them.
         # SHELL: prefix prevents CMake from splitting the @ separator into two arguments.
-        "SHELL:--preload-file /app/assets/grids/DemoWorld.grid@assets/grids/DemoWorld.grid"
+        "SHELL:--preload-file /app/assets/grids/TrafficWorld_Web.grid@assets/grids/TrafficWorld_Web.grid"
     )
 
   # Copy custom HTML into build output

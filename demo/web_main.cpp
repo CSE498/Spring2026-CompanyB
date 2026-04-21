@@ -14,16 +14,29 @@
 #include "WebImage.hpp"
 #include "WebLayout.hpp"
 #include "WebTextbox.hpp"
-#include "Interfaces/AutoInterface.hpp"
-#include "Worlds/TrafficWorld.hpp"
+#include "Worlds/StepTrafficWorld.hpp"
 #include "Worlds/InfectiousWorld.hpp"
+#include "core/AgentData.hpp"
 #include "core/ItemBase.hpp"
-#include "Agents/DrivingAgent.hpp"
-#include "Agents/PacingAgent.hpp"
+#include "Agents/SwarmingAgent.hpp"
 #include "InfoGraph.hpp"
 #include "WebTextboxOutputManager.hpp"
 
 using namespace cse498;
+
+// Subclass adapter that exposes StepTrafficWorld's protected members so
+// the web canvas drawer can read grid and per agent state each frame
+class WebTrafficWorld : public StepTrafficWorld<SwarmingAgent<TrafficData>> {
+ public:
+  using Base = StepTrafficWorld<SwarmingAgent<TrafficData>>;
+  using Base::Base;  // inherit constructors
+
+  [[nodiscard]] const WorldGrid& GetGrid() const { return main_grid; }
+  [[nodiscard]] size_t GetNumAgents() const { return agent_set.size(); }
+  [[nodiscard]] TrafficData GetAgentState(size_t id) const {
+    return agent_set[id]->GetState();
+  }
+};
 
 // Globals kept alive for the duration of the page
 enum class ActiveSim { NONE, TRAFFIC, VIRUS };
@@ -32,7 +45,7 @@ enum class SimState  { STOPPED, PLAYING, PAUSED };
 static ActiveSim active_sim = ActiveSim::NONE;
 static SimState  sim_state  = SimState::STOPPED;
 static std::shared_ptr<WebCanvas> GameCanvas;
-static std::unique_ptr<TrafficWorld> traffic_world;
+static std::unique_ptr<WebTrafficWorld> traffic_world;
 static std::unique_ptr<InfectiousWorld> virus_world;
 static std::shared_ptr<WebTextbox> log_textbox;
 static std::unique_ptr<WebTextboxOutputManager> logger;
@@ -169,7 +182,7 @@ auto handle_sim_state = [](SimState next) {
             sim_tick  = 0;
             // Reset the active world to its initial state
             if (active_sim == ActiveSim::TRAFFIC) {
-                traffic_world = std::make_unique<TrafficWorld>("assets/grids/DemoWorld.grid");
+                traffic_world = std::make_unique<WebTrafficWorld>("assets/grids/TrafficWorld_Web.grid");
                 last_traffic_agent_count = 0;
                 traffic_reached_log.clear();
             } else if (active_sim == ActiveSim::VIRUS) {
@@ -224,8 +237,9 @@ void DrawTrafficSim() {
 
     const double radius = std::max(std::min(cell_w, cell_h) * 0.4, 8.0);
     for (size_t id = 0; id < traffic_world->GetNumAgents(); ++id) {
-        const AgentBase& agent = traffic_world->GetAgent(id);
-        WorldPosition pos = agent.GetLocation().AsWorldPosition();
+        TrafficData state = traffic_world->GetAgentState(id);
+        if (!state.is_active) continue;  // skip despawned agents
+        WorldPosition pos = state.position;
         double cx = pos.CellX() * cell_w + cell_w / 2.0;
         double cy = pos.CellY() * cell_h + cell_h / 2.0;
         GameCanvas->SetFillColor({255, 80, 80}).DrawCircle(cx, cy, radius * 0.75, true);
@@ -241,7 +255,9 @@ void DrawTrafficSim() {
 
             size_t n = traffic_world->GetNumAgents();
             if (traffic_reached_log.size() < n) {
-                traffic_reached_log.resize(n, false);
+                // New slots default to "was active" so the next-frame transition
+                // detection treats a fresh agent as active rather than just-spawned.
+                traffic_reached_log.resize(n, true);
             }
             for (size_t id = last_traffic_agent_count; id < n; ++id) {
                 LogSim("Agent " + std::to_string(id), "Spawned", "info");
@@ -249,17 +265,15 @@ void DrawTrafficSim() {
             last_traffic_agent_count = n;
 
             for (size_t id = 0; id < n; ++id) {
-                const AgentBase& agent = traffic_world->GetAgent(id);
-                const auto* driver = dynamic_cast<const DrivingAgent*>(&agent);
-                if (!driver) continue;
-                bool reached = driver->GetReachedDestination();
-                if (reached && !traffic_reached_log[id]) {
+                bool active = traffic_world->GetAgentState(id).is_active;
+                bool was_active = traffic_reached_log[id];
+                if (was_active && !active) {
                     LogSim("Agent " + std::to_string(id), "Reached destination", "start");
-                    traffic_reached_log[id] = true;
-                } else if (!reached && traffic_reached_log[id]) {
+                } else if (!was_active && active) {
+                    // Slot was inactive (despawned) and is now active again — recycled spawn.
                     LogSim("Agent " + std::to_string(id), "Spawned", "info");
-                    traffic_reached_log[id] = false;
                 }
+                traffic_reached_log[id] = active;
             }
         }
     }
@@ -281,13 +295,13 @@ void DrawVirusSim() {
     }
 
     for (size_t id = 0; id < virus_world->GetNumAgents(); ++id) {
-        const AgentBase& agent = virus_world->GetAgent(id);
-        WorldPosition pos = agent.GetLocation().AsWorldPosition();
-        char sym;
-        switch (virus_world->GetAgentHealth(id)) {
-            case InfectiousWorld::HealthState::SUSCEPTIBLE: sym = 'S'; break;
-            case InfectiousWorld::HealthState::INFECTED:    sym = 'I'; break;
-            case InfectiousWorld::HealthState::RECOVERED:   sym = 'R'; break;
+        DiseaseData state = virus_world->GetAgentState(id);
+        WorldPosition pos = state.position;
+        char sym = '?';
+        switch (state.health) {
+            case HealthState::SUSCEPTIBLE: sym = 'S'; break;
+            case HealthState::INFECTED:    sym = 'I'; break;
+            case HealthState::RECOVERED:   sym = 'R'; break;
         }
         display[pos.CellY()][pos.CellX()] = sym;
     }
@@ -331,16 +345,17 @@ void DrawVirusSim() {
             size_t n = virus_world->GetNumAgents();
             if (last_virus_health.size() != n) last_virus_health.assign(n, -1);
             for (size_t id = 0; id < n; ++id) {
-                int cur = static_cast<int>(virus_world->GetAgentHealth(id));
+                HealthState health = virus_world->GetAgentHealth(id);
+                int cur = static_cast<int>(health);
                 if (cur != last_virus_health[id]) {
                     const char* label = "";
-                    switch (virus_world->GetAgentHealth(id)) {
-                        case InfectiousWorld::HealthState::SUSCEPTIBLE: label = "became susceptible"; break;
-                        case InfectiousWorld::HealthState::INFECTED:    label = "infected"; break;
-                        case InfectiousWorld::HealthState::RECOVERED:   label = "recovered"; break;
+                    switch (health) {
+                        case HealthState::SUSCEPTIBLE: label = "became susceptible"; break;
+                        case HealthState::INFECTED:    label = "infected"; break;
+                        case HealthState::RECOVERED:   label = "recovered"; break;
                     }
                     LogSim("Agent " + std::to_string(id), label,
-                           virus_world->GetAgentHealth(id) == InfectiousWorld::HealthState::INFECTED ? "error" : "info");
+                           health == HealthState::INFECTED ? "error" : "info");
                     last_virus_health[id] = cur;
                 }
             }
@@ -369,16 +384,17 @@ void SetupVirusWorld() {
     virus_world->SetInfectionDuration(8);
     virus_world->SetImmunityDuration(15);
 
-    virus_world->AddAgent<PacingAgent>("Agent-1").SetLocation(WorldPosition{3, 2});
-    virus_world->AddAgent<PacingAgent>("Agent-2").SetLocation(WorldPosition{5, 4});
-    virus_world->AddAgent<PacingAgent>("Agent-3").SetLocation(WorldPosition{7, 3});
-    virus_world->AddAgent<PacingAgent>("Agent-4").SetLocation(WorldPosition{4, 6});
-    virus_world->AddAgent<PacingAgent>("Agent-5").SetLocation(WorldPosition{8, 7});
-    virus_world->AddAgent<PacingAgent>("Agent-6").SetLocation(WorldPosition{12, 3});
-    virus_world->AddAgent<PacingAgent>("Agent-7").SetLocation(WorldPosition{15, 5});
-    virus_world->AddAgent<PacingAgent>("Agent-8").SetLocation(WorldPosition{14, 2});
-    virus_world->AddAgent<PacingAgent>("Agent-9").SetLocation(WorldPosition{16, 7});
-    virus_world->AddAgent<PacingAgent>("Agent-10").SetLocation(WorldPosition{13, 7});
+    using SwarmAgent = SwarmingAgent<DiseaseData>;
+    virus_world->AddAgent<SwarmAgent>(DiseaseData{WorldPosition{3, 2}});
+    virus_world->AddAgent<SwarmAgent>(DiseaseData{WorldPosition{5, 4}});
+    virus_world->AddAgent<SwarmAgent>(DiseaseData{WorldPosition{7, 3}});
+    virus_world->AddAgent<SwarmAgent>(DiseaseData{WorldPosition{4, 6}});
+    virus_world->AddAgent<SwarmAgent>(DiseaseData{WorldPosition{8, 7}});
+    virus_world->AddAgent<SwarmAgent>(DiseaseData{WorldPosition{12, 3}});
+    virus_world->AddAgent<SwarmAgent>(DiseaseData{WorldPosition{15, 5}});
+    virus_world->AddAgent<SwarmAgent>(DiseaseData{WorldPosition{14, 2}});
+    virus_world->AddAgent<SwarmAgent>(DiseaseData{WorldPosition{16, 7}});
+    virus_world->AddAgent<SwarmAgent>(DiseaseData{WorldPosition{13, 7}});
 
     virus_world->InfectAgent(0);
 }
@@ -566,7 +582,7 @@ void load_traffic_layout() {
     active_sim = ActiveSim::TRAFFIC;
     sim_state  = SimState::STOPPED;
     sim_tick   = 0;
-    traffic_world = std::make_unique<TrafficWorld>("assets/grids/TrafficWorld_Web.grid");
+    traffic_world = std::make_unique<WebTrafficWorld>("assets/grids/TrafficWorld_Web.grid");
     last_traffic_agent_count = 0;
     traffic_reached_log.clear();
     set_active_layout(SimulationLayout(ActiveSim::TRAFFIC, load_traffic_layout, load_menu_layout));
