@@ -8,17 +8,16 @@
 namespace cse498 {
 
 class MainGraph : public QWidget {
-    Q_OBJECT
+  Q_OBJECT
 
-private:
-    QChartView* mChartView;
-    QLineSeries* mSeries;
+ private:
+  QChartView* mChartView;
+  QLineSeries* mSeries;
 
-public:
-    MainGraph(QWidget* parent = nullptr);
+ public:
+  MainGraph(QWidget* parent = nullptr);
 
-    void AddDataPoint(double x, double y);
-
+  void AddDataPoint(double x, double y);
 };
 
-} 
+}  // namespace cse498

@@ -5,11 +5,11 @@
  **/
 
 // Include the modules that we will be using.
-//#include "Agents/PacingAgent.hpp"
-//#include "Interfaces/TrashInterface.hpp"
-//#include "Worlds/MazeWorld.hpp"
+// #include "Agents/PacingAgent.hpp"
+// #include "Interfaces/TrashInterface.hpp"
+// #include "Worlds/MazeWorld.hpp"
 //
-//using namespace cse498;
+// using namespace cse498;
 
 // int main() {
 //   MazeWorld world;

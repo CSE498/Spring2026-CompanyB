@@ -5,10 +5,10 @@
 #include <queue>
 #include <string>
 
-#include "../core/WorldBase.hpp"
-#include "../tools/WeightedSet.hpp"
 #include "../Agents/DrivingAgent.hpp"
+#include "../core/WorldBase.hpp"
 #include "../tools/StateGridPosition.hpp"
+#include "../tools/WeightedSet.hpp"
 
 namespace cse498 {
 

@@ -103,7 +103,7 @@ class ActionMap {
         size_t ret_t_idx, std::vector<size_t> &&arg_t_idxs)
         : wrapped_func(std::move(wrapped_func)),
           ret_t_idx(ret_t_idx),
-          arg_t_idxs(std::move(arg_t_idxs)) {};
+          arg_t_idxs(std::move(arg_t_idxs)){};
 
     // Delete copy ctors
     FuncEntry(const FuncEntry &) = delete;

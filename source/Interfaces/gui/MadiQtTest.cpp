@@ -1,10 +1,9 @@
-#include "../../Worlds/MazeWorld.hpp"
-#include "ImageGrid.hpp"
-
-#include <vector>
-#include <unordered_map>
 #include <string>
 #include <unordered_map>
+#include <vector>
+
+#include "../../Worlds/MazeWorld.hpp"
+#include "ImageGrid.hpp"
 
 using namespace cse498;
 
@@ -22,10 +21,12 @@ using namespace cse498;
 //     // tile size the same as the image dimensions
 //     const int tileSize = 64;
 
-//     std::vector<QString> imagePaths = {"images/test1.png", "images/test2.png"};
+//     std::vector<QString> imagePaths = {"images/test1.png",
+//     "images/test2.png"};
 
 //     // TODO: suggestion from peer review to use map
-//     // std::unordered_map<std::string, QString> imageMap = {{"floor", "images/test1.png"}, {"wall", "images/test2.png"}};
+//     // std::unordered_map<std::string, QString> imageMap = {{"floor",
+//     "images/test1.png"}, {"wall", "images/test2.png"}};
 
 //     // create ImageGrid
 //     ImageGrid imageGrid(world, scene, tileSize);

@@ -9,106 +9,106 @@
 #include <QSplitter>
 #include <QStatusBar>
 #include <QString>
-#include <QToolBar>
-#include <QWidget>
-#include <QTimer>
 #include <QTextEdit>
+#include <QTimer>
+#include <QToolBar>
 #include <QVBoxLayout>
+#include <QWidget>
 #include <memory>
+#include <sstream>
 #include <vector>
-#include <sstream> 
 
-#include "../../core/WorldBase.hpp"
+#include "../../Agents/PacingAgent.hpp"
 #include "../../Worlds/InfectiousWorld.hpp"
 #include "../../Worlds/MazeWorld.hpp"
-#include "../../Agents/PacingAgent.hpp"
+#include "../../core/WorldBase.hpp"
 #include "ImageGrid.hpp"
 #include "MainGraph.hpp"
 
 namespace cse498 {
 
 class MainWindow : public QMainWindow {
-    Q_OBJECT
+  Q_OBJECT
 
-public:
-    MainWindow(WorldBase& world, const std::vector<QString>& imagePaths,
-               int tileSize = 32, const QString& agentImagePath = QString(),
-               QWidget* parent = nullptr, int mode = 1);
-    virtual ~MainWindow() = default;
-    void logCommand(const QString& message);
+ public:
+  MainWindow(WorldBase& world, const std::vector<QString>& imagePaths,
+             int tileSize = 32, const QString& agentImagePath = QString(),
+             QWidget* parent = nullptr, int mode = 1);
+  virtual ~MainWindow() = default;
+  void logCommand(const QString& message);
 
-    std::unique_ptr<WorldBase> mOwnedWorld{};
+  std::unique_ptr<WorldBase> mOwnedWorld{};
 
-    // disable copy
-    MainWindow(const MainWindow &) = delete;
-    MainWindow &operator=(const MainWindow &) = delete;
+  // disable copy
+  MainWindow(const MainWindow&) = delete;
+  MainWindow& operator=(const MainWindow&) = delete;
 
-    // disable move
-    MainWindow(MainWindow &&) = delete;
-    MainWindow &operator=(MainWindow &&) = delete;
+  // disable move
+  MainWindow(MainWindow&&) = delete;
+  MainWindow& operator=(MainWindow&&) = delete;
 
-private:
-    void setMenuBar();
-    void setStatusBar();
-    void setMainWidget();
-    void setImageGrid();
-    void setupAgents();
+ private:
+  void setMenuBar();
+  void setStatusBar();
+  void setMainWidget();
+  void setImageGrid();
+  void setupAgents();
 
-    void onFileNew();
-    void onFileOpen();
-    void onFileSave();
-    void onFileExit();
-    void onHelpAbout();
-    void onBackToMainMenu();
+  void onFileNew();
+  void onFileOpen();
+  void onFileSave();
+  void onFileExit();
+  void onHelpAbout();
+  void onBackToMainMenu();
 
-    void startSimulation();
-    void onTick();
+  void startSimulation();
+  void onTick();
 
-    // Replay control
-    void onReplayToggle();
+  // Replay control
+  void onReplayToggle();
 
-    // Timer
-    QTimer* mTimer = nullptr;
-    int mTickInterval = 150;
+  // Timer
+  QTimer* mTimer = nullptr;
+  int mTickInterval = 150;
 
-    // For ImageGrid construction
-    WorldBase& mWorld;
-    const std::vector<QString>& mImagePaths;
-    int mTileSize;
-    QString mAgentImagePath;
-    int mMode = 1;
+  // For ImageGrid construction
+  WorldBase& mWorld;
+  const std::vector<QString>& mImagePaths;
+  int mTileSize;
+  QString mAgentImagePath;
+  int mMode = 1;
 
-    // Menu bar
-    QMenu* mFileMenu;
-    QMenu* mHelpMenu;
+  // Menu bar
+  QMenu* mFileMenu;
+  QMenu* mHelpMenu;
 
-    QAction* mNewFileAction;
-    QAction* mOpenFileAction;
-    QAction* mSaveFileAction;
-    QAction* mExitAction;
-    QAction* mAboutAction;
-    QAction* mBackToMenuAction;
+  QAction* mNewFileAction;
+  QAction* mOpenFileAction;
+  QAction* mSaveFileAction;
+  QAction* mExitAction;
+  QAction* mAboutAction;
+  QAction* mBackToMenuAction;
 
-    QToolBar* mToolBar;
+  QToolBar* mToolBar;
 
-    QWidget* mSidePanel;
-    QGraphicsView* mGraphicsView;
-    QGraphicsScene* mGraphicsScene;
+  QWidget* mSidePanel;
+  QGraphicsView* mGraphicsView;
+  QGraphicsScene* mGraphicsScene;
 
-    std::unique_ptr<ImageGrid> mImageGrid;
+  std::unique_ptr<ImageGrid> mImageGrid;
 
-    MainGraph* mMainGraph;
+  MainGraph* mMainGraph;
 
-    QTextEdit* mCommandLog;
-    QVBoxLayout* mSidePanelLayout;
+  QTextEdit* mCommandLog;
+  QVBoxLayout* mSidePanelLayout;
 
-    // Replay control
-    QAction* mReplayToggleAction;
-    bool mIsRunning = true;
+  // Replay control
+  QAction* mReplayToggleAction;
+  bool mIsRunning = true;
 
-    void onReplayRestart();
-    QAction* mReplayRestartAction;
-    std::stringstream mInitialState;
+  void onReplayRestart();
+  QAction* mReplayRestartAction;
+  std::stringstream mInitialState;
 };
 
-} // namespace cse498
+}  // namespace cse498
