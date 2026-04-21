@@ -24,6 +24,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && update-alternatives --install /usr/bin/c++ c++ /usr/bin/g++-14 14 \
     && git config --system --add safe.directory '*'
 
+
 # Install Emscripten SDK 5.0.0
 RUN git clone https://github.com/emscripten-core/emsdk.git /emsdk && \
     /emsdk/emsdk install 5.0.0 && \

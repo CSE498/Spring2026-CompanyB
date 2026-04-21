@@ -125,7 +125,8 @@ std::expected<void, InterpErr> StmtWhile::Finalize(SymbolTable &s) {
   return {};
 }
 
-std::expected<void, InterpErr> StmtLoopCtl::Finalize(SymbolTable &s) {
+std::expected<void, InterpErr> StmtLoopCtl::Finalize(
+    [[maybe_unused]] SymbolTable &s) {
   return {};
 }
 
@@ -141,7 +142,10 @@ std::expected<void, InterpErr> StmtReturn::Finalize(SymbolTable &s) {
   TRY(protected_finalize(m_Value, s));
   return {};
 }
-std::expected<void, InterpErr> StmtFunc::Finalize(SymbolTable &s) { return {}; }
+std::expected<void, InterpErr> StmtFunc::Finalize(
+    [[maybe_unused]] SymbolTable &s) {
+  return {};
+}
 std::expected<void, InterpErr> StmtFuncCall::Finalize(SymbolTable &s) {
   // All funcs should be resolved now
   FuncSym sym = std::get<FuncSym>(m_Symbol->sym);
@@ -151,11 +155,13 @@ std::expected<void, InterpErr> StmtFuncCall::Finalize(SymbolTable &s) {
   return {};
 }
 
-std::expected<void, InterpErr> ValLiteral::Finalize(SymbolTable &s) {
+std::expected<void, InterpErr> ValLiteral::Finalize(
+    [[maybe_unused]] SymbolTable &s) {
   return {};
 }
 
-std::expected<void, InterpErr> ValVariable::Finalize(SymbolTable &s) {
+std::expected<void, InterpErr> ValVariable::Finalize(
+    [[maybe_unused]] SymbolTable &s) {
   return {};
 }
 
