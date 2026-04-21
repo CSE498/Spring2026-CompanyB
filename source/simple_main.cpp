@@ -8,15 +8,10 @@
 #include "Agents/PacingAgent.hpp"
 #include "Interfaces/TrashInterface.hpp"
 #include "Worlds/MazeWorld.hpp"
-#include "tools/ActionLog.hpp"
-#include "tools/DataLog.hpp"
 
 using namespace cse498;
 
 int main() {
-  // DataLog data_log;
-  // ActionLog<AgentBase> action_log(data_log);
-
   MazeWorld world;
   world.AddAgent<PacingAgent>("Pacer 1").SetLocation(WorldPosition{3, 1});
   world.AddAgent<PacingAgent>("Pacer 2").SetLocation(WorldPosition{6, 1});
