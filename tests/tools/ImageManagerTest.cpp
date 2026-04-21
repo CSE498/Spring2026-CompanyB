@@ -8,8 +8,10 @@
 
 #include "../../source/Interfaces/gui/ImageManager.hpp"
 
-static int argc = 0;
-static QApplication app(argc, nullptr);
+static int argc = 1;
+static char arg0[] = "tests";
+static char* argv[] = {arg0, nullptr};
+static QApplication app(argc, argv);
 
 static const QString kImg1 = "../../images/test1.png";
 static const QString kImg2 = "../../images/test2.png";
