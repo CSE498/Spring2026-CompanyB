@@ -129,7 +129,9 @@ TEST_CASE("WebLayout constructor creates DOM element with ID", "[WebLayout]") {
 TEST_CASE("WebLayout DOM element is removed on object being destructed",
           "[WebLayout]") {
   SetupMockDOMWebLayout mock;
-  { WebLayout layout("layout1"); }
+  {
+    WebLayout layout("layout1");
+  }
 
   std::string id = "layout1";
 
