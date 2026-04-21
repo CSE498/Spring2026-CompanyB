@@ -1,11 +1,15 @@
 #pragma once
 
 #include <chrono>
+#include <filesystem>
 #include <iostream>
 #include <memory>
+#include <sstream>
 #include <thread>
 #include <vector>
 
+#include "Agents/ScriptedAgent.hpp"
+#include "Interpreter/Parser.hpp"
 #include "Step.hpp"
 #include "StepAgentBase.hpp"
 #include "WorldGrid.hpp"
@@ -24,6 +28,9 @@ class StepWorldBase {
   /// Id of the next created agent
   size_t next_id = 0;
 
+  /// Parser for scripted agent
+  Parser parser{};
+
  protected:
   /// Whether the simulation is running
   bool run_over = false;
@@ -36,6 +43,33 @@ class StepWorldBase {
   /// @note Override this function to provide agents with actions or other
   /// setup.
   virtual void ConfigAgent([[maybe_unused]] Agent& agent) {}
+
+  std::string GetAgentFileContents() {
+    std::ifstream file("test.al");
+    std::ostringstream buffer;
+    buffer << file.rdbuf();
+    return buffer.str();
+  }
+
+  void SetupScriptedAgents() {
+    std::string contents = GetAgentFileContents();
+    std::stringstream ss{contents};
+    std::cout << contents;
+
+    auto parse_res = parser.parse(ss);
+    if (!parse_res.has_value()) {
+      std::cout << parse_res.error().ToStr() << "\n";
+      // TODO LOG?
+      // std::terminate();
+      return;
+    }
+    for (auto& agent_def : parse_res.value()) {
+      DataClass data;
+      this->AddAgent<ScriptedAgent<DataClass>>(data)
+          .SetInit(std::move(agent_def->m_Init))
+          .SetTurn(std::move(agent_def->m_Turn));
+    }
+  }
 
  public:
   StepWorldBase() = default;
@@ -79,6 +113,7 @@ class StepWorldBase {
 
   /// @brief Run all agents repeatedly until an end condition is met.
   virtual void Run() {
+    SetupScriptedAgents();
     run_over = false;
     while (!run_over) {
       RunAgents();

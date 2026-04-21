@@ -16,12 +16,12 @@
 namespace cse498 {
 
 struct TickStats {
-  double min    = 0.0;
-  double max    = 0.0;
-  double mean   = 0.0;
+  double min = 0.0;
+  double max = 0.0;
+  double mean = 0.0;
   double median = 0.0;
-  double sum    = 0.0;
-  size_t count  = 0;
+  double sum = 0.0;
+  size_t count = 0;
 };
 
 enum class WorldType { Infection, Traffic };
@@ -37,7 +37,8 @@ class IDataLog {
 
   /// @brief Aggregate agent states; should be called every tick
   /// @param agents Vector of agents in the world
-  virtual void AggregateData(const std::vector<std::shared_ptr<StepAgentBase<DataClass>>>& agents) = 0;
+  virtual void AggregateData(
+      const std::vector<std::shared_ptr<StepAgentBase<DataClass>>>& agents) = 0;
 
   /// @brief Returns the full time series of aggregation data for all declared
   /// fields. Each vector entry corresponds to one tick (index 0 = first tick).

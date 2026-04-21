@@ -53,8 +53,12 @@ class DataLog : public IDataLog<DataClass> {
   /// @param worldType WorldType::Infection or WorldType::Traffic
   explicit DataLog(WorldType worldType) {
     switch (worldType) {
-      case WorldType::Infection:   InitFields(kInfectionFields);   break;
-      case WorldType::Traffic: InitFields(kTrafficFields); break;
+      case WorldType::Infection:
+        InitFields(kInfectionFields);
+        break;
+      case WorldType::Traffic:
+        InitFields(kTrafficFields);
+        break;
     }
   }
 
@@ -63,7 +67,9 @@ class DataLog : public IDataLog<DataClass> {
   /// @brief Aggregate agent states for the current tick; appends one TickStats
   /// entry per declared field to the time series.
   /// @param agents Vector of agents in the world
-  void AggregateData(const std::vector<std::shared_ptr<StepAgentBase<DataClass>>>& agents) override;
+  void AggregateData(
+      const std::vector<std::shared_ptr<StepAgentBase<DataClass>>>& agents)
+      override;
 
   /// @brief Returns the full time series for all declared fields.
   /// Index into the vector by tick number; call .back() for the latest tick.

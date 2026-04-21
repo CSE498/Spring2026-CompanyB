@@ -6,15 +6,15 @@
 #pragma once
 
 #include <algorithm>
-#include <unordered_map>
-#include <iostream>
 #include <concepts>
 #include <expected>
 #include <fstream>
+#include <iostream>
 #include <optional>
 #include <string>
 #include <string_view>
 #include <type_traits>
+#include <unordered_map>
 #include <vector>
 
 #include "../Interfaces/IReplayDriver.hpp"
@@ -54,20 +54,24 @@ class ReplayDriver : public IReplayDriver<AgentT> {
           if (event.contains("agentId") && event.contains("agentType")) {
             int agentId = std::stoi(event["agentId"].get<std::string>());
             std::string agentType = event["agentType"].get<std::string>();
-            std::cout << "Parsed agentId: " << agentId << ", agentType: " << agentType << std::endl;
+            std::cout << "Parsed agentId: " << agentId
+                      << ", agentType: " << agentType << std::endl;
             agentMap.emplace(agentId, agentType);
           }
         }
       } else if (eventData.is_object()) {
-        if (eventData.contains("agentId") && eventData["agentId"].is_number_integer()
-            && eventData.contains("agentType") && eventData["agentType"].is_string()) {
+        if (eventData.contains("agentId") &&
+            eventData["agentId"].is_number_integer() &&
+            eventData.contains("agentType") &&
+            eventData["agentType"].is_string()) {
           int agentId = eventData["agentId"].get<int>();
           std::string agentType = eventData["agentType"].get<std::string>();
           agentMap.emplace(agentId, agentType);
         }
       }
       for (const auto& [id, type] : agentMap) {
-        std::cout << "Parsed agentId: " << id << ", agentType: " << type << std::endl;
+        std::cout << "Parsed agentId: " << id << ", agentType: " << type
+                  << std::endl;
       }
       return agentMap;
     } catch (const nlohmann::json::parse_error& e) {

@@ -10,7 +10,8 @@
 namespace cse498 {
 
 template <typename DataClass>
-void DataLog<DataClass>::AggregateData(const std::vector<std::shared_ptr<StepAgentBase<DataClass>>>& agents) {
+void DataLog<DataClass>::AggregateData(
+    const std::vector<std::shared_ptr<StepAgentBase<DataClass>>>& agents) {
   // Collect per-field samples from all agents for this tick
   std::unordered_map<std::string, std::vector<double>> samples;
   for (const auto& [fieldName, unused] : time_series) {
@@ -18,9 +19,9 @@ void DataLog<DataClass>::AggregateData(const std::vector<std::shared_ptr<StepAge
   }
 
   for (const auto& agent : agents) {
-    // TODO: replace with toJson() or describe() once agent teams finalize their API
-    // auto state = agent.describe();
-    // for (const auto& [fieldView, value] : state) {
+    // TODO: replace with toJson() or describe() once agent teams finalize their
+    // API auto state = agent.describe(); for (const auto& [fieldView, value] :
+    // state) {
     //   std::string fieldKey(fieldView);
     //   if (samples.contains(fieldKey)) {
     //     samples[fieldKey].push_back(value);
@@ -38,10 +39,10 @@ void DataLog<DataClass>::AggregateData(const std::vector<std::shared_ptr<StepAge
     }
 
     stats.count = values.size();
-    stats.sum   = std::accumulate(values.begin(), values.end(), 0.0);
-    stats.mean  = stats.sum / static_cast<double>(stats.count);
-    stats.min   = *std::min_element(values.begin(), values.end());
-    stats.max   = *std::max_element(values.begin(), values.end());
+    stats.sum = std::accumulate(values.begin(), values.end(), 0.0);
+    stats.mean = stats.sum / static_cast<double>(stats.count);
+    stats.min = *std::min_element(values.begin(), values.end());
+    stats.max = *std::max_element(values.begin(), values.end());
 
     // Median
     std::vector<double> sorted = values;
