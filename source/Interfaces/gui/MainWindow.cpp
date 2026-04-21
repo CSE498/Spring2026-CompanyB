@@ -113,7 +113,8 @@ void MainWindow::setMenuBar() {
   mReplayToggleAction = new QAction("⏸ Pause", this);
   mReplayToggleAction->setShortcut(QKeySequence(Qt::Key_Space));
   mReplayToggleAction->setStatusTip("Pause or resume the simulation");
-  connect(mReplayToggleAction, &QAction::triggered, this, &MainWindow::onReplayToggle);
+  connect(mReplayToggleAction, &QAction::triggered, this,
+          &MainWindow::onReplayToggle);
   mToolBar->addAction(mReplayToggleAction);
 }
 
