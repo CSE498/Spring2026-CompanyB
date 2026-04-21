@@ -155,6 +155,10 @@ std::expected<std::unique_ptr<AST::Node>, InterpErr> Parser::parse_term() {
     case IDs::ID_LITERAL_STR: {
       return std::make_unique<AST::ValLiteral>(next_token, next_token.lexeme);
     }
+    case IDs::ID_LITERAL_NULL: {
+      return std::make_unique<AST::ValLiteral>(next_token,
+                                               agentlang::Types::NullType{});
+    }
     case IDs::ID_DELIM_PAREN_OPEN: {
       auto expr = parse_expr();
       if (!expr.has_value()) return expr.error();

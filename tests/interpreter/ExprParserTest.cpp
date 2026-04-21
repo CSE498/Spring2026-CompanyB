@@ -45,6 +45,7 @@ right;
 true;
 false;
 "foo";
+null;
 
 )V0G0N";
 TEST_CASE(
@@ -61,7 +62,7 @@ TEST_CASE(
   std::vector<Type> check_values{
       Type{Dir::UP}, Type{Dir::DOWN}, Type{Dir::LEFT}, Type{Dir::RIGHT},
       Type{0.0},     Type{0.0},       Type{0},         Type{true},
-      Type{false},   Type{"foo"}};
+      Type{false},   Type{"foo"},     Type{NullType{}}};
 
   size_t i = 0;
   for (Type cur_type : check_values) {

@@ -41,7 +41,15 @@ enum class Dir {
 // TODO : How are agents represented internally?
 struct Car {};
 struct Student {};
-struct NullType {};
+struct NullType {
+  bool operator==(auto const &other) const {
+    if constexpr (std::is_same_v<NullType, decltype(other)>) {
+      return true;
+    } else {
+      return false;
+    }
+  }
+};
 using Type =
     std::variant<bool, int, double, str, PointTy, Dir, Car, Student, NullType>;
 
