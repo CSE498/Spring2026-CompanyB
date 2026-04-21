@@ -54,9 +54,6 @@ body {
     overflow: hidden;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
     background-color: #1a1a1a;
-}
-
-#game-area.traffic {
     background-image: url("assets/images/full_map.svg");
     background-size: 100% 100%;
     background-repeat: no-repeat;

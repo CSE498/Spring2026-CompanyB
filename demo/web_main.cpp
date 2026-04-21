@@ -16,13 +16,60 @@
 #include "WebTextbox.hpp"
 #include "Worlds/StepTrafficWorld.hpp"
 #include "Worlds/InfectiousWorld.hpp"
+#include "Worlds/InfectiousBuildings.hpp"
 #include "core/AgentData.hpp"
 #include "core/ItemBase.hpp"
+#include "Agents/ScriptedAgent.hpp"
 #include "Agents/SwarmingAgent.hpp"
+#include "tools/Box.hpp"
+#include "tools/Point.hpp"
 #include "InfoGraph.hpp"
 #include "WebTextboxOutputManager.hpp"
 
 using namespace cse498;
+
+// Virus / InfectiousWorld constants
+constexpr size_t kGridW         = 1000;
+constexpr size_t kGridH         = 1000;
+constexpr size_t kNumPacers     = 6;     // ScriptedAgent residents
+constexpr size_t kSpawnInterval = 10;    // new infected visitor every N ticks
+constexpr size_t kMaxAgents     = 500;
+constexpr size_t kStatsInterval = 50;    // log S/I/R counts every N ticks
+
+constexpr size_t kRiverY1 = 395;
+constexpr size_t kRiverY2 = 425;
+
+// Spawn entry points
+constexpr size_t kSpawnSources = 3;
+constexpr size_t kSpawnX[kSpawnSources] = {200, 500, 800};
+constexpr size_t kSpawnY[kSpawnSources] = {350, 350, 350};
+
+struct Label { size_t x, y; const char* text; };
+constexpr Label kLabels[] = {
+    {500, 405, "RED CEDAR RIVER"},
+};
+
+// Draw a building's perimeter walls, then cut a single cell door opening at
+// the center of each side. The Python extractor guarantees building boxes are
+// pairwise disjoint, so we don't need to clip against neighbors here
+static void PlaceBuilding(WorldGrid& grid, size_t wall_id, size_t floor_id,
+                         size_t x1, size_t y1, size_t x2, size_t y2) {
+    if (x2 <= x1 + 1 || y2 <= y1 + 1) return;
+    for (size_t x = x1; x <= x2; ++x) {
+        grid[x, y1] = wall_id;
+        grid[x, y2] = wall_id;
+    }
+    for (size_t y = y1 + 1; y < y2; ++y) {
+        grid[x1, y] = wall_id;
+        grid[x2, y] = wall_id;
+    }
+    size_t cx = (x1 + x2) / 2;
+    size_t cy = (y1 + y2) / 2;
+    grid[cx, y1] = floor_id;
+    grid[cx, y2] = floor_id;
+    grid[x1, cy] = floor_id;
+    grid[x2, cy] = floor_id;
+}
 
 // Subclass adapter that exposes StepTrafficWorld's protected members so
 // the web canvas drawer can read grid and per agent state each frame
@@ -285,66 +332,122 @@ void DrawVirusSim() {
 
     const size_t W = grid.GetWidth();
     const size_t H = grid.GetHeight();
+    const double cell_w = static_cast<double>(GameCanvas->GetWidth())  / W;
+    const double cell_h = static_cast<double>(GameCanvas->GetHeight()) / H;
 
-    std::vector<std::string> display(H);
-    for (size_t y = 0; y < H; ++y) {
-        display[y].resize(W);
-        for (size_t x = 0; x < W; ++x) {
-            display[y][x] = grid.GetSymbol(WorldPosition{x, y});
+    // Quarantine overlay
+    GameCanvas->SetFillColor({240, 200, 60})
+        .DrawRect(850, 540, 990 - 850, 900 - 540, true);
+
+    // Red Cedar River with bridges
+    GameCanvas->SetFillColor({60, 110, 200});
+    const double river_x0 = 0.0;
+    const double river_x1 = 1000.0;
+    const double river_y = static_cast<double>(kRiverY1);
+    const double river_h = static_cast<double>(kRiverY2 - kRiverY1);
+    struct BridgeSpan { double x_lo, x_hi; };
+    constexpr BridgeSpan kBridges[] = {{80, 130}, {470, 520}, {770, 820}};
+    double cursor = river_x0;
+    for (auto& br : kBridges) {
+        if (br.x_lo > cursor) {
+            GameCanvas->DrawRect(cursor, river_y, br.x_lo - cursor, river_h, true);
         }
+        cursor = br.x_hi;
+    }
+    if (cursor < river_x1) {
+        GameCanvas->DrawRect(cursor, river_y, river_x1 - cursor, river_h, true);
     }
 
-    for (size_t id = 0; id < virus_world->GetNumAgents(); ++id) {
+    // Building outlines
+    GameCanvas->SetPenColor({80, 80, 80});
+    constexpr double kDoorHalf = 4.0;  // half-width of door gap, in canvas px
+    for (auto& b : infectious_buildings::kBuildings) {
+        double x1 = b.x1, y1 = b.y1, x2 = b.x2, y2 = b.y2;
+        double cxd = (x1 + x2) * 0.5, cyd = (y1 + y2) * 0.5;
+        // Top edge
+        GameCanvas->DrawLine({x1, y1}, {cxd - kDoorHalf, y1});
+        GameCanvas->DrawLine({cxd + kDoorHalf, y1}, {x2, y1});
+        // Bottom edge
+        GameCanvas->DrawLine({x1, y2}, {cxd - kDoorHalf, y2});
+        GameCanvas->DrawLine({cxd + kDoorHalf, y2}, {x2, y2});
+        // Left edge
+        GameCanvas->DrawLine({x1, y1}, {x1, cyd - kDoorHalf});
+        GameCanvas->DrawLine({x1, cyd + kDoorHalf}, {x1, y2});
+        // Right edge
+        GameCanvas->DrawLine({x2, y1}, {x2, cyd - kDoorHalf});
+        GameCanvas->DrawLine({x2, cyd + kDoorHalf}, {x2, y2});
+    }
+
+    // Per building labels at the center of each box. Using the building index
+    constexpr double kBuildingLabelPx = 9.0;
+    GameCanvas->SetFont(std::to_string(static_cast<int>(kBuildingLabelPx)) + "px monospace")
+              .SetFillColor({230, 230, 230});
+    for (size_t i = 0; i < infectious_buildings::kBuildings.size(); ++i) {
+        auto& b = infectious_buildings::kBuildings[i];
+        double cxd = (b.x1 + b.x2) * 0.5;
+        double cyd = (b.y1 + b.y2) * 0.5;
+        std::string txt = std::to_string(i);
+        // Horizontal centering
+        GameCanvas->DrawText(txt, cxd - txt.size() * 2.5, cyd + kBuildingLabelPx * 0.35);
+    }
+
+    // Special location labels, river
+    constexpr double kLabelFontPx = 18.0;
+    GameCanvas->SetFont(std::to_string(static_cast<int>(kLabelFontPx)) + "px monospace")
+              .SetFillColor({0, 220, 220});
+    for (auto& lbl : kLabels) {
+        double lx = lbl.x * cell_w;
+        double ly = lbl.y * cell_h + kLabelFontPx * 0.85;
+        GameCanvas->DrawText(lbl.text, lx, ly);
+    }
+
+    // Agents with a small fixed radius so 1-cell movement is visible.
+    constexpr double kResidentR = 5.0;
+    constexpr double kVisitorR  = 4.0;
+    size_t n = virus_world->GetNumAgents();
+    for (size_t id = 0; id < n; ++id) {
         DiseaseData state = virus_world->GetAgentState(id);
         WorldPosition pos = state.position;
-        char sym = '?';
+        double cx = pos.CellX() * cell_w + cell_w / 2.0;
+        double cy = pos.CellY() * cell_h + cell_h / 2.0;
+        bool is_resident = id < kNumPacers;
+        double r = is_resident ? kResidentR : kVisitorR;
         switch (state.health) {
-            case HealthState::SUSCEPTIBLE: sym = 'S'; break;
-            case HealthState::INFECTED:    sym = 'I'; break;
-            case HealthState::RECOVERED:   sym = 'R'; break;
+            case HealthState::SUSCEPTIBLE: GameCanvas->SetFillColor({60, 220, 90});  break;
+            case HealthState::INFECTED:    GameCanvas->SetFillColor({230, 60, 60});  break;
+            case HealthState::RECOVERED:   GameCanvas->SetFillColor({90, 130, 240}); break;
         }
-        display[pos.CellY()][pos.CellX()] = sym;
-    }
-
-    const double cell_w = static_cast<double>(GameCanvas->GetWidth()) / W;
-    const double cell_h = static_cast<double>(GameCanvas->GetHeight()) / H;
-    const double radius = std::min(cell_w, cell_h) * 0.35;
-
-    for (size_t y = 0; y < H; ++y) {
-        for (size_t x = 0; x < W; ++x) {
-            double cx = x * cell_w + cell_w / 2.0;
-            double cy = y * cell_h + cell_h / 2.0;
-            char c = display[y][x];
-            switch (c) {
-                case 'S':
-                    GameCanvas->SetFillColor({0, 255, 0}).DrawCircle(cx, cy, radius, true);
-                    break;
-                case 'I':
-                    GameCanvas->SetFillColor({255, 0, 0}).DrawCircle(cx, cy, radius, true);
-                    break;
-                case 'R':
-                    GameCanvas->SetFillColor({0, 0, 255}).DrawCircle(cx, cy, radius, true);
-                    break;
-                case '#':
-                    GameCanvas->SetFillColor({0, 0, 0}).DrawRect(cx - cell_w / 2.0, cy - cell_h / 2.0, cell_w, cell_h, true);
-                    break;
-                default:
-                    break;
-            }
-        }
+        GameCanvas->DrawCircle(cx, cy, r, true);
     }
 
     if (sim_state == SimState::PLAYING) {
         int steps = StepsThisFrame();
         for (int s = 0; s < steps; ++s) {
-            virus_world->RunAgents();
-            virus_world->UpdateWorld();
+            // Periodic infected visitor spawn
+            if (sim_tick > 0 && sim_tick % kSpawnInterval == 0 &&
+                virus_world->GetNumAgents() < kMaxAgents) {
+                size_t src = (sim_tick / kSpawnInterval) % kSpawnSources;
+                virus_world->AddAgent<SwarmingAgent<DiseaseData>>(
+                    DiseaseData{WorldPosition{kSpawnX[src], kSpawnY[src]}});
+                virus_world->InfectAgent(virus_world->GetNumAgents() - 1);
+                LogSim("World",
+                       "Visitor spawned at (" + std::to_string(kSpawnX[src]) + "," +
+                           std::to_string(kSpawnY[src]) + ")",
+                       "warn");
+            }
+
+            // Each visible step advances the world several times so agents
+            constexpr int kVirusStepsPerTick = 4;
+            for (int sub = 0; sub < kVirusStepsPerTick; ++sub) {
+                virus_world->RunAgents();
+                virus_world->UpdateWorld();
+            }
             sim_tick++;
             UpdateGraphs();
 
-            size_t n = virus_world->GetNumAgents();
-            if (last_virus_health.size() != n) last_virus_health.assign(n, -1);
-            for (size_t id = 0; id < n; ++id) {
+            size_t cur_n = virus_world->GetNumAgents();
+            if (last_virus_health.size() < cur_n) last_virus_health.resize(cur_n, -1);
+            for (size_t id = 0; id < cur_n; ++id) {
                 HealthState health = virus_world->GetAgentHealth(id);
                 int cur = static_cast<int>(health);
                 if (cur != last_virus_health[id]) {
@@ -359,44 +462,88 @@ void DrawVirusSim() {
                     last_virus_health[id] = cur;
                 }
             }
+
+            // Periodic stats summary
+            if (sim_tick > 0 && sim_tick % kStatsInterval == 0) {
+                LogSim("World",
+                       "S=" + std::to_string(virus_world->GetSusceptibleCount()) +
+                           "  I=" + std::to_string(virus_world->GetInfectedCount()) +
+                           "  R=" + std::to_string(virus_world->GetRecoveredCount()) +
+                           "  total=" + std::to_string(virus_world->GetNumAgents()),
+                       "info");
+            }
         }
     }
 }
 
 void SetupVirusWorld() {
-    virus_world = std::make_unique<InfectiousWorld>(20, 10);
+    virus_world = std::make_unique<InfectiousWorld>(kGridW, kGridH);
     WorldGrid& grid = virus_world->GetGrid();
+    size_t wall  = virus_world->GetWallID();
+    size_t floor = virus_world->GetFloorID();
 
-    for (size_t y = 0; y < 10; ++y) {
-        grid[0, y] = virus_world->GetWallID();
-        grid[19, y] = virus_world->GetWallID();
+    // Outer border
+    for (size_t y = 0; y < kGridH; ++y) {
+        grid[0,         y] = wall;
+        grid[kGridW - 1, y] = wall;
     }
-    for (size_t x = 0; x < 20; ++x) {
-        grid[x, 0] = virus_world->GetWallID();
-        grid[x, 9] = virus_world->GetWallID();
-    }
-    for (size_t y = 1; y < 6; ++y) {
-        grid[10, y] = virus_world->GetWallID();
+    for (size_t x = 0; x < kGridW; ++x) {
+        grid[x, 0          ] = wall;
+        grid[x, kGridH - 1] = wall;
     }
 
-    virus_world->SetTransmissionRate(0.4);
-    virus_world->SetInfectionRadius(1.5);
-    virus_world->SetInfectionDuration(8);
-    virus_world->SetImmunityDuration(15);
+    // Auto generated building outlines from full_map
+    for (auto& b : infectious_buildings::kBuildings) {
+        PlaceBuilding(grid, wall, floor, b.x1, b.y1, b.x2, b.y2);
+    }
 
-    using SwarmAgent = SwarmingAgent<DiseaseData>;
-    virus_world->AddAgent<SwarmAgent>(DiseaseData{WorldPosition{3, 2}});
-    virus_world->AddAgent<SwarmAgent>(DiseaseData{WorldPosition{5, 4}});
-    virus_world->AddAgent<SwarmAgent>(DiseaseData{WorldPosition{7, 3}});
-    virus_world->AddAgent<SwarmAgent>(DiseaseData{WorldPosition{4, 6}});
-    virus_world->AddAgent<SwarmAgent>(DiseaseData{WorldPosition{8, 7}});
-    virus_world->AddAgent<SwarmAgent>(DiseaseData{WorldPosition{12, 3}});
-    virus_world->AddAgent<SwarmAgent>(DiseaseData{WorldPosition{15, 5}});
-    virus_world->AddAgent<SwarmAgent>(DiseaseData{WorldPosition{14, 2}});
-    virus_world->AddAgent<SwarmAgent>(DiseaseData{WorldPosition{16, 7}});
-    virus_world->AddAgent<SwarmAgent>(DiseaseData{WorldPosition{13, 7}});
+    // Red Cedar River across the middle band, with three bridges.
+    for (size_t y = kRiverY1; y <= kRiverY2; ++y) {
+        for (size_t x = 1; x <= kGridW - 2; ++x) grid[x, y] = wall;
+    }
+    auto bridge = [&](size_t x_lo, size_t x_hi) {
+        for (size_t y = kRiverY1; y <= kRiverY2; ++y) {
+            for (size_t x = x_lo; x <= x_hi; ++x) grid[x, y] = floor;
+        }
+    };
+    bridge( 80, 130);
+    bridge(470, 520);
+    bridge(770, 820);
 
-    virus_world->InfectAgent(0);
+    // Quarantine zone
+    virus_world->AddQuarantineZone(
+        Box::FromCorners(Point(850.0, 540.0), Point(990.0, 900.0)));
+
+    // Disease parameters
+    virus_world->SetTransmissionRate(0.50);
+    virus_world->SetInfectionRadius(25.0);
+    virus_world->SetTreatmentDuration(40);
+    virus_world->SetImmunityDuration(50);
+    virus_world->SetFallbackRecoveryTicks(100);
+    virus_world->SetClinicEntrance(WorldPosition{900, 700});
+    virus_world->SetRecoveryExit(WorldPosition{780, 470});
+
+    // Resident pacers
+    using Pacer = ScriptedAgent<DiseaseData>;
+    virus_world->AddAgent<Pacer>(DiseaseData{WorldPosition{ 80, 200}});
+    virus_world->AddAgent<Pacer>(DiseaseData{WorldPosition{220, 200}});
+    virus_world->AddAgent<Pacer>(DiseaseData{WorldPosition{420, 200}});
+    virus_world->AddAgent<Pacer>(DiseaseData{WorldPosition{ 60, 700}});
+    virus_world->AddAgent<Pacer>(DiseaseData{WorldPosition{260, 700}});
+    virus_world->AddAgent<Pacer>(DiseaseData{WorldPosition{600, 200}});
+
+    // Initial swarming visitors
+    using Swarm = SwarmingAgent<DiseaseData>;
+    virus_world->AddAgent<Swarm>(DiseaseData{WorldPosition{160, 360}});
+    virus_world->AddAgent<Swarm>(DiseaseData{WorldPosition{490, 360}});
+    virus_world->AddAgent<Swarm>(DiseaseData{WorldPosition{760, 360}});
+    virus_world->AddAgent<Swarm>(DiseaseData{WorldPosition{180, 460}});
+    virus_world->AddAgent<Swarm>(DiseaseData{WorldPosition{490, 460}});
+    virus_world->AddAgent<Swarm>(DiseaseData{WorldPosition{690, 460}});
+    virus_world->AddAgent<Swarm>(DiseaseData{WorldPosition{520, 580}});
+
+    // Patient zero: first swarming agent.
+    virus_world->InfectAgent(kNumPacers);
 }
 
 // We switch screens by holding a shared pointer to the active screen's
@@ -464,7 +611,7 @@ std::shared_ptr<WebElement> SimulationLayout(ActiveSim sim, std::function<void()
         );
     } else {
         game_children.push_back(
-            (GameCanvas = UIItem<WebCanvas>(1000, 500, WebOptions{
+            (GameCanvas = UIItem<WebCanvas>(1000, 1000, WebOptions{
                 .id = "game-canvas",
             }))->SetFillColor({255, 255, 255}).SetFont("48px arial")
         );
@@ -472,7 +619,6 @@ std::shared_ptr<WebElement> SimulationLayout(ActiveSim sim, std::function<void()
 
     auto game_area = UIItem<WebLayout>(WebOptions{
         .id = "game-area",
-        .classes = sim == ActiveSim::TRAFFIC ? std::vector<std::string>{"traffic"} : std::vector<std::string>{},
         .children = game_children,
     });
 
