@@ -1,7 +1,6 @@
-#define CATCH_CONFIG_MAIN
+#include <catch2/catch_test_macros.hpp>
 
 #include "../../source/Interfaces/gui/Text.hpp"
-#include "../../third-party/Catch/single_include/catch2/catch.hpp"
 
 TEST_CASE("Test Text Constructor", "[core]") {
   // testing getters
