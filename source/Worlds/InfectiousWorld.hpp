@@ -274,8 +274,10 @@ class InfectiousWorld : public SimWorldBase<DiseaseData> {
   DiseaseData DoAction(AgentPtr agent) override {
     using namespace cse498::steps;
 
-    DiseaseData state = agent->GetState();
+    // I switched the order of these because for scripted agents
+    // its crucial that GetTurn() is called before GetState()
     StepContainer turn = agent->GetTurn();
+    DiseaseData state = agent->GetState();
 
     while (!turn.exhausted()) {
       auto step_result = turn.get_next();
