@@ -1,16 +1,3 @@
-/**
- * This file is part of the Fall 2026, CSE 498, section 2, course project.
- * @brief A class that renders the GUI
- *
- * references:
- * https://doc.qt.io/qt-6/qtwidgets-graphicsview-diagramscene-example.html
- * https://doc.qt.io/qt-6/qstatusbar.html
- * https://doc.qt.io/qt-6/qfiledialog.html#getOpenFileName
- * https://doc.qt.io/qt-6/qsplitter.html
- * https://doc.qt.io/qt-6/qkeysequence.html
- *
- **/
-
 #pragma once
 
 #include <QAction>
@@ -22,13 +9,18 @@
 #include <QSplitter>
 #include <QStatusBar>
 #include <QString>
-#include <QToolBar>
-#include <QWidget>
 #include <QTextEdit>
+#include <QTimer>
+#include <QToolBar>
 #include <QVBoxLayout>
+#include <QWidget>
 #include <memory>
+#include <sstream>
 #include <vector>
 
+#include "../../Agents/PacingAgent.hpp"
+#include "../../Worlds/InfectiousWorld.hpp"
+#include "../../Worlds/MazeWorld.hpp"
 #include "../../core/WorldBase.hpp"
 #include "ImageGrid.hpp"
 #include "MainGraph.hpp"
@@ -36,70 +28,87 @@
 namespace cse498 {
 
 class MainWindow : public QMainWindow {
-    Q_OBJECT
+  Q_OBJECT
 
-   public:
-    MainWindow(WorldBase& world, const std::vector<QString>& imagePaths,
-               int tileSize = 32, QWidget* parent = nullptr);
-    virtual ~MainWindow() = default;
-    void logCommand(const QString& message);
+ public:
+  MainWindow(WorldBase& world, const std::vector<QString>& imagePaths,
+             int tileSize = 32, const QString& agentImagePath = QString(),
+             QWidget* parent = nullptr, int mode = 1);
+  virtual ~MainWindow() = default;
+  void logCommand(const QString& message);
 
+  std::unique_ptr<WorldBase> mOwnedWorld{};
 
-    // disable copy
-    MainWindow(const MainWindow &) = delete;
-    MainWindow &operator=(const MainWindow &) = delete;
+  // disable copy
+  MainWindow(const MainWindow&) = delete;
+  MainWindow& operator=(const MainWindow&) = delete;
 
-    // disable move
-    MainWindow(MainWindow &&) = delete;
-    MainWindow &operator=(MainWindow &&) = delete;
+  // disable move
+  MainWindow(MainWindow&&) = delete;
+  MainWindow& operator=(MainWindow&&) = delete;
 
-   private:
-    void setMenuBar();
-    void setStatusBar();
-    void setMainWidget();
-    void setImageGrid();
+ private:
+  void setMenuBar();
+  void setStatusBar();
+  void setMainWidget();
+  void setImageGrid();
+  void setupAgents();
 
-    void onFileNew();
-    void onFileOpen();
-    void onFileSave();
-    void onFileExit();
-    void onHelpAbout();
+  void onFileNew();
+  void onFileOpen();
+  void onFileSave();
+  void onFileExit();
+  void onHelpAbout();
+  void onBackToMainMenu();
 
-    // For ImageGrid construction
-    WorldBase& mWorld;
-    const std::vector<QString>& mImagePaths;
-    int mTileSize;
+  void startSimulation();
+  void onTick();
 
-    // Menu bar
-    QMenu* mFileMenu;
-    QMenu* mHelpMenu;
+  // Replay control
+  void onReplayToggle();
 
-    // Actions
-    // Raw pointers intentional because of the QT paraent ownership for the menu
-    // They get destroyed automatically when the window gets destroyed.
-    QAction* mNewFileAction;
-    QAction* mOpenFileAction;
-    QAction* mSaveFileAction;
-    QAction* mExitAction;
-    QAction* mAboutAction;
+  // Timer
+  QTimer* mTimer = nullptr;
+  int mTickInterval = 150;
 
-    // Toolbar
-    QToolBar* mToolBar;
+  // For ImageGrid construction
+  WorldBase& mWorld;
+  const std::vector<QString>& mImagePaths;
+  int mTileSize;
+  QString mAgentImagePath;
+  int mMode = 1;
 
-    // Main widget
-    QWidget* mSidePanel;
-    QGraphicsView* mGraphicsView;
-    QGraphicsScene* mGraphicsScene;
+  // Menu bar
+  QMenu* mFileMenu;
+  QMenu* mHelpMenu;
 
-    // ImageGrid
-    std::unique_ptr<ImageGrid> mImageGrid;
+  QAction* mNewFileAction;
+  QAction* mOpenFileAction;
+  QAction* mSaveFileAction;
+  QAction* mExitAction;
+  QAction* mAboutAction;
+  QAction* mBackToMenuAction;
 
-    // Graph
-    MainGraph* mMainGraph;
+  QToolBar* mToolBar;
 
-    // Command Log
-    QTextEdit* mCommandLog;
-    QVBoxLayout* mSidePanelLayout;
+  QWidget* mSidePanel;
+  QGraphicsView* mGraphicsView;
+  QGraphicsScene* mGraphicsScene;
+
+  std::unique_ptr<ImageGrid> mImageGrid;
+
+  MainGraph* mMainGraph;
+
+  QTextEdit* mCommandLog;
+  QVBoxLayout* mSidePanelLayout;
+
+  // Replay control
+  QAction* mReplayToggleAction;
+  bool mIsRunning = true;
+
+  void onReplayRestart();
+  QAction* mReplayRestartAction;
+  std::stringstream mInitialState;
 };
 
 }  // namespace cse498
