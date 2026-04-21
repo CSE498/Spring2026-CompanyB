@@ -9,6 +9,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && apt-get install -y --no-install-recommends \
     qt6-base-dev \
     libgl-dev \
+    nlohmann-json3-dev \
     gcc-14 \
     g++-14 \
     git \

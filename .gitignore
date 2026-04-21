@@ -5,6 +5,8 @@
 /output/
 /build/
 
+*.env
+
 # Prerequisites
 *.d
 
@@ -59,3 +61,12 @@
 /docs/man/
 /docs/rtf/
 /docs/generated/
+
+
+# Simulation logs
+/logs/
+
+# Build
+/build/
+**/build/
+**/simple
