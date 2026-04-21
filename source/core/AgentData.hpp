@@ -36,7 +36,7 @@ struct TrafficData {
   // bool swarm_away;  // true = flee, false = approach
 
   /// Whether the traffic agent should emit movement steps.
-  bool is_active;
+  bool is_active{};
 
   /// Character used by text or debug renderers.
   char symbol = '@';

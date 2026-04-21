@@ -44,9 +44,6 @@ The following are implemented:
   **Returns:** Pointer to the point, or `nullptr` if out of range.  
   **Note:** `noexcept`, no exceptions thrown.
 
-- ~~`Point& at(size_t index);`~~ **(deprecated)**  
-  **Use `get()` for checked access or `operator[]` for unchecked access.**
-
 - `Point& front();` / `const Point& front() const;`  
   **Assert:** Path not empty.  
   **Returns:** First point.
