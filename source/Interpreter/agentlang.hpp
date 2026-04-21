@@ -42,6 +42,9 @@ enum class Dir {
 struct Car {};
 struct Student {};
 struct NullType {
+  // Any other nulltype is equal, otherwise false
+  // This might actually want *some* thought given that
+  // by I think some IEEE standard, NaN != NaN
   bool operator==(auto const &other) const {
     if constexpr (std::is_same_v<NullType, decltype(other)>) {
       return true;
@@ -49,6 +52,9 @@ struct NullType {
       return false;
     }
   }
+
+  // Always non-truthy
+  operator bool() { return false; }
 };
 using Type =
     std::variant<bool, int, double, str, PointTy, Dir, Car, Student, NullType>;

@@ -1,12 +1,10 @@
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/matchers/catch_matchers_templated.hpp>
 #include <expected>
-#include <functional>
-#include <unordered_map>
 #include <variant>
 
+#include "Interpreter/Evaluation/BoolConv.hpp"
 #include "Interpreter/Evaluation/OpVisits.hpp"
-#include "Interpreter/Parser.hpp"
 #include "Interpreter/agentlang.hpp"
 #include "Interpreter/errors.hpp"
 #include "catch2/matchers/catch_matchers_floating_point.hpp"
@@ -109,5 +107,45 @@ TEST_CASE("Binary operators", "[Interpreter]") {
     REQUIRE(res.has_value());
     REQUIRE(std::holds_alternative<str>(res.value()));
     REQUIRE(std::get<str>(res.value()) == "foobar");
+  }
+}
+
+TEST_CASE("Implicit conversion", "[Interpreter]") {
+  SECTION("int truthiness") {
+    EvalRet res = evaluate_bool(Type{0});
+
+    REQUIRE(res.has_value());
+    REQUIRE_THAT(res.value(), VariantHas<bool>(false));
+
+    res = evaluate_bool(Type{100});
+
+    REQUIRE(res.has_value());
+    REQUIRE_THAT(res.value(), VariantHas<bool>(true));
+  }
+
+  SECTION("string truthiness (error)") {
+    EvalRet res = evaluate_bool(Type{"foo"});
+
+    REQUIRE_FALSE(res.has_value());
+    REQUIRE(res.error().Is<RuntimeErr>(RuntimeErr::NOT_BOOL_CONV));
+  }
+
+  SECTION("double truthiness") {
+    EvalRet res = evaluate_bool(Type{0.00});
+
+    REQUIRE(res.has_value());
+    REQUIRE_THAT(res.value(), VariantHas<bool>(false));
+
+    res = evaluate_bool(Type{1.5});
+
+    REQUIRE(res.has_value());
+    REQUIRE_THAT(res.value(), VariantHas<bool>(true));
+  }
+
+  SECTION("null truthiness") {
+    EvalRet res = evaluate_bool(Type{NullType{}});
+
+    REQUIRE(res.has_value());
+    REQUIRE_THAT(res.value(), VariantHas<bool>(false));
   }
 }
