@@ -9,11 +9,6 @@
 #include "RobinHoodMap.hpp"
 #include "core.hpp"
 
-template <typename... Ts>
-struct Overload : Ts... {
-  using Ts::operator()...;
-};
-
 using namespace cse498::agentlang::Types;
 
 namespace cse498 {
