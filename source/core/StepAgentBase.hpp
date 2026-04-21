@@ -18,7 +18,7 @@ class StepAgentBase {
   DataClass mData;
 
  public:
-  StepAgentBase(DataClass data, size_t id) : mData{data}, mId{id} {}
+  StepAgentBase(DataClass data, size_t id) : mId{id}, mData{data} {}
   virtual ~StepAgentBase() = default;
 
   /// Get the ID of the agent

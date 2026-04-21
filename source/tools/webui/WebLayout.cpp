@@ -15,27 +15,23 @@ using emscripten::val;
 
 namespace cse498 {
 
-WebLayout::WebLayout(std::string id) : WebElement(id, false) {
-  val document = val::global("document");
-  val existing = document.call<val>("getElementById", id);
+WebLayout::WebLayout(const WebOptions& options) : WebElement("div", options) {
+#ifdef DEBUG_LOG_WEB_ELEMENTS
+  if (!id.empty()) {
+    std::printf("WebLayout #%s constructed\n", id.c_str());
+  }
+#endif
 
-  assert((existing.isNull() || existing.isUndefined()) &&
-         "Element with this ID already exists in the DOM");
-
-  dom_element = document.call<val>("createElement", std::string("div"));
   dom_element["style"].set("display", "flex");
-  dom_element.set("id", id);
-  document["body"].call<void>("appendChild", dom_element);
-}
 
-WebLayout::~WebLayout() {
-  if (!dom_element.isNull() && !dom_element.isUndefined()) {
-    dom_element.call<void>("remove");
+  // Add children from options if any
+  for (const auto& child : options.children) {
+    AddChild(child);
   }
 }
 
 std::expected<void, WebLayout::Error> WebLayout::AddChild(
-    std::shared_ptr<WebElement> elem) {
+    const std::shared_ptr<WebElement>& elem) {
   if (!elem) {
     return std::unexpected(WebLayout::Error::NullPtr);
   }
@@ -44,20 +40,20 @@ std::expected<void, WebLayout::Error> WebLayout::AddChild(
   }
 
   // Add child element to the layout's DOM tree
-  val document = val::global("document");
-  val childElem = document.call<val>("getElementById", elem->GetId());
-  if (childElem.isNull() || childElem.isUndefined()) {
+  if (dom_element.isNull() || dom_element.isUndefined()) {
     return std::unexpected(WebLayout::Error::DOMElementNotFound);
   }
-  dom_element.call<void>("appendChild", childElem);
 
+  dom_element.call<void>("appendChild", elem->GetDOMElement());
+
+  // Add pointer to the element to the list of children
   elements.push_back(elem);
 
   return {};
 }
 
 std::expected<void, WebLayout::Error> WebLayout::RemoveChild(
-    std::shared_ptr<WebElement> elem) {
+    const std::shared_ptr<WebElement>& elem) {
   if (!elem) {
     return std::unexpected(WebLayout::Error::NullPtr);
   }
@@ -66,13 +62,13 @@ std::expected<void, WebLayout::Error> WebLayout::RemoveChild(
   }
 
   // Remove child element from the layout
-  val document = val::global("document");
-  val childElem = document.call<val>("getElementById", elem->GetId());
-  if (childElem.isNull() || childElem.isUndefined()) {
+  if (dom_element.isNull() || dom_element.isUndefined()) {
     return std::unexpected(WebLayout::Error::DOMElementNotFound);
   }
-  dom_element.call<void>("removeChild", childElem);
 
+  dom_element.call<void>("removeChild", elem->GetDOMElement());
+
+  // Remove child element pointer from the list of children
   std::erase(elements, elem);
 
   return {};
@@ -80,32 +76,61 @@ std::expected<void, WebLayout::Error> WebLayout::RemoveChild(
 
 size_t WebLayout::GetNumChildren() const { return elements.size(); }
 
-bool WebLayout::ContainsChild(std::shared_ptr<WebElement> elem) const {
+bool WebLayout::ContainsChild(const std::shared_ptr<WebElement>& elem) const {
   return std::find(elements.begin(), elements.end(), elem) != elements.end();
 }
 
-WebLayout& WebLayout::SetDirection(std::string dir) {
+WebLayout& WebLayout::SetDirection(const std::string& dir) {
   dom_element["style"].set("flexDirection", dir);
   return *this;
 }
 
-WebLayout& WebLayout::SetJustifyContent(std::string justify) {
+std::string WebLayout::GetDirection() const {
+  return dom_element["style"]["flexDirection"].as<std::string>();
+}
+
+WebLayout& WebLayout::SetJustifyContent(const std::string& justify) {
   dom_element["style"].set("justifyContent", justify);
   return *this;
 }
 
-WebLayout& WebLayout::SetAlignItems(std::string align) {
+std::string WebLayout::GetJustifyContent() const {
+  return dom_element["style"]["justifyContent"].as<std::string>();
+}
+
+WebLayout& WebLayout::SetHeight(const std::string& height) {
+  dom_element["style"].set("height", height);
+  return *this;
+}
+
+std::string WebLayout::GetHeight() const {
+  return dom_element["style"]["height"].as<std::string>();
+}
+
+WebLayout& WebLayout::SetAlignItems(const std::string& align) {
   dom_element["style"].set("alignItems", align);
   return *this;
 }
 
-WebLayout& WebLayout::SetAlignContent(std::string alignContent) {
+std::string WebLayout::GetAlignItems() const {
+  return dom_element["style"]["alignItems"].as<std::string>();
+}
+
+WebLayout& WebLayout::SetAlignContent(const std::string& alignContent) {
   dom_element["style"].set("alignContent", alignContent);
   return *this;
 }
 
-WebLayout& WebLayout::SetGap(std::string gap) {
+std::string WebLayout::GetAlignContent() const {
+  return dom_element["style"]["alignContent"].as<std::string>();
+}
+
+WebLayout& WebLayout::SetGap(const std::string& gap) {
   dom_element["style"].set("gap", gap);
   return *this;
+}
+
+std::string WebLayout::GetGap() const {
+  return dom_element["style"]["gap"].as<std::string>();
 }
 }  // namespace cse498

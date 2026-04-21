@@ -9,7 +9,10 @@
 #include <emscripten/val.h>
 
 #include <expected>
+#include <memory>
 #include <string>
+
+#include "WebElement.hpp"
 
 namespace cse498 {
 
@@ -25,41 +28,38 @@ enum class SizeUnit { px, em, rem, percent, vw, vh };
  * allowing programmers to control image source, position, size, alt text,
  * and visibility using C++ functions.
  **/
-class WebImage {
+class WebImage : public WebElement {
  private:
-  /// Image's DOM element ID
-  std::string id{};
-
   /// Image's source
-  std::string src{};
+  std::string src_{};
 
   /// Image's alt text
-  std::string alt{};
+  std::string alt_{};
 
   /// Image's Width
-  int width = 0;
+  double width_ = 0;
 
   /// Image's Height
-  int height = 0;
+  double height_ = 0;
 
   /// Image's X position
-  int x_pos = 0;
+  int x_pos_ = 0;
 
   /// Image's Y position
-  int y_pos = 0;
+  int y_pos_ = 0;
 
-  /// DOM image element
-  emscripten::val img_element = emscripten::val::null();
+  /// Current visibility state
+  bool visible_ = true;
 
  public:
   /**
    * @brief Construct a WebImage, creating the <img> element in the DOM.
-   * @param img_id The DOM element ID for the image. Must be unique.
    * @param src The image source URL or file path.
    * @param alt_text Alternative text for accessibility
+   * @param options Optional WebOptions to apply to the image.
    **/
-  WebImage(const std::string& img_id, const std::string& src,
-           const std::string& alt_text);
+  WebImage(const std::string& src, const std::string& alt_text,
+           const WebOptions& options = {});
 
   /// Destructor that removes the image element from the DOM
   ~WebImage();
@@ -88,78 +88,114 @@ class WebImage {
    * @brief Change the image source to a new file or URL.
    * @param source The new image source path or URL.
    **/
-  void SetSource(const std::string& source);
+  WebImage& SetSource(const std::string& source);
 
   /**
    * @brief Set the alt text for accessibility and screen readers.
    * @param alt_text The alternative text describing the image.
    **/
-  void SetAlt(const std::string& alt_text);
+  WebImage& SetAlt(const std::string& alt_text);
 
   /**
    * @brief Set the position of the image on the page.
    * @param x The x-coordinate in pixels from the left edge.
    * @param y The y-coordinate in pixels from the top edge.
+   * @note Negative values are supported and will position the element partially
+   *       or fully outside the visible viewport.
    **/
-  void SetPosition(int x, int y);
+  WebImage& SetPosition(int x, int y);
 
   /**
    * @brief Set the display size of the image.
-   * @param w The width value. Must be non-negative.
-   * @param h The height value. Must be non-negative.
+   * @param w The width value. Must be numeric.
+   * @param h The height value. Must be numeric.
    * @param unit The CSS unit enum with defaults to SizeUnit::px.
    **/
-  void SetSize(int w, int h, SizeUnit unit = SizeUnit::px);
+  template <typename T>
+    requires std::is_arithmetic_v<T> && (!std::is_same_v<T, bool>)
+  WebImage& SetSize(T w, T h, SizeUnit unit = SizeUnit::px) {
+    width_ = static_cast<double>(w);
+    height_ = static_cast<double>(h);
+
+    std::string unit_str;
+
+    switch (unit) {
+      case SizeUnit::px:
+        unit_str = "px";
+        break;
+      case SizeUnit::em:
+        unit_str = "em";
+        break;
+      case SizeUnit::rem:
+        unit_str = "rem";
+        break;
+      case SizeUnit::percent:
+        unit_str = "%";
+        break;
+      case SizeUnit::vw:
+        unit_str = "vw";
+        break;
+      case SizeUnit::vh:
+        unit_str = "vh";
+        break;
+    }
+
+    dom_element["style"].set("width", std::to_string(w) + unit_str);
+    dom_element["style"].set("height", std::to_string(h) + unit_str);
+    return *this;
+  }
 
   /**
    * @brief Show or hide the image element.
    * @param is_visible If true, display the image; if false, hide it.
    **/
-  void SetVisible(bool is_visible);
+  WebImage& SetVisible(bool is_visible);
 
   /**
    * @brief Get the current width and height of the image.
    * @return A pair containing (width, height) in pixels.
    **/
-  [[nodiscard]] std::pair<int, int> GetSize() const { return {width, height}; }
+  [[nodiscard]] std::pair<double, double> GetSize() const {
+    return {width_, height_};
+  }
 
   /**
    * @brief Get the current position of the image.
    * @return A pair containing (x, y) coordinates in pixels.
    **/
   [[nodiscard]] std::pair<int, int> GetPosition() const {
-    return {x_pos, y_pos};
+    return {x_pos_, y_pos_};
   }
 
   /**
    * @brief Get the alt text of the image.
    * @return The alternative text string.
    **/
-  [[nodiscard]] std::string GetAlt() const { return alt; }
-
-  /**
-   * @brief Get the DOM element ID of the image.
-   * @return The image element's unique identifier.
-   **/
-  [[nodiscard]] std::string GetId() const { return id; }
+  [[nodiscard]] std::string GetAlt() const { return alt_; }
 
   /**
    * @brief Get the current image source path or URL.
    * @return The source string.
    **/
-  [[nodiscard]] std::string GetSource() const { return src; }
+  [[nodiscard]] std::string GetSource() const { return src_; }
 
   /**
    * @brief Get the current width of the image in pixels.
    * @return The image width.
    **/
-  [[nodiscard]] int GetWidth() const { return width; }
+  [[nodiscard]] double GetWidth() const { return width_; }
 
   /**
    * @brief Get the current height of the image in pixels.
    * @return The image height.
    **/
-  [[nodiscard]] int GetHeight() const { return height; }
+  [[nodiscard]] double GetHeight() const { return height_; }
+
+  /**
+   * @brief Get the current visibility state of the image.
+   * @return True if the image is visible, false if hidden.
+   **/
+  [[nodiscard]] bool GetVisible() const { return visible_; }
 };
 
 }  // namespace cse498

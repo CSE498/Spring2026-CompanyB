@@ -10,6 +10,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     qt6-base-dev \
     libqt6charts6-dev \
     libgl-dev \
+    nlohmann-json3-dev \
     gcc-14 \
     g++-14 \
     git \
@@ -24,6 +25,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && update-alternatives --install /usr/bin/cc cc /usr/bin/gcc-14 14 \
     && update-alternatives --install /usr/bin/c++ c++ /usr/bin/g++-14 14 \
     && git config --system --add safe.directory '*'
+
 
 # Install Emscripten SDK 5.0.0
 RUN git clone https://github.com/emscripten-core/emsdk.git /emsdk && \

@@ -7,6 +7,8 @@
 // for Catch::Matchers::WithinRel() for approx double in Catchv3
 #include <catch2/matchers/catch_matchers_floating_point.hpp>
 #include <cmath>
+#include <ranges>
+#include <vector>
 
 using namespace cse498;
 
@@ -22,6 +24,60 @@ using namespace cse498;
 // The following modifications were made with AI assistance:
 //   - Restructured all TEST_CASEs into SECTION-based groupings
 //   - Added GENERATE/CAPTURE for parametric small-path tests
+
+TEST_CASE("WorldPath constructors", "[worldpath]") {
+  SECTION("default constructor yields empty valid path") {
+    WorldPath path{};
+    REQUIRE(path.empty());
+    REQUIRE(path.size() == 0);
+    REQUIRE(path.isValid());
+  }
+
+  SECTION("initializer-list constructor from braced points") {
+    WorldPath segment{{0.0, 0.0}, {3.0, 4.0}};
+    REQUIRE(segment.size() == 2);
+    REQUIRE_THAT(segment.totalLength(), Catch::Matchers::WithinRel(5.0));
+    REQUIRE_THAT(segment.front().getX(), Catch::Matchers::WithinRel(0.0));
+    REQUIRE_THAT(segment.back().getY(), Catch::Matchers::WithinRel(4.0));
+    REQUIRE(segment.isValid());
+  }
+
+  SECTION("initializer-list constructor multi-segment path") {
+    WorldPath patrol{{0.0, 0.0}, {10.0, 0.0}, {10.0, 10.0}};
+    REQUIRE(patrol.size() == 3);
+    REQUIRE_THAT(patrol.totalLength(), Catch::Matchers::WithinRel(20.0));
+  }
+
+  SECTION("initializer-list constructor empty list") {
+    WorldPath path({});
+    REQUIRE(path.empty());
+    REQUIRE(path.isValid());
+  }
+
+  SECTION("range constructor from vector copies points in order") {
+    std::vector<Point> waypoints{{1.0, 2.0}, {3.0, 4.0}};
+    WorldPath path(waypoints);
+    REQUIRE(path.size() == 2);
+    REQUIRE_THAT(path[0].getX(), Catch::Matchers::WithinRel(1.0));
+    REQUIRE_THAT(path[1].getY(), Catch::Matchers::WithinRel(4.0));
+    REQUIRE(path.isValid());
+  }
+
+  SECTION("range constructor from empty vector") {
+    const std::vector<Point> empty;
+    WorldPath path(empty);
+    REQUIRE(path.empty());
+    REQUIRE(path.isValid());
+  }
+
+  SECTION("range constructor from reversed view") {
+    std::vector<Point> waypoints{{0.0, 0.0}, {1.0, 0.0}, {2.0, 0.0}};
+    WorldPath backward(std::views::reverse(waypoints));
+    REQUIRE(backward.size() == 3);
+    REQUIRE_THAT(backward.front().getX(), Catch::Matchers::WithinRel(2.0));
+    REQUIRE_THAT(backward.back().getX(), Catch::Matchers::WithinRel(0.0));
+  }
+}
 
 TEST_CASE("WorldPath basic container behavior", "[worldpath]") {
   WorldPath path;

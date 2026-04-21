@@ -1,6 +1,10 @@
 #pragma once
 
-#include "LeafNode.hpp"
+#include <functional>
+
+#include "Node.hpp"
+
+using Action = std::function<Status(Blackboard&)>;
 
 // ATTRIBUTIONS: Used ChatGPT to create Docstrings. Further modifications come
 // from my input
@@ -13,14 +17,36 @@
  * it does not have children and encapsulates a specific action
  * or task.
  */
-class ActionNode : public LeafNode {
+class ActionNode : public Node {
  public:
-  using LeafNode::LeafNode;
+  using Node::Node;
 
-  Status tick() override {
+  void addNode([[maybe_unused]] std::unique_ptr<Node> node) override {}
+
+  void deleteNode([[maybe_unused]] Node* node) override {}
+
+  ActionNode(std::string name, Action action, int tickDuration)
+      : Node(name), m_action(action), m_tickDuration(tickDuration) {}
+
+  // ATTRIBUTIONS: Used ChatGPT to get ASCII implementation
+
+  virtual void print(const std::string& prefix, bool isLast,
+                     bool isRoot) const {
+    if (!isRoot) {
+      std::cout << prefix;
+      std::cout << (isLast ? "└── " : "├── ");
+    }
+    std::cout << m_name << " (" << m_status << "): " << m_tickDuration << '\n';
+  };
+
+  Status tick(Blackboard& blackboard) override {
     ++m_tickCount;
 
-    // std::cout << m_name << '\n';
+    if (m_action) {
+      m_action(blackboard);
+    } else {
+      return Status::Failure;
+    }
 
     m_status = (m_tickDuration > 1) ? Status::Running : Status::Success;
 
@@ -29,10 +55,9 @@ class ActionNode : public LeafNode {
     return m_status;
   };
 
-  int tickCount() const { return m_tickCount; }
-
-  std::string getActivePath() override { return m_name; }
+  std::string getActivePath() const override { return m_name; }
 
  private:
-  int m_tickCount{};
+  Action m_action;
+  int m_tickDuration{};
 };
