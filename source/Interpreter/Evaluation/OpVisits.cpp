@@ -4,7 +4,6 @@
 
 #include "Interpreter/agentlang.hpp"
 #include "Interpreter/errors.hpp"
-#include "core.hpp"
 
 namespace cse498 {
 
@@ -25,8 +24,4 @@ std::expected<Type, InterpErr> evaluate_binary(AgentLexer::Token const &token,
   return std::visit(OpVisitor{token.id}, left, right);
 }
 
-std::expected<bool, InterpErr> evaluate_bool(Type t) {
-  return std::visit(BoolConvVisitor{}, t);
-}
-
-};  // namespace cse498
+}; // namespace cse498
