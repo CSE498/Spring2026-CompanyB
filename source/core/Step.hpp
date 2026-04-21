@@ -10,9 +10,9 @@
 #include <utility>
 #include <variant>
 
+#include "../tools/FuncInfo.hpp"
 #include "WorldPosition.hpp"
 #include "core.hpp"
-#include "../tools/FuncInfo.hpp"
 
 namespace cse498 {
 namespace steps {
@@ -75,7 +75,7 @@ struct _InfoHandler {
   _InfoHandler(F f)
       : funcs({pick_handler<typename std::tuple_element<
                                 0, typename FuncInfo::FuncInfo<F>::args>::type,
-                            Ts>(f)...}) {};
+                            Ts>(f)...}) {}
 
   template <typename S>
   std::expected<bool, StepErr> operator()(S s) {
@@ -100,7 +100,7 @@ struct StepContainer;
 struct MovementStep {
   WorldPosition loc;
 
-  bool operator==(MovementStep const &other) { return other.loc == loc; }
+  bool operator==(MovementStep const& other) { return other.loc == loc; }
 };
 
 struct InfoStep {
@@ -113,7 +113,7 @@ struct InfoStep {
   Aspect aspect;
   WorldPosition target;
 
-  bool operator==(InfoStep const &other) const {
+  bool operator==(InfoStep const& other) const {
     return (other.aspect == aspect) && (other.target == target);
   }
 };
@@ -121,7 +121,7 @@ struct InfoStep {
 struct ConditionalStep {
   InfoHandler condition;
 
-  bool operator==(ConditionalStep const &other) const {
+  bool operator==(ConditionalStep const& other) const {
     // Figure out how to compare functors...
     return true;
   }
@@ -129,7 +129,7 @@ struct ConditionalStep {
 
 struct ReconStep {
   // TODO (probably gonna scrap)
-  bool operator==(ReconStep const &other) const { return false; }
+  bool operator==(ReconStep const& other) const { return false; }
 };
 
 template <typename T>
@@ -162,7 +162,7 @@ struct StepContainer {
   // Need one node prior to handle infostep stuff
   Node const* prev_node = nullptr;
 
-  std::stack<Node const *> next_stack;
+  std::stack<Node const*> next_stack;
 
   // Filled in by .inform()
   std::optional<InfoType> world_info = {};
@@ -176,12 +176,12 @@ struct StepContainer {
   }
 
   template <IsInfoType I>
-  void inform(I const &info) {
+  void inform(I const& info) {
     world_info = InfoType{std::in_place_type<I>, info};
   }
 
   template <StepKind S>
-  void add_step(S &&s) {
+  void add_step(S&& s) {
     assert(last != nullptr);
     last->next = std::make_unique<Node>(std::move(s));
     last = last->next.get();
@@ -193,7 +193,7 @@ struct StepContainer {
   // step as a branch w/o needing a full stepcontainer
 
   template <BranchLike T>
-  void add_step(InfoStep &&i, ConditionalStep &&s, T &&t_body) {
+  void add_step(InfoStep&& i, ConditionalStep&& s, T&& t_body) {
     assert(last != nullptr);
 
     // Insert infostep node first
@@ -217,7 +217,7 @@ struct StepContainer {
   }
 
   template <BranchLike T, BranchLike F>
-  void add_step(InfoStep &&i, ConditionalStep &&s, T &&t_body, F &&f_body) {
+  void add_step(InfoStep&& i, ConditionalStep&& s, T&& t_body, F&& f_body) {
     assert(last != nullptr);
 
     // Do everything the single-branch add_step does, then just additionally add

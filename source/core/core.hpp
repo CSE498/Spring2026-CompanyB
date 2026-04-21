@@ -5,7 +5,7 @@
 #include <type_traits>
 #include <variant>
 
-#include "../Worlds/TrafficData.hpp"
+#include "AgentData.hpp"
 
 namespace Concepts {
 template <typename T, typename... Ts>
@@ -14,7 +14,7 @@ concept IsOneOf = (std::is_same_v<T, Ts> || ...);
 template <typename Head, typename... Tail>
 constexpr bool all_unique() {
   // On final element, must be unique
-  if constexpr (std::is_void_v<std::tuple<Tail...>>()) {
+  if constexpr (sizeof...(Tail) == 1) {
     return true;
   } else if constexpr (IsOneOf<Head, Tail...>) {
     return false;
@@ -27,7 +27,7 @@ constexpr bool all_unique() {
 /** @brief Wraps `all_unique()` to provide a corresponding concept requirement.
  */
 template <typename... Ts>
-concept UniqueTypes = all_unique<Ts..., std::void_t>();
+concept UniqueTypes = all_unique<Ts...>();
 
 /**
  * @brief Determines a valid dataclass for the agents and world
@@ -37,7 +37,7 @@ concept UniqueTypes = all_unique<Ts..., std::void_t>();
  * after discussing with both world groups
  */
 template <typename T>
-concept IsDataClass = IsOneOf<T, cse498::TrafficData, int>;
+concept IsDataClass = IsOneOf<T, cse498::TrafficData, cse498::DiseaseData>;
 
 }  // namespace Concepts
 

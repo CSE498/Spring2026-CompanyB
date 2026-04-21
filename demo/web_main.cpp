@@ -566,7 +566,7 @@ void load_traffic_layout() {
     active_sim = ActiveSim::TRAFFIC;
     sim_state  = SimState::STOPPED;
     sim_tick   = 0;
-    traffic_world = std::make_unique<TrafficWorld>("assets/grids/DemoWorld.grid");
+    traffic_world = std::make_unique<TrafficWorld>("assets/grids/TrafficWorld_Web.grid");
     last_traffic_agent_count = 0;
     traffic_reached_log.clear();
     set_active_layout(SimulationLayout(ActiveSim::TRAFFIC, load_traffic_layout, load_menu_layout));
