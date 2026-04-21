@@ -24,4 +24,4 @@ std::expected<Type, InterpErr> evaluate_binary(AgentLexer::Token const &token,
   return std::visit(OpVisitor{token.id}, left, right);
 }
 
-}; // namespace cse498
+};  // namespace cse498

@@ -11,4 +11,4 @@ std::expected<bool, InterpErr> evaluate_bool(Type t) {
   return std::visit(BoolConvVisitor{}, t);
 }
 
-}; // namespace cse498
+};  // namespace cse498

@@ -16,9 +16,10 @@ struct BoolConvVisitor {
     return static_cast<bool>(t);
   }
 
-  template <TypeKind T> std::expected<bool, InterpErr> operator()(T) {
+  template <TypeKind T>
+  std::expected<bool, InterpErr> operator()(T) {
     return RuntimeErr(RuntimeErr::NOT_BOOL_CONV);
   }
 };
 
-}; // namespace cse498
+};  // namespace cse498
