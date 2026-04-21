@@ -276,27 +276,23 @@ TEST_CASE("PathGenerator SetHeuristic changes distance calculation",
 
   // Manhattan distance heuristic
   auto manhattan = [](const Point &a, const Point &b) {
-    auto manhattan = [](const Point &a, const Point &b) {
-      return std::abs(b.getX() - a.getX()) + std::abs(b.getY() - a.getY());
-    };
+    return std::abs(b.getX() - a.getX()) + std::abs(b.getY() - a.getY());
+  };
 
-    gen.SetHeuristic(manhattan);
+  gen.SetHeuristic(manhattan);
 
-    Point start{0.0, 0.0};
-    Point goal{3.0, 4.0};
-    auto result = gen.ShortestPath(start, goal);
-    REQUIRE(result.has_value());
-    REQUIRE_THAT(result->front().getX(),
-                 Catch::Matchers::WithinRel(start.getX()));
-    REQUIRE_THAT(result->front().getY(),
-                 Catch::Matchers::WithinRel(start.getY()));
-    REQUIRE_THAT(result->back().getX(),
-                 Catch::Matchers::WithinRel(goal.getX()));
-    REQUIRE_THAT(result->back().getY(),
-                 Catch::Matchers::WithinRel(goal.getY()));
-    REQUIRE(result->totalLength() >=
-            5.0); // Euclidean distance is 5 (3-4-5 triangle)
-  }
+  Point start{0.0, 0.0};
+  Point goal{3.0, 4.0};
+  auto result = gen.ShortestPath(start, goal);
+  REQUIRE(result.has_value());
+  REQUIRE_THAT(result->front().getX(),
+               Catch::Matchers::WithinRel(start.getX()));
+  REQUIRE_THAT(result->front().getY(),
+               Catch::Matchers::WithinRel(start.getY()));
+  REQUIRE_THAT(result->back().getX(), Catch::Matchers::WithinRel(goal.getX()));
+  REQUIRE_THAT(result->back().getY(), Catch::Matchers::WithinRel(goal.getY()));
+  REQUIRE(result->totalLength() >=
+          5.0); // Euclidean distance is 5 (3-4-5 triangle)
 }
 TEST_CASE("PathGenerator handles same start and goal", "[pathgenerator]") {
   PathGenerator gen;
