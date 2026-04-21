@@ -298,7 +298,7 @@ struct StmtFuncCall : public Node {
   ~StmtFuncCall() = default;
 };
 
-static std::string IDNodeForTest(Node const *node) {
+[[maybe_unused]] static std::string IDNodeForTest(Node const *node) {
   if (dynamic_cast<StmtBlock const *>(node)) {
     return "StmtBlock";
   } else if (dynamic_cast<EmptyNode const *>(node)) {

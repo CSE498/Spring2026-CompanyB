@@ -198,7 +198,7 @@ class ScriptedAgent : public StepAgentBase<DataClass> {
       return val_result;
     }
 
-    std::expected<Type, InterpErr> operator()(FuncSym f) {
+    std::expected<Type, InterpErr> operator()([[maybe_unused]] FuncSym f) {
       return RuntimeErr(RuntimeErr::IMMUTABLE_ERR,
                         "Attempted to assign to function");
     }
@@ -219,7 +219,6 @@ class ScriptedAgent : public StepAgentBase<DataClass> {
     std::expected<Type, InterpErr> operator()(VarSym v) { return v.m_Type; }
 
     std::expected<Type, InterpErr> operator()(MagicSym m) {
-      using Value = MagicSym::Value;
       auto data = mAgentBase.GetState();
 
       switch (m.m_Value) {
@@ -324,7 +323,8 @@ class ScriptedAgent : public StepAgentBase<DataClass> {
         SymAssignVisitor(mAgentWrapper, node.m_Value, node.m_Sym, *this),
         node.m_Sym->sym);
   }
-  std::expected<Type, InterpErr> Visit(AST::StmtAgentDef &node) {
+  std::expected<Type, InterpErr> Visit(
+      [[maybe_unused]] AST::StmtAgentDef &node) {
     return RuntimeErr{
         RuntimeErr::ENCOUNTERED_AGENT_DEF,
         "Encountered an agent definition when evaluation agent turn"};
@@ -408,7 +408,7 @@ class ScriptedAgent : public StepAgentBase<DataClass> {
 
     return NullType{};
   }
-  std::expected<Type, InterpErr> Visit(AST::StmtFunc &node) {
+  std::expected<Type, InterpErr> Visit([[maybe_unused]] AST::StmtFunc &node) {
     return RuntimeErr(RuntimeErr::IMPOSSIBLE_STATE,
                       "Function definition node was visited");
   }
