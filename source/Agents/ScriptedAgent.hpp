@@ -109,6 +109,8 @@ class ScriptedAgent : public StepAgentBase<DataClass> {
   StepContainer GetTurn() override {
     mCurrentTurn = StepContainer{};  // Clear the container
 
+    if (!mTurn) return std::move(mCurrentTurn);
+
     auto res = mAgentWrapper->Evaluate(*mTurn);
     if (!res.has_value()) {
       // TODO we do no move, but we need to report error
