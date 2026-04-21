@@ -277,7 +277,7 @@ public:
     std::expected<Type, InterpErr> operator()(FuncSym f) {
       // Sequentially set each param symbol
       for (size_t index = 0; index < mParams.size(); index++) {
-        auto val = mParams[index];
+        auto &val = mParams[index];
         f.m_Params[index]->sym = val;
       }
       return NullType{};
@@ -429,7 +429,7 @@ public:
       std::vector<Type> args{};
 
       for (size_t index = 0; index < node.m_Args.size(); index++) {
-        auto arg = node.m_Args[index];
+        auto &arg = node.m_Args[index];
         TRY_DECL(arg_res, arg->Accept(*mAgentWrapper));
         args.emplace_back(arg_res);
       }
@@ -445,7 +445,7 @@ public:
 
     // Set args
     for (size_t index = 0; index < node.m_Args.size(); index++) {
-      auto arg = node.m_Args[index];
+      auto &arg = node.m_Args[index];
       auto &param = f.m_Params.at(index);
       if (!std::holds_alternative<VarSym>(param->sym))
         return RuntimeErr(RuntimeErr::IMPOSSIBLE_STATE,
