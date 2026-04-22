@@ -7,6 +7,9 @@
 #include "MainWindow.hpp"
 #include "../../Worlds/SimWorldBase.hpp"
 #include "../../Worlds/InfectiousWorld.hpp"
+#include "TrafficMainWindow.hpp"
+#include "../../Worlds/StepTrafficWorld.hpp"
+#include "../../Agents/SwarmingAgent.hpp"
 
 namespace cse498 {
 
@@ -29,7 +32,8 @@ namespace cse498 {
         std::vector<QString> mImagePaths{};
         int mTileSize{};
         QString mAgentImagePath{};
-        std::unique_ptr<SimWorldBase<DiseaseData>> mWorld{};
+        std::unique_ptr<InfectiousWorld> mDiseaseWorld{};
+        std::unique_ptr<StepTrafficWorld<SwarmingAgent<TrafficData>>>  mTrafficWorld{};
 
         QPushButton* mTrafficBtn{};
         QPushButton* mVirusBtn{};

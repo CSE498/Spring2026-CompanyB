@@ -8,6 +8,7 @@
 #include <QPixmap>
 #include <QVBoxLayout>
 
+
 namespace cse498 {
 
 StartScreen::StartScreen(const std::vector<QString>& imagePaths,
@@ -88,25 +89,32 @@ void StartScreen::onVirusClicked()   { launchMainWindow(2); }
 
 void StartScreen::launchMainWindow(int mode) {
     if (mode == 1) {
-        // TODO: Traffic mode - needs TrafficWorld updated for StepWorldBase
+        mTrafficWorld = std::make_unique<StepTrafficWorld<SwarmingAgent<TrafficData>>>(
+             "demo/DemoWorld.grid"   // adjust path if needed
+        );
+
+        auto* win = new TrafficMainWindow(*mTrafficWorld,
+                                         mImagePaths, mTileSize, mAgentImagePath);
+        win->mOwnedWorld = std::move(mTrafficWorld);
+        win->setWindowTitle("Group 21 Demo - Traffic");
+        win->setAttribute(Qt::WA_DeleteOnClose);
+        win->show();
+
     } else {
-        auto iw = std::make_unique<cse498::InfectiousWorld>(20, 15);
-        iw->SetTransmissionRate(0.4);
-        iw->SetInfectionRadius(1.5);
-        iw->SetInfectionDuration(8);
-        iw->SetImmunityDuration(15);
-        mWorld = std::move(iw);
+        mDiseaseWorld = std::make_unique<InfectiousWorld>(20, 15);
+        mDiseaseWorld->SetTransmissionRate(0.4);
+        mDiseaseWorld->SetInfectionRadius(1.5);
+        mDiseaseWorld->SetInfectionDuration(8);
+        mDiseaseWorld->SetImmunityDuration(15);
+
+        auto* win = new MainWindow(*mDiseaseWorld,
+                                   mImagePaths, mTileSize, mAgentImagePath, nullptr, 2);
+        win->mOwnedWorld = std::move(mDiseaseWorld);
+        win->setWindowTitle("Group 21 Demo - Virus");
+        win->setAttribute(Qt::WA_DeleteOnClose);
+        win->show();
     }
 
-    if (!mWorld) return;
-
-    auto* win = new MainWindow(*mWorld, mImagePaths, mTileSize, mAgentImagePath, nullptr, mode);
-    win->mOwnedWorld = std::move(mWorld);
-    win->setWindowTitle(mode == 1 ? "Group 21 Demo - Traffic"
-                                  : "Group 21 Demo - Virus");
-    win->setAttribute(Qt::WA_DeleteOnClose);
-    win->show();
     close();
 }
-
 } // namespace cse498

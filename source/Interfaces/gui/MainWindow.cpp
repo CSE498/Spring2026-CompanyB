@@ -26,7 +26,7 @@ MainWindow::MainWindow(SimWorldBase<DiseaseData> &world, const std::vector<QStri
       mAgentImagePath(agentImagePath),
       mMode(mode)
 {
-    setWindowTitle("Group 21 Demo");
+    setWindowTitle("Group 21 Demo- Virus");
     setMinimumSize(640, 480);
     resize(1280, 720);
 

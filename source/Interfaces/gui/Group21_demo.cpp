@@ -10,7 +10,7 @@ int main(int argc, char *argv[]) {
     const std::vector<QString> backgroundImagePaths = {"images/test1.png",
                                                        "images/test2.png"};
     const QString agentImagePath = "images/agent.png";
-    const int tileSize = 64;
+    const int tileSize = 20;
 
     cse498::StartScreen startScreen(backgroundImagePaths, tileSize, agentImagePath);
     startScreen.show();
