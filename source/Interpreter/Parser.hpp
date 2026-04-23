@@ -29,6 +29,9 @@ struct Parser {
   bool m_InTurn = false;
   bool m_InFunc = false;
 
+  std::expected<void, InterpErr> preload_functions();
+  std::expected<void, InterpErr> preload_magic_vals();
+
   std::expected<std::unique_ptr<AST::Node>, InterpErr> parse_stmt(
       ParseSetting setting = ParseSetting::NONE);
   std::expected<std::unique_ptr<AST::Node>, InterpErr> parse_expr(
