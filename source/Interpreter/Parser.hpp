@@ -36,8 +36,6 @@ struct Parser {
       ParseSetting setting = ParseSetting::NONE);
   std::expected<std::unique_ptr<AST::Node>, InterpErr> parse_expr(
       int prec = agentlang::Operators::MAX_PREC);
-  std::expected<std::unique_ptr<AST::Node>, InterpErr>
-  parse_expr_expect_semicln(int prec = agentlang::Operators::MAX_PREC);
   std::expected<std::unique_ptr<AST::Node>, InterpErr> parse_term();
   std::expected<std::unique_ptr<AST::Node>, InterpErr> parse_stmt_block();
 
