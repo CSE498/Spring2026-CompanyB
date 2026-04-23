@@ -16,6 +16,19 @@
 
 namespace cse498 {
 
+/** @brief Entry-point for parsing functionality, taking in an `istream` and
+returning an expected containing either a vector of agent definition nodes or an
+`InterpErr` representing an error.
+
+General process:
+  1. Parse `world <infection/traffic>;` world configuration statement
+  2. Configure internal environment and environment-specific behavior
+  3. Register pre-loaded functions into the symbol table
+  4. Register pre-loaded magic (dunder) symbols into the symbol table
+  5. Parse & collect every top-level statement in the script
+  6. Call `Finalize` on every parsed node, giving access to the symbol table
+  7. Return vector of parsed agent definitions
+*/
 std::expected<std::vector<std::unique_ptr<AST::StmtAgentDef>>, InterpErr>
 Parser::parse(std::istream &in) {
   using AgentLexer::IDs;
@@ -88,6 +101,8 @@ Parser::parse(std::istream &in) {
   return std::move(m_AgentDefs);
 }
 
+/** @brief Parse and return the expected keyword representing a type.
+ */
 std::expected<AgentLexer::Token, InterpErr> Parser::parse_type() {
   using AgentLexer::IDs;
   // Check for world-type mismatch
