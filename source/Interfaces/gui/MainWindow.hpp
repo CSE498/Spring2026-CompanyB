@@ -9,97 +9,98 @@
 #include <QSplitter>
 #include <QStatusBar>
 #include <QString>
-#include <QToolBar>
-#include <QWidget>
-#include <QTimer>
 #include <QTextEdit>
+#include <QTimer>
+#include <QToolBar>
 #include <QVBoxLayout>
+#include <QWidget>
 #include <memory>
-#include <vector>
 #include <sstream>
+#include <vector>
 
-#include "../../Worlds/SimWorldBase.hpp"
-#include "../../Worlds/InfectiousWorld.hpp"
 #include "../../Agents/dummyStepPacingAgent.hpp"
+#include "../../Worlds/InfectiousWorld.hpp"
+#include "../../Worlds/SimWorldBase.hpp"
 #include "ImageGrid.hpp"
 #include "MainGraph.hpp"
 
 namespace cse498 {
 
 class MainWindow : public QMainWindow {
-    Q_OBJECT
+  Q_OBJECT
 
-public:
-    MainWindow(SimWorldBase<DiseaseData>& world, const std::vector<QString>& imagePaths,
-               int tileSize = 32, const QString& agentImagePath = QString(),
-               QWidget* parent = nullptr, int mode = 1);
-    virtual ~MainWindow() = default;
-    void logCommand(const QString& message);
+ public:
+  MainWindow(SimWorldBase<DiseaseData>& world,
+             const std::vector<QString>& imagePaths, int tileSize = 32,
+             const QString& agentImagePath = QString(),
+             QWidget* parent = nullptr, int mode = 1);
+  virtual ~MainWindow() = default;
+  void logCommand(const QString& message);
 
-    std::unique_ptr<SimWorldBase<DiseaseData>> mOwnedWorld{};
+  std::unique_ptr<SimWorldBase<DiseaseData>> mOwnedWorld{};
 
-    MainWindow(const MainWindow &) = delete;
-    MainWindow &operator=(const MainWindow &) = delete;
-    MainWindow(MainWindow &&) = delete;
-    MainWindow &operator=(MainWindow &&) = delete;
+  MainWindow(const MainWindow&) = delete;
+  MainWindow& operator=(const MainWindow&) = delete;
+  MainWindow(MainWindow&&) = delete;
+  MainWindow& operator=(MainWindow&&) = delete;
 
-private:
-    void setMenuBar();
-    void setStatusBar();
-    void setMainWidget();
-    void setImageGrid();
-    void setupAgents();
+ private:
+  void setMenuBar();
+  void setStatusBar();
+  void setMainWidget();
+  void setImageGrid();
+  void setupAgents();
 
-    void onFileNew();
-    void onFileOpen();
-    void onFileSave();
-    void onFileExit();
-    void onHelpAbout();
-    void onBackToMainMenu();
+  void onFileNew();
+  void onFileOpen();
+  void onFileSave();
+  void onFileExit();
+  void onHelpAbout();
+  void onBackToMainMenu();
 
-    void startSimulation();
-    void onTick();
+  void startSimulation();
+  void onTick();
 
-    void onReplayToggle();
+  void onReplayToggle();
 
-    QTimer* mTimer = nullptr;
-    int mTickInterval = 150;
+  QTimer* mTimer = nullptr;
+  int mTickInterval = 150;
 
-    SimWorldBase<DiseaseData>& mWorld;
-    const std::vector<QString>& mImagePaths;
-    int mTileSize;
-    QString mAgentImagePath;
-    int mMode = 1;
+  SimWorldBase<DiseaseData>& mWorld;
+  const std::vector<QString>& mImagePaths;
+  int mTileSize;
+  QString mAgentImagePath;
+  int mMode = 1;
 
-    QMenu* mFileMenu;
-    QMenu* mHelpMenu;
+  QMenu* mFileMenu;
+  QMenu* mHelpMenu;
 
-    QAction* mNewFileAction;
-    QAction* mOpenFileAction;
-    QAction* mSaveFileAction;
-    QAction* mExitAction;
-    QAction* mAboutAction;
-    QAction* mBackToMenuAction;
+  QAction* mNewFileAction;
+  QAction* mOpenFileAction;
+  QAction* mSaveFileAction;
+  QAction* mExitAction;
+  QAction* mAboutAction;
+  QAction* mBackToMenuAction;
 
-    QToolBar* mToolBar;
+  QToolBar* mToolBar;
 
-    QWidget* mSidePanel;
-    QGraphicsView* mGraphicsView;
-    QGraphicsScene* mGraphicsScene;
+  QWidget* mSidePanel;
+  QGraphicsView* mGraphicsView;
+  QGraphicsScene* mGraphicsScene;
 
-    std::unique_ptr<ImageGrid> mImageGrid;
+  std::unique_ptr<ImageGrid> mImageGrid;
 
-    MainGraph* mMainGraph;
+  MainGraph* mMainGraph;
 
-    QTextEdit* mCommandLog;
-    QVBoxLayout* mSidePanelLayout;
+  QTextEdit* mCommandLog;
+  QVBoxLayout* mSidePanelLayout;
 
-    QAction* mReplayToggleAction;
-    bool mIsRunning = true;
+  QAction* mReplayToggleAction;
+  bool mIsRunning = true;
 
-    void onReplayRestart();
-    QAction* mReplayRestartAction;
-    std::stringstream mInitialState;
+  void onReplayRestart();
+  QAction* mReplayRestartAction;
+  std::stringstream mInitialState;
 };
 
-} // namespace cse498
+}  // namespace cse498

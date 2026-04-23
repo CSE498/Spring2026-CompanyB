@@ -8,19 +8,19 @@
 
 #include "../../source/Interfaces/gui/ImageManager.hpp"
 //
-//static int argc = 0;
-//static QApplication app(argc, nullptr);
+// static int argc = 0;
+// static QApplication app(argc, nullptr);
 //
-//static const QString kImg1 = "../../images/test1.png";
-//static const QString kImg2 = "../../images/test2.png";
+// static const QString kImg1 = "../../images/test1.png";
+// static const QString kImg2 = "../../images/test2.png";
 //
-//TEST_CASE("Test ImageManager Constructor", "[ImageManager]") {
+// TEST_CASE("Test ImageManager Constructor", "[ImageManager]") {
 //  cse498::ImageManager manager1;
 //  CHECK(!manager1.HasImage("anyImage"));
 //  CHECK(!manager1.HasImage(""));
 //}
 //
-//TEST_CASE("Test ImageManager Load", "[ImageManager]") {
+// TEST_CASE("Test ImageManager Load", "[ImageManager]") {
 //  cse498::ImageManager manager1;
 //
 //  CHECK(manager1.Load("image1", kImg1));
@@ -38,7 +38,7 @@
 //  CHECK(manager1.HasImage("image1"));
 //}
 //
-//TEST_CASE("Test ImageManager HasImage", "[ImageManager]") {
+// TEST_CASE("Test ImageManager HasImage", "[ImageManager]") {
 //  cse498::ImageManager manager1;
 //
 //  CHECK(!manager1.HasImage("image1"));
@@ -49,7 +49,7 @@
 //  CHECK(!manager1.HasImage("image2"));
 //}
 //
-//TEST_CASE("Test ImageManager GetImage", "[ImageManager]") {
+// TEST_CASE("Test ImageManager GetImage", "[ImageManager]") {
 //  cse498::ImageManager manager1;
 //  CHECK(manager1.Load("image1", kImg1));  // fixed
 //
@@ -63,7 +63,7 @@
 //  CHECK(!missing.has_value());
 //}
 //
-//TEST_CASE("Test ImageManager Remove", "[ImageManager]") {
+// TEST_CASE("Test ImageManager Remove", "[ImageManager]") {
 //  cse498::ImageManager manager1;
 //  CHECK(manager1.Load("image1", kImg1));  // fixed
 //  CHECK(manager1.Load("image2", kImg2));  // fixed
@@ -81,7 +81,7 @@
 //  CHECK(manager1.HasImage("image1"));
 //}
 //
-//TEST_CASE("Test ImageManager Clear", "[ImageManager]") {
+// TEST_CASE("Test ImageManager Clear", "[ImageManager]") {
 //  cse498::ImageManager manager1;
 //  CHECK(manager1.Load("image1", kImg1));  // fixed
 //  CHECK(manager1.Load("image2", kImg2));  // fixed
