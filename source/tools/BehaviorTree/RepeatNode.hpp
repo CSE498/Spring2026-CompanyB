@@ -17,29 +17,23 @@ class RepeatNode : public DecoratorNode {
  public:
   using DecoratorNode::DecoratorNode;
 
-  Status tick() override {
+  Status tick(Blackboard& blackboard) override {
     ++m_tickCount;
 
     // Check status of active child
     auto& child = this->getChild();
     if (!child) return Status::Running;
 
-    Status status = child->tick();
+    Status status = child->tick(blackboard);
 
     m_status = (status != Status::Failure) ? Status::Running : Status::Failure;
 
     return m_status;
   };
 
-  int tickCount() const { return m_tickCount; }
-
-  std::string getActivePath() override {
+  std::string getActivePath() const override {
     auto& child = this->getChild();
 
     return (child) ? m_name + " - " + child->getActivePath() : m_name;
   };
-
- private:
-  /// Tracks the total number of tick() calls made on this node.
-  int m_tickCount{};
 };
