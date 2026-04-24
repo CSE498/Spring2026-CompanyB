@@ -44,15 +44,22 @@ class StepWorldBase {
   /// setup.
   virtual void ConfigAgent([[maybe_unused]] Agent& agent) {}
 
-  std::string GetAgentFileContents() {
-    std::ifstream file("test.al");
+  std::string GetAgentFileContents(std::string const &path) {
+    std::ifstream file(path);
     std::ostringstream buffer;
     buffer << file.rdbuf();
     return buffer.str();
   }
 
-  void SetupScriptedAgents() {
-    std::string contents = GetAgentFileContents();
+  /** @brief Set up the scripted agents by parsing the intended script and
+   * initializing the agents.
+   * @param input Input script to interpret. If left empty, the file 'test.al'
+   * is read as input. If supplied, the given string will be treated as the
+   * input script itself.
+   */
+  void SetupScriptedAgents(std::string const &input = "") {
+    std::string contents =
+        (input.empty()) ? GetAgentFileContents("test.al") : input;
     std::stringstream ss{contents};
     std::cout << contents;
 
