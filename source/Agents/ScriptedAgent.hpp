@@ -6,6 +6,7 @@
 
 #include <any>
 #include <memory>
+#include <print>
 #include <ranges>
 #include <variant>
 
@@ -84,6 +85,9 @@ class ScriptedAgent : public StepAgentBase<DataClass> {
 
   std::optional<Type> mCurrentRetval = {};
 
+  /// Whether the agent has been initialized correctly
+  bool mReady = false;
+
  public:
   ScriptedAgent(DataClass initial_state, size_t id)
       : StepAgentBase<DataClass>(initial_state, id),
@@ -97,6 +101,7 @@ class ScriptedAgent : public StepAgentBase<DataClass> {
     mCurrentlyInInit = true;
     mAgentWrapper->Evaluate(*mInit);
     mCurrentlyInInit = false;
+    mReady = true;
     return *this;
   }
 
@@ -109,7 +114,11 @@ class ScriptedAgent : public StepAgentBase<DataClass> {
   StepContainer GetTurn() override {
     mCurrentTurn = StepContainer{};  // Clear the container
 
-    if (!mTurn) return std::move(mCurrentTurn);
+    if (!mReady) {
+      // Fatal : ScriptedAgent was not initialized
+      std::println("Fatal error: ScriptedAgent was never initialized!");
+      return std::move(mCurrentTurn);
+    }
 
     auto res = mAgentWrapper->Evaluate(*mTurn);
     if (!res.has_value()) {
@@ -119,6 +128,8 @@ class ScriptedAgent : public StepAgentBase<DataClass> {
       return StepContainer{};
     };
 
+    // this std::move() does not break RVO, it is needed to transfer ownership
+    // of the mCurrentTurn unique ptr.
     return std::move(mCurrentTurn);
   }
 
