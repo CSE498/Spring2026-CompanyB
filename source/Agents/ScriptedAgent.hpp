@@ -117,7 +117,7 @@ class ScriptedAgent : public StepAgentBase<DataClass> {
     if (!mReady) {
       // Fatal : ScriptedAgent was not initialized
       std::println("Fatal error: ScriptedAgent was never initialized!");
-      return std::move(mCurrentTurn);
+      return mCurrentTurn;
     }
 
     auto res = mAgentWrapper->Evaluate(*mTurn);
@@ -128,7 +128,7 @@ class ScriptedAgent : public StepAgentBase<DataClass> {
       return StepContainer{};
     };
 
-    return std::move(mCurrentTurn);
+    return mCurrentTurn;
   }
 
   /* --------------- Visits for symbol types ---------------- */
