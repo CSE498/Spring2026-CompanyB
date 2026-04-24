@@ -117,7 +117,7 @@ class ScriptedAgent : public StepAgentBase<DataClass> {
     if (!mReady) {
       // Fatal : ScriptedAgent was not initialized
       std::println("Fatal error: ScriptedAgent was never initialized!");
-      return mCurrentTurn;
+      return std::move(mCurrentTurn);
     }
 
     auto res = mAgentWrapper->Evaluate(*mTurn);
@@ -128,7 +128,8 @@ class ScriptedAgent : public StepAgentBase<DataClass> {
       return StepContainer{};
     };
 
-    return mCurrentTurn;
+    // this std::move() does not break RVO, it is needed to transfer ownership of the mCurrentTurn unique ptr.
+    return std::move(mCurrentTurn);
   }
 
   /* --------------- Visits for symbol types ---------------- */
