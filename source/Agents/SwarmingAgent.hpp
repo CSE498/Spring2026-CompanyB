@@ -40,7 +40,7 @@ concept IsSwarmData = Concepts::IsOneOf<T, TrafficData, DiseaseData>;
  */
 template <IsSwarmData SwarmData>
 class SwarmingAgent : public StepAgentBase<SwarmData> {
-private:
+ private:
   /// Random generator used to choose among candidate neighboring cells.
   std::mt19937 rng{std::random_device{}()};
 
@@ -54,7 +54,7 @@ private:
     double y{};
 
     /// Equality comparison required for unordered_map keys
-    bool operator==(CellKey const &other) const {
+    bool operator==(CellKey const& other) const {
       return x == other.x && y == other.y;
     }
   };
@@ -62,7 +62,7 @@ private:
   /// Hash function for CellKey so it can be used in unordered_map
   /// Combines hashes of x and y coordinates
   struct CellKeyHash {
-    std::size_t operator()(CellKey const &k) const {
+    std::size_t operator()(CellKey const& k) const {
       std::size_t h1 = std::hash<double>{}(k.x);
       std::size_t h2 = std::hash<double>{}(k.y);
       return h1 ^ (h2 << 1);
@@ -71,7 +71,7 @@ private:
 
   /// Converts a WorldPosition into a CellKey for use in maps
   /// Extracts X and Y coordinates
-  static CellKey to_key(WorldPosition const &p) {
+  static CellKey to_key(WorldPosition const& p) {
     return CellKey{p.X(), p.Y()};
   }
 
@@ -93,7 +93,7 @@ private:
    * @param pos The position that the agent has just moved to and should be
    * recorded as visited.
    */
-  void record_visit(WorldPosition const &pos) {
+  void record_visit(WorldPosition const& pos) {
     visit_counts[to_key(pos)]++;
 
     recent_positions.push_back(pos);
@@ -111,7 +111,7 @@ private:
    * been visited frequently, encouraging the agent to explore less-visited
    * areas of the world and avoid congestion.
    */
-  [[nodiscard]] std::size_t get_visit_count(WorldPosition const &pos) const {
+  [[nodiscard]] std::size_t get_visit_count(WorldPosition const& pos) const {
     auto it = visit_counts.find(to_key(pos));
     return (it == visit_counts.end()) ? 0 : it->second;
   }
@@ -127,7 +127,7 @@ private:
    * period of time, which can help it escape loops and reduce congestion around
    * its destination.
    */
-  void update_from_previous_turn(WorldPosition const &current_pos) {
+  void update_from_previous_turn(WorldPosition const& current_pos) {
     record_visit(current_pos);
   }
 
@@ -139,9 +139,9 @@ private:
    * @return The score for the candidate cell.
    * Lower scores indicate more desirable movement options.
    */
-  [[nodiscard]] double neighbor_score(WorldPosition const &candidate,
-                                      WorldPosition const &target) const {
-    auto manhattan = [&](WorldPosition const &p) {
+  [[nodiscard]] double neighbor_score(WorldPosition const& candidate,
+                                      WorldPosition const& target) const {
+    auto manhattan = [&](WorldPosition const& p) {
       return std::abs(target.X() - p.X()) + std::abs(target.Y() - p.Y());
     };
 
@@ -162,7 +162,7 @@ private:
    * @return An array of the four neighboring positions in the order: up, down,
    * left, right.
    */
-  std::array<WorldPosition, 4> get_neighbors(WorldPosition const &pos) const {
+  std::array<WorldPosition, 4> get_neighbors(WorldPosition const& pos) const {
     return {pos.Up(), pos.Down(), pos.Left(), pos.Right()};
   }
 
@@ -176,8 +176,8 @@ private:
    * first position, and if that move is blocked or unavailable, it can fall
    * back to the next options in order.
    */
-  std::array<WorldPosition, 4>
-  choose_move_options(WorldPosition const &pos, WorldPosition const &target) {
+  std::array<WorldPosition, 4> choose_move_options(
+      WorldPosition const& pos, WorldPosition const& target) {
     auto neighbors = get_neighbors(pos);
 
     struct Candidate {
@@ -191,12 +191,12 @@ private:
 
     std::uniform_real_distribution<double> jitter(0.0, 0.001);
 
-    for (auto const &n : neighbors) {
+    for (auto const& n : neighbors) {
       scored.push_back(Candidate{n, neighbor_score(n, target), jitter(rng)});
     }
 
     std::sort(scored.begin(), scored.end(),
-              [](Candidate const &a, Candidate const &b) {
+              [](Candidate const& a, Candidate const& b) {
                 return a.score + a.tie_breaker < b.score + b.tie_breaker;
               });
 
@@ -208,7 +208,7 @@ private:
    * @param p Position to search for.
    * @return true if p appears in recent_positions.
    */
-  [[nodiscard]] bool in_recent(WorldPosition const &p) const {
+  [[nodiscard]] bool in_recent(WorldPosition const& p) const {
     return std::find(recent_positions.begin(), recent_positions.end(), p) !=
            recent_positions.end();
   }
@@ -218,7 +218,7 @@ private:
    * @param pos Current position.
    * @return Neighboring position selected from up, down, left, or right.
    */
-  WorldPosition get_random_neighbor(WorldPosition const &pos) {
+  WorldPosition get_random_neighbor(WorldPosition const& pos) {
     std::array<WorldPosition, 4> neighbors{pos.Up(), pos.Down(), pos.Left(),
                                            pos.Right()};
 
@@ -226,7 +226,7 @@ private:
 
     // check if all possible neighbors are in
     // recent positions
-    for (auto const &n : neighbors) {
+    for (auto const& n : neighbors) {
       if (!in_recent(n)) {
         candidates.push_back(n);
       }
@@ -242,7 +242,7 @@ private:
     return candidates[dist(rng)];
   }
 
-public:
+ public:
   /**
    * @brief Construct a swarming agent with initial state and stable ID.
    * @param data Initial state object.
@@ -282,7 +282,7 @@ public:
       return container;
     }
 
-    WorldPosition const &pos = this->mData.position;
+    WorldPosition const& pos = this->mData.position;
 
     // First, learn from what happened last turn
     update_from_previous_turn(pos);
@@ -294,7 +294,7 @@ public:
       return container;
     }
 
-    WorldPosition const &dest = this->mData.destination.value();
+    WorldPosition const& dest = this->mData.destination.value();
 
     if (pos == dest) {
       return container;
@@ -377,4 +377,4 @@ public:
 };
 
 // clang-format on
-} // End of namespace cse498
+}  // End of namespace cse498
