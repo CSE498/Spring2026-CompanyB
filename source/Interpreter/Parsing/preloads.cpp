@@ -99,8 +99,7 @@ std::expected<void, InterpErr> Parser::preload_magic_vals() {
   // Always-present preloads
   TRY((m_Syms.AddSym("__spawn__", Value::SPAWN)));
   TRY((m_Syms.AddSym("__position__", Value::POSITION)));
-  // TRY((m_Syms.AddSym("__destination__", Value::DESTINATION)));
-  TRY((m_Syms.AddSym("__pOsition__", Value::DESTINATION)));
+  TRY((m_Syms.AddSym("__destination__", Value::DESTINATION)));
 
   // World-specific preloads
   switch (m_Env) {
