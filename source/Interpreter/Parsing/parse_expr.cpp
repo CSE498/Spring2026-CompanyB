@@ -72,14 +72,14 @@ std::expected<std::unique_ptr<AST::Node>, InterpErr> Parser::parse_expr(
 }
 
 /** @brief Parse and return an expected containing either the parsed term or the
-first error encountered.
-
-A term may be:
-  - A unary operator (followed by an expression)
-  - A variable or magic value
-  - A literal
-  - Parentheses, containing another expression
-*/
+ * first error encountered.
+ *
+ * A term may be:
+ *   - A unary operator (followed by an expression)
+ *   - A variable or magic value
+ *   - A literal
+ *   - Parentheses, containing another expression
+ */
 std::expected<std::unique_ptr<AST::Node>, InterpErr> Parser::parse_term() {
   using agentlang::Operators::OpInfo;
   using agentlang::Types::Dir;

@@ -15,6 +15,9 @@ using cse498::AgentLexer::IDs;
 
 namespace cse498 {
 
+/** @brief Recursive call to apply `enforce_signature()` sequentially along the
+ * given pack of types.
+ */
 template <size_t idx, typename Head, typename... Tail>
 std::expected<void, InterpErr> templ_recurse_typecheck(
     std::vector<Type> const &args) {
@@ -34,6 +37,11 @@ std::expected<void, InterpErr> templ_recurse_typecheck(
   }
 }
 
+/** @brief Check that the input vector of `Type`s contains exactly the sequence
+ * of types represented by `Ts`
+ * @tparam Ts The sequence of the underlying types which the vector of `Type`s
+ * must match.
+ */
 template <typename... Ts>
 std::expected<void, InterpErr> enforce_signature(
     std::vector<Type> const &input) {
