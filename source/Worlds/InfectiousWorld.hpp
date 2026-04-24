@@ -251,7 +251,7 @@ class InfectiousWorld : public SimWorldBase<DiseaseData> {
    * @param script Input script for ScriptedAgents, defaults to none.
    */
   InfectiousWorld(size_t width = 20, size_t height = 15,
-                  std::string const &script = "") {
+                  std::string const& script = "") {
     main_grid.Resize(width, height, floor_id);
     SetupScriptedAgents(script);
   }
