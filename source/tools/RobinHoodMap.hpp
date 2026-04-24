@@ -339,14 +339,17 @@ class RobinHoodMap {
     // default insert if not found
     insert(key, V{});
 
+    // Recompute mask in case insert caused resize
+    const size_t new_mask = mTable.size() - 1;
+
     // now find the inserted entry to return a reference to its value
-    index = hash & mask;
+    index = hash & new_mask;
     for (;;) {
       Entry& entry = mTable[index];
       if (entry.filled && entry.hash == hash && entry.key == key) {
         return entry.value;
       }
-      index = (index + 1) & mask;
+      index = (index + 1) & new_mask;
     }
   }
 
