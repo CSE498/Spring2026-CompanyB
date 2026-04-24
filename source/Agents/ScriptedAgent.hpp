@@ -114,11 +114,10 @@ class ScriptedAgent : public StepAgentBase<DataClass> {
   StepContainer GetTurn() override {
     mCurrentTurn = StepContainer{};  // Clear the container
 
-    // if (!mTurn) return std::move(mCurrentTurn);
     if (!mReady) {
       // Fatal : ScriptedAgent was not initialized
       std::println("Fatal error: ScriptedAgent was never initialized!");
-      std::terminate();
+      return std::move(mCurrentTurn);
     }
 
     auto res = mAgentWrapper->Evaluate(*mTurn);
