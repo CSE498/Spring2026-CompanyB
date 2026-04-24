@@ -65,7 +65,7 @@ private:
     std::size_t operator()(CellKey const &k) const {
       std::size_t h1 = std::hash<double>{}(k.x);
       std::size_t h2 = std::hash<double>{}(k.y);
-      return h1 ^ (h2 << 1); // combine hashes
+      return h1 ^ (h2 << 1);
     }
   };
 
@@ -376,4 +376,5 @@ public:
   }
 };
 
-} // namespace cse498
+// clang-format on
+} // End of namespace cse498
