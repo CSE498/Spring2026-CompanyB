@@ -67,6 +67,20 @@ class MainWindow : public QMainWindow {
   // Replay control
   void onReplayToggle();
 
+  // infection graphs
+  void onShowInfectedGraph();
+  void onShowSusceptibleGraph();
+  void onShowCuredGraph();
+  void onShowInfectionBreakdown();
+
+  // traffic graphs
+  void onShowWaitingGraph();
+  void onShowDrivingGraph();
+  void onShowActiveGraph();
+  void onShowDistanceGraph();
+  void onShowTimeToArriveGraph();
+  void onShowCarActivityBreakdown();
+
   // Timer
   QTimer* mTimer = nullptr;
   int mTickInterval = 150;
@@ -81,6 +95,7 @@ class MainWindow : public QMainWindow {
   // Menu bar
   QMenu* mFileMenu;
   QMenu* mHelpMenu;
+  QMenu* mGraphsMenu;
 
   QAction* mNewFileAction;
   QAction* mOpenFileAction;
@@ -88,6 +103,20 @@ class MainWindow : public QMainWindow {
   QAction* mExitAction;
   QAction* mAboutAction;
   QAction* mBackToMenuAction;
+
+  // infection graph 
+  QAction* mInfectedGraphAction;
+  QAction* mSusceptibleGraphAction;
+  QAction* mCuredGraphAction;
+  QAction* mInfectionBreakdownAction;
+
+  // traffic graph 
+  QAction* mWaitingGraphAction;
+  QAction* mDrivingGraphAction;
+  QAction* mActiveGraphAction;
+  QAction* mDistanceGraphAction;
+  QAction* mTimeToArriveGraphAction;
+  QAction* mCarActivityBreakdownAction;
 
   QToolBar* mToolBar;
 
