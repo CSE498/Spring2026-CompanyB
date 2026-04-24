@@ -128,7 +128,8 @@ class ScriptedAgent : public StepAgentBase<DataClass> {
       return StepContainer{};
     };
 
-    // this std::move() does not break RVO, it is needed to transfer ownership of the mCurrentTurn unique ptr.
+    // this std::move() does not break RVO, it is needed to transfer ownership
+    // of the mCurrentTurn unique ptr.
     return std::move(mCurrentTurn);
   }
 
