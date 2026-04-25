@@ -7,6 +7,25 @@
 
 namespace cse498 {
 
+/** @brief Parse and return an expected containing either the statement parsed
+ * or an `InterpErr` describing the error which occured.
+ *
+ * When an empty statement (a statement which consists only of a semicolon) is
+ * parsed, an empty node is returned.
+ *
+ * A statement may be:
+ *  - While
+ *    - Continue (if in while)
+ *    - Break (if in while)
+ *  - If
+ *    - Else (if preceeded by if)
+ *  - Function
+ *    - Return (if in function)
+ *  - Let assignment
+ *  - Identifier (variable, dunder value, or function)
+ *  - Move (if in agent definition)
+ *  - An expression
+ */
 std::expected<std::unique_ptr<AST::Node>, InterpErr> Parser::parse_stmt(
     ParseSetting setting) {
   using AgentLexer::IDs;
@@ -63,6 +82,9 @@ std::expected<std::unique_ptr<AST::Node>, InterpErr> Parser::parse_stmt(
   return std::move(res.value());
 }
 
+/** @brief Parse and return an expected containing either a collection of zero
+ * or more statements, or an `InterpErr` describing the error which occured.
+ */
 std::expected<std::unique_ptr<AST::Node>, InterpErr>
 Parser::parse_stmt_block() {
   /*

@@ -11,12 +11,23 @@
 
 namespace cse498 {
 
+/** @brief The base of all `InterpErr` states. Contains the string message
+ * describing the error, and defines an implicit conversion from itself to
+ * `std::unexpected<T>` for the derived class.
+ */
 struct BaseErr {
   std::string m_Why;
 
   BaseErr() = default;
   BaseErr(std::string const &why) : m_Why(why) {}
 
+  /** @brief Implicit conversion from the derived type to the `std::unexpected`
+  representation of the derived type. Utilizes "deducing this".
+
+  @tparam T The success state of the templated expected.
+  @tparam E The error state of the templated expected.
+  @tparam Self The type of the derived class.
+  */
   template <typename T, typename E, typename Self>
   operator std::expected<T, E>(this Self && self) {
     return std::unexpected(std::forward<Self>(self));
@@ -24,11 +35,18 @@ struct BaseErr {
 
   bool operator==(const BaseErr &) const = default;
 };
+
+/** @brief Form a human-readable description of an error given the base error
+ * name, the error state, and optionally a message further describing the error.
+ */
 static std::string Name(std::string const &base, std::string_view const &state,
                         std::string const &msg = "") {
   return std::format("{}::{}({})", base, state, msg);
 }
 
+/** @brief The `InterpErr` state representing errors which occur during the
+ * construction of the AST and do not originate from a parsing failure.
+ */
 struct ASTErr : BaseErr {
   bool operator==(const ASTErr &) const = default;
   enum Kind {
@@ -46,6 +64,9 @@ struct ASTErr : BaseErr {
       : BaseErr(Name("ASTErr", m_KindNames[kind], why)), m_Kind(kind) {};
 };
 
+/** @brief The `InterpErr` state representing errors which originate from the
+ * lexer.
+ */
 struct LexerErr : BaseErr {
   bool operator==(const LexerErr &) const = default;
   enum Kind {
@@ -63,6 +84,10 @@ struct LexerErr : BaseErr {
       : BaseErr(Name("LexerErr", m_KindNames[kind], msg)), m_Kind(kind) {}
 };
 
+/** @brief The `InterpErr` state representing errors which occur during parsing
+ * and originate from either an internal failure to parse or a user parsing
+ * error.
+ */
 struct ParseErr : BaseErr {
   bool operator==(const ParseErr &) const = default;
   enum Kind {
@@ -96,6 +121,9 @@ struct ParseErr : BaseErr {
       : BaseErr(Name("ParseErr", m_KindNames[kind], msg)), m_Kind(kind) {}
 };
 
+/** @brief The `InterpErr` state representing errors which originate from
+ * symbol-table failures.
+ */
 struct SymbolErr : public BaseErr {
   bool operator==(const SymbolErr &) const = default;
   enum Kind {
@@ -116,6 +144,9 @@ struct SymbolErr : public BaseErr {
       : BaseErr(Name("SymbolErr", m_KindNames[kind], msg)), m_Kind(kind) {}
 };
 
+/** @brief The `InterpErr` state representing errors which originate during
+ * runtime/evaluation.
+ */
 struct RuntimeErr : BaseErr {
   bool operator==(const RuntimeErr &) const = default;
   enum Kind {
@@ -160,6 +191,13 @@ struct RuntimeErr : BaseErr {
       : BaseErr(Name("RuntimeErr", m_KindNames[kind], msg)), m_Kind(kind) {}
 };
 
+/** @brief The `InterpErr` state representing control-flow occurence. When
+allowed to propagate up unhandled, these represent a failure to handle for a
+control statement.
+
+These are intended to simplify control flow during evaluation. Their presence is
+not exclusively an error, only when left unhandled.
+*/
 struct LoopControlErr : BaseErr {
   bool operator==(const LoopControlErr &) const = default;
   enum Kind {
@@ -178,6 +216,9 @@ struct LoopControlErr : BaseErr {
 };
 
 // For internal errors as we implement the rest of the interpreter
+/** @brief The `InterpErr` state representing internal implementation errors
+ * only.
+ */
 struct TempErr : BaseErr {
   bool operator==(const TempErr &) const = default;
   enum Kind {
@@ -195,16 +236,29 @@ struct TempErr : BaseErr {
 
 using InterpErr_T = std::variant<LexerErr, ParseErr, SymbolErr, ASTErr,
                                  RuntimeErr, LoopControlErr, TempErr>;
+
+/** @brief The error variant which represents any error originating from the
+ * Interpreter. Defines an implicit conversion from itself to the
+ * `std::unexpected` representation of itself.
+ */
 struct InterpErr : public InterpErr_T {
   using InterpErr_T::variant;
 
+  /** @brief Implicit conversion from this variant to the `std::unexpected`
+   * representation of this variant.
+   */
   template <typename T>
   operator std::expected<T, InterpErr>() {
     return std::unexpected(*this);
   }
 
+  /** @brief Retrieve the full message representing this error.
+   */
   std::string ToStr() const { return std::visit(StrVis{}, *this); }
 
+  /** @brief Determine whether this variant currently has the state `ErrT`.
+  @tparam ErrT The error state to check that this variant currently has.
+  */
   template <typename ErrT>
   bool Is(ErrT::Kind err) {
     return (std::holds_alternative<ErrT>(*this) &&
@@ -212,6 +266,9 @@ struct InterpErr : public InterpErr_T {
   }
 
  private:
+  /** @brief Visitor to retrieve the string representation of the underlying
+   * object.
+   */
   struct StrVis {
     std::string operator()(std::derived_from<BaseErr> auto e) {
       return e.m_Why;

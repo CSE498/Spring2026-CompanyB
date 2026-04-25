@@ -26,6 +26,10 @@ std::expected<Type, InterpErr> evaluate_binary(int id, Type, Type);
 
 std::expected<bool, InterpErr> evaluate_bool(Type);
 
+/** @brief Visitor which accepts a `Type` variant and attempts to cast the
+ * contained value to a boolean. If there is no defined conversion for the type,
+ * it will return an `InterpErr` containing a `RuntimeErr`.
+ */
 struct BoolConvVisitor {
   template <TypeKind T>
     requires std::is_convertible_v<T, bool>
@@ -39,6 +43,11 @@ struct BoolConvVisitor {
   }
 };
 
+/** @brief Visitor which accepts a `Type` variant and is constructed with a
+ * token ID, and attempts to perform the corresponding C++ operator call. If no
+ * overload is defined for the given operator, returns an `InterpErr` containing
+ * an `RuntimeErr`.
+ */
 struct OpVisitor {
   int token_id;
 
@@ -47,6 +56,10 @@ struct OpVisitor {
     using AgentLexer::IDs;
     switch (token_id) {
       case IDs::ID_OP_LNOT: {
+        // See macros header for STATIC_CHECKED_OP definition
+        // Wraps the input expression in an if-constexpr requires which returns
+        // the result of the expression if it is well-formed, otherwise breaks
+        // out of the switch
         STATIC_CHECKED_OP(!l);
       }
       case IDs::ID_OP_MINUS: {

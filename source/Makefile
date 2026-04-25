@@ -18,26 +18,32 @@ else
   CMAKE_NO_QT :=
 endif
 
+ifneq ($(strip $(TARGET_MAIN)),)
+	CMAKE_TARGET_MAIN := -DTARGET_MAIN=$(TARGET_MAIN)
+else
+	CMAKE_TARGET_MAIN :=
+endif
+
 .PHONY: default build debug opt quick grumpy
 
 default: build
 
 build:
-	cmake -S . -B $(BUILD_DIR) $(CMAKE_NO_QT)
+	cmake -S . -B $(BUILD_DIR) $(CMAKE_NO_QT) $(CMAKE_TARGET_MAIN)
 	cmake --build $(BUILD_DIR) --parallel
 
 debug:
-	cmake -S . -B $(BUILD_DIR) -DCMAKE_BUILD_TYPE=Debug $(CMAKE_NO_QT)
+	cmake -S . -B $(BUILD_DIR) -DCMAKE_BUILD_TYPE=Debug $(CMAKE_NO_QT) $(CMAKE_TARGET_MAIN)
 	cmake --build $(BUILD_DIR) --parallel
 
 opt:
-	cmake -S . -B $(BUILD_DIR) -DCMAKE_BUILD_TYPE=Release $(CMAKE_NO_QT)
+	cmake -S . -B $(BUILD_DIR) -DCMAKE_BUILD_TYPE=Release $(CMAKE_NO_QT) $(CMAKE_TARGET_MAIN)
 	cmake --build $(BUILD_DIR) --parallel
 
 quick:
-	cmake -S . -B $(BUILD_DIR) -DCMAKE_CXX_FLAGS="-DNDEBUG" $(CMAKE_NO_QT)
+	cmake -S . -B $(BUILD_DIR) -DCMAKE_CXX_FLAGS="-DNDEBUG" $(CMAKE_NO_QT) $(CMAKE_TARGET_MAIN)
 	cmake --build $(BUILD_DIR) --parallel
 
 grumpy:
-	cmake -S . -B $(BUILD_DIR) -DCMAKE_CXX_FLAGS="-Wconversion -Weffc++" $(CMAKE_NO_QT)
+	cmake -S . -B $(BUILD_DIR) -DCMAKE_CXX_FLAGS="-Wconversion -Weffc++" $(CMAKE_NO_QT) $(CMAKE_TARGET_MAIN)
 	cmake --build $(BUILD_DIR) --parallel
