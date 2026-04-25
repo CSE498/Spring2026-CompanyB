@@ -10,6 +10,10 @@ namespace cse498 {
 
 using AgentLexer::IDs;
 
+/** @brief Parse a function definition and return an expected containing either
+ * the body of the function, or an `InterpErr` describing the error which
+ * occured.
+ */
 std::expected<std::unique_ptr<AST::Node>, InterpErr> Parser::parse_func() {
   /*
   ---
@@ -67,6 +71,14 @@ std::expected<std::unique_ptr<AST::Node>, InterpErr> Parser::parse_func() {
   return std::make_unique<AST::EmptyNode>(func_tok);
 }
 
+/** @brief Parse a function call and return an expected containing either a node
+ * representing the function call or an `InterpErr` describing the error which
+ * occured.
+ *
+ * Function call statements are left incomplete when parsed, only becoming
+ * complete when `Finalize()` is called. Finalization fills in the `shared_ptr`
+ * which points to the called function's body.
+ */
 std::expected<std::unique_ptr<AST::Node>, InterpErr> Parser::parse_func_call() {
   /*
   ---
@@ -128,6 +140,12 @@ std::expected<std::unique_ptr<AST::Node>, InterpErr> Parser::parse_func_call() {
   return func_call;
 }
 
+/** @brief Parse a return statement and return an expected containing either a
+ *  node representing the return statement, or and `InterpErr` describing the
+ * error which occured.
+ *
+ * Return statements are invalid outside of a function body.
+ */
 std::expected<std::unique_ptr<AST::Node>, InterpErr> Parser::parse_return() {
   if (!m_InFunc)
     return ParseErr(ParseErr::OUT_OF_FUNC,

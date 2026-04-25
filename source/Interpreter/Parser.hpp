@@ -29,12 +29,13 @@ struct Parser {
   bool m_InTurn = false;
   bool m_InFunc = false;
 
+  std::expected<void, InterpErr> preload_functions();
+  std::expected<void, InterpErr> preload_magic_vals();
+
   std::expected<std::unique_ptr<AST::Node>, InterpErr> parse_stmt(
       ParseSetting setting = ParseSetting::NONE);
   std::expected<std::unique_ptr<AST::Node>, InterpErr> parse_expr(
       int prec = agentlang::Operators::MAX_PREC);
-  std::expected<std::unique_ptr<AST::Node>, InterpErr>
-  parse_expr_expect_semicln(int prec = agentlang::Operators::MAX_PREC);
   std::expected<std::unique_ptr<AST::Node>, InterpErr> parse_term();
   std::expected<std::unique_ptr<AST::Node>, InterpErr> parse_stmt_block();
 

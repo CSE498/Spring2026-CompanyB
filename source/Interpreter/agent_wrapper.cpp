@@ -5,6 +5,10 @@
 
 namespace cse498 {
 
+/** @brief Helper to simplify AgentWrapper's `Visit` overloads, templated around
+ * the AST node type. Uses `std::any_cast` to cast the member pointer to the
+ * agent back to the type corresponding to the current world.
+ */
 std::expected<Type, InterpErr> templ_visit(
     AgentWrapper &i, std::derived_from<AST::Node> auto &node) {
   if (!i.m_AgentPtr.has_value())
