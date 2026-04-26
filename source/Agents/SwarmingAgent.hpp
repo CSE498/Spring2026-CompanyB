@@ -40,6 +40,8 @@ namespace cse498 {
  */
 template <Concepts::IsDataClass SwarmData>
 class SwarmingAgent : public StepAgentBase<SwarmData> {
+
+  const double visit_penalty = 1.75;  // Tunable parameter to adjust how strongly the agent avoids revisiting cells
  private:
   /// Random generator used to choose among candidate neighboring cells.
   std::mt19937 rng{std::random_device{}()};
@@ -160,7 +162,7 @@ class SwarmingAgent : public StepAgentBase<SwarmData> {
     score += static_cast<double>(manhattan(candidate));
 
     // Penalize revisiting overused cells
-    score += 1.75 * static_cast<double>(get_visit_count(candidate));
+    score += visit_penalty * static_cast<double>(get_visit_count(candidate));
 
     return score;
   }
