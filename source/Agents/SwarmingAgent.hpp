@@ -8,11 +8,13 @@
 #include <cstdint>
 #include <deque>
 #include <random>
+#include <unordered_set>
 #include <unordered_map>
 #include <vector>
 
 #include "../core/AgentData.hpp"
 #include "../core/Step.hpp"
+#include "../core/core.hpp"
 #include "../core/StepAgentBase.hpp"
 #include "../core/StepWorldBase.hpp"
 #include "../tools/StateGridPosition.hpp"
@@ -25,8 +27,6 @@ namespace cse498 {
  * SwarmingAgent currently supports traffic and infectious-disease data because
  * those state objects provide the fields its movement logic reads and updates.
  */
-template <typename T>
-concept IsSwarmData = Concepts::IsOneOf<T, TrafficData, DiseaseData>;
 
 /**
  * @brief Agent that moves toward a destination while avoiding recently visited
@@ -38,7 +38,7 @@ concept IsSwarmData = Concepts::IsOneOf<T, TrafficData, DiseaseData>;
  * cells based on their distance to the target and how frequently they have been
  * visited, and then chooses the best option with some random tie-breaking.
  */
-template <IsSwarmData SwarmData>
+template <Concepts::IsDataClass SwarmData>
 class SwarmingAgent : public StepAgentBase<SwarmData> {
  private:
   /// Random generator used to choose among candidate neighboring cells.
@@ -46,6 +46,9 @@ class SwarmingAgent : public StepAgentBase<SwarmData> {
 
   /// Recent positions used to avoid short movement loops.
   std::deque<WorldPosition> recent_positions;
+
+  /// Set mirror of recent_positions for O(1) lookup in in_recent.
+  std::unordered_set<WorldPosition> recent_positions_set;
 
   /// Represents a grid position used as a key in hash maps
   /// Stores X and Y coordinates extracted from WorldPosition
@@ -62,7 +65,7 @@ class SwarmingAgent : public StepAgentBase<SwarmData> {
   /// Hash function for CellKey so it can be used in unordered_map
   /// Combines hashes of x and y coordinates
   struct CellKeyHash {
-    std::size_t operator()(CellKey const& k) const {
+    [[nodiscard]] std::size_t operator()(CellKey const& k) const {
       std::size_t h1 = std::hash<double>{}(k.x);
       std::size_t h2 = std::hash<double>{}(k.y);
       return h1 ^ (h2 << 1);
@@ -71,7 +74,7 @@ class SwarmingAgent : public StepAgentBase<SwarmData> {
 
   /// Converts a WorldPosition into a CellKey for use in maps
   /// Extracts X and Y coordinates
-  static CellKey to_key(WorldPosition const& p) {
+  [[nodiscard]] static CellKey to_key(WorldPosition const& p) {
     return CellKey{p.X(), p.Y()};
   }
 
@@ -97,8 +100,14 @@ class SwarmingAgent : public StepAgentBase<SwarmData> {
     visit_counts[to_key(pos)]++;
 
     recent_positions.push_back(pos);
+    recent_positions_set.insert(pos);
     if (recent_positions.size() > 6) {
+      WorldPosition const evicted = recent_positions.front();
       recent_positions.pop_front();
+      if (std::count(recent_positions.begin(), recent_positions.end(),
+                     evicted) == 0) {
+        recent_positions_set.erase(evicted);
+      }
     }
   }
 
@@ -209,8 +218,7 @@ class SwarmingAgent : public StepAgentBase<SwarmData> {
    * @return true if p appears in recent_positions.
    */
   [[nodiscard]] bool in_recent(WorldPosition const& p) const {
-    return std::find(recent_positions.begin(), recent_positions.end(), p) !=
-           recent_positions.end();
+    return recent_positions_set.count(p) > 0;
   }
 
   /**
