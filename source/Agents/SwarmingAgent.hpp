@@ -8,15 +8,15 @@
 #include <cstdint>
 #include <deque>
 #include <random>
-#include <unordered_set>
 #include <unordered_map>
+#include <unordered_set>
 #include <vector>
 
 #include "../core/AgentData.hpp"
 #include "../core/Step.hpp"
-#include "../core/core.hpp"
 #include "../core/StepAgentBase.hpp"
 #include "../core/StepWorldBase.hpp"
+#include "../core/core.hpp"
 #include "../tools/StateGridPosition.hpp"
 
 namespace cse498 {
@@ -40,8 +40,9 @@ namespace cse498 {
  */
 template <Concepts::IsDataClass SwarmData>
 class SwarmingAgent : public StepAgentBase<SwarmData> {
-
-  const double visit_penalty = 1.75;  // Tunable parameter to adjust how strongly the agent avoids revisiting cells
+  const double visit_penalty =
+      1.75;  // Tunable parameter to adjust how strongly the agent avoids
+             // revisiting cells
  private:
   /// Random generator used to choose among candidate neighboring cells.
   std::mt19937 rng{std::random_device{}()};
