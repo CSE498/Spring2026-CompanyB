@@ -46,6 +46,10 @@ void MainWindow::setupAgents() {
   } else {
     auto &iw = static_cast<InfectiousWorld &>(mWorld);
 
+    //clears agents if restarting
+    iw.ClearAgents();
+
+
     auto makeData = [](size_t x, size_t y) {
       DiseaseData d;
       d.position = WorldPosition{x, y};

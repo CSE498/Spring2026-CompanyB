@@ -7,7 +7,7 @@ namespace cse498 {
 
 MainGraph::MainGraph(QWidget* parent) : QWidget(parent) {
   mSeries = new QLineSeries();
-  mSeries->setName("[Placeholder Traffice data value]");
+  mSeries->setName("[Placeholder Traffic data value]");
 
   // dummy data
   mSeries->append(0, 0);
@@ -18,7 +18,7 @@ MainGraph::MainGraph(QWidget* parent) : QWidget(parent) {
 
   QChart* chart = new QChart();
   chart->addSeries(mSeries);
-  chart->setTitle("[Placeholder Traffice data title]");
+  chart->setTitle("[Placeholder Traffic data title]");
   chart->createDefaultAxes();
 
   mChartView = new QChartView(chart, this);

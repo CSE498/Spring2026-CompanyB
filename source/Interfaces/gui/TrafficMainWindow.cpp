@@ -278,6 +278,9 @@ void TrafficMainWindow::onReplayToggle() {
 void TrafficMainWindow::onReplayRestart() {
   mTimer->stop();
   mTickCount = 0;
+  mWorld.ClearAgents();
+
+  redraw();
   mCommandLog->clear();
   mIsRunning = true;
   mReplayToggleAction->setText("Pause");

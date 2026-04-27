@@ -95,7 +95,7 @@ void StartScreen::launchMainWindow(int mode) {
             "assets/grids/DemoWorld.grid"  // adjust path if needed
         );
 
-    auto* win = new TrafficMainWindow(*mTrafficWorld, mImagePaths, mTileSize ,
+    auto* win = new TrafficMainWindow(*mTrafficWorld, mImagePaths, mTileSize,
                                       mAgentImagePath);
     win->mOwnedWorld = std::move(mTrafficWorld);
     win->setWindowTitle("Group 21 Demo - Traffic");
@@ -109,7 +109,7 @@ void StartScreen::launchMainWindow(int mode) {
     mDiseaseWorld->SetInfectionDuration(8);
     mDiseaseWorld->SetImmunityDuration(15);
 
-    auto* win = new MainWindow(*mDiseaseWorld, mImagePaths, mTileSize ,
+    auto* win = new MainWindow(*mDiseaseWorld, mImagePaths, mTileSize,
                                mAgentImagePath, nullptr, 2);
     win->mOwnedWorld = std::move(mDiseaseWorld);
     win->setWindowTitle("Group 21 Demo - Virus");

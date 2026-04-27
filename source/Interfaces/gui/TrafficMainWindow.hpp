@@ -66,7 +66,7 @@ class TrafficMainWindow : public QMainWindow {
   QString mAgentImagePath;
 
   QTimer* mTimer = nullptr;
-  int mTickInterval = 150;
+  const int mTickInterval = 150;
   bool mIsRunning = true;
   int mTickCount = 0;
 
