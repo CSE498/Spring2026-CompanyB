@@ -15,7 +15,7 @@
 #include "nlohmann/json.hpp"
 
 namespace cse498 {
-template <DataConcept DataClass>
+template <typename DataClass>
 class DataLog;
 
 /// @brief Formats and persists simulation log data and programmer log messages.

@@ -5,105 +5,76 @@
 
 #pragma once
 
-#include <algorithm>
+#include <array>
 #include <cstddef>
-#include <optional>
-#include <set>
+#include <span>
 #include <string>
+#include <string_view>
 #include <unordered_map>
 #include <vector>
 
 #include "../Interfaces/IDataLog.hpp"
 
 namespace cse498 {
-template <DataConcept DataClass>
+
+template <typename DataClass>
 class DataLog : public IDataLog<DataClass> {
  private:
-  std::unordered_map<std::string_view, float> min = {};
-  std::unordered_map<std::string_view, float> max = {};
-  std::unordered_map<std::string_view, float> mean = {};
-  std::unordered_map<std::string_view, float> median = {};
-  std::unordered_map<std::string_view, float> sum = {};
-  std::unordered_map<std::string_view, float> count_nonzero = {};
-  std::unordered_map<std::string_view, std::vector<double>> median_samples = {};
+  std::unordered_map<std::string, std::vector<TickStats>> time_series;
 
-  void Clear();
+  static constexpr std::array<std::string_view, 4> kInfectionFields = {
+      "infection_count", "susceptible_count", "cured_count",
+      "infection_probability"};
 
-  std::unordered_map<std::string_view,
-                     std::unordered_map<std::string_view, double>>
-  reshapeData() const;
+  static constexpr std::array<std::string_view, 5> kTrafficFields = {
+      "waiting_count", "driving_count", "active_count", "distance_driven",
+      "time_to_arrive"};
 
-  /// @brief
-  /// @param agentState
-  /// @param num_agents_counted Number of states counted, not including this
-  /// state i.e. start at 0
-  void AddData(std::unordered_map<std::string_view, double>& agentState,
-               size_t num_agents_counted) {
-    for (const auto& [fieldName, value] : agentState) {
-      // Min
-      if (min.contains(fieldName)) {
-        min[fieldName] = std::min(min[fieldName], static_cast<float>(value));
-      } else {
-        min[fieldName] = static_cast<float>(value);
-      }
-      // Max
-      if (max.contains(fieldName)) {
-        max[fieldName] = std::max(max[fieldName], static_cast<float>(value));
-      } else {
-        max[fieldName] = static_cast<float>(value);
-      }
-      // Mean
-      if (mean.contains(fieldName)) {
-        mean[fieldName] = (mean[fieldName] * num_agents_counted + value) /
-                          (num_agents_counted + 1);
-      } else {
-        mean[fieldName] = value;
-      }
-      // Median
-      if (median_samples.contains(fieldName)) {
-        auto& samples = median_samples[fieldName];
-        samples.push_back(value);
-        std::vector<double> sortedSamples = samples;
-        std::sort(sortedSamples.begin(), sortedSamples.end());
-        const size_t n = sortedSamples.size();
-        if (n % 2 == 0) {
-          median[fieldName] = static_cast<float>(
-              (sortedSamples[n / 2 - 1] + sortedSamples[n / 2]) / 2.0);
-        } else {
-          median[fieldName] = static_cast<float>(sortedSamples[n / 2]);
-        }
-      } else {
-        median_samples[fieldName].push_back(value);
-        median[fieldName] = value;
-      }
-      // Sum
-      if (mean.contains(fieldName)) {
-        sum[fieldName] += value;
-      } else {
-        sum[fieldName] = value;
-      }
-      // Count of Non Zero Fields
-      if (mean.contains(fieldName)) {
-        count_nonzero[fieldName] += static_cast<double>(value != 0);
-      } else {
-        count_nonzero[fieldName] = static_cast<double>(value != 0);
-      }
+  void InitFields(std::span<const std::string_view> fields) {
+    for (const auto& field : fields) {
+      time_series[std::string(field)] = {};
     }
   }
 
  public:
-  DataLog();
+  /// @brief Construct DataLog with a declared set of field names.
+  /// The map is pre-keyed so the schema is known from tick 0.
+  /// Only fields in this list will be aggregated; anything else from
+  /// agent.describe() is ignored.
+  /// @param fields constexpr array of field name string literals
+  template <size_t N>
+  explicit DataLog(const std::array<std::string_view, N>& fields) {
+    InitFields(fields);
+  }
+
+  /// @brief Construct DataLog for a known world type.
+  /// Intended for use by the web (emscripten) layer — selects the field list
+  /// automatically based on the world.
+  /// @param worldType WorldType::Infection or WorldType::Traffic
+  explicit DataLog(WorldType worldType) {
+    switch (worldType) {
+      case WorldType::Infection:
+        InitFields(kInfectionFields);
+        break;
+      case WorldType::Traffic:
+        InitFields(kTrafficFields);
+        break;
+    }
+  }
+
   ~DataLog() = default;
 
-  /// @brief Aggregate agent states; should be called every tick
+  /// @brief Aggregate agent states for the current tick; appends one TickStats
+  /// entry per declared field to the time series.
   /// @param agents Vector of agents in the world
-  void AggregateData(const std::vector<AgentBase>& agents);
+  void AggregateData(
+      const std::vector<std::shared_ptr<StepAgentBase<DataClass>>>& agents)
+      override;
 
-  /// @brief Returns all aggregation data for all fields for the most recent
-  /// tick
-  /// @returns Map of field name to map of aggregation type to aggregate value
-  std::unordered_map<std::string_view,
-                     std::unordered_map<std::string_view, double>>
+  /// @brief Returns the full time series for all declared fields.
+  /// Index into the vector by tick number; call .back() for the latest tick.
+  /// @returns Map of field name to vector of TickStats (one entry per tick)
+  const std::unordered_map<std::string, std::vector<TickStats>>&
   GetAggregationData() const override;
 };
 

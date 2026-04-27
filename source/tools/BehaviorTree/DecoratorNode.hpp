@@ -28,11 +28,11 @@ class DecoratorNode : public Node {
    *
    * @param node The node to attach as the child.
    */
-  void addNode(std::unique_ptr<Node> node) {
+  void addNode(std::unique_ptr<Node> node) override {
     // assert(m_child != nullptr); // Check for Existing Child
 
     m_child = std::move(node);
-  };
+  }
 
   /**
    * @brief Removes the child node from this decorator.
@@ -40,19 +40,26 @@ class DecoratorNode : public Node {
    * The child is destroyed when removed. After deletion, the decorator
    * has no child until a new node is added.
    */
-  void deleteNode() { m_child = nullptr; };
+  void deleteNode([[maybe_unused]] Node* node) override { m_child = nullptr; }
 
-  virtual void print(int depth) const {
-    int indent = 2;
+  // ATTRIBUTIONS: Used ChatGPT to get ASCII implementation
 
-    std::cout << std::string(depth * indent, ' ') << m_name << " (" << m_status
-              << ")" << '\n';
+  virtual void print(const std::string& prefix, bool isLast,
+                     bool isRoot) const {
+    if (!isRoot) {
+      std::cout << prefix;
+      std::cout << (isLast ? "└── " : "├── ");
+    }
+    std::cout << m_name << " (" << m_status << ")" << '\n';
 
-    m_child->print(depth + 1);
-  };
+    if (m_child) {
+      std::string newPrefix = prefix + (isLast ? "    " : "│   ");
+      m_child->print(newPrefix, true);
+    }
+  }
 
-  virtual Status tick() = 0;
-  virtual std::string getActivePath() = 0;
+  virtual Status tick(Blackboard& blackboard) = 0;
+  virtual std::string getActivePath() const = 0;
 
  protected:
   /**

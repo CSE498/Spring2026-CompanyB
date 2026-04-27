@@ -6,39 +6,44 @@
 #pragma once
 
 #include <cstddef>
-#include <optional>
+#include <memory>
+#include <string>
 #include <unordered_map>
 #include <vector>
 
-#include "../core/AgentBase.hpp"
+#include "../core/StepAgentBase.hpp"
 
 namespace cse498 {
 
-template <typename DataClass>
-concept DataConcept = requires(DataClass a) {
-  {
-    a.describe()
-  } -> std::same_as<std::unordered_map<std::string_view, double>>;
+struct TickStats {
+  double min = 0.0;
+  double max = 0.0;
+  double mean = 0.0;
+  double median = 0.0;
+  double sum = 0.0;
+  size_t count = 0;
 };
+
+enum class WorldType { Infection, Traffic };
 
 /**
  * @class IDataLog
  * @brief Interface for data aggregation and storage.
  */
-template <DataConcept DataClass>
+template <typename DataClass>
 class IDataLog {
  public:
   virtual ~IDataLog() = default;
 
   /// @brief Aggregate agent states; should be called every tick
   /// @param agents Vector of agents in the world
-  virtual void AggregateData(const std::vector<AgentBase>& agents) = 0;
+  virtual void AggregateData(
+      const std::vector<std::shared_ptr<StepAgentBase<DataClass>>>& agents) = 0;
 
-  /// @brief Returns all aggregation data for all fields for the most recent
-  /// tick
-  /// @returns Map of field name to map of aggregation type to aggregate value
-  virtual std::unordered_map<std::string_view,
-                             std::unordered_map<std::string_view, double>>
+  /// @brief Returns the full time series of aggregation data for all declared
+  /// fields. Each vector entry corresponds to one tick (index 0 = first tick).
+  /// @returns Map of field name to vector of TickStats (one per tick)
+  virtual const std::unordered_map<std::string, std::vector<TickStats>>&
   GetAggregationData() const = 0;
 };
 

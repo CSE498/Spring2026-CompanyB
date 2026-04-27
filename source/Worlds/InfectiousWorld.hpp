@@ -248,9 +248,12 @@ class InfectiousWorld : public SimWorldBase<DiseaseData> {
    * @brief Construct an infectious world with a rectangular grid.
    * @param width Grid width in cells.
    * @param height Grid height in cells.
+   * @param script Input script for ScriptedAgents, defaults to none.
    */
-  InfectiousWorld(size_t width = 20, size_t height = 15) {
+  InfectiousWorld(size_t width = 20, size_t height = 15,
+                  std::string const& script = "") {
     main_grid.Resize(width, height, floor_id);
+    SetupScriptedAgents(script);
   }
 
   /**
@@ -274,8 +277,10 @@ class InfectiousWorld : public SimWorldBase<DiseaseData> {
   DiseaseData DoAction(AgentPtr agent) override {
     using namespace cse498::steps;
 
-    DiseaseData state = agent->GetState();
+    // I switched the order of these because for scripted agents
+    // its crucial that GetTurn() is called before GetState()
     StepContainer turn = agent->GetTurn();
+    DiseaseData state = agent->GetState();
 
     while (!turn.exhausted()) {
       auto step_result = turn.get_next();
@@ -348,6 +353,7 @@ class InfectiousWorld : public SimWorldBase<DiseaseData> {
    * observer is called after health and spread updates finish.
    */
   void UpdateWorld() override {
+    RunAgents();
     tick_count++;
     UpdateHealthTimers();
     SpreadInfection();
