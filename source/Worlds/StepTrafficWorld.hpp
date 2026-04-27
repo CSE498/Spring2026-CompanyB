@@ -214,20 +214,6 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
   /// @brief Scan the grid after loading to find traffic lights, spawners,
   /// and destinations.
   void ScanGrid() {
-    for (size_t y = 0; y < main_grid.GetHeight(); ++y) {
-      for (size_t x = 0; x < main_grid.GetWidth(); ++x) {
-        WorldPosition pos(x, y);
-        if (main_grid[pos] == traffic_light_vertical_id) {
-          traffic_light_positions.push_back(pos);
-        } else if (main_grid[pos] == spawn_fast_id) {
-          fast_spawner_positions.push_back(pos);
-        } else if (main_grid[pos] == spawn_normal_id) {
-          normal_spawner_positions.push_back(pos);
-        } else if (main_grid[pos] == spawn_slow_id) {
-          slow_spawner_positions.push_back(pos);
-        }
-      }
-    }
     const std::vector<std::string> colour_palette = {
         "\033[91m",  // bright red
         "\033[92m",  // bright green
@@ -236,10 +222,22 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
         "\033[95m",  // bright magenta
     };
     size_t colour_idx = 0;
+
     for (size_t y = 0; y < main_grid.GetHeight(); ++y) {
       for (size_t x = 0; x < main_grid.GetWidth(); ++x) {
-        WorldPosition pos(x, y);
-        if (main_grid[pos] == destination_id) {
+        WorldPosition pos(static_cast<double>(x), static_cast<double>(y));
+        auto cell = main_grid[pos];
+
+        if (cell == traffic_light_vertical_id ||
+            cell == traffic_light_horizontal_id) {
+          traffic_light_positions.push_back(pos);
+        } else if (cell == spawn_fast_id) {
+          fast_spawner_positions.push_back(pos);
+        } else if (cell == spawn_normal_id) {
+          normal_spawner_positions.push_back(pos);
+        } else if (cell == spawn_slow_id) {
+          slow_spawner_positions.push_back(pos);
+        } else if (cell == destination_id) {
           destination_positions.Insert(pos, 1.0);  // equal weight for now
           destination_colours.emplace(
               pos, colour_palette[colour_idx % colour_palette.size()]);
@@ -269,6 +267,9 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
     ScanGrid();
   }
 
+  /// @brief Return the number of currently active spawned agents.
+  [[nodiscard]] int GetNumSpawnedAgents() const { return num_spawned_agents; }
+
   /// @brief Return the ANSI colour code pre-assigned to a destination tile,
   ///        or an empty string if the position is not a destination.
   [[nodiscard]] const std::string &GetDestinationColour(
@@ -289,23 +290,24 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
   /// @return Direction from pos to new_pos if move is valid, error otherwise
   [[nodiscard]] std::expected<Direction, WorldErr> GetNewDirection(
       WorldPosition pos, WorldPosition new_pos) const {
-    size_t old_x = pos.CellX();
-    size_t old_y = pos.CellY();
-    size_t new_x = new_pos.CellX();
-    size_t new_y = new_pos.CellY();
+    double old_x = pos.X();
+    double old_y = pos.Y();
+    double new_x = new_pos.X();
+    double new_y = new_pos.Y();
     Direction new_dir{};
+
     if (new_x == old_x) {
-      if (new_y == old_y - 1) {
+      if (new_y == old_y - 1.0) {
         new_dir = Direction::North;
-      } else if (new_y == old_y + 1) {
+      } else if (new_y == old_y + 1.0) {
         new_dir = Direction::South;
       } else {
         return std::unexpected<WorldErr>("invalid move");
       }
     } else if (new_y == old_y) {
-      if (new_x == old_x - 1) {
+      if (new_x == old_x - 1.0) {
         new_dir = Direction::West;
-      } else if (new_x == old_x + 1) {
+      } else if (new_x == old_x + 1.0) {
         new_dir = Direction::East;
       } else {
         return std::unexpected<WorldErr>("invalid move");
