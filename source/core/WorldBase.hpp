@@ -50,13 +50,13 @@ class WorldBase {
   [[nodiscard]] size_t GetNumAgents() const { return agent_set.size(); }
 
   /// Return a reference to an Item with a given ID.
-  [[nodiscard]] ItemBase &GetItem(size_t id) {
+  [[nodiscard]] ItemBase& GetItem(size_t id) {
     assert(id < item_set.size());
     return *item_set[id];
   }
 
   /// Return a CONST reference to an Item with a given ID.
-  [[nodiscard]] const ItemBase &GetItem(size_t id) const {
+  [[nodiscard]] const ItemBase& GetItem(size_t id) const {
     assert(id < item_set.size());
     return *item_set[id];
   }
@@ -75,10 +75,10 @@ class WorldBase {
 
   /// Return an editable version of the current grid for this world (main_grid
   /// by default)
-  virtual WorldGrid &GetGrid() { return main_grid; }
+  virtual WorldGrid& GetGrid() { return main_grid; }
 
   /// Return the current grid for this world (main_grid by default)
-  virtual const WorldGrid &GetGrid() const { return main_grid; }
+  virtual const WorldGrid& GetGrid() const { return main_grid; }
 
   /// Determine if the run has ended.
   virtual bool IsRunOver() const { return run_over; }

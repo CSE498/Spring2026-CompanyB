@@ -102,9 +102,19 @@ class StepAgentBase {
   /// Log of all actions taken by the agent, used for replay
   std::vector<ActionEvent<DataClass>> mActions;
 
+  /// Log of all states taken by the agent in JSON format, also used for replay
+  std::vector<nlohmann::json> mStates;
+
   /// Cached string representation of agent ID to keep string_view (needed in
   /// logging) backing alive
   std::string mCachedAgentIdStr;
+
+  /// Flag indicating if the agent is currently replaying past states
+  bool mIsReplay = false;
+
+  /// Fast O(1) lookup map for replay: maps timestamp (tick) to its index in
+  /// mStates
+  std::unordered_map<uint64_t, size_t> mReplayStateIndex;
 
  public:
   StepAgentBase(DataClass data, size_t id, LogLevel logLevel = LogLevel::Normal,
@@ -115,14 +125,20 @@ class StepAgentBase {
     mActions.push_back(
         ActionEvent<DataClass>({std::string_view(mCachedAgentIdStr),
                                 "initial_state", logLevel, tick, data}));
+
+    mStates.push_back({{"agentId", mCachedAgentIdStr},
+                       {"actionType", "initial_state"},
+                       {"logLevel", static_cast<int>(logLevel)},
+                       {"timestamp", tick},
+                       {"details", data.ToJSON()}});
   }
   virtual ~StepAgentBase() = default;
 
   /// Get the ID of the agent
-  [[nodiscard]] size_t getId() const noexcept { return mId; }
+  [[nodiscard]] size_t GetId() const noexcept { return mId; }
 
-  [[nodiscard]] const std::vector<ActionEvent<DataClass>>& GetStates() const {
-    return mActions;
+  [[nodiscard]] const std::vector<nlohmann::json>& GetStates() const {
+    return mStates;
   }
 
   void loadFromJson(const nlohmann::json& eventData) {
@@ -154,6 +170,16 @@ class StepAgentBase {
       return;
     }
 
+    if (!mIsReplay) {
+      mIsReplay = true;
+      mStates.clear();  // Clear the default initial_state from the constructor
+      mReplayStateIndex.clear();
+    }
+
+    size_t index = mStates.size();
+    mStates.push_back(eventData);
+    mReplayStateIndex[eventData.at("timestamp").get<uint64_t>()] = index;
+
     DataClass details{};
 
     if constexpr (std::is_same_v<DataClass, TrafficData>) {
@@ -162,9 +188,15 @@ class StepAgentBase {
       details = this->DeserializeDiseaseData(eventData.at("details"));
     }
 
+    // Apply initial state immediately so the agent starts correctly
+    if (eventData.at("actionType").get<std::string>() == "initial_state") {
+      mData = DataClass::FromJSON(eventData.at("details"));
+    }
+
     LogLevel logLevel = static_cast<LogLevel>(levelRaw);
     uint64_t tick = eventData.at("timestamp").get<uint64_t>();
-    this->SetState(details, logLevel, tick);
+    mActions.push_back(ActionEvent<DataClass>{
+        std::string_view(mCachedAgentIdStr), "movement", logLevel, tick, details}));
   }
 
   // The main logic that separates the agents. When prompted for their turn,
@@ -183,17 +215,38 @@ class StepAgentBase {
   // logging purposes.
   void SetState(DataClass data, LogLevel logLevel = LogLevel::Normal,
                 uint64_t tick = 0) {
+    if (mIsReplay) {
+      // Fast O(1) lookup for the state associated with this tick
+      if (auto it = mReplayStateIndex.find(tick);
+          it != mReplayStateIndex.end()) {
+        const auto& state = mStates[it->second];
+        if (state.contains("details") && state.at("details").is_object()) {
+          mData = DataClass::FromJSON(state.at("details"));
+        }
+      }
+      return;  // Do not log or overwrite states during replay
+    }
+
     mData = data;
     // Here handle logic to log for replay?
     mActions.push_back(ActionEvent<DataClass>{
-        std::string_view(mCachedAgentIdStr), "movement", logLevel, tick, data});
+        std::string_view(mCachedAgentIdStr), "movement", logLevel, tick, data}));
+
+    mStates.push_back({{"agentId", mCachedAgentIdStr},
+                       {"actionType", "movement"},
+                       {"logLevel", static_cast<int>(logLevel)},
+                       {"timestamp", tick},
+                       {"details", data.ToJSON()}});
   }
 
   // SetStateNoLog is used in cases where we want to update the agent's state
   // without logging an action. Useful for helper functions or when the world
   // needs to update the agent's state without it being considered an action
   // taken by the agent.
-  void SetStateNoLog(DataClass data) { mData = data; }
+  void SetStateNoLog(DataClass data) {
+    if (mIsReplay) return;
+    mData = data;
+  }
 
   virtual void SetGoal(WorldPosition position) = 0;
 };
