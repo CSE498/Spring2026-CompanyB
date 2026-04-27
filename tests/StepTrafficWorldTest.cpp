@@ -216,6 +216,20 @@ TEST_CASE("DoAction", "[StepTrafficWorld][do_action]") {
     a->SetNextMove(WorldPosition{1, 1});  // west while facing east
     CHECK(tw.DoAction(a).position == WorldPosition{2, 1});
   }
+  SECTION("U-turn (backward move) allowed at dead end") {
+    static const std::vector<std::string> kDeadEnd = {
+        "###",
+        "#.#", // (1,1) is road
+        "#.#", // (1,2) is road
+        "###", // (1,3) is grass
+    };
+    // (1,2) has grass at (0,2), (2,2), (1,3). Road at (1,1).
+    TestWorld tw{kDeadEnd};
+    auto a = std::make_shared<ScriptedTestAgent>(
+        Make(WorldPosition{1, 2}, {}, Direction::South), 0);
+    a->SetNextMove(WorldPosition{1, 1}); // North, which is backward
+    CHECK(tw.DoAction(a).position == WorldPosition{1, 1});
+  }
   SECTION("diagonal move rejected") {
     TestWorld tw{kMinimal};
     auto a = std::make_shared<ScriptedTestAgent>(
