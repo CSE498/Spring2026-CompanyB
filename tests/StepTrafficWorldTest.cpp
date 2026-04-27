@@ -313,6 +313,19 @@ TEST_CASE("CanCollideWithAgentAt", "[StepTrafficWorld][collision]") {
 // traffic_light_period == 3.  Initial phase: ALLOW_VERTICAL, so '|' blocks east
 // moves
 TEST_CASE("UpdateWorld — traffic lights", "[StepTrafficWorld][update]") {
+  SECTION("ScanGrid picks up horizontal lights too") {
+    static const std::vector<std::string> kHorizOnly = {
+        "###",
+        "#-D",
+        "###",
+    };
+    TestWorld tw{kHorizOnly};
+    CHECK(tw.VerticalBlockedAt(WorldPosition{1, 1}));
+    for (int i = 0; i < 3; ++i) tw.UpdateWorld();
+    // After flip, it should be ALLOW_HORIZONTAL
+    CHECK_FALSE(tw.VerticalBlockedAt(WorldPosition{1, 1}));
+    CHECK(tw.HorizontalBlockedAt(WorldPosition{1, 1}));
+  }
   SECTION("period-1 ticks: light unchanged, east move still blocked") {
     TestWorld tw{kMinimal};
     for (int i = 0; i < 2; ++i) tw.UpdateWorld();
@@ -346,11 +359,17 @@ TEST_CASE("UpdateWorld — spawners", "[StepTrafficWorld][update]") {
       for (int i = 0; i < 60; ++i) tw.UpdateWorld();
     }());
   }
-  SECTION("max_spawned_agents cap (== 3) respected over many ticks") {
+  SECTION("spawner actually spawns an agent") {
+    TestWorld tw{kMinimal}; // S is at (1,1)
+    CHECK(tw.GetNumSpawnedAgents() == 0);
+    // fast_spawn_period is 10
+    for (int i = 0; i < 10; ++i) tw.UpdateWorld();
+    CHECK(tw.GetNumSpawnedAgents() == 1);
+  }
+  SECTION("max_spawned_agents cap (== 50) respected over many ticks") {
     TestWorld tw{kMulti};
-    for (int i = 0; i < 400; ++i) tw.UpdateWorld();
-    // We can only verify this doesn't crash since agent internals are private
-    CHECK_NOTHROW((void)0);
+    for (int i = 0; i < 1000; ++i) tw.UpdateWorld();
+    CHECK(tw.GetNumSpawnedAgents() <= 50);
   }
 }
 
