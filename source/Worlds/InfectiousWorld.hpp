@@ -346,14 +346,21 @@ class InfectiousWorld : public SimWorldBase<DiseaseData> {
   }
 
   /**
-   * @brief Advance the infectious world by one tick.
+   * @brief Advance the infectious world by one world-update tick.
+   *
+   * Call RunAgents() once before this each logical tick so movement reflects
+   * the current scripted/swarming turn.
+   *
+   * Per-tick order:
+   * 1. tick_count++
+   * 2. UpdateHealthTimers()
+   * 3. SpreadInfection()
+   * 4. tick_observer : tick_count is this tick's index.
    *
    * Timers run before spread so agents infected during this tick keep
-   * ticks_in_state == 0 until the next UpdateWorld() call. The optional
-   * observer is called after health and spread updates finish.
+   * ticks_in_state == 0 until the next UpdateWorld() call.
    */
   void UpdateWorld() override {
-    RunAgents();
     tick_count++;
     UpdateHealthTimers();
     SpreadInfection();
