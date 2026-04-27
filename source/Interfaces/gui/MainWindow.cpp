@@ -10,8 +10,6 @@
 #include <fstream>
 #include <string>
 #include <vector>
-#include <QMessageBox>
-#include <QPixmap>
 
 #include "StartScreen.h"
 
@@ -97,6 +95,12 @@ void MainWindow::setMenuBar() {
   mSaveFileAction->setStatusTip("Save the current file");
   connect(mSaveFileAction, &QAction::triggered, this, &MainWindow::onFileSave);
 
+  mBackToMenuAction =
+      new QAction(QIcon::fromTheme("go-home"), ("&Back to Main Menu"), this);
+  mBackToMenuAction->setStatusTip("Return to the main menu");
+  connect(mBackToMenuAction, &QAction::triggered, this,
+          &MainWindow::onBackToMainMenu);
+
   mExitAction =
       new QAction(QIcon::fromTheme("application-exit"), ("E&xit"), this);
   mExitAction->setShortcut(QKeySequence::Quit);
@@ -107,55 +111,15 @@ void MainWindow::setMenuBar() {
   mFileMenu->addAction(mOpenFileAction);
   mFileMenu->addAction(mSaveFileAction);
   mFileMenu->addSeparator();
+  mFileMenu->addAction(mBackToMenuAction);
+  mFileMenu->addSeparator();
   mFileMenu->addAction(mExitAction);
 
-  // Main Menu dropdown
-  mMainMenu = menuBar()->addMenu("&Main Menu");
-
-  mSwitchToTrafficAction = new QAction("Switch to Traffic Simulation", this);
-  mSwitchToTrafficAction->setStatusTip("Switch to the traffic simulation");
-  connect(mSwitchToTrafficAction, &QAction::triggered, this,
-          &MainWindow::onSwitchToTrafficSimulation);
-
-  mSwitchToInfectionAction = new QAction("Switch to Infection Simulation", this);
-  mSwitchToInfectionAction->setStatusTip("Switch to the infection simulation");
-  connect(mSwitchToInfectionAction, &QAction::triggered, this,
-          &MainWindow::onSwitchToInfectionSimulation);
-
-  mReturnHomeAction =
-      new QAction(QIcon::fromTheme("go-home"), "Return to Home Screen", this);
-  mReturnHomeAction->setStatusTip("Return to the home screen");
-  connect(mReturnHomeAction, &QAction::triggered, this,
-          &MainWindow::onReturnToHomeScreen);
-
+  mHelpMenu = menuBar()->addMenu("&Help");
   mAboutAction = new QAction(QIcon::fromTheme("help-about"), ("&About"), this);
   mAboutAction->setStatusTip("Show information about this application");
   connect(mAboutAction, &QAction::triggered, this, &MainWindow::onHelpAbout);
-
-  mMainMenu->addAction(mSwitchToTrafficAction);
-  mMainMenu->addAction(mSwitchToInfectionAction);
-  mMainMenu->addSeparator();
-  mMainMenu->addAction(mReturnHomeAction);
-  mMainMenu->addSeparator();
-  mMainMenu->addAction(mAboutAction);
-
-  if (mMode == 1) {
-    mSwitchToTrafficAction->setEnabled(false);
-  }
-
-  if (mMode == 2) {
-    mSwitchToInfectionAction->setEnabled(false);
-  }
-
-  // Help menu
-  mHelpMenu = menuBar()->addMenu("&Help");
-
-  mHelpSimulationsAction = new QAction("Simulation Information", this);
-  mHelpSimulationsAction->setStatusTip("Show information about the simulations");
-  connect(mHelpSimulationsAction, &QAction::triggered, this,
-          &MainWindow::onHelpSimulations);
-
-  mHelpMenu->addAction(mHelpSimulationsAction);
+  mHelpMenu->addAction(mAboutAction);
 
   // Toolbar
   mToolBar = addToolBar("Simulation");
@@ -374,43 +338,7 @@ void MainWindow::onHelpAbout() {
   QMessageBox::about(this, "About", "<b>Group 21 Demo</b>");
 }
 
-void MainWindow::onHelpSimulations() {
-  QString message;
-
-  if (mMode == 1) {
-    message =
-        "<b>Traffic Simulation</b><br><br>"
-        "The Traffic simulation displays a road-based world where cars or agents "
-        "move through the grid. The graph options can show traffic-related data, "
-        "such as waiting cars, driving cars, active cars, distance driven, and "
-        "time to arrive.<br><br>"
-        "<b>How to use it:</b><br>"
-        "- Use the pause/play button to stop or resume the simulation.<br>"
-        "- Use restart to reset the simulation.<br>"
-        "- Use the Graphs menu to switch between traffic graphs.<br>"
-        "- Use Main Menu to switch to the Infection simulation or return home.";
-  } else {
-    message =
-        "<b>Infection Simulation</b><br><br>"
-        "The Infection simulation displays agents moving through a world where "
-        "infection can spread between nearby agents. The graph options can show "
-        "infection-related data, such as infected, susceptible, and cured counts."
-        "<br><br>"
-        "<b>How to use it:</b><br>"
-        "- Use the pause/play button to stop or resume the simulation.<br>"
-        "- Use restart to reset the simulation.<br>"
-        "- Use the Graphs menu to switch between infection graphs.<br>"
-        "- Use Main Menu to switch to the Traffic simulation or return home.";
-  }
-
-  QMessageBox::information(this, "Simulation Information", message);
-}
-
-void MainWindow::setOwnedWorld(std::unique_ptr<WorldBase> world) {
-  mOwnedWorld = std::move(world);
-}
-
-void MainWindow::onReturnToHomeScreen() {
+void MainWindow::onBackToMainMenu() {
   if (mTimer) {
     mTimer->stop();
   }
@@ -418,36 +346,6 @@ void MainWindow::onReturnToHomeScreen() {
   auto *startScreen = new StartScreen(mImagePaths, mTileSize, mAgentImagePath);
   startScreen->setAttribute(Qt::WA_DeleteOnClose);
   startScreen->show();
-
-  close();
-}
-
-void MainWindow::onSwitchToTrafficSimulation() {
-  if (mMode == 1) {
-    statusBar()->showMessage("Already in Traffic Simulation", TIMEOUT);
-    return;
-  }
-
-  if (mTimer) {
-    mTimer->stop();
-  }
-
-  emit requestSimulationSwitch("traffic");
-
-  close();
-}
-
-void MainWindow::onSwitchToInfectionSimulation() {
-  if (mMode == 2) {
-    statusBar()->showMessage("Already in Infection Simulation", TIMEOUT);
-    return;
-  }
-
-  if (mTimer) {
-    mTimer->stop();
-  }
-
-  emit requestSimulationSwitch("infection");
 
   close();
 }
