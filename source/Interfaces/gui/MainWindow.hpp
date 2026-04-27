@@ -37,14 +37,22 @@ class MainWindow : public QMainWindow {
   virtual ~MainWindow() = default;
   void logCommand(const QString& message);
 
+
   std::unique_ptr<SimWorldBase<DiseaseData>> mOwnedWorld{};
+
+  // for switching between sims
+  void setOwnedWorld(std::unique_ptr<WorldBase> world);
 
   MainWindow(const MainWindow&) = delete;
   MainWindow& operator=(const MainWindow&) = delete;
   MainWindow(MainWindow&&) = delete;
   MainWindow& operator=(MainWindow&&) = delete;
 
+signals:
+  void requestSimulationSwitch(const QString& simulationName);
+
  private:
+  std::unique_ptr<WorldBase> mOwnedWorld{};
   void setMenuBar();
   void setStatusBar();
   void setMainWidget();
@@ -55,8 +63,11 @@ class MainWindow : public QMainWindow {
   void onFileOpen();
   void onFileSave();
   void onFileExit();
+  void onSwitchToTrafficSimulation();
+  void onSwitchToInfectionSimulation();
+  void onReturnToHomeScreen();
   void onHelpAbout();
-  void onBackToMainMenu();
+  void onHelpSimulations();
 
   void startSimulation();
   void onTick();
@@ -73,14 +84,19 @@ class MainWindow : public QMainWindow {
   int mMode = 1;
 
   QMenu* mFileMenu;
+  QMenu* mMainMenu;
   QMenu* mHelpMenu;
 
   QAction* mNewFileAction;
   QAction* mOpenFileAction;
   QAction* mSaveFileAction;
   QAction* mExitAction;
+
+  QAction* mSwitchToTrafficAction;
+  QAction* mSwitchToInfectionAction;
+  QAction* mReturnHomeAction;
   QAction* mAboutAction;
-  QAction* mBackToMenuAction;
+  QAction* mHelpSimulationsAction;
 
   QToolBar* mToolBar;
 
