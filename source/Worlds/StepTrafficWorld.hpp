@@ -478,14 +478,11 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
           traffic_light_phase == TrafficLightPhase::ALLOW_HORIZONTAL
               ? TrafficLightPhase::ALLOW_VERTICAL
               : TrafficLightPhase::ALLOW_HORIZONTAL;
-      // Swap the cell type at every traffic light position to match the new
-      // phase
-      const size_t new_type =
-          (traffic_light_phase == TrafficLightPhase::ALLOW_VERTICAL)
-              ? traffic_light_vertical_id
-              : traffic_light_horizontal_id;
-      for (const auto& pos : traffic_light_positions) {
-        main_grid[pos] = new_type;
+      // Flip every traffic light to its opposite state
+      for (const auto &pos : traffic_light_positions) {
+        main_grid[pos] = (main_grid[pos] == traffic_light_vertical_id)
+                             ? traffic_light_horizontal_id
+                             : traffic_light_vertical_id;
       }
     }
   }
