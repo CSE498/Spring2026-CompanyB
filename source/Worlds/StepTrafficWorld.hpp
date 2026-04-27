@@ -479,7 +479,7 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
               ? TrafficLightPhase::ALLOW_VERTICAL
               : TrafficLightPhase::ALLOW_HORIZONTAL;
       // Flip every traffic light to its opposite state
-      for (const auto &pos : traffic_light_positions) {
+      for (const auto& pos : traffic_light_positions) {
         main_grid[pos] = (main_grid[pos] == traffic_light_vertical_id)
                              ? traffic_light_horizontal_id
                              : traffic_light_vertical_id;
