@@ -117,24 +117,6 @@ void StartScreen::launchMainWindow(int mode) {
     win->show();
   }
 
-  auto* win = new MainWindow(*mWorld, mImagePaths, mTileSize, mAgentImagePath,
-                             nullptr, mode);
-  win->setOwnedWorld(std::move(mWorld));
-
-  connect(win, &MainWindow::requestSimulationSwitch,
-        this,
-        [this](const QString& simulationName) {
-          if (simulationName == "traffic") {
-            launchMainWindow(1);
-          } else if (simulationName == "infection") {
-            launchMainWindow(2);
-          }
-        });
-
-  win->setWindowTitle(mode == 1 ? "Group 21 Demo - Traffic"
-                                : "Group 21 Demo - Virus");
-  win->setAttribute(Qt::WA_DeleteOnClose);
-  win->show();
   close();
 }
 }  // namespace cse498
