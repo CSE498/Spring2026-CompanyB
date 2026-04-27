@@ -80,16 +80,44 @@ void TrafficMainWindow::setMenuBar() {
   mFileMenu->addAction(mOpenFileAction);
   mFileMenu->addAction(mSaveFileAction);
   mFileMenu->addSeparator();
-  mFileMenu->addAction(mBackToMenuAction);
-  mFileMenu->addSeparator();
   mFileMenu->addAction(mExitAction);
 
   mHelpMenu = menuBar()->addMenu("&Help");
+
+  mSimulationHelpAction = new QAction("&Current Simulation Help", this);
+  mSimulationHelpAction->setStatusTip("Explain the current simulation");
+  connect(mSimulationHelpAction, &QAction::triggered, this,
+          &TrafficMainWindow::onShowSimulationHelp);
+
   mAboutAction = new QAction(QIcon::fromTheme("help-about"), "&About", this);
   mAboutAction->setStatusTip("Show information about this application");
   connect(mAboutAction, &QAction::triggered, this,
           &TrafficMainWindow::onHelpAbout);
+
+  mHelpMenu->addAction(mSimulationHelpAction);
+  mHelpMenu->addSeparator();
   mHelpMenu->addAction(mAboutAction);
+
+  mMainMenu = menuBar()->addMenu("&Main Menu");
+
+  mSwitchToTrafficAction = new QAction("&Switch to Traffic Simulation", this);
+  mSwitchToTrafficAction->setStatusTip("You are already in the traffic simulation");
+  mSwitchToTrafficAction->setEnabled(false);
+
+  mSwitchToVirusAction = new QAction("&Switch to Virus Simulation", this);
+  mSwitchToVirusAction->setStatusTip("Open the virus simulation");
+  connect(mSwitchToVirusAction, &QAction::triggered, this,
+          &TrafficMainWindow::onSwitchToVirusSimulation);
+
+  mReturnToStartAction = new QAction("&Return to Start Screen", this);
+  mReturnToStartAction->setStatusTip("Return to the main start screen");
+  connect(mReturnToStartAction, &QAction::triggered, this,
+          &TrafficMainWindow::onBackToMainMenu);
+
+  mMainMenu->addAction(mSwitchToTrafficAction);
+  mMainMenu->addAction(mSwitchToVirusAction);
+  mMainMenu->addSeparator();
+  mMainMenu->addAction(mReturnToStartAction);
 
   mToolBar = addToolBar("Simulation");
   mToolBar->setMovable(false);
@@ -253,11 +281,16 @@ void TrafficMainWindow::onHelpAbout() {
 }
 
 void TrafficMainWindow::onBackToMainMenu() {
-  if (mTimer) mTimer->stop();
+  if (mTimer) {
+    mTimer->stop();
+  }
+
   auto* startScreen = new StartScreen(mImagePaths, mTileSize, mAgentImagePath);
   startScreen->setAttribute(Qt::WA_DeleteOnClose);
   startScreen->show();
-  close();
+
+  hide();
+  deleteLater();
 }
 
 void TrafficMainWindow::onReplayToggle() {
@@ -287,6 +320,41 @@ void TrafficMainWindow::onReplayRestart() {
   mTimer->start(mTickInterval);
   statusBar()->showMessage("Simulation restarted", TRAFFIC_TIMEOUT);
   logCommand("[System] Simulation restarted.");
+}
+
+void TrafficMainWindow::onShowSimulationHelp() {
+  QMessageBox::information(
+      this,
+      "Traffic Simulation Help",
+      "Current Simulation: Traffic Simulation\n\n"
+      "This simulation shows agents moving through a traffic-style grid. "
+      "Different colors represent different terrain or blocked directions, "
+      "and active agents are drawn as moving circles.\n\n"
+      "Use Pause to stop the simulation, Restart to reset it, and Main Menu "
+      "to switch simulations or return to the start screen.");
+}
+
+void TrafficMainWindow::onSwitchToTrafficSimulation() {
+  statusBar()->showMessage("Already in Traffic Simulation", TRAFFIC_TIMEOUT);
+}
+
+void TrafficMainWindow::onSwitchToVirusSimulation() {
+  if (mTimer) {
+    mTimer->stop();
+  }
+
+  // Create the infection/virus world the same way StartScreen creates it.
+  // This example assumes InfectiousWorld has a default constructor.
+  auto* virusWorld = new InfectiousWorld();
+
+  auto* virusWindow =
+      new MainWindow(*virusWorld, mImagePaths, mTileSize,
+                     mAgentImagePath, nullptr, 2);
+
+  virusWindow->setAttribute(Qt::WA_DeleteOnClose);
+  virusWindow->show();
+
+  close();
 }
 
 }  // namespace cse498

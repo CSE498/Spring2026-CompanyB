@@ -58,6 +58,10 @@ class MainWindow : public QMainWindow {
   void onHelpAbout();
   void onBackToMainMenu();
 
+  void onSwitchToTrafficSimulation();
+  void onSwitchToVirusSimulation();
+  void onShowSimulationHelp();
+
   void startSimulation();
   void onTick();
 
@@ -74,6 +78,12 @@ class MainWindow : public QMainWindow {
 
   QMenu* mFileMenu;
   QMenu* mHelpMenu;
+  QMenu* mMainMenu = nullptr;
+
+  QAction* mSwitchToTrafficAction = nullptr;
+  QAction* mSwitchToVirusAction = nullptr;
+  QAction* mReturnToStartAction = nullptr;
+  QAction* mSimulationHelpAction = nullptr;
 
   QAction* mNewFileAction;
   QAction* mOpenFileAction;

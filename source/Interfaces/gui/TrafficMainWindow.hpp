@@ -52,6 +52,10 @@ class TrafficMainWindow : public QMainWindow {
   void onFileExit();
   void onHelpAbout();
 
+  void onSwitchToTrafficSimulation();
+  void onSwitchToVirusSimulation();
+  void onShowSimulationHelp();
+
  private:
   void setMenuBar();
   void setStatusBar();
@@ -80,6 +84,12 @@ class TrafficMainWindow : public QMainWindow {
   QMenu* mFileMenu{};
   QMenu* mHelpMenu{};
   QToolBar* mToolBar{};
+  QMenu* mMainMenu = nullptr;
+
+  QAction* mSwitchToTrafficAction = nullptr;
+  QAction* mSwitchToVirusAction = nullptr;
+  QAction* mReturnToStartAction = nullptr;
+  QAction* mSimulationHelpAction = nullptr;
 
   QAction* mNewFileAction{};
   QAction* mOpenFileAction{};
