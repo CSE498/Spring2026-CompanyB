@@ -362,8 +362,7 @@ TEST_CASE("UpdateWorld — spawners", "[StepTrafficWorld][update]") {
   SECTION("spawner actually spawns an agent") {
     TestWorld tw{kMinimal};  // S is at (1,1)
     CHECK(tw.GetNumSpawnedAgents() == 0);
-    // fast_spawn_period is 10
-    for (int i = 0; i < 10; ++i) tw.UpdateWorld();
+    for (int i = 0; i < 30; ++i) tw.UpdateWorld();
     CHECK(tw.GetNumSpawnedAgents() == 1);
   }
   SECTION("max_spawned_agents cap (== 50) respected over many ticks") {
