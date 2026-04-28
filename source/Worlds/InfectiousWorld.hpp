@@ -388,10 +388,12 @@ class InfectiousWorld : public SimWorldBase<DiseaseData> {
   /**
    * @brief Get an agent's health state.
    * @param id Agent index in agent_set.
-   * @return Current health state, or SUSCEPTIBLE if id is out of range.
+   * @return Current health state.
+   * @throws std::out_of_range if id does not refer to an existing agent.
    */
   [[nodiscard]] HealthState GetAgentHealth(size_t id) const {
-    if (id >= agent_set.size()) return HealthState::SUSCEPTIBLE;
+    if (id >= agent_set.size())
+      throw std::out_of_range("GetAgentHealth: agent id out of range");
     return agent_set[id]->GetState().health;
   }
 
@@ -465,15 +467,25 @@ class InfectiousWorld : public SimWorldBase<DiseaseData> {
 
   /**
    * @brief Set per-contact transmission probability.
-   * @param rate Probability in the range expected by callers, usually [0, 1].
+   * @param rate Probability in the inclusive range [0, 1].
+   * @throws std::invalid_argument if rate is outside [0, 1].
    */
-  void SetTransmissionRate(double rate) { transmission_rate = rate; }
+  void SetTransmissionRate(double rate) {
+    if (!(rate >= 0.0 && rate <= 1.0))
+      throw std::invalid_argument("transmission rate must be between 0 and 1");
+    transmission_rate = rate;
+  }
 
   /**
    * @brief Set radius used for infection proximity checks.
    * @param r Infection radius in grid-cell units.
+   * @throws std::invalid_argument if r is negative.
    */
-  void SetInfectionRadius(double r) { infection_radius = r; }
+  void SetInfectionRadius(double r) {
+    if (!(r >= 0.0))
+      throw std::invalid_argument("infection radius must be non-negative");
+    infection_radius = r;
+  }
 
   /**
    * @brief Set reserved infection duration parameter.
@@ -491,8 +503,13 @@ class InfectiousWorld : public SimWorldBase<DiseaseData> {
   /**
    * @brief Set treatment duration inside quarantine zones.
    * @param ticks Quarantine ticks required for recovery.
+   * @throws std::invalid_argument if ticks is zero.
    */
-  void SetTreatmentDuration(size_t ticks) { treatment_duration = ticks; }
+  void SetTreatmentDuration(size_t ticks) {
+    if (ticks == 0)
+      throw std::invalid_argument("treatment duration must be greater than 0");
+    treatment_duration = ticks;
+  }
 
   /**
    * @brief Set fallback recovery delay for infected agents outside treatment.
@@ -545,6 +562,40 @@ class InfectiousWorld : public SimWorldBase<DiseaseData> {
    * @return Current immunity_duration value.
    */
   [[nodiscard]] size_t GetImmunityDuration() const { return immunity_duration; }
+
+  /**
+   * @brief Get treatment duration inside quarantine zones.
+   * @return Quarantine ticks required before infected agents recover.
+   */
+  [[nodiscard]] size_t GetTreatmentDuration() const {
+    return treatment_duration;
+  }
+
+  /**
+   * @brief Get fallback recovery delay for infected agents outside treatment.
+   * @return Number of infected ticks before fallback recovery; zero disables it.
+   */
+  [[nodiscard]] size_t GetFallbackRecoveryTicks() const {
+    return fallback_recovery_ticks;
+  }
+
+  /**
+   * @brief Get configured clinic entrance, if one has been set.
+   * @return Clinic entrance position, or std::nullopt if unconfigured.
+   */
+  [[nodiscard]] std::optional<WorldPosition> GetClinicEntrance() const {
+    if (!has_clinic) return std::nullopt;
+    return clinic_entrance;
+  }
+
+  /**
+   * @brief Get configured recovery exit, if one has been set.
+   * @return Recovery exit position, or std::nullopt if unconfigured.
+   */
+  [[nodiscard]] std::optional<WorldPosition> GetRecoveryExit() const {
+    if (!has_recovery_exit) return std::nullopt;
+    return recovery_exit;
+  }
 };
 
 }  // End of namespace cse498
