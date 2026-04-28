@@ -10,6 +10,7 @@
 #include <thread>
 #include <vector>
 
+#include "../Agents/ScriptedBusAgent.hpp"
 #include "../core/AgentData.hpp"
 #include "../core/StepWorldBase.hpp"
 #include "../tools/WeightedSet.hpp"
@@ -115,6 +116,7 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
   size_t
       spawn_normal_id{};  // < Id for Normal spawners that uses the normal clock
   size_t spawn_slow_id{};  // < Id for Slow spawners that uses the Slow clock
+  size_t bus_spawner_id{};  ///< ID of bus-spawner tiles ('B').
 
   // Containers for the 3 different types of spawners
   std::vector<WorldPosition>
@@ -123,6 +125,8 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
       normal_spawner_positions{};  // < normal Spawner location container
   std::vector<WorldPosition>
       slow_spawner_positions{};  // < slow Spawner location container
+  std::vector<WorldPosition>
+      bus_spawner_positions{};  ///< Positions of all bus-spawner tiles.
 
   size_t destination_id{};  ///< ID of cells which are destinations that agents
                             ///< try to reach.
@@ -176,6 +180,8 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
   inline static const std::string normal_spawn_colour = "\033[36m";
   /// @brief Dim Cyan for the slow spawner
   inline static const std::string slow_spawn_colour = "\033[2;36m";
+  /// @brief Bright white for bus agents
+  inline static const std::string bus_colour = "\033[95m";
 
   /// @brief The number of currently-active agents that have been spawned by
   /// spawner tiles. Incremented whenever a spawner spawns something,
@@ -207,6 +213,8 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
     spawn_normal_id =
         main_grid.AddCellType("spawn_normal", "Normal spawner", 'N');
     spawn_slow_id = main_grid.AddCellType("spawn_slow", "Slow spawner", 'S');
+    bus_spawner_id =
+        main_grid.AddCellType("bus_spawner", "Bus spawner tile", 'B');
     destination_id = main_grid.AddCellType(
         "destination", "Destination for driving agents", 'D');
   }
@@ -225,6 +233,8 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
           normal_spawner_positions.push_back(pos);
         } else if (main_grid[pos] == spawn_slow_id) {
           slow_spawner_positions.push_back(pos);
+        } else if (main_grid[pos] == bus_spawner_id) {
+          bus_spawner_positions.push_back(pos);
         }
       }
     }
@@ -233,7 +243,6 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
         "\033[92m",  // bright green
         "\033[93m",  // bright yellow
         "\033[94m",  // bright blue
-        "\033[95m",  // bright magenta
     };
     size_t colour_idx = 0;
     for (size_t y = 0; y < main_grid.GetHeight(); ++y) {
@@ -257,6 +266,7 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
     RegisterCellTypes();
     main_grid.Load(grid_lines);
     ScanGrid();
+    SpawnBuses();
   }
 
   /// @brief Construct a TrafficWorld by reading a grid layout from a file.
@@ -267,6 +277,7 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
     assert(file.is_open() && "TrafficWorld: could not open grid file");
     main_grid.Load(file);
     ScanGrid();
+    SpawnBuses();
   }
 
   /// @brief Return the ANSI colour code pre-assigned to a destination tile,
@@ -559,6 +570,22 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
     driver->SetState(state);
   }
 
+  /// @brief Spawn one ScriptedBusAgent at every 'B' tile found during ScanGrid.
+  /// Buses have no destination so they never despawn; they are created once at
+  /// world construction time and run forever.
+  void SpawnBuses() {
+    for (const WorldPosition &pos : bus_spawner_positions) {
+      TrafficData state;
+      state.position = pos;
+      state.direction = Direction::East;
+      state.is_active = true;
+      state.symbol = '>';
+      state.colour = bus_colour;
+      state.destination = std::nullopt;
+      this->template AddAgent<ScriptedBusAgent>(state);
+    }
+  }
+
   // =====================================================================
   //  Terminal display — written by Claude.
   //  Adapted from AutoInterface to work with the StepWorldBase/StepAgentBase
@@ -631,6 +658,12 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
     colourSpawners(fast_spawner_positions, fast_spawn_colour);
     colourSpawners(normal_spawner_positions, normal_spawn_colour);
     colourSpawners(slow_spawner_positions, slow_spawn_colour);
+
+    // Display bus spawner tiles as 'B' in bright white
+    for (const auto &pos : bus_spawner_positions) {
+      size_t x = pos.CellX(), y = pos.CellY();
+      symbol_grid[y][x] = '.';
+    }
 
     // Stamp active agents onto the grid.
     for (const auto &agent_ptr : agent_set) {
