@@ -369,8 +369,10 @@ class InfectiousWorld : public SimWorldBase<DiseaseData> {
    * @throws std::out_of_range if id does not refer to an existing agent.
    */
   void InfectAgent(size_t id) {
-    if (id >= agent_set.size())
-      throw std::out_of_range("InfectAgent: agent id out of range");
+    assert(id < agent_set.size() &&
+           "Agent id out of range: " 
+           + std::to_string(id) + " < " 
+           + std::to_string(agent_set.size()));
     DiseaseData state = agent_set[id]->GetState();
     state.health = HealthState::INFECTED;
     state.ticks_in_state = 0;
@@ -385,7 +387,10 @@ class InfectiousWorld : public SimWorldBase<DiseaseData> {
    * @return Current health state, or SUSCEPTIBLE if id is out of range.
    */
   [[nodiscard]] HealthState GetAgentHealth(size_t id) const {
-    if (id >= agent_set.size()) return HealthState::SUSCEPTIBLE;
+    assert(id < agent_set.size() &&
+           "Agent id out of range: " 
+           + std::to_string(id) + " < " 
+           + std::to_string(agent_set.size()));
     return agent_set[id]->GetState().health;
   }
 

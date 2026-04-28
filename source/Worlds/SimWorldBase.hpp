@@ -47,7 +47,10 @@ class SimWorldBase : public StepWorldBase<DataClass> {
 
   /// Get the current DataClass state of agent at index \p id.
   [[nodiscard]] DataClass GetAgentState(size_t id) const {
-    assert(id < agent_set.size());
+    assert(id < agent_set.size() &&
+           "Agent id out of range: " 
+           + std::to_string(id) + " < " 
+           + std::to_string(agent_set.size()));
     return agent_set[id]->GetState();
   }
 
