@@ -195,8 +195,9 @@ class StepAgentBase {
 
     LogLevel logLevel = static_cast<LogLevel>(levelRaw);
     uint64_t tick = eventData.at("timestamp").get<uint64_t>();
-    mActions.push_back(ActionEvent<DataClass>{
-        std::string_view(mCachedAgentIdStr), "movement", logLevel, tick, details});
+    mActions.push_back(
+        ActionEvent<DataClass>{std::string_view(mCachedAgentIdStr), "movement",
+                               logLevel, tick, details});
   }
 
   // The main logic that separates the agents. When prompted for their turn,

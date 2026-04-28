@@ -40,11 +40,14 @@ TEST_CASE("StepAgentBase - Single Action Logging", "[StepAgentBase]") {
     REQUIRE(agent.GetStates().size() ==
             1);  // Initial state is logged in constructor
     const auto& initialAction = agent.GetStates()[0];
-    REQUIRE(initialAction.agentId == "42");
-    REQUIRE(initialAction.actionType == "initial_state");
-    REQUIRE(initialAction.logLevel == LogLevel::Normal);
-    REQUIRE(initialAction.timestamp == 0);
-    REQUIRE(initialAction.details.position == initialData.position);
+    REQUIRE(initialAction.at("agentId").get<std::string>() == "42");
+    REQUIRE(initialAction.at("actionType").get<std::string>() ==
+            "initial_state");
+    REQUIRE(initialAction.at("logLevel").get<int>() ==
+            static_cast<int>(LogLevel::Normal));
+    REQUIRE(initialAction.at("timestamp").get<uint64_t>() == 0);
+    REQUIRE(initialAction.at("details").at("position").get<WorldPosition>() ==
+            initialData.position);
   }
 
   SECTION("SetState logs one action") {
@@ -59,9 +62,10 @@ TEST_CASE("StepAgentBase - Single Action Logging", "[StepAgentBase]") {
 
     REQUIRE(agent.GetStates().size() == 2);  // 1 initial state + 1 movement
     const auto& action = agent.GetStates()[1];
-    REQUIRE(action.timestamp == 100);
-    REQUIRE(action.logLevel == LogLevel::Normal);
-    REQUIRE(action.actionType == "movement");
+    REQUIRE(action.at("timestamp").get<uint64_t>() == 100);
+    REQUIRE(action.at("logLevel").get<int>() ==
+            static_cast<int>(LogLevel::Normal));
+    REQUIRE(action.at("actionType").get<std::string>() == "movement");
   }
 }
 
@@ -82,7 +86,7 @@ TEST_CASE("StepAgentBase - Agent ID Caching", "[StepAgentBase]") {
 
     REQUIRE(agent.GetStates().size() == 2);  // 1 initial state + 1 movement
     const auto& action = agent.GetStates()[0];
-    REQUIRE(action.agentId == "123");
+    REQUIRE(action.at("agentId").get<std::string>() == "123");
   }
 
   SECTION("Different agent IDs produce different strings") {
@@ -91,8 +95,8 @@ TEST_CASE("StepAgentBase - Agent ID Caching", "[StepAgentBase]") {
     agent1.SetState(data, LogLevel::Normal, 10);
     agent2.SetState(data, LogLevel::Normal, 10);
 
-    REQUIRE(agent1.GetStates()[0].agentId == "1");
-    REQUIRE(agent2.GetStates()[0].agentId == "2");
+    REQUIRE(agent1.GetStates()[0].at("agentId").get<std::string>() == "1");
+    REQUIRE(agent2.GetStates()[0].at("agentId").get<std::string>() == "2");
   }
 }
 
@@ -121,11 +125,14 @@ TEST_CASE("StepAgentBase - Multiple Actions", "[StepAgentBase]") {
     agent.SetState(data, LogLevel::Verbose, 2);
     agent.SetState(data, LogLevel::Debug, 3);
 
-    REQUIRE(agent.GetStates()[0].logLevel ==
-            LogLevel::Normal);  // Initial state log level
-    REQUIRE(agent.GetStates()[1].logLevel == LogLevel::Normal);
-    REQUIRE(agent.GetStates()[2].logLevel == LogLevel::Verbose);
-    REQUIRE(agent.GetStates()[3].logLevel == LogLevel::Debug);
+    REQUIRE(agent.GetStates()[0].at("logLevel").get<int>() ==
+            static_cast<int>(LogLevel::Normal));  // Initial state log level
+    REQUIRE(agent.GetStates()[1].at("logLevel").get<int>() ==
+            static_cast<int>(LogLevel::Normal));
+    REQUIRE(agent.GetStates()[2].at("logLevel").get<int>() ==
+            static_cast<int>(LogLevel::Verbose));
+    REQUIRE(agent.GetStates()[3].at("logLevel").get<int>() ==
+            static_cast<int>(LogLevel::Debug));
   }
 
   SECTION("Timestamps are preserved") {
@@ -133,10 +140,11 @@ TEST_CASE("StepAgentBase - Multiple Actions", "[StepAgentBase]") {
     agent.SetState(data, LogLevel::Normal, 2000);
     agent.SetState(data, LogLevel::Normal, 3000);
 
-    REQUIRE(agent.GetStates()[0].timestamp == 0);  // Initial state timestamp
-    REQUIRE(agent.GetStates()[1].timestamp == 1000);
-    REQUIRE(agent.GetStates()[2].timestamp == 2000);
-    REQUIRE(agent.GetStates()[3].timestamp == 3000);
+    REQUIRE(agent.GetStates()[0].at("timestamp").get<uint64_t>() ==
+            0);  // Initial state timestamp
+    REQUIRE(agent.GetStates()[1].at("timestamp").get<uint64_t>() == 1000);
+    REQUIRE(agent.GetStates()[2].at("timestamp").get<uint64_t>() == 2000);
+    REQUIRE(agent.GetStates()[3].at("timestamp").get<uint64_t>() == 3000);
   }
 }
 
@@ -195,8 +203,8 @@ TEST_CASE("StepAgentBase - Cached Agent ID Lifetime", "[StepAgentBase]") {
     REQUIRE(agentId == "555");
 
     agent.SetState(data, LogLevel::Normal, 200);
-    REQUIRE(agent.GetStates()[0].agentId == "555");
-    REQUIRE(agent.GetStates()[1].agentId == "555");
+    REQUIRE(agent.GetStates()[0].at("agentId").get<std::string>() == "555");
+    REQUIRE(agent.GetStates()[1].at("agentId").get<std::string>() == "555");
   }
 }
 
@@ -231,13 +239,15 @@ TEST_CASE("StepAgentBase - Data Preservation", "[StepAgentBase]") {
 
   SECTION("Action stores the data details") {
     const auto action = agent.GetStates();
-    REQUIRE(action[0].details.position.X() == 0);
-    REQUIRE(action[0].details.position.Y() == 0);
-    REQUIRE(action[0].details.direction == cse498::Direction::North);
+    REQUIRE(action[0].at("details").at("position").at("x").get<int>() == 0);
+    REQUIRE(action[0].at("details").at("position").at("y").get<int>() == 0);
+    REQUIRE(action[0].at("details").at("direction").get<int>() ==
+            static_cast<int>(cse498::Direction::North));
 
-    REQUIRE(action[1].details.position.X() == 5);
-    REQUIRE(action[1].details.position.Y() == 5);
-    REQUIRE(action[1].details.direction == cse498::Direction::West);
+    REQUIRE(action[1].at("details").at("position").at("x").get<int>() == 5);
+    REQUIRE(action[1].at("details").at("position").at("y").get<int>() == 5);
+    REQUIRE(action[1].at("details").at("direction").get<int>() ==
+            static_cast<int>(cse498::Direction::West));
   }
 }
 
@@ -256,20 +266,23 @@ TEST_CASE("StepAgentBase - ActionLog Concept Compliance", "[StepAgentBase]") {
   const auto& states = agent.GetStates();
   REQUIRE(states.size() == 3);  // 1 initial state + 2 movements
 
-  REQUIRE(states[0].agentId == "11");
-  REQUIRE(states[0].actionType == "initial_state");
-  REQUIRE(states[0].logLevel == LogLevel::Normal);
-  REQUIRE(states[0].timestamp == 0);
+  REQUIRE(states[0].at("agentId").get<std::string>() == "11");
+  REQUIRE(states[0].at("actionType").get<std::string>() == "initial_state");
+  REQUIRE(states[0].at("logLevel").get<int>() ==
+          static_cast<int>(LogLevel::Normal));
+  REQUIRE(states[0].at("timestamp").get<uint64_t>() == 0);
 
-  REQUIRE(states[1].agentId == "11");
-  REQUIRE(states[1].actionType == "movement");
-  REQUIRE(states[1].logLevel == LogLevel::Normal);
-  REQUIRE(states[1].timestamp == 100);
+  REQUIRE(states[1].at("agentId").get<std::string>() == "11");
+  REQUIRE(states[1].at("actionType").get<std::string>() == "movement");
+  REQUIRE(states[1].at("logLevel").get<int>() ==
+          static_cast<int>(LogLevel::Normal));
+  REQUIRE(states[1].at("timestamp").get<uint64_t>() == 100);
 
-  REQUIRE(states[2].agentId == "11");
-  REQUIRE(states[2].actionType == "movement");
-  REQUIRE(states[2].logLevel == LogLevel::Normal);
-  REQUIRE(states[2].timestamp == 200);
+  REQUIRE(states[2].at("agentId").get<std::string>() == "11");
+  REQUIRE(states[2].at("actionType").get<std::string>() == "movement");
+  REQUIRE(states[2].at("logLevel").get<int>() ==
+          static_cast<int>(LogLevel::Normal));
+  REQUIRE(states[2].at("timestamp").get<uint64_t>() == 200);
 }
 
 }  // namespace cse498
