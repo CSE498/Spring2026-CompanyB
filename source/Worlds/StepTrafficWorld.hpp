@@ -49,7 +49,7 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
       auto curr_state = agent.GetState();
       curr_state.position = step.loc;
       curr_state.direction = world.GetNewDirection(old_pos, step.loc).value();
-      agent.SetState(curr_state);
+      agent.SetState(curr_state, LogLevel::Normal, world.GetTickCount());
 
       return {};
     }
@@ -556,7 +556,7 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
     state.is_active = true;
     state.symbol = '>';
     state.colour = GetDestinationColour(dest_pos);
-    driver->SetState(state);
+    driver->SetState(state, LogLevel::Normal, GetTickCount());
   }
 
   // =====================================================================

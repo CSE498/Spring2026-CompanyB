@@ -188,7 +188,7 @@ class InfectiousWorld : public SimWorldBase<DiseaseData> {
       state.ticks_in_state = 0;
       state.quarantine_ticks = 0;
       if (has_clinic) state.destination = clinic_entrance;
-      agent_set[id]->SetState(state);
+      agent_set[id]->SetState(state, LogLevel::Normal, tick_count);
     }
   }
 
@@ -239,7 +239,7 @@ class InfectiousWorld : public SimWorldBase<DiseaseData> {
         }
       }
 
-      agent_ptr->SetState(state);
+      agent_ptr->SetState(state, LogLevel::Normal, tick_count);
     }
   }
 
@@ -382,7 +382,7 @@ class InfectiousWorld : public SimWorldBase<DiseaseData> {
     state.ticks_in_state = 0;
     state.quarantine_ticks = 0;
     if (has_clinic) state.destination = clinic_entrance;
-    agent_set[id]->SetState(state);
+    agent_set[id]->SetState(state, LogLevel::Normal, tick_count);
   }
 
   /**

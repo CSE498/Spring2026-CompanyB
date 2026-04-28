@@ -196,7 +196,7 @@ class StepAgentBase {
     LogLevel logLevel = static_cast<LogLevel>(levelRaw);
     uint64_t tick = eventData.at("timestamp").get<uint64_t>();
     mActions.push_back(ActionEvent<DataClass>{
-        std::string_view(mCachedAgentIdStr), "movement", logLevel, tick, details}));
+        std::string_view(mCachedAgentIdStr), "movement", logLevel, tick, details});
   }
 
   // The main logic that separates the agents. When prompted for their turn,
@@ -230,7 +230,7 @@ class StepAgentBase {
     mData = data;
     // Here handle logic to log for replay?
     mActions.push_back(ActionEvent<DataClass>{
-        std::string_view(mCachedAgentIdStr), "movement", logLevel, tick, data}));
+        std::string_view(mCachedAgentIdStr), "movement", logLevel, tick, data});
 
     mStates.push_back({{"agentId", mCachedAgentIdStr},
                        {"actionType", "movement"},

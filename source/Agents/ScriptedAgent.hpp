@@ -185,7 +185,7 @@ class ScriptedAgent : public StepAgentBase<DataClass> {
 
           data.destination = std::get<PointTy>(val_result);
 
-          mAgentBase.SetState(data);
+          mAgentBase.SetStateNoLog(data);
           break;
         }
         case Value::SPAWN: {
@@ -200,7 +200,7 @@ class ScriptedAgent : public StepAgentBase<DataClass> {
                                           "__spawn__ outside of init"));
           auto data = mAgentBase.GetState();
           data.position = std::get<PointTy>(val_result);
-          mAgentBase.SetState(data);
+          mAgentBase.SetStateNoLog(data);
           break;
         }
         default:
