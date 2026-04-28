@@ -154,12 +154,12 @@ class ScriptedAgent : public StepAgentBase<DataClass> {
 
       // Handle for type mismatch
       if (v.m_Type.index() != val_result.index())
-        return RuntimeErr(
+        return InterpErr{RuntimeErr(
             RuntimeErr::TYPE_MISMATCH,
             std::format("Attempted to assign expression of type {} "
                         "to variable of type {}",
                         TypeVariantToName(val_result),
-                        TypeVariantToName(v.m_Type)));
+                        TypeVariantToName(v.m_Type)))};
 
       mSymPtr->sym = VarSym(val_result);
       return val_result;
@@ -175,11 +175,11 @@ class ScriptedAgent : public StepAgentBase<DataClass> {
         case Value::DESTINATION: {
           // Ensure val_result is a point
           if (!std::holds_alternative<PointTy>(val_result))
-            return RuntimeErr(
+            return InterpErr{RuntimeErr(
                 RuntimeErr::TYPE_MISMATCH,
                 std::format("Attempted to set magic value "
-                            "__destination__ to non-point type '{}'",
-                            TypeVariantToName(val_result)));
+                            "__destination__ to non-point type '{}')",
+                            TypeVariantToName(val_result)))};
 
           auto data = mAgentBase.GetState();
 
@@ -190,30 +190,30 @@ class ScriptedAgent : public StepAgentBase<DataClass> {
         }
         case Value::SPAWN: {
           if (!std::holds_alternative<PointTy>(val_result))
-            return RuntimeErr(RuntimeErr::TYPE_MISMATCH,
+            return InterpErr{RuntimeErr(RuntimeErr::TYPE_MISMATCH,
                               std::format("Attempted to set magic value "
-                                          "__spawn__ to non-point type '{}'",
-                                          TypeVariantToName(val_result)));
+                                          "__spawn__ to non-point type '{}')",
+                                          TypeVariantToName(val_result)))};
           if (!mAgentBase.mCurrentlyInInit)
-            return RuntimeErr(RuntimeErr::SPAWN_OUTSIDE_INIT,
+            return InterpErr{RuntimeErr(RuntimeErr::SPAWN_OUTSIDE_INIT,
                               std::format("Attempted to set magic value "
-                                          "__spawn__ outside of init"));
+                                          "__spawn__ outside of init"))};
           auto data = mAgentBase.GetState();
           data.position = std::get<PointTy>(val_result);
           mAgentBase.SetState(data);
           break;
         }
         default:
-          return RuntimeErr(RuntimeErr::MAGIC_ERR,
-                            "Attempted to set non-mutable magic value");
+          return InterpErr{RuntimeErr(RuntimeErr::MAGIC_ERR,
+                            "Attempted to set non-mutable magic value")};
       };
 
       return val_result;
     }
 
     std::expected<Type, InterpErr> operator()([[maybe_unused]] FuncSym f) {
-      return RuntimeErr(RuntimeErr::IMMUTABLE_ERR,
-                        "Attempted to assign to function");
+      return InterpErr{RuntimeErr(RuntimeErr::IMMUTABLE_ERR,
+                        "Attempted to assign to function")};
     }
   };
 
@@ -236,14 +236,14 @@ class ScriptedAgent : public StepAgentBase<DataClass> {
 
       switch (m.m_Value) {
         case MagicSym::Value::SPAWN:
-          return RuntimeErr(RuntimeErr::MAGIC_ERR,
-                            "__spawn__ is only writable, not readable");
+          return InterpErr{RuntimeErr(RuntimeErr::MAGIC_ERR,
+                            "__spawn__ is only writable, not readable")};
         case MagicSym::Value::POSITION:
           return Type{data.position};
         case MagicSym::Value::DESTINATION: {
           auto ret = data.destination;
           if (!ret.has_value())
-            return RuntimeErr(RuntimeErr::MAGIC_ERR, "Destination unset!");
+            return InterpErr{RuntimeErr(RuntimeErr::MAGIC_ERR, "Destination unset!")};
           // return NullType{};
           else
             return Type{ret.value()};
@@ -278,18 +278,18 @@ class ScriptedAgent : public StepAgentBase<DataClass> {
               case Direction::West:
                 return Type{Dir::LEFT};
               default:
-                return RuntimeErr(
-                    RuntimeErr::VALUE_ERR,
-                    std::format("Invalid facing state encountered"));
+                return InterpErr{
+                    RuntimeErr(RuntimeErr::VALUE_ERR,
+                    std::format("Invalid facing state encountered"))};
             };
           }
           break;
       }
       // If we're here, the value requested is not valid in this dataclass
-      return RuntimeErr(RuntimeErr::MAGIC_ERR,
-                        std::format("Could not match requested magic value "
-                                    "'__{}__' to dataclass for getting",
-                                    MagicSym::ToStr(m.m_Value)));
+      return InterpErr{RuntimeErr(RuntimeErr::MAGIC_ERR,
+            std::format("Could not match requested magic value "
+                "'__{}__' to dataclass for getting",
+                MagicSym::ToStr(m.m_Value)))};
     }
 
     std::expected<Type, InterpErr> operator()(FuncSym f) {

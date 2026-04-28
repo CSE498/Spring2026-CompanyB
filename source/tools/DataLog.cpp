@@ -25,8 +25,35 @@ void DataLog<DataClass>::AggregateData(
   for (const auto& agent : agents) {
     nlohmann::json state = nlohmann::json::object();
 
-    if constexpr (requires(const DataClass& d) { d.ToJSON(); }) {
-      state = agent->GetState().ToJSON();
+    if constexpr (std::is_same_v<DataClass, DiseaseData>) {
+      auto st = agent->GetState();
+      const bool infected = st.health == HealthState::INFECTED;
+      const bool susceptible = st.health == HealthState::SUSCEPTIBLE;
+      const bool recovered = st.health == HealthState::RECOVERED;
+
+      state = {
+          {"infection_count", infected ? 1.0 : 0.0},
+          {"susceptible_count", susceptible ? 1.0 : 0.0},
+          {"cured_count", recovered ? 1.0 : 0.0},
+          {"infection_probability", infected ? 1.0 : 0.0},
+      };
+    } else if constexpr (std::is_same_v<DataClass, TrafficData>) {
+      auto st = agent->GetState();
+      double eta = 0.0;
+      const bool driving = st.is_active && st.destination.has_value();
+      if (st.destination.has_value()) {
+        const auto& d = st.destination.value();
+        eta = std::abs(static_cast<double>(d.X() - st.position.X())) +
+              std::abs(static_cast<double>(d.Y() - st.position.Y()));
+      }
+
+      state = {
+          {"waiting_count", st.is_active ? 0.0 : 1.0},
+          {"driving_count", driving ? 1.0 : 0.0},
+          {"active_count", st.is_active ? 1.0 : 0.0},
+          {"distance_driven", 0.0},
+          {"time_to_arrive", eta},
+      };
     }
 
     for (auto it = state.begin(); it != state.end(); ++it) {
@@ -75,5 +102,9 @@ const std::unordered_map<std::string, std::vector<TickStats>>&
 DataLog<DataClass>::GetAggregationData() const {
   return time_series;
 }
+
+// Explicit template instantiations for DiseaseData and TrafficData
+template class DataLog<DiseaseData>;
+template class DataLog<TrafficData>;
 
 }  // namespace cse498

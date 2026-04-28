@@ -9,6 +9,7 @@
 #include "tools/DataLog.hpp"
 
 using namespace cse498;
+using Catch::Approx;
 
 TEST_CASE("DataLog infection metrics aggregate from DiseaseData",
           "[datalog][infection]") {
