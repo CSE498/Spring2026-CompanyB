@@ -5,6 +5,8 @@
 /output/
 /build/
 
+*.env
+
 # Prerequisites
 *.d
 
@@ -53,9 +55,19 @@
 .idea
 
 # Generated docs from Doxygen
+/docs
 /docs/html/
 /docs/latex/
 /docs/xml/
 /docs/man/
 /docs/rtf/
 /docs/generated/
+
+
+# Simulation logs
+/logs/
+
+# Build
+/build/
+**/build/
+**/simple

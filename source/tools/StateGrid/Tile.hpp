@@ -5,14 +5,23 @@
 
 #pragma once
 
+#include <cassert>
 #include <memory>
 #include <string>
 
 namespace cse498 {
 /***********************************************
  * Forward declaration for Agent
+ * Just to be used for testing
  ***********************************************/
-class Agent;
+class Agent {
+ public:
+  explicit Agent(int id) : id(id) {}
+  int getId() const { return id; }
+
+ private:
+  int id;
+};
 
 /***********************************************
  *  Holds Possible weather conditions
@@ -33,60 +42,66 @@ struct MetaData {
  ***********************************************/
 class Tile {
  private:
-  int row;            // Row of the tile in the State grid, vector[row, col]
-  int column;         // Column of the tile in the State grid, vector[row, col]
-  char symbol;        // Simple single symbol representation
-  bool canTraverse;   // Stores if you can walk on it
-  std::string name;   // Name of the tile
-  MetaData metadata;  // Meta data to simplify class variables
+  size_t row = 0;     // Row of the tile in the State grid, vector[row, col]
+  size_t column = 0;  // Column of the tile in the State grid, vector[row, col]
+  char symbol = ' ';  // Simple single symbol representation
+  bool canTraverse = true;  // Stores if you can walk on it
+  std::string name = "";    // Name of the tile
+  MetaData metadata;        // Meta data to simplify class variables
 
-  std::shared_ptr<Agent> agent;  // Single occupant (nullptr if empty)
+  std::unique_ptr<Agent> agent;  // Single occupant (nullptr if empty)
 
  public:
-  Tile(int row, int column, char symbol, bool canTraverse,
-       const std::string& name, const MetaData& metaData);
+  Tile(size_t row, size_t column, char symbol, bool canTraverse,
+       const std::string &name, const MetaData &metaData);
 
   /***********************************************
-   *  Sets the agent pointer
+   *  Sets the agent pointer. Only moves the pointer on success,
+   *  so the caller retains ownership if the tile is occupied.
    *
    * @param newAgent The agent pointer to be added
    *
    * @returns True if successful, false if it is occupied
    ***********************************************/
-  bool addAgent(const std::shared_ptr<Agent>& newAgent);
+  [[nodiscard]] bool addAgent(std::unique_ptr<Agent> &newAgent);
 
   /***********************************************
    *  Removes the agent
    *
    * @returns True if successful, false if there is no agent to remove
    ***********************************************/
-  bool removeAgent();
+  [[nodiscard]] bool removeAgent();
 
   /***********************************************
-   *  Returns an Agent pointer, needs to be able to move from tile to tile
-   * so i use a shared pointer
+   *  Releases and returns ownership of the agent
    *
-   * @returns the shared pointer to the agent
+   * @returns unique_ptr to the agent, nullptr if empty
    ***********************************************/
-  std::shared_ptr<Agent> getAgent() const;
+  [[nodiscard]] std::unique_ptr<Agent> releaseAgent();
+
+  /***********************************************
+   *  Returns a non-owning pointer to the agent on this tile
+   *
+   * @returns raw pointer to the agent, nullptr if empty
+   ***********************************************/
+  [[nodiscard]] Agent *getAgent() const;
 
   /***********************************************
    *  Returns whether this tile stores an agent
    *
    * @returns bool to indicate occupancy
    ***********************************************/
-  bool hasAgent() const;
+  [[nodiscard]] bool hasAgent() const;
 
   /***********************************************
    *  Returns whether the tile can be traversed
    *
    * @returns bool to indicate traversability
    ***********************************************/
-  bool getCanTraverse() const;
+  [[nodiscard]] constexpr bool getCanTraverse() const { return canTraverse; };
 
   /***********************************************
-   *  Sets traverseability, not no error checking, If its set to true
-   *  and you try to se it to true anyway, this will work
+   *  Sets whether the tile can be traversed.
    *
    * @param traversability to set the new status
    ***********************************************/
@@ -97,34 +112,34 @@ class Tile {
    *
    * @returns int, row of the tile
    ***********************************************/
-  int getRow() const;
+  [[nodiscard]] constexpr size_t getRow() const { return row; };
 
   /***********************************************
    *  Col getter
    *
    * @returns int, col of the tile
    ***********************************************/
-  int getColumn() const;
+  [[nodiscard]] constexpr size_t getColumn() const { return column; };
 
   /***********************************************
    *  Symbol getter
    *
    * @returns char, symbol of the tile
    ***********************************************/
-  char getSymbol() const;
+  [[nodiscard]] constexpr char getSymbol() const { return symbol; };
 
   /***********************************************
    *  Name getter
    *
    * @returns string ref, name of the tile
    ***********************************************/
-  const std::string& getName() const;
+  [[nodiscard]] const std::string &getName() const;
 
   /***********************************************
    *  MetaData getter
    *
    * @returns MetaData ref, metadata of the tile
    ***********************************************/
-  const MetaData& getMetaData() const;
+  [[nodiscard]] const MetaData &getMetaData() const;
 };
 }  // namespace cse498

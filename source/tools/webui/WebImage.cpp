@@ -15,102 +15,55 @@ using emscripten::val;
 
 namespace cse498 {
 
-WebImage::WebImage(const std::string& img_id, const std::string& src,
-                   const std::string& alt_text)
-    : id(img_id), src(src), alt(alt_text) {
-  val document = val::global("document");
-
-  // Check if ID already exists
-  val existing = document.call<val>("getElementById", id);
-  assert((existing.isNull() || existing.isUndefined()) &&
-         "Image element with this ID already exists");
-
-  // Create the <img> element
-  img_element = document.call<val>("createElement", std::string("img"));
-  img_element.set("id", id);
-  img_element.set("src", src);
-  img_element.set("alt", alt);
-
-  // Add to the page
-  document["body"].call<void>("appendChild", img_element);
+WebImage::WebImage(const std::string& src, const std::string& alt_text,
+                   const WebOptions& options)
+    : WebElement("img", options), src_(src), alt_(alt_text) {
+  dom_element.set("src", src_);
+  dom_element.set("alt", alt_);
 
   // Enable absolute positioning
-  img_element["style"].set("position", std::string("absolute"));
+  dom_element["style"].set("position", std::string("absolute"));
 }
 
-WebImage::~WebImage() {
-  if (!img_element.isNull() && !img_element.isUndefined()) {
-    img_element.call<void>("remove");
-  }
+WebImage::~WebImage() {}
+
+WebImage& WebImage::SetSource(const std::string& new_src) {
+  assert(!new_src.empty() && "Image source path cannot be empty");
+  src_ = new_src;
+  dom_element.set("src", src_);
+  return *this;
 }
 
-void WebImage::SetSource(const std::string& new_src) {
-  src = new_src;
-  img_element.set("src", src);
+WebImage& WebImage::SetPosition(int x, int y) {
+  x_pos_ = x;
+  y_pos_ = y;
+
+  dom_element["style"].set("left", std::to_string(x_pos_) + "px");
+  dom_element["style"].set("top", std::to_string(y_pos_) + "px");
+
+  return *this;
 }
 
-void WebImage::SetSize(int w, int h, SizeUnit unit) {
-  assert(w >= 0 && "Width must be non-negative");
-  assert(h >= 0 && "Height must be non-negative");
-
-  width = w;
-  height = h;
-
-  std::string unit_str;
-
-  switch (unit) {
-    case SizeUnit::px:
-      unit_str = "px";
-      break;
-    case SizeUnit::em:
-      unit_str = "em";
-      break;
-    case SizeUnit::rem:
-      unit_str = "rem";
-      break;
-    case SizeUnit::percent:
-      unit_str = "%";
-      break;
-    case SizeUnit::vw:
-      unit_str = "vw";
-      break;
-    case SizeUnit::vh:
-      unit_str = "vh";
-      break;
-  }
-
-  img_element["style"].set("width", std::to_string(width) + unit_str);
-  img_element["style"].set("height", std::to_string(height) + unit_str);
+WebImage& WebImage::SetAlt(const std::string& alt_text) {
+  alt_ = alt_text;
+  dom_element.set("alt", alt_);
+  return *this;
 }
 
-void WebImage::SetPosition(int x, int y) {
-  x_pos = x;
-  y_pos = y;
-
-  img_element["style"].set("left", std::to_string(x_pos) + "px");
-  img_element["style"].set("top", std::to_string(y_pos) + "px");
+WebImage& WebImage::SetVisible(bool is_visible) {
+  visible_ = is_visible;
+  dom_element["style"].set("display",
+                           std::string(is_visible ? "block" : "none"));
+  return *this;
 }
 
-void WebImage::SetAlt(const std::string& alt_text) {
-  alt = alt_text;
-  img_element.set("alt", alt);
-}
-
-void WebImage::SetVisible(bool is_visible) {
-  if (is_visible) {
-    img_element["style"].set("display", std::string("block"));
-  } else {
-    img_element["style"].set("display", std::string("none"));
-  }
-}
-
-bool WebImage::IsLoaded() const { return img_element["complete"].as<bool>(); }
+bool WebImage::IsLoaded() const { return dom_element["complete"].as<bool>(); }
 
 std::expected<void, std::string> WebImage::HasError() const {
   // Check the naturalWidth to insure it isnt 0 and is properly loaded
-  if (img_element["complete"].as<bool>() &&
-      img_element["naturalWidth"].as<int>() == 0) {
-    return std::unexpected("Image failed to load: " + src);
+  if (dom_element["complete"].as<bool>() &&
+      dom_element["naturalWidth"].as<int>() == 0) {
+    return std::unexpected("Image failed to load: " + src_);
   }
   return {};
 }

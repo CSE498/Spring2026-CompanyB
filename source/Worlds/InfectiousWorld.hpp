@@ -248,9 +248,12 @@ class InfectiousWorld : public SimWorldBase<DiseaseData> {
    * @brief Construct an infectious world with a rectangular grid.
    * @param width Grid width in cells.
    * @param height Grid height in cells.
+   * @param script Input script for ScriptedAgents, defaults to none.
    */
-  InfectiousWorld(size_t width = 20, size_t height = 15) {
+  InfectiousWorld(size_t width = 20, size_t height = 15,
+                  std::string const& script = "") {
     main_grid.Resize(width, height, floor_id);
+    SetupScriptedAgents(script);
   }
 
   /**
@@ -274,8 +277,10 @@ class InfectiousWorld : public SimWorldBase<DiseaseData> {
   DiseaseData DoAction(AgentPtr agent) override {
     using namespace cse498::steps;
 
-    DiseaseData state = agent->GetState();
+    // I switched the order of these because for scripted agents
+    // its crucial that GetTurn() is called before GetState()
     StepContainer turn = agent->GetTurn();
+    DiseaseData state = agent->GetState();
 
     while (!turn.exhausted()) {
       auto step_result = turn.get_next();
@@ -348,6 +353,7 @@ class InfectiousWorld : public SimWorldBase<DiseaseData> {
    * observer is called after health and spread updates finish.
    */
   void UpdateWorld() override {
+    RunAgents();
     tick_count++;
     UpdateHealthTimers();
     SpreadInfection();
@@ -369,7 +375,8 @@ class InfectiousWorld : public SimWorldBase<DiseaseData> {
    * @throws std::out_of_range if id does not refer to an existing agent.
    */
   void InfectAgent(size_t id) {
-    assert(id < agent_set.size() && "Agent id out of range");
+    if (id >= agent_set.size())
+      throw std::out_of_range("InfectAgent: agent id out of range");
     DiseaseData state = agent_set[id]->GetState();
     state.health = HealthState::INFECTED;
     state.ticks_in_state = 0;
@@ -384,7 +391,7 @@ class InfectiousWorld : public SimWorldBase<DiseaseData> {
    * @return Current health state, or SUSCEPTIBLE if id is out of range.
    */
   [[nodiscard]] HealthState GetAgentHealth(size_t id) const {
-    assert(id < agent_set.size() && "Agent id out of range");
+    if (id >= agent_set.size()) return HealthState::SUSCEPTIBLE;
     return agent_set[id]->GetState().health;
   }
 
