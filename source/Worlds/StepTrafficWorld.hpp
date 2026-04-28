@@ -222,22 +222,6 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
   /// @brief Scan the grid after loading to find traffic lights, spawners,
   /// and destinations.
   void ScanGrid() {
-    for (size_t y = 0; y < main_grid.GetHeight(); ++y) {
-      for (size_t x = 0; x < main_grid.GetWidth(); ++x) {
-        WorldPosition pos(x, y);
-        if (main_grid[pos] == traffic_light_vertical_id) {
-          traffic_light_positions.push_back(pos);
-        } else if (main_grid[pos] == spawn_fast_id) {
-          fast_spawner_positions.push_back(pos);
-        } else if (main_grid[pos] == spawn_normal_id) {
-          normal_spawner_positions.push_back(pos);
-        } else if (main_grid[pos] == spawn_slow_id) {
-          slow_spawner_positions.push_back(pos);
-        } else if (main_grid[pos] == bus_spawner_id) {
-          bus_spawner_positions.push_back(pos);
-        }
-      }
-    }
     const std::vector<std::string> colour_palette = {
         "\033[91m",  // bright red
         "\033[92m",  // bright green
@@ -260,6 +244,8 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
           normal_spawner_positions.push_back(pos);
         } else if (cell == spawn_slow_id) {
           slow_spawner_positions.push_back(pos);
+        } else if (main_grid[pos] == bus_spawner_id) {
+          bus_spawner_positions.push_back(pos);
         } else if (cell == destination_id) {
           destination_positions.Insert(pos, 1.0);  // equal weight for now
           destination_colours.emplace(
