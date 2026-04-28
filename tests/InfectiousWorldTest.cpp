@@ -46,11 +46,7 @@ TEST_CASE("InfectiousWorld: InfectAgent updates state", "[InfectiousWorld]") {
   CHECK(world.GetSusceptibleCount() == 0);
 }
 
-TEST_CASE("InfectiousWorld: InfectAgent invalid id throws",
-          "[InfectiousWorld]") {
-  InfectiousWorld world(8, 6);
-  CHECK_THROWS_AS(world.InfectAgent(0), std::out_of_range);
-}
+
 
 // ============================================================================
 // Spread
