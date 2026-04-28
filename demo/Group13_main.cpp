@@ -87,7 +87,7 @@ constexpr char VISITOR    = 'W';
  * agent walk in a rectangular pattern.
  * * @param steps_v Number of steps to move vertically (Up then Down).
  * @param steps_h Number of steps to move horizontally (Left then Right).
- * @return std::string A script string like "uuuuullllliddddrrrr".
+ * @return std::string A script string.
  */
 std::string CreatePatrolScript(size_t steps_v, size_t steps_h) {
     std::string script = "";
