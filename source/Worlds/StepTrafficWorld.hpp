@@ -115,7 +115,7 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
   size_t spawn_fast_id{};  // < Id for Fast spawners that uses the fast clock
   size_t
       spawn_normal_id{};  // < Id for Normal spawners that uses the normal clock
-  size_t spawn_slow_id{};  // < Id for Slow spawners that uses the Slow clock
+  size_t spawn_slow_id{};   // < Id for Slow spawners that uses the Slow clock
   size_t bus_spawner_id{};  ///< ID of bus-spawner tiles ('B').
 
   // Containers for the 3 different types of spawners
@@ -195,9 +195,9 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
   /// Written by Claude.
   std::queue<size_t> despawned_agent_ids{};
 
-  //private:
-  // Pulled by Claude out of the preexisting constructor — registers cell types
-  // and scans the loaded grid for traffic lights, spawners, and destinations.
+  // private:
+  //  Pulled by Claude out of the preexisting constructor — registers cell types
+  //  and scans the loaded grid for traffic lights, spawners, and destinations.
   void RegisterCellTypes() {
     road_id = main_grid.AddCellType("road", "Road to drive in", '.');
     grass_id =
@@ -266,7 +266,7 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
     ScanGrid();
     SpawnBuses();
     SetupScriptedAgents();
-    for (AgentPtr &ptr : agent_set) {
+    for (AgentPtr& ptr : agent_set) {
       std::cout << "TEST" << std::endl;
       auto state = ptr->GetState();
       state.symbol = '>';
@@ -286,7 +286,7 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
     ScanGrid();
     SpawnBuses();
     SetupScriptedAgents();
-    for (AgentPtr &ptr : agent_set) {
+    for (AgentPtr& ptr : agent_set) {
       std::cout << "TEST" << std::endl;
       auto state = ptr->GetState();
       state.symbol = '>';
@@ -324,42 +324,41 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
     double new_x = new_pos.X();
     double new_y = new_pos.Y();
     Direction new_dir{};
-	/**
+    /**
+if (new_x == old_x) {
+  if (new_y == old_y - 1.0) {
+    new_dir = Direction::North;
+  } else if (new_y == old_y + 1.0) {
+    new_dir = Direction::South;
+  } else {
+    return std::unexpected<WorldErr>("invalid move");
+  }
+} else if (new_y == old_y) {
+  if (new_x == old_x - 1.0) {
+    new_dir = Direction::West;
+  } else if (new_x == old_x + 1.0) {
+    new_dir = Direction::East;
+  } else {
+    return std::unexpected<WorldErr>("invalid move");
+  }
+    */
+    // Avoids possible underflow by comparing after addition
     if (new_x == old_x) {
-      if (new_y == old_y - 1.0) {
+      if (old_y > 0 && new_y + 1 == old_y) {
         new_dir = Direction::North;
-      } else if (new_y == old_y + 1.0) {
+      } else if (new_y == old_y + 1) {
         new_dir = Direction::South;
       } else {
         return std::unexpected<WorldErr>("invalid move");
       }
     } else if (new_y == old_y) {
-      if (new_x == old_x - 1.0) {
+      if (old_x > 0 && new_x + 1 == old_x) {
         new_dir = Direction::West;
-      } else if (new_x == old_x + 1.0) {
+      } else if (new_x == old_x + 1) {
         new_dir = Direction::East;
       } else {
         return std::unexpected<WorldErr>("invalid move");
       }
-	*/
-// Avoids possible underflow by comparing after addition
-	if (new_x == old_x) {
-  		if (old_y > 0 && new_y + 1 == old_y) {
-    		new_dir = Direction::North;
-  		} else if (new_y == old_y + 1) {
-    	new_dir = Direction::South;
-  		} else {
-    		return std::unexpected<WorldErr>("invalid move");
-  		}
-	}
-	else if (new_y == old_y) {
-  		if (old_x > 0 && new_x + 1 == old_x) {
-    		new_dir = Direction::West;
-  		} else if (new_x == old_x + 1) {
-    	new_dir = Direction::East;
-  		} else {
-    		return std::unexpected<WorldErr>("invalid move");
-  		}
     } else {
       return std::unexpected<WorldErr>("invalid move");
     }
@@ -610,7 +609,7 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
   /// Buses have no destination so they never despawn; they are created once at
   /// world construction time and run forever.
   void SpawnBuses() {
-    for (const WorldPosition &pos : bus_spawner_positions) {
+    for (const WorldPosition& pos : bus_spawner_positions) {
       TrafficData state;
       state.position = pos;
       state.direction = Direction::East;
@@ -696,7 +695,7 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
     colourSpawners(slow_spawner_positions, slow_spawn_colour);
 
     // Display bus spawner tiles as 'B' in bright white
-    for (const auto &pos : bus_spawner_positions) {
+    for (const auto& pos : bus_spawner_positions) {
       size_t x = pos.CellX(), y = pos.CellY();
       symbol_grid[y][x] = '.';
     }
