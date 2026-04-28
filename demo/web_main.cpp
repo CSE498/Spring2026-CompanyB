@@ -144,9 +144,12 @@ static void PollTickRateInput() {
 }
 
 /// Used for logging traffic data for graphs
-auto kDataLog = DataLog<WebTrafficWorld>(WorldType::Traffic);
+auto kTrafficLog = DataLog<WebTrafficWorld>(WorldType::Traffic);
+/// Used for logging virus data for graphs
+auto kVirusLog   = DataLog<InfectiousWorld>(WorldType::Infection);
 
 void LogSim(const std::string& entity, const std::string& msg, const std::string& tag);
+
 
 // Called by JS when the tick-rate input submits. Validates and
 // reverts to the last valid value if out of range.
@@ -190,16 +193,34 @@ static int count = 0;
 void UpdateGraphs() {
   if (line_graph) {
     if (active_sim == ActiveSim::TRAFFIC) {
-      auto& stats = kDataLog.GetAggregationData();
+      auto& stats = kTrafficLog.GetAggregationData();
       if (stats.contains("driving_count") && !stats.at("driving_count").empty()) {
+        line_graph->SetChartType(InfoGraph::ChartType::Line);
         line_graph->AddDataPoint(stats.at("driving_count").back().current, "Driving Agents");
       }
+    } else if (active_sim == ActiveSim::VIRUS) {
+      auto& stats = kVirusLog.GetAggregationData();
+      bool has_i = stats.contains("infected_count") && !stats.at("infected_count").empty();
+      bool has_s = stats.contains("susceptible_count") && !stats.at("susceptible_count").empty();
+      bool has_r = stats.contains("recovered_count") && !stats.at("recovered_count").empty();
+
+      if (has_i && has_s && has_r) {
+        line_graph->SetChartType(InfoGraph::ChartType::Bar);
+        std::vector<double> bar_data = {
+            stats.at("infected_count").back().current,
+            stats.at("susceptible_count").back().current,
+            stats.at("recovered_count").back().current
+        };
+        line_graph->DrawBarChart(bar_data, "I / S / R Population");
+      }
     } else {
+      line_graph->SetChartType(InfoGraph::ChartType::Line);
       line_graph->AddDataPoint(count, "Counting Test");
       count++;
     }
   }
 }
+
 
 std::shared_ptr<WebElement> GameInfoCanvas(WebOptions options) {
   auto gameInfo = UIItem<InfoGraph>(500, 500, options);
@@ -298,9 +319,10 @@ void DrawTrafficSim() {
             sim_tick++;
 
             // Aggregate data
-            kDataLog.AggregateData(*traffic_world);
+            kTrafficLog.AggregateData(*traffic_world);
 
             UpdateGraphs();
+
 
             size_t n = traffic_world->GetNumAgents();
             if (traffic_reached_log.size() < n) {
@@ -445,6 +467,10 @@ void DrawVirusSim() {
                 virus_world->UpdateWorld();
             }
             sim_tick++;
+
+            // Aggregate data
+            kVirusLog.AggregateData(*virus_world);
+
             UpdateGraphs();
 
             size_t cur_n = virus_world->GetNumAgents();
