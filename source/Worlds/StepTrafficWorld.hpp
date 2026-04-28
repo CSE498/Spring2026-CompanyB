@@ -99,7 +99,7 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
     }
   };
 
- protected:
+ private:
   size_t road_id{};   ///< ID of road cells, which agents can move on.
   size_t grass_id{};  ///< ID of grass cells, which agents can't move on..
 
@@ -189,7 +189,7 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
   /// Written by Claude.
   std::queue<size_t> despawned_agent_ids{};
 
- private:
+  //private:
   // Pulled by Claude out of the preexisting constructor — registers cell types
   // and scans the loaded grid for traffic lights, spawners, and destinations.
   void RegisterCellTypes() {
@@ -295,7 +295,7 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
     double new_x = new_pos.X();
     double new_y = new_pos.Y();
     Direction new_dir{};
-
+	/**
     if (new_x == old_x) {
       if (new_y == old_y - 1.0) {
         new_dir = Direction::North;
@@ -312,6 +312,25 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
       } else {
         return std::unexpected<WorldErr>("invalid move");
       }
+	*/
+// Avoids possible underflow by comparing after addition
+	if (new_x == old_x) {
+  		if (old_y > 0 && new_y + 1 == old_y) {
+    		new_dir = Direction::North;
+  		} else if (new_y == old_y + 1) {
+    	new_dir = Direction::South;
+  		} else {
+    		return std::unexpected<WorldErr>("invalid move");
+  		}
+	}
+	else if (new_y == old_y) {
+  		if (old_x > 0 && new_x + 1 == old_x) {
+    		new_dir = Direction::West;
+  		} else if (new_x == old_x + 1) {
+    	new_dir = Direction::East;
+  		} else {
+    		return std::unexpected<WorldErr>("invalid move");
+  		}
     } else {
       return std::unexpected<WorldErr>("invalid move");
     }
