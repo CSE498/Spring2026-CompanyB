@@ -11,18 +11,10 @@
 
 namespace cse498 {
 
-std::expected<std::unique_ptr<AST::Node>, InterpErr>
-Parser::parse_expr_expect_semicln(int prec) {
-  // Parse an expression
-  auto ret = parse_expr(prec);
-  if (!ret.has_value()) return ret.error();
-
-  auto semi = m_Lexer.UseIf(AgentLexer::IDs::ID_DELIM_SEMICLN);
-  if (!semi.has_value()) return semi.error();
-
-  return std::move(ret.value());
-}
-
+/** @brief Parse an expression, expecting precedence `prec` (defaulting to 0).
+ * Returns an expected containing either the parsed expression or the first
+ * error encountered.
+ */
 std::expected<std::unique_ptr<AST::Node>, InterpErr> Parser::parse_expr(
     int prec) {
   using agentlang::Operators::OpInfo;
@@ -79,6 +71,15 @@ std::expected<std::unique_ptr<AST::Node>, InterpErr> Parser::parse_expr(
   return left;
 }
 
+/** @brief Parse and return an expected containing either the parsed term or the
+ * first error encountered.
+ *
+ * A term may be:
+ *   - A unary operator (followed by an expression)
+ *   - A variable or magic value
+ *   - A literal
+ *   - Parentheses, containing another expression
+ */
 std::expected<std::unique_ptr<AST::Node>, InterpErr> Parser::parse_term() {
   using agentlang::Operators::OpInfo;
   using agentlang::Types::Dir;

@@ -46,6 +46,10 @@ using Type =
     std::variant<bool, int, double, str, PointTy, Dir, Car, Student, NullType>;
 
 // Concept satisfied if T is a valid agentlang type
+/** @brief Named constraint requiring that the templated type `T` is a valid
+ * agentlang type.
+ * @tparam T The type to verify as a legal agentlang type
+ */
 template <typename T>
 concept TypeKind = Concepts::IsOneOf<T, bool, int, double, str, PointTy, Dir,
                                      Car, Student, NullType>;
@@ -53,16 +57,29 @@ static const std::array<std::string_view, 9> TYPE_NAMES = {
     "bool",      "int", "double",  "str", "point",
     "direction", "car", "student", "null"};
 
+/** @brief Retrieve the agentlang keyword representation of the templated type
+ * `TypeKind`
+ * @tparam T The type to retrieve the agentlang keyword for
+ */
 template <TypeKind T>
 inline std::string_view TypeToName() {
   return TYPE_NAMES.at(StaticUtil::variant_index<Type, T>());
 }
 
+/** @brief Retrieve the agentlang keyword representation of the input `Type`
+ * variant.
+ * @param t Type to retrieve the agentlang keyword representation of.
+ */
 inline std::string_view TypeVariantToName(const Type &t) {
   return std::visit(
       [](auto &&v) { return TypeToName<std::decay_t<decltype(v)>>(); }, t);
 }
 
+/** @brief Retrieve a default-constructed instance of the `Type` object
+ * corresponding to the given token, if it exists. Otherwise, return an empty
+ * `Optional`.
+ * @param type_tok The token containing the desired type.
+ */
 inline std::optional<Type> NameToType(const emplex::Token &type_tok) {
   static const std::unordered_map<std::string, Type> type_map = {
       {"bool", bool{}}, {"int", int{}},         {"double", double{}},
@@ -103,6 +120,12 @@ struct OpInfo {
    - 7 : Assignment
   */
 
+  /** @brief Retrieve an `OpInfo` corresponding to the given operator token
+   *   `token`. If the token is a valid binary operator, the `OpInfo` found is
+   *   returned. Otherwise, an `InterpErr` is returned describing the error
+   * which occured.
+   *   @param token The token containing the desired operator.
+   */
   static std::expected<OpInfo, InterpErr> FromBinary(
       AgentLexer::Token const &token) {
     using AgentLexer::IDs;
@@ -131,6 +154,12 @@ struct OpInfo {
                         AgentLexer::TokenName(token.id))));
     };
   }
+  /** @brief Retrieve an `OpInfo` corresponding to the given operator token
+   *   `token`. If the token is a valid unary operator, the `OpInfo` found is
+   *   returned. Otherwise, an `InterpErr` is returned describing the error
+   * which occured.
+   *   @param token The token containing the desired operator.
+   */
   static std::expected<OpInfo, InterpErr> FromUnary(
       AgentLexer::Token const &token) {
     using AgentLexer::IDs;
@@ -152,6 +181,10 @@ struct OpInfo {
   static constexpr int MIN_OP = AgentLexer::IDs::ID_OP_ADD;
   static constexpr int MAX_OP = AgentLexer::IDs::ID_OP_MINUS;
 
+  /** @brief Determine whether the given token represents a valid operator,
+   *   either unary or binary.
+   *   @param token The token to check.
+   */
   static bool IsOpToken(AgentLexer::Token const &token) {
     return ((token.id <= MAX_OP) && (token.id >= MIN_OP));
   }
@@ -165,12 +198,23 @@ using agentlang::Types::Type;
 // Forwrad decl.
 struct SymInfo;
 
+/** @brief The symbol variant representing any user-defined variable. Contains
+ * only a `Type` variant representing the current value of that symbol.
+ */
 struct VarSym {
   Type m_Type;
 
   VarSym(Type t) : m_Type(t) {}
 };
 
+/** @brief The symbol variant representing any function, user-defined or
+ * preloaded. Contains a vector of `shared_ptr`s to the function's parameters,
+ * the index of the function's body in the symbol table's function vector, and
+ * an optional containing a preloaded function. This field is left in the
+ * optional's empty state for any user-defined functions. For preloaded
+ * functions, this field contains a `std::function` object which holds the
+ * preloaded function.
+ */
 struct FuncSym {
   std::vector<std::shared_ptr<SymInfo>> m_Params;
   size_t m_BodyIdx;
@@ -191,6 +235,9 @@ struct FuncSym {
   FuncSym(Func f) : m_Params({}), m_BodyIdx(0), m_PreloadFunc(f) {}
 };
 
+/** @brief The symbol variant representing preloaded "magic" (or dunder) values.
+ * Contains only an enum representing the desired magic value.
+ */
 struct MagicSym {
   enum class Value {
     SPAWN,        // __spawn__, valid both
@@ -204,12 +251,22 @@ struct MagicSym {
 
   Value m_Value;
 
+  /** @brief Determine whether the currently held `Value` state can be
+   *   considered mutable.
+   *
+   *   Current mutable values are:
+   *     - DESTINATION
+   *     - SPAWN
+   */
   bool CanMut() {
-    // Return whether the current value is a mutable magic val
-    // Only one can be for now
     return (m_Value == Value::DESTINATION || m_Value == Value::SPAWN);
   };
 
+  /** @brief Convert the given magic value state into its string representation
+   *   without the surrounding underscores.
+   *
+   *   @param m The value to retrieve the state of.
+   */
   static std::string ToStr(Value m) {
     switch (m) {
       case Value::POSITION:
@@ -234,12 +291,22 @@ struct MagicSym {
 };
 
 using SymVariant_T = std::variant<VarSym, FuncSym, MagicSym>;
+
+/** @brief The variant representing the concrete information about symbol in the
+ * symbol table. Derived from the variant of the symbol types.
+ *
+ * Permits most usage a normal variant would, namely
+ * `std::holds_alternative<T>(V)` and `std::get<T>(V)`. Two symbol variants are
+ * considered equal if they both hold the same state and their underlying
+ * objects are equal.
+ */
 struct SymVariant : SymVariant_T {
   using SymVariant_T::variant;
   using SymVariant_T::operator=;
-  // Feels like there's a good chance I'll want to have done this later
-  // so just doing it now
 
+  /** @brief Retrieve a string describing the current state of this symbol
+   * variant.
+   */
   std::string StateAsStr() const {
     switch (this->index()) {
       case 0:
@@ -253,17 +320,30 @@ struct SymVariant : SymVariant_T {
     }
   }
 
+  /** @brief Determine whether this symbol variant currently holds the state
+   *   `T`.
+   *   @tparam T The state to check whether this symbol variant holds.
+   */
   template <typename T>
   bool IsA() const {
     return this->index() == StaticUtil::variant_index<SymVariant_T, T>();
   }
 
+  /** @brief Apply `std::get<T>(V)` to this symbol variant, returning the
+   *   object. Currently does no checking that the underlying object contains
+   * the correct state.
+   *   @tparam The state to retrieve the underlying object representation of.
+   */
   template <typename T>
   T As() const {
     return std::get<T>(*this);
   }
 };
 
+/** @brief The complete information representing a symbol in the symbol table.
+ * Only the `sym` field is under the symbol variant, all other fields are
+ * consistent across types.
+ */
 struct SymInfo {
   std::string name;
   size_t line_def;

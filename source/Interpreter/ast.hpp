@@ -23,6 +23,9 @@ struct SymbolTable;
 namespace cse498::AST {
 // ----------------- Nodes -------------
 using namespace agentlang;
+/** @brief Base `Node` type, requires inheritors to define
+ * `Accept(AgentWrapper&)` and `Finalize(SymbolTable&)`.
+ */
 struct Node {
   emplex::Token m_Token;
 
@@ -32,14 +35,23 @@ struct Node {
     return ASTErr(ASTErr::UNTYPED_NODE, "Node is untyped");
   }
 
-  // Should evaluation return nothing?
+  /** @brief Force the derived node to call to the agent behind the given
+   * `AgentWrapper` and return the resulting `Type` or error state `InterpErr`.
+   */
   virtual std::expected<Types::Type, InterpErr> Accept(AgentWrapper &) = 0;
+  /** @brief Provide the derived node with a reference to the complete symbol
+   * table upon the completion of parsing in order to finalize any remaining
+   * missing information.
+   */
   virtual std::expected<void, InterpErr> Finalize(SymbolTable &) = 0;
 
   Node(emplex::Token token) : m_Token(token) {};
   virtual ~Node() = 0;
 };
 
+/** @brief Base for typed nodes, derived from the base node. Intended to
+ * streamline semantic analysis, but largely unused
+ */
 struct TypedNode : public Node {
   // Cache a type !!INDEX!!
   std::optional<size_t> m_Type;
@@ -59,9 +71,14 @@ struct TypedNode : public Node {
   virtual ~TypedNode() = 0;
 };
 
+/** @brief Node representing any curly-brace-enclosed block of statements.
+ */
 struct StmtBlock : public Node {
   std::vector<std::unique_ptr<Node>> m_Body;
 
+  /** @brief Add a node to the statement block. Moves the given block into the
+   * vector.
+   */
   void add_node(std::unique_ptr<Node> &&node) {
     m_Body.emplace_back(std::move(node));
   }
@@ -76,6 +93,10 @@ struct StmtBlock : public Node {
 };
 
 // Filler for scaffolding
+/** @brief Empty placeholder node for occurences where parsing steps should not
+ * return a proper node but also should not return an error (e.g. an empty
+ * statement).
+ */
 struct EmptyNode : public Node {
   std::expected<Types::Type, InterpErr> Accept(AgentWrapper &) override {
     return Types::NullType{};
@@ -90,6 +111,8 @@ struct EmptyNode : public Node {
 
 // -- Values --
 // Literal reference
+/** @brief Node representing a literal value.
+ */
 struct ValLiteral : public TypedNode {
   Types::Type m_Val;
 
@@ -110,10 +133,11 @@ struct ValLiteral : public TypedNode {
 };
 
 // Variable reference
+/** @brief Node representing a variable. May refer to either a user named symbol
+ * or a magic (dunder) value.
+ */
 struct ValVariable : public TypedNode {
   std::shared_ptr<Symbols::SymInfo> m_Symbol;
-
-  // std::expected<size_t, InterpErr> ResolveType() override;
 
   std::expected<Types::Type, InterpErr> Accept(AgentWrapper &) override;
   std::expected<void, InterpErr> Finalize(SymbolTable &) override;
@@ -124,6 +148,8 @@ struct ValVariable : public TypedNode {
 };
 
 // -- Expressions --
+/** @brief Node representing a unary expression.
+ */
 struct ExprUnary : public TypedNode {
   std::unique_ptr<Node> m_Left;
 
@@ -136,6 +162,8 @@ struct ExprUnary : public TypedNode {
   ~ExprUnary() = default;
 };
 
+/** @brief Node representing a binary expression (excluding assignment).
+ */
 struct ExprBinary : public TypedNode {
   std::unique_ptr<Node> m_Left;
   std::unique_ptr<Node> m_Right;
@@ -150,13 +178,14 @@ struct ExprBinary : public TypedNode {
   ~ExprBinary() = default;
 };
 
+/** @brief Node representing the specific binary expression case of assignment.
+ * Also used internally to represent assignment of function parameters before
+ * evaluation.
+ */
 struct Assign : public TypedNode {
   std::shared_ptr<Symbols::SymInfo> m_Sym;
   std::unique_ptr<Node> m_Value;
 
-  // std::expected<size_t, InterpErr> ResolveType() override {
-  //   return m_Sym->type.index();
-  // }
   std::expected<Types::Type, InterpErr> Accept(AgentWrapper &) override;
   std::expected<void, InterpErr> Finalize(SymbolTable &) override;
 
@@ -169,6 +198,8 @@ struct Assign : public TypedNode {
 // -- Statements --
 
 // Agent definition
+/** @brief Adent definition node.
+ */
 struct StmtAgentDef : public Node {
   std::unique_ptr<Node> m_Init;
   std::unique_ptr<Node> m_Turn;
@@ -183,6 +214,10 @@ struct StmtAgentDef : public Node {
 };
 
 // Agent action
+/** @brief Node representing an action by the agent. During evaluation, this
+ * node results in a `Step` being generated. At this time, only permits
+ * movement.
+ */
 struct StmtAction : public Node {
   // The only action is currently a movement in a direction
   // So this node MUST resolve to a direction
@@ -197,6 +232,8 @@ struct StmtAction : public Node {
 };
 
 // Loop (while)
+/** @brief Node representing a while loop.
+ */
 struct StmtWhile : public Node {
   // Must resolve to a bool-convertible type
   std::unique_ptr<Node> m_Condition;
@@ -214,6 +251,10 @@ struct StmtWhile : public Node {
 };
 
 // Loop control
+/** @brief Node representing a loop control-flow statement. Only valid within a
+ * loop, results in an error when either parsed outside of a loop or evaluated
+ * outside of a loop.
+ */
 struct StmtLoopCtl : public Node {
   enum Action {
     BREAK,
@@ -230,6 +271,8 @@ struct StmtLoopCtl : public Node {
 };
 
 // Conditional
+/** @brief Node representing a condition.
+ */
 struct StmtIf : public Node {
   // Must resolve to a bool-convertible type
   std::unique_ptr<Node> m_Condition;
@@ -255,6 +298,10 @@ struct StmtIf : public Node {
 };
 
 // Function return
+/** @brief Node representing a return statement, only valid within a function
+ * body. Results in an error both when parsed outside of a function, as well as
+ * when evaluated outside of a function.
+ */
 struct StmtReturn : public Node {
   std::unique_ptr<Node> m_Value;
 
@@ -267,6 +314,9 @@ struct StmtReturn : public Node {
 };
 
 // Function
+/** @brief Node representing a function body. Moved into the symbol table after
+ * creation.
+ */
 struct StmtFunc : public Node {
   std::shared_ptr<Symbols::SymInfo> m_Symbol;
   std::unique_ptr<Node> m_Body;
@@ -281,6 +331,11 @@ struct StmtFunc : public Node {
 };
 
 // Function call
+/** @brief Node representing a function call. Holds a vector of nodes
+ * representing the values passed into the function called. The node shared
+ * pointer `m_Body` referring to the function being called is left unset until
+ * finalization.
+ */
 struct StmtFuncCall : public Node {
   std::shared_ptr<Symbols::SymInfo> m_Symbol;
   std::vector<std::unique_ptr<Node>> m_Args{};

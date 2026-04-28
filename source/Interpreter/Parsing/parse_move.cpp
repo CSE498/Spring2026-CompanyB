@@ -4,6 +4,9 @@
 
 namespace cse498 {
 
+/** @brief Parse a move statement and return an expected containing either the
+ * parsed move statement or an `InterpErr` describing the error which occured.
+ */
 std::expected<std::unique_ptr<AST::Node>, InterpErr> Parser::parse_move() {
   /*
   ---
