@@ -3,8 +3,8 @@
  * @brief Integration tests for Scripted Agents
  * @author Lalit Chitibomma
  */
-#include <catch2/catch_test_macros.hpp>
 #include <array>
+#include <catch2/catch_test_macros.hpp>
 #include <format>
 #include <sstream>
 #include <string>
@@ -137,7 +137,8 @@ TEST_CASE("GetTurn before SetInit is a safe no-op", "[traffic][intg]") {
   CHECK(step_container.empty());
 }
 
-TEST_CASE("Traffic built-ins drive a target-following move", "[traffic][intg]") {
+TEST_CASE("Traffic built-ins drive a target-following move",
+          "[traffic][intg]") {
   auto [p, result] = parse(std::string{TARGET_FOLLOWER});
 
   CAPTURE(result);
