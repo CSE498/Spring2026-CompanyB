@@ -17,6 +17,7 @@
 #include "Worlds/StepTrafficWorld.hpp"
 #include "Worlds/InfectiousWorld.hpp"
 #include "Worlds/InfectiousBuildings.hpp"
+#include "Worlds/WebTrafficWorld.hpp"
 #include "core/AgentData.hpp"
 #include "core/ItemBase.hpp"
 #include "Agents/ScriptedAgent.hpp"
@@ -25,6 +26,7 @@
 #include "tools/Point.hpp"
 #include "InfoGraph.hpp"
 #include "WebTextboxOutputManager.hpp"
+#include "tools/DataLog.hpp"
 
 using namespace cse498;
 
@@ -70,20 +72,6 @@ static void PlaceBuilding(WorldGrid& grid, size_t wall_id, size_t floor_id,
     grid[x1, cy] = floor_id;
     grid[x2, cy] = floor_id;
 }
-
-// Subclass adapter that exposes StepTrafficWorld's protected members so
-// the web canvas drawer can read grid and per agent state each frame
-class WebTrafficWorld : public StepTrafficWorld<SwarmingAgent<TrafficData>> {
- public:
-  using Base = StepTrafficWorld<SwarmingAgent<TrafficData>>;
-  using Base::Base;  // inherit constructors
-
-  [[nodiscard]] const WorldGrid& GetGrid() const { return main_grid; }
-  [[nodiscard]] size_t GetNumAgents() const { return agent_set.size(); }
-  [[nodiscard]] TrafficData GetAgentState(size_t id) const {
-    return agent_set[id]->GetState();
-  }
-};
 
 // Globals kept alive for the duration of the page
 enum class ActiveSim { NONE, TRAFFIC, VIRUS };
@@ -155,6 +143,9 @@ static void PollTickRateInput() {
     }
 }
 
+/// Used for logging traffic data for graphs
+auto kDataLog = DataLog<WebTrafficWorld>(WorldType::Traffic);
+
 void LogSim(const std::string& entity, const std::string& msg, const std::string& tag);
 
 // Called by JS when the tick-rate input submits. Validates and
@@ -198,8 +189,15 @@ static int count = 0;
 
 void UpdateGraphs() {
   if (line_graph) {
-    line_graph->AddDataPoint(count, "Counting Test");
-    count++;
+    if (active_sim == ActiveSim::TRAFFIC) {
+      auto& stats = kDataLog.GetAggregationData();
+      if (stats.contains("driving_count") && !stats.at("driving_count").empty()) {
+        line_graph->AddDataPoint(stats.at("driving_count").back().current, "Driving Agents");
+      }
+    } else {
+      line_graph->AddDataPoint(count, "Counting Test");
+      count++;
+    }
   }
 }
 
@@ -298,6 +296,10 @@ void DrawTrafficSim() {
             traffic_world->RunAgents();
             traffic_world->UpdateWorld();
             sim_tick++;
+
+            // Aggregate data
+            kDataLog.AggregateData(*traffic_world);
+
             UpdateGraphs();
 
             size_t n = traffic_world->GetNumAgents();
