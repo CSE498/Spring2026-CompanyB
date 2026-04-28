@@ -31,6 +31,7 @@
 #include "../tools/Point.hpp"    // continuous positions for geometry queries
 #include "../tools/Surface.hpp"  // overlap detection for infection spread
 #include "SimWorldBase.hpp"
+#include "../tools/DataLog.hpp"
 
 namespace cse498 {
 
@@ -64,6 +65,9 @@ class InfectiousWorld : public SimWorldBase<DiseaseData> {
 
   /// Observer called at the end of every UpdateWorld tick.
   std::function<void(const InfectiousWorld&)> tick_observer;
+
+  /// Single world-owned DataLog aggregated at end-of-tick.
+  DataLog<DiseaseData> datalog{WorldType::Infection};
 
   /// Probability that a susceptible nearby agent becomes infected per tick.
   double transmission_rate = 0.3;
@@ -365,6 +369,8 @@ class InfectiousWorld : public SimWorldBase<DiseaseData> {
     UpdateHealthTimers();
     SpreadInfection();
     if (tick_observer) tick_observer(*this);
+    // Aggregate after world update (end-of-tick snapshot).
+    datalog.AggregateData(agent_set);
   }
 
   /**
@@ -374,6 +380,14 @@ class InfectiousWorld : public SimWorldBase<DiseaseData> {
   void RegisterTickObserver(
       std::function<void(const InfectiousWorld&)> observer) {
     tick_observer = std::move(observer);
+  }
+
+  /**
+   * @brief Access the world-owned DataLog.
+   * @return Const reference to the per-tick aggregated data.
+   */
+  [[nodiscard]] const DataLog<DiseaseData>& GetDataLog() const {
+    return datalog;
   }
 
   /**

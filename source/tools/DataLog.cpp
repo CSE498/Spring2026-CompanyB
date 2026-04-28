@@ -2,10 +2,14 @@
 #include "DataLog.hpp"
 
 #include <algorithm>
+#include <cmath>
 #include <memory>
 #include <numeric>
 #include <string>
 #include <vector>
+
+#include "../core/AgentData.hpp"
+#include "nlohmann/json.hpp"
 
 namespace cse498 {
 
@@ -19,14 +23,22 @@ void DataLog<DataClass>::AggregateData(
   }
 
   for (const auto& agent : agents) {
-    // TODO: replace with toJson() or describe() once agent teams finalize their
-    // API auto state = agent.describe(); for (const auto& [fieldView, value] :
-    // state) {
-    //   std::string fieldKey(fieldView);
-    //   if (samples.contains(fieldKey)) {
-    //     samples[fieldKey].push_back(value);
-    //   }
-    // }
+    nlohmann::json state = nlohmann::json::object();
+
+    if constexpr (requires(const DataClass& d) { d.ToJSON(); }) {
+      state = agent->GetState().ToJSON();
+    }
+
+    for (auto it = state.begin(); it != state.end(); ++it) {
+      std::string fieldKey = it.key();
+      if (samples.contains(fieldKey)) {
+        if (it.value().is_number()) {
+          samples[fieldKey].push_back(it.value().get<double>());
+        } else if (it.value().is_boolean()) {
+          samples[fieldKey].push_back(it.value().get<bool>() ? 1.0 : 0.0);
+        }
+      }
+    }
   }
 
   // Compute TickStats for each declared field and append to the time series
