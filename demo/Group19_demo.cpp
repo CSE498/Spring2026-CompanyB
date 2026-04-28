@@ -16,7 +16,7 @@ int main() {
   // compatible with DrivingAgent right now. This is not something we want to
   // have long-term, of course, but until the agent-world API is fully worked
   // out, we figure we'll just use a single simple agent to show things off.
-  TrafficWorld world("DemoWorld.grid");
+  TrafficWorld world("demo/DemoWorld.grid");
   // AutoInterface is a little class we made to replace TrashInterface for the
   // specific purpose of
   world.AddAgent<AutoInterface>("Viewer");

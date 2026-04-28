@@ -36,38 +36,80 @@ class WorldPath {
   /// Tolerance for floating-point comparisons in geometry helpers.
   static constexpr double kDefaultEps = 1e-9;
 
+  /// @brief Construct an empty path.
   constexpr WorldPath() noexcept = default;
 
-  constexpr auto begin() noexcept { return points_.begin(); }
-  constexpr auto end() noexcept { return points_.end(); }
-  constexpr auto begin() const noexcept { return points_.begin(); }
-  constexpr auto end() const noexcept { return points_.end(); }
-
-  constexpr Point& operator[](std::size_t i) noexcept { return points_[i]; }
-  constexpr const Point& operator[](std::size_t i) const noexcept {
-    return points_[i];
+  /**
+   * @brief Constructs a path from a braced list of points.
+   * @param pts Initializer list of points. All must have finite coordinates
+   *
+   * @code
+   *   // patrol route inline
+   *   WorldPath patrol = {{0, 0}, {10, 0}, {10, 10}, {0, 10}, {0, 0}};
+   *
+   *   // two-point path for distance queries
+   *   WorldPath segment{{0, 0}, {3, 4}};
+   *   assert(segment.totalLength() == 5.0);
+   * @endcode
+   */
+  WorldPath(std::initializer_list<Point> pts) : points_(pts) {
+    assert(isValid());
   }
 
   /**
-   * @brief Bounds-checked access to the i-th point.
-   * @param i Index of the point.
-   * @return Reference to the point at index i.
-   * @throws std::out_of_range if i >= size().
+   * @brief Constructs a path from any range whose elements can build a Point.
+   * @tparam R An input range whose elements satisfy
+   *           std::constructible_from<Point, range_reference_t<R>>.
+   * @param range The source range of points.
+   *
+   * @code
+   *   // Convert an existing container of waypoints
+   *   std::vector<Point> waypoints = computeWaypoints();
+   *   WorldPath path(waypoints);
+   *
+   *   // Build from a reversed view without copying twice
+   *   WorldPath returnTrip(waypoints | std::views::reverse);
+   * @endcode
    */
-  [[deprecated(
-      "Exceptions are disallowed. Use get() for checked access or [] for "
-      "unchecked access.")]] Point&
-  at(std::size_t i) {
-    if (i >= points_.size()) throw std::out_of_range("WorldPath::at");
-    return points_[i];
+  template <std::ranges::input_range R>
+    requires(!std::same_as<std::remove_cvref_t<R>, WorldPath>) &&
+            std::constructible_from<Point, std::ranges::range_reference_t<R>>
+  explicit WorldPath(R&& range) {
+    if constexpr (std::ranges::sized_range<R>) {
+      points_.reserve(std::ranges::size(range));
+    }
+
+    for (auto&& p : range) {
+      points_.emplace_back(std::forward<decltype(p)>(p));
+    }
+
+    assert(isValid());
   }
 
-  /** @copydoc at(std::size_t) */
-  [[deprecated(
-      "Exceptions are disallowed. Use get() for checked access or [] for "
-      "unchecked access.")]] const Point&
-  at(std::size_t i) const {
-    if (i >= points_.size()) throw std::out_of_range("WorldPath::at");
+  constexpr auto begin() noexcept { return points_.begin(); }
+
+  /// @brief Mutable iterator one past the last point.
+  constexpr auto end() noexcept { return points_.end(); }
+
+  /// @brief Const iterator to the first point.
+  constexpr auto begin() const noexcept { return points_.begin(); }
+
+  /// @brief Const iterator one past the last point.
+  constexpr auto end() const noexcept { return points_.end(); }
+
+  /**
+   * @brief Unchecked mutable indexed access.
+   * @param i Point index.
+   * @return Mutable reference to the requested point.
+   */
+  constexpr Point& operator[](std::size_t i) noexcept { return points_[i]; }
+
+  /**
+   * @brief Unchecked const indexed access.
+   * @param i Point index.
+   * @return Const reference to the requested point.
+   */
+  constexpr const Point& operator[](std::size_t i) const noexcept {
     return points_[i];
   }
 
@@ -75,34 +117,80 @@ class WorldPath {
     return i < points_.size() ? &points_[i] : nullptr;
   }
 
+  /**
+   * @brief Checked const indexed access.
+   * @param i Point index.
+   * @return Pointer to the point, or nullptr when i is out of range.
+   */
   [[nodiscard]] constexpr const Point* get(std::size_t i) const noexcept {
     return i < points_.size() ? &points_[i] : nullptr;
   }
 
+  /**
+   * @brief Access the first point.
+   * @return Mutable reference to the first point.
+   * @pre Path must not be empty.
+   */
   [[nodiscard]] constexpr Point& front() noexcept {
     assert(!points_.empty());
     return points_.front();
   }
+
+  /**
+   * @brief Access the first point.
+   * @return Const reference to the first point.
+   * @pre Path must not be empty.
+   */
   [[nodiscard]] constexpr const Point& front() const noexcept {
     assert(!points_.empty());
     return points_.front();
   }
+
+  /**
+   * @brief Access the last point.
+   * @return Mutable reference to the last point.
+   * @pre Path must not be empty.
+   */
   [[nodiscard]] constexpr Point& back() noexcept {
     assert(!points_.empty());
     return points_.back();
   }
+
+  /**
+   * @brief Access the last point.
+   * @return Const reference to the last point.
+   * @pre Path must not be empty.
+   */
   [[nodiscard]] constexpr const Point& back() const noexcept {
     assert(!points_.empty());
     return points_.back();
   }
 
+  /**
+   * @brief Check whether the path has no points.
+   * @return true if size() == 0.
+   */
   [[nodiscard]] constexpr bool empty() const noexcept {
     return points_.empty();
   }
+
+  /**
+   * @brief Get the number of stored points.
+   * @return Point count.
+   */
   [[nodiscard]] constexpr std::size_t size() const noexcept {
     return points_.size();
   }
+
+  /**
+   * @brief Reserve storage for at least n points.
+   * @param n Requested capacity.
+   */
   constexpr void reserve(std::size_t n) { points_.reserve(n); }
+
+  /**
+   * @brief Remove all points from the path.
+   */
   constexpr void clear() noexcept { points_.clear(); }
 
   /**
