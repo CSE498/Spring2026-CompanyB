@@ -686,7 +686,9 @@ std::shared_ptr<WebElement> SimulationLayout(ActiveSim sim, std::function<void()
                     UIItem<WebLayout>(WebOptions{
                         .id = "left-column",
                         .style = {
-                            {"flex", "1"},
+                          // Allow left column to shrink down to a reasonable width (smaller viewport will overflow)
+                            {"min-width", "200px"},
+                            {"flex", "0 10 500px"},
                         },
                         .children = {
                             // Our graph canvas
@@ -701,11 +703,11 @@ std::shared_ptr<WebElement> SimulationLayout(ActiveSim sim, std::function<void()
                         // while including it as a parameter to the function call
                         // This is possible because they return a reference to the WebElement,
                         // Which in turn is implicitly casted to the shared pointer with an operator overload
-                    })->SetHeight("100%").SetDirection("column").SetGap("10px").SetAlignItems("stretch"),
+                    })->SetHeight("100%").SetDirection("column").SetGap("10px").SetAlignItems("stretch").SetJustifyContent("center"),
                     game_area
                 }
             })
-                ->SetHeight("80vh").SetDirection("row").SetGap("20px").SetAlignItems("stretch").SetJustifyContent("flex-start")
+                ->SetHeight("80vh").SetDirection("row").SetGap("20px").SetAlignItems("stretch").SetJustifyContent("center")
         }
     })->SetDirection("column").SetAlignItems("center").SetGap("10px").SetHeight("100vh").SetJustifyContent("flex-start");
 }

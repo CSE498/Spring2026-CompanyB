@@ -47,9 +47,11 @@ body {
 
 #game-area {
     position: relative !important;
-    flex: 3 1 0;
-    min-width: 50%;
+    width: auto;
+    aspect-ratio: 1;
     height: 100%;
+    flex-shrink: 0;
+
     border-radius: 24px;
     overflow: hidden;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
@@ -76,11 +78,6 @@ body {
     font-family: "Menlo", "Consolas", monospace;
     font-size: 14px;
     color-scheme: dark;
-}
-
-#left-column {
-    flex: 2 1 0 !important;
-    min-width: 0;
 }
 
 #map-image,
