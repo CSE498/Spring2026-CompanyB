@@ -267,6 +267,15 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
     main_grid.Load(grid_lines);
     ScanGrid();
     SpawnBuses();
+    SetupScriptedAgents();
+    for (AgentPtr &ptr : agent_set) {
+      std::cout << "TEST" << std::endl;
+      auto state = ptr->GetState();
+      state.symbol = '>';
+      state.colour = "\033[95m";
+      state.is_active = true;
+      ptr->SetState(state);
+    }
   }
 
   /// @brief Construct a TrafficWorld by reading a grid layout from a file.
@@ -278,6 +287,15 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
     main_grid.Load(file);
     ScanGrid();
     SpawnBuses();
+    SetupScriptedAgents();
+    for (AgentPtr &ptr : agent_set) {
+      std::cout << "TEST" << std::endl;
+      auto state = ptr->GetState();
+      state.symbol = '>';
+      state.colour = "\033[95m";
+      state.is_active = true;
+      ptr->SetState(state);
+    }
   }
 
   /// @brief Return the ANSI colour code pre-assigned to a destination tile,
