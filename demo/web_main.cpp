@@ -652,6 +652,9 @@ std::shared_ptr<WebElement> SimulationLayout(ActiveSim sim, std::function<void()
 
     return UIItem<WebLayout>(WebOptions{
         .id = "app-layout",
+        .style = {
+          {"margin", "1rem"},
+        },
         .children = {
             // We can use the .children property to declare elements inside WebLayouts
             // Which can include other WebLayouts - allowing us to create arbitrary layouts
