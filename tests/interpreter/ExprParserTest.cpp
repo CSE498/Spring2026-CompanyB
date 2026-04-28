@@ -26,14 +26,14 @@ using AgentLexer::IDs;
 static std::pair<
     Parser,
     std::expected<std::vector<std::unique_ptr<StmtAgentDef>>, InterpErr>>
-parse(std::string const &stmts) {
+parse(std::string const& stmts) {
   Parser p;
   std::istringstream ss("world traffic;\n" + stmts);
   auto result = p.parse(ss);
   return {std::move(p), std::move(result)};
 }
 
-const char *LITERALS_TEST = R"V0G0N(
+const char* LITERALS_TEST = R"V0G0N(
 // Check all literals are correctly parsed
 up;
 down;
@@ -65,7 +65,7 @@ TEST_CASE(
 
   size_t i = 0;
   for (Type cur_type : check_values) {
-    auto *lit = dynamic_cast<ValLiteral *>(p.m_Nodes[i].get());
+    auto* lit = dynamic_cast<ValLiteral*>(p.m_Nodes[i].get());
     REQUIRE(lit);
     CHECK(lit->m_Val.index() == cur_type.index());
     // Make use of opvisits to compare equality
@@ -73,7 +73,7 @@ TEST_CASE(
     ++i;
   }
 
-  CHECK(dynamic_cast<ValLiteral *>(p.m_Nodes[0].get()));
+  CHECK(dynamic_cast<ValLiteral*>(p.m_Nodes[0].get()));
 }
 
 TEST_CASE("Expr (Basic): 1+-1", "[expr][parser]") {
@@ -82,13 +82,13 @@ TEST_CASE("Expr (Basic): 1+-1", "[expr][parser]") {
   REQUIRE(result.has_value());
   REQUIRE(p.m_Nodes.size() == 1);
 
-  auto *root = dynamic_cast<ExprBinary *>(p.m_Nodes[0].get());
+  auto* root = dynamic_cast<ExprBinary*>(p.m_Nodes[0].get());
   REQUIRE(root);
-  auto *left = dynamic_cast<ValLiteral *>(root->m_Left.get());
+  auto* left = dynamic_cast<ValLiteral*>(root->m_Left.get());
   REQUIRE(left);
-  auto *right = dynamic_cast<ExprUnary *>(root->m_Right.get());
+  auto* right = dynamic_cast<ExprUnary*>(root->m_Right.get());
   REQUIRE(right);
-  auto *right_left = dynamic_cast<ValLiteral *>(right->m_Left.get());
+  auto* right_left = dynamic_cast<ValLiteral*>(right->m_Left.get());
   REQUIRE(right_left);
 
   CHECK_THAT(left->m_Val, VariantHas<int>(1));
@@ -103,15 +103,15 @@ TEST_CASE("Expr (Ambiguity): 2-1+1", "[expr][parser]") {
 
   // ExprBinary
 
-  auto *root = dynamic_cast<ExprBinary *>(p.m_Nodes[0].get());
+  auto* root = dynamic_cast<ExprBinary*>(p.m_Nodes[0].get());
   REQUIRE(root);
-  auto *left = dynamic_cast<ExprBinary *>(root->m_Left.get());
+  auto* left = dynamic_cast<ExprBinary*>(root->m_Left.get());
   REQUIRE(left);
-  auto *right = dynamic_cast<ValLiteral *>(root->m_Right.get());
+  auto* right = dynamic_cast<ValLiteral*>(root->m_Right.get());
   REQUIRE(right);
-  auto *left_left = dynamic_cast<ValLiteral *>(left->m_Left.get());
+  auto* left_left = dynamic_cast<ValLiteral*>(left->m_Left.get());
   REQUIRE(left_left);
-  auto *left_right = dynamic_cast<ValLiteral *>(left->m_Right.get());
+  auto* left_right = dynamic_cast<ValLiteral*>(left->m_Right.get());
   REQUIRE(left_right);
 
   CHECK(root->m_Token.id == AgentLexer::IDs::ID_OP_ADD);
@@ -129,15 +129,15 @@ TEST_CASE("Expr (Precedence): 2-3*4", "[expr][parser]") {
 
   // ExprBinary
 
-  auto *root = dynamic_cast<ExprBinary *>(p.m_Nodes[0].get());
+  auto* root = dynamic_cast<ExprBinary*>(p.m_Nodes[0].get());
   REQUIRE(root);
-  auto *left = dynamic_cast<ValLiteral *>(root->m_Left.get());
+  auto* left = dynamic_cast<ValLiteral*>(root->m_Left.get());
   REQUIRE(left);
-  auto *right = dynamic_cast<ExprBinary *>(root->m_Right.get());
+  auto* right = dynamic_cast<ExprBinary*>(root->m_Right.get());
   REQUIRE(right);
-  auto *right_left = dynamic_cast<ValLiteral *>(right->m_Left.get());
+  auto* right_left = dynamic_cast<ValLiteral*>(right->m_Left.get());
   REQUIRE(right_left);
-  auto *right_right = dynamic_cast<ValLiteral *>(right->m_Right.get());
+  auto* right_right = dynamic_cast<ValLiteral*>(right->m_Right.get());
   REQUIRE(right_right);
 
   CHECK(root->m_Token.id == AgentLexer::IDs::ID_OP_MINUS);
@@ -155,26 +155,25 @@ TEST_CASE("Expr (PMDAS): 1+2*(3+4)+5", "[expr][parser]") {
 
   // ExprBinary
 
-  auto *root = dynamic_cast<ExprBinary *>(p.m_Nodes[0].get());
+  auto* root = dynamic_cast<ExprBinary*>(p.m_Nodes[0].get());
   REQUIRE(root);
-  auto *left = dynamic_cast<ExprBinary *>(root->m_Left.get());
+  auto* left = dynamic_cast<ExprBinary*>(root->m_Left.get());
   REQUIRE(left);
-  auto *left_left = dynamic_cast<ValLiteral *>(left->m_Left.get());
+  auto* left_left = dynamic_cast<ValLiteral*>(left->m_Left.get());
   REQUIRE(left_left);
-  auto *left_right = dynamic_cast<ExprBinary *>(left->m_Right.get());
+  auto* left_right = dynamic_cast<ExprBinary*>(left->m_Right.get());
   REQUIRE(left_right);
-  auto *left_right_left = dynamic_cast<ValLiteral *>(left_right->m_Left.get());
+  auto* left_right_left = dynamic_cast<ValLiteral*>(left_right->m_Left.get());
   REQUIRE(left_right_left);
-  auto *left_right_right =
-      dynamic_cast<ExprBinary *>(left_right->m_Right.get());
+  auto* left_right_right = dynamic_cast<ExprBinary*>(left_right->m_Right.get());
   REQUIRE(left_right_right);
-  auto *left_right_right_left =
-      dynamic_cast<ValLiteral *>(left_right_right->m_Left.get());
+  auto* left_right_right_left =
+      dynamic_cast<ValLiteral*>(left_right_right->m_Left.get());
   REQUIRE(left_right_right_left);
-  auto *left_right_right_right =
-      dynamic_cast<ValLiteral *>(left_right_right->m_Right.get());
+  auto* left_right_right_right =
+      dynamic_cast<ValLiteral*>(left_right_right->m_Right.get());
   REQUIRE(left_right_right_right);
-  auto *right = dynamic_cast<ValLiteral *>(root->m_Right.get());
+  auto* right = dynamic_cast<ValLiteral*>(root->m_Right.get());
   REQUIRE(right);
 
   CHECK(root->m_Token.id == IDs::ID_OP_ADD);

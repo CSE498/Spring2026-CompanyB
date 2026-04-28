@@ -26,12 +26,12 @@
 
 #include "../core/AgentData.hpp"
 #include "../core/Step.hpp"
-#include "../tools/Box.hpp"      // quarantine zones with restricted movement
-#include "../tools/Circle.hpp"   // infection radius around each agent
+#include "../tools/Box.hpp"     // quarantine zones with restricted movement
+#include "../tools/Circle.hpp"  // infection radius around each agent
+#include "../tools/DataLog.hpp"
 #include "../tools/Point.hpp"    // continuous positions for geometry queries
 #include "../tools/Surface.hpp"  // overlap detection for infection spread
 #include "SimWorldBase.hpp"
-#include "../tools/DataLog.hpp"
 
 namespace cse498 {
 

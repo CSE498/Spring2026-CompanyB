@@ -19,7 +19,7 @@ static DiseaseData at(size_t x, size_t y) {
 template <Concepts::IsOneOf<DiseaseData>... Ds>
 static std::string make_script(Ds... ds) {
   size_t agent_count = 0;
-  auto make_agentdef = [&agent_count](DiseaseData const &d) {
+  auto make_agentdef = [&agent_count](DiseaseData const& d) {
     return std::format(
         "let agent_{} : student {{\n"
         "init: {{ __spawn__ = make_point({}, {}); }};\n"

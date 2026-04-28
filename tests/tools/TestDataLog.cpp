@@ -1,6 +1,5 @@
 #include <catch2/catch_approx.hpp>
 #include <catch2/catch_test_macros.hpp>
-
 #include <memory>
 #include <vector>
 
@@ -48,8 +47,9 @@ TEST_CASE("DataLog infection metrics aggregate from DiseaseData",
   CHECK(data.at("infection_probability").back().mean == Approx(1.0 / 3.0));
 }
 
-TEST_CASE("InfectiousWorld aggregates into world-owned DataLog after UpdateWorld",
-          "[datalog][infection][world-hook]") {
+TEST_CASE(
+    "InfectiousWorld aggregates into world-owned DataLog after UpdateWorld",
+    "[datalog][infection][world-hook]") {
   InfectiousWorld world(10, 8);
 
   DiseaseData a{};
