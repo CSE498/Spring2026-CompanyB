@@ -33,6 +33,10 @@ std::expected<std::vector<std::unique_ptr<AST::StmtAgentDef>>, InterpErr>
 Parser::parse(std::istream &in) {
   using AgentLexer::IDs;
   m_AgentDefs.clear();
+  m_Nodes.clear();
+  m_InInit = false;
+  m_InTurn = false;
+  m_InFunc = false;
 
   TRY(m_Lexer.Tokenize(in));
 

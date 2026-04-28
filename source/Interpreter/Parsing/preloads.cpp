@@ -49,7 +49,7 @@ std::expected<void, InterpErr> enforce_signature(
   if (input.size() < sizeof...(Ts))
     return RuntimeErr(RuntimeErr::TOO_FEW_ARGS);
   else if (input.size() > sizeof...(Ts))
-    return RuntimeErr(RuntimeErr::TOO_FEW_ARGS);
+    return RuntimeErr(RuntimeErr::TOO_MANY_ARGS);
 
   // Now enforce argument types match what's defined
   TRY((templ_recurse_typecheck<0, Ts...>(input)));

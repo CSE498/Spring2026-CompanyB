@@ -104,8 +104,10 @@ std::expected<std::unique_ptr<AST::Node>, InterpErr> Parser::parse_func_call() {
   if (!func_sym_data.m_PreloadFunc.has_value()) {
     while (!m_Lexer.Is(IDs::ID_DELIM_PAREN_CLOSE)) {
       if (arg_index >= func_sym_data.m_Params.size())
-        return TempErr(TempErr::NOT_IMPLEMENTED,
-                       "TODO: Put in ParseErr for too many args (vs runtime)");
+        return RuntimeErr(
+            RuntimeErr::TOO_MANY_ARGS,
+            std::format("Too many arguments passed to function '{}'",
+                        func_id.lexeme));
 
       TRY_DECL_M(arg, parse_expr());
 
