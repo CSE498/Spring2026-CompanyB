@@ -17,6 +17,7 @@
 
 #include "../Interfaces/IDataLog.hpp"
 #include "Worlds/WebTrafficWorld.hpp"
+#include "Worlds/InfectiousWorld.hpp"
 
 namespace cse498 {
 
@@ -26,7 +27,7 @@ class DataLog : public IDataLog<World> {
   std::unordered_map<std::string, std::vector<TickStats>> time_series;
 
   static constexpr std::array<std::string_view, 4> kInfectionFields = {
-      "infection_count", "susceptible_count", "recovered_count",
+      "infected_count", "susceptible_count", "recovered_count",
       "infection_probability"};
 
   static constexpr std::array<std::string_view, 5> kTrafficFields = {
@@ -79,6 +80,12 @@ class DataLog : public IDataLog<World> {
 
     if constexpr (std::is_same_v<World, WebTrafficWorld>) {
       samples["driving_count"].push_back(world.GetNumSpawnedAgents());
+    }
+
+    if constexpr (std::is_same_v<World, InfectiousWorld>) {
+      samples["infected_count"].push_back(world.GetInfectedCount());
+      samples["susceptible_count"].push_back(world.GetSusceptibleCount());
+      samples["recovered_count"].push_back(world.GetRecoveredCount());
     }
 
     // Compute TickStats for each declared field and append to the time series
