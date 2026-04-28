@@ -100,7 +100,7 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
     }
   };
 
- private:
+ protected:
   size_t road_id{};   ///< ID of road cells, which agents can move on.
   size_t grass_id{};  ///< ID of grass cells, which agents can't move on..
 
@@ -195,7 +195,7 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
   /// Written by Claude.
   std::queue<size_t> despawned_agent_ids{};
 
-  // private:
+  private:
   //  Pulled by Claude out of the preexisting constructor — registers cell types
   //  and scans the loaded grid for traffic lights, spawners, and destinations.
   void RegisterCellTypes() {
@@ -264,7 +264,8 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
     RegisterCellTypes();
     main_grid.Load(grid_lines);
     ScanGrid();
-    SpawnBuses();
+    //SpawnBuses();
+    //SetupScriptedAgents("buses.al");
     SetupScriptedAgents();
     for (AgentPtr& ptr : agent_set) {
       std::cout << "TEST" << std::endl;
@@ -284,7 +285,8 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
     assert(file.is_open() && "TrafficWorld: could not open grid file");
     main_grid.Load(file);
     ScanGrid();
-    SpawnBuses();
+    //SpawnBuses();
+    //SetupScriptedAgents("buses.al");
     SetupScriptedAgents();
     for (AgentPtr& ptr : agent_set) {
       std::cout << "TEST" << std::endl;
