@@ -107,7 +107,7 @@ struct ParseErr : BaseErr {
     OUT_OF_FUNC = 13,
     ILLEGAL_NESTING = 14,
   };
-  static constexpr std::array<std::string_view, 16> m_KindNames = {
+  static constexpr std::array<std::string_view, 15> m_KindNames = {
       "MISSING_TOKEN",   "EXPECTED_STMT",      "OUT_OF_TURN",
       "OUT_OF_INIT",     "OUT_OF_LOOP",        "INVALID_OP_TOKEN",
       "INVALID_LITERAL", "INVALID_TERM",       "INVALID_WORLD",
