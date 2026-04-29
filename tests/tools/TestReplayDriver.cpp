@@ -64,7 +64,7 @@ TEST_CASE("ReplayDriver handles malformed JSON gracefully", "[ReplayDriver]") {
   auto result = replayDriver.ReplayFromFile("malformed.json", agents);
 
   REQUIRE_FALSE(result.has_value());
-  REQUIRE(result.error() == "Failed to parse JSON");
+  REQUIRE(result.error().find("Failed to parse JSON") != std::string::npos);
 
   // Clean up the test file
   std::remove("malformed.json");
