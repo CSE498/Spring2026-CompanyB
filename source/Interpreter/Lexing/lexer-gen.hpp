@@ -1930,11 +1930,11 @@ class DFA {
     // If sym is an unused control symbol (line begin/end), keep old state.
     return (sym < SYMBOL_MIN_INPUT && next_state == -1) ? state : next_state;
   }
-  static int GetNext(int state, const std::string &syms) {
+  static int GetNext(int state, const std::string& syms) {
     for (char x : syms) state = GetNext(state, x);
     return state;
   }
-  static int Test(const std::string &str) {
+  static int Test(const std::string& str) {
     int state = GetNext(0, SYMBOL_START);
     state = GetNext(state, str);
     int eol_state = GetNext(state, SYMBOL_STOP);
@@ -2230,7 +2230,7 @@ class Lexer {
   }
 
   // Convert an input string into a vector of tokens.
-  const std::vector<Token> &Tokenize(std::string_view in) {
+  const std::vector<Token>& Tokenize(std::string_view in) {
     start_pos = 0;  // Start processing at beginning of string.
     cur_line = 1;   // Start processing at the first line of the input.
     cur_col = 0;    // Start processing at the first position of the input.
@@ -2243,7 +2243,7 @@ class Lexer {
   }
 
   // Convert an input stream to a string, then tokenize.
-  const std::vector<Token> &Tokenize(std::istream &is) {
+  const std::vector<Token>& Tokenize(std::istream& is) {
     return Tokenize(std::string(std::istreambuf_iterator<char>(is),
                                 std::istreambuf_iterator<char>()));
   }
@@ -2269,13 +2269,13 @@ class Lexer {
   bool Is(int id) const { return Any() && Peek() == id; }
 
   // Get the current (or upcoming) token, but don't remove it from the queue.
-  const Token &Peek(size_t skip_count = 0) const {
+  const Token& Peek(size_t skip_count = 0) const {
     if (token_id + skip_count >= tokens.size()) return eof_token;
     return tokens[token_id + skip_count];
   }
 
   // Get the current token, removing it from the queue.
-  const Token &Use() {
+  const Token& Use() {
     if (None()) return eof_token;
     return tokens[token_id++];
   }
@@ -2283,7 +2283,7 @@ class Lexer {
   // Use the current token if it is the expected type; otherwise error.
   // (Use provided error if available, otherwise use default error)
   template <typename... Ts>
-  const Token &Use(int id, Ts &&...message) {
+  const Token& Use(int id, Ts&&... message) {
     if (!Is(id)) {
       if constexpr (sizeof...(Ts) == 0) {
         Error("Expected token of type ", TokenName(id), ", but found type ",

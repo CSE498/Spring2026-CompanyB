@@ -13,16 +13,15 @@
 #include <cstddef>
 #include <iomanip>
 #include <iostream>
+#include <format>
 #include <string>
 #include <string_view>
 #include <thread>
 #include <vector>
-#include <format>
 
 #include "../source/Agents/ScriptedAgent.hpp"
 #include "../source/Agents/SwarmingAgent.hpp"
 #include "../source/Worlds/InfectiousWorld.hpp"
-#include "WorldPosition.hpp"
 
 using namespace cse498;
 
@@ -67,6 +66,7 @@ constexpr const char* YELLOW    = "\033[33m";
 constexpr const char* GREY      = "\033[90m";
 constexpr const char* BG_BLUE   = "\033[44m";
 constexpr const char* BG_YELLOW = "\033[43m";
+constexpr const char* CLEAR_SCREEN = "\033[2J\033[H";
 }  // namespace ansi
 
 /** @brief Generate a script for any number of scripted agents which spawn at
@@ -199,7 +199,7 @@ void DrawWorld(const InfectiousWorld& world) {
   }
 
   // 3. Render
-  std::cout << "\033[2J\033[H";
+  std::cout << ansi::CLEAR_SCREEN;
   std::cout << ansi::BOLD
             << "=== MSU Campus Infectious Disease Simulation (Group 13) ===\n"
             << ansi::RESET;
@@ -412,4 +412,6 @@ int RunInfectiousDemo() {
   return 0;
 }
 
+// #if defined(DEMO_GROUP13)
 int main() { return RunInfectiousDemo(); }
+// #endif

@@ -4,7 +4,7 @@
 #include <ranges>
 
 namespace cse498 {
-StateGrid::StateGrid(const std::vector<std::vector<char>> &premadeMap) {
+StateGrid::StateGrid(const std::vector<std::vector<char>>& premadeMap) {
   assert(premadeMap.size() > 0 && premadeMap[0].size() > 0 && "Map not empty");
 
   auto tileFromSymbol = [](char symbol, size_t r, size_t c) -> Tile {
@@ -39,14 +39,14 @@ StateGrid::StateGrid(const std::vector<std::vector<char>> &premadeMap) {
 
 // ==================== Tile Access (read-only) ====================
 
-[[nodiscard]] const Tile *StateGrid::getTile(size_t row, size_t col) const {
+[[nodiscard]] const Tile* StateGrid::getTile(size_t row, size_t col) const {
   if (row >= getHeight() || col >= getWidth()) {
     return nullptr;
   }
   return &tiles[row][col];
 }
 
-[[nodiscard]] const std::vector<std::vector<Tile>> &StateGrid::getAllTiles()
+[[nodiscard]] const std::vector<std::vector<Tile>>& StateGrid::getAllTiles()
     const {
   return tiles;
 }
@@ -58,13 +58,13 @@ StateGrid::StateGrid(const std::vector<std::vector<char>> &premadeMap) {
   return tiles[row][col].getSymbol();
 }
 
-[[nodiscard]] const std::string &StateGrid::getName(size_t row,
+[[nodiscard]] const std::string& StateGrid::getName(size_t row,
                                                     size_t col) const {
   assert(row < getHeight() && col < getWidth() && "Coordinates in bounds");
   return tiles[row][col].getName();
 }
 
-[[nodiscard]] const MetaData &StateGrid::getMetaData(size_t row,
+[[nodiscard]] const MetaData& StateGrid::getMetaData(size_t row,
                                                      size_t col) const {
   assert(row < getHeight() && col < getWidth() && "Coordinates in bounds");
   return tiles[row][col].getMetaData();
@@ -85,7 +85,7 @@ void StateGrid::setCanTraverse(size_t row, size_t col, bool traversable) {
 // ==================== Agent Management ====================
 
 bool StateGrid::addAgent(size_t row, size_t col,
-                         std::unique_ptr<Agent> &agent) {
+                         std::unique_ptr<Agent>& agent) {
   assert(row < getHeight() && col < getWidth() && "Coordinates in bounds");
   return tiles[row][col].addAgent(agent);
 }
@@ -113,7 +113,7 @@ bool StateGrid::moveAgent(size_t fromRow, size_t fromCol, size_t toRow,
   return true;
 }
 
-[[nodiscard]] Agent *StateGrid::getAgent(size_t row, size_t col) const {
+[[nodiscard]] Agent* StateGrid::getAgent(size_t row, size_t col) const {
   assert(row < getHeight() && col < getWidth() && "Coordinates in bounds");
   return tiles[row][col].getAgent();
 }

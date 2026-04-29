@@ -12,6 +12,9 @@
 // ./build/native/group20_demo
 
 #include "../source/tools/Logger.hpp"
+#include "../source/tools/DataLog.hpp"
+#include "../source/Agents/SwarmingAgent.hpp"
+#include "../source/core/AgentData.hpp"
 
 #include <filesystem>
 #include <fstream>
@@ -236,6 +239,57 @@ bool CleanupFile(const std::filesystem::path& filePath) {
   return true;
 }
 
+void RunDataLogScenario() {
+  std::cout << "=== SCENARIO 3: DATALOG METRICS (INFECTION + TRAFFIC) ===\n";
+
+  std::vector<std::shared_ptr<StepAgentBase<DiseaseData>>> infection_agents;
+  DiseaseData d1{};
+  d1.position = WorldPosition{1, 1};
+  d1.health = HealthState::INFECTED;
+  DiseaseData d2{};
+  d2.position = WorldPosition{3, 1};
+  d2.health = HealthState::SUSCEPTIBLE;
+  infection_agents.push_back(
+    std::make_shared<SwarmingAgent<DiseaseData>>(d1, 0));
+  infection_agents.push_back(
+    std::make_shared<SwarmingAgent<DiseaseData>>(d2, 1));
+
+  DataLog<DiseaseData> infection_log(WorldType::Infection);
+  infection_log.AggregateData(infection_agents);
+  const auto& infection_data = infection_log.GetAggregationData();
+
+  std::cout << "   Infection tick: infected="
+      << infection_data.at("infection_count").back().sum
+      << ", susceptible="
+      << infection_data.at("susceptible_count").back().sum
+      << ", recovered=" << infection_data.at("cured_count").back().sum
+      << ", p_infected="
+      << infection_data.at("infection_probability").back().mean << "\n";
+
+  std::vector<std::shared_ptr<StepAgentBase<TrafficData>>> traffic_agents;
+  TrafficData t1{};
+  t1.position = WorldPosition{0, 0};
+  t1.destination = WorldPosition{3, 0};
+  t1.is_active = true;
+  TrafficData t2{};
+  t2.position = WorldPosition{2, 2};
+  t2.destination = std::nullopt;
+  t2.is_active = false;
+  traffic_agents.push_back(std::make_shared<SwarmingAgent<TrafficData>>(t1, 0));
+  traffic_agents.push_back(std::make_shared<SwarmingAgent<TrafficData>>(t2, 1));
+
+  DataLog<TrafficData> traffic_log(WorldType::Traffic);
+  traffic_log.AggregateData(traffic_agents);
+  const auto& traffic_data = traffic_log.GetAggregationData();
+
+  std::cout << "   Traffic tick: active="
+      << traffic_data.at("active_count").back().sum
+      << ", driving=" << traffic_data.at("driving_count").back().sum
+      << ", waiting=" << traffic_data.at("waiting_count").back().sum
+      << ", eta_sum=" << traffic_data.at("time_to_arrive").back().sum
+      << "\n\n";
+}
+
 }  // namespace
 
 int main() {
@@ -253,6 +307,7 @@ int main() {
 
   const bool saveOk = RunSaveScenario(saveAndReplayPath);
   const bool loadOk = saveOk ? RunLoadScenario(saveAndReplayPath) : false;
+  RunDataLogScenario();
 
   std::cout << "=== CLEANUP ===\n";
   const bool cleanupOk = CleanupFile(saveAndReplayPath);

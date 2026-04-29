@@ -19,7 +19,7 @@ struct BaseErr {
   std::string m_Why;
 
   BaseErr() = default;
-  BaseErr(std::string const &why) : m_Why(why) {}
+  BaseErr(std::string const& why) : m_Why(why) {}
 
   /** @brief Implicit conversion from the derived type to the `std::unexpected`
   representation of the derived type. Utilizes "deducing this".
@@ -29,18 +29,18 @@ struct BaseErr {
   @tparam Self The type of the derived class.
   */
   template <typename T, typename E, typename Self>
-  operator std::expected<T, E>(this Self && self) {
+  operator std::expected<T, E>(this Self&& self) {
     return std::unexpected(std::forward<Self>(self));
   }
 
-  bool operator==(const BaseErr &) const = default;
+  bool operator==(const BaseErr&) const = default;
 };
 
 /** @brief Form a human-readable description of an error given the base error
  * name, the error state, and optionally a message further describing the error.
  */
-static std::string Name(std::string const &base, std::string_view const &state,
-                        std::string const &msg = "") {
+static std::string Name(std::string const& base, std::string_view const& state,
+                        std::string const& msg = "") {
   return std::format("{}::{}({})", base, state, msg);
 }
 
@@ -48,7 +48,7 @@ static std::string Name(std::string const &base, std::string_view const &state,
  * construction of the AST and do not originate from a parsing failure.
  */
 struct ASTErr : BaseErr {
-  bool operator==(const ASTErr &) const = default;
+  bool operator==(const ASTErr&) const = default;
   enum Kind {
     UNTYPED_NODE = 0,
   };
@@ -60,7 +60,7 @@ struct ASTErr : BaseErr {
 
   ASTErr(Kind kind)
       : BaseErr(Name("ASTErr", m_KindNames[kind])), m_Kind(kind) {};
-  ASTErr(Kind kind, std::string const &why)
+  ASTErr(Kind kind, std::string const& why)
       : BaseErr(Name("ASTErr", m_KindNames[kind], why)), m_Kind(kind) {};
 };
 
@@ -68,7 +68,7 @@ struct ASTErr : BaseErr {
  * lexer.
  */
 struct LexerErr : BaseErr {
-  bool operator==(const LexerErr &) const = default;
+  bool operator==(const LexerErr&) const = default;
   enum Kind {
     UNEXP_TOKEN = 0,
   };
@@ -80,7 +80,7 @@ struct LexerErr : BaseErr {
 
   LexerErr(Kind kind)
       : BaseErr(Name("LexerErr", m_KindNames[kind])), m_Kind(kind) {}
-  LexerErr(Kind kind, std::string const &msg)
+  LexerErr(Kind kind, std::string const& msg)
       : BaseErr(Name("LexerErr", m_KindNames[kind], msg)), m_Kind(kind) {}
 };
 
@@ -89,7 +89,7 @@ struct LexerErr : BaseErr {
  * error.
  */
 struct ParseErr : BaseErr {
-  bool operator==(const ParseErr &) const = default;
+  bool operator==(const ParseErr&) const = default;
   enum Kind {
     MISSING_TOKEN = 0,
     EXPECTED_STMT = 1,
@@ -117,7 +117,7 @@ struct ParseErr : BaseErr {
   Kind m_Kind;
   ParseErr(Kind kind)
       : BaseErr(Name("ParseErr", m_KindNames[kind])), m_Kind(kind) {}
-  ParseErr(Kind kind, std::string const &msg)
+  ParseErr(Kind kind, std::string const& msg)
       : BaseErr(Name("ParseErr", m_KindNames[kind], msg)), m_Kind(kind) {}
 };
 
@@ -125,7 +125,7 @@ struct ParseErr : BaseErr {
  * symbol-table failures.
  */
 struct SymbolErr : public BaseErr {
-  bool operator==(const SymbolErr &) const = default;
+  bool operator==(const SymbolErr&) const = default;
   enum Kind {
     UNDEFINED_SYMBOL = 0,
     REDEFINITION = 1,
@@ -140,7 +140,7 @@ struct SymbolErr : public BaseErr {
   Kind m_Kind;
   SymbolErr(Kind kind)
       : BaseErr(Name("SymbolErr", m_KindNames[kind])), m_Kind(kind) {}
-  SymbolErr(Kind kind, std::string const &msg)
+  SymbolErr(Kind kind, std::string const& msg)
       : BaseErr(Name("SymbolErr", m_KindNames[kind], msg)), m_Kind(kind) {}
 };
 
@@ -148,7 +148,7 @@ struct SymbolErr : public BaseErr {
  * runtime/evaluation.
  */
 struct RuntimeErr : BaseErr {
-  bool operator==(const RuntimeErr &) const = default;
+  bool operator==(const RuntimeErr&) const = default;
   enum Kind {
     TYPE_MISMATCH = 0,
     EMPTY_INTERP_WRAPPER = 1,
@@ -187,7 +187,7 @@ struct RuntimeErr : BaseErr {
   Kind m_Kind;
   RuntimeErr(Kind kind)
       : BaseErr(Name("RuntimeErr", m_KindNames[kind])), m_Kind(kind) {}
-  RuntimeErr(Kind kind, std::string const &msg)
+  RuntimeErr(Kind kind, std::string const& msg)
       : BaseErr(Name("RuntimeErr", m_KindNames[kind], msg)), m_Kind(kind) {}
 };
 
@@ -199,7 +199,7 @@ These are intended to simplify control flow during evaluation. Their presence is
 not exclusively an error, only when left unhandled.
 */
 struct LoopControlErr : BaseErr {
-  bool operator==(const LoopControlErr &) const = default;
+  bool operator==(const LoopControlErr&) const = default;
   enum Kind {
     BREAK = 0,
     CONTINUE = 1,
@@ -211,7 +211,7 @@ struct LoopControlErr : BaseErr {
   Kind m_Kind;
   LoopControlErr(Kind kind)
       : BaseErr(Name("LoopControlErr", m_KindNames[kind])), m_Kind(kind) {}
-  LoopControlErr(Kind kind, std::string const &msg)
+  LoopControlErr(Kind kind, std::string const& msg)
       : BaseErr(Name("LoopControlErr", m_KindNames[kind], msg)), m_Kind(kind) {}
 };
 
@@ -220,7 +220,7 @@ struct LoopControlErr : BaseErr {
  * only.
  */
 struct TempErr : BaseErr {
-  bool operator==(const TempErr &) const = default;
+  bool operator==(const TempErr&) const = default;
   enum Kind {
     NOT_IMPLEMENTED = 0,
   };
@@ -230,7 +230,7 @@ struct TempErr : BaseErr {
   Kind m_Kind;
   TempErr(Kind kind)
       : BaseErr(Name("TempErr", m_KindNames[kind])), m_Kind(kind) {}
-  TempErr(Kind kind, std::string const &msg)
+  TempErr(Kind kind, std::string const& msg)
       : BaseErr(Name("TempErr", m_KindNames[kind], msg)), m_Kind(kind) {}
 };
 
