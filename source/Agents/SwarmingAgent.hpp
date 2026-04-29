@@ -37,7 +37,7 @@ concept IsSwarmData = Concepts::IsOneOf<T, TrafficData, DiseaseData>;
  */
 template <IsSwarmData SwarmData>
 class SwarmingAgent : public StepAgentBase<SwarmData> {
- private:
+private:
   /// Random generator used to choose among candidate neighboring cells.
   std::mt19937 rng{std::random_device{}()};
 
@@ -51,10 +51,11 @@ class SwarmingAgent : public StepAgentBase<SwarmData> {
    * @brief Add a position to the rolling movement history.
    * @param pos Position to record.
    */
-  void record_position(WorldPosition const& pos) {
+  void record_position(WorldPosition const &pos) {
     // skip duplicates so a stationary agent doesn't flush the history with
     // copies of the same cell
-    if (!recent_positions.empty() && recent_positions.back() == pos) return;
+    if (!recent_positions.empty() && recent_positions.back() == pos)
+      return;
 
     recent_positions.push_back(pos);
 
@@ -68,7 +69,7 @@ class SwarmingAgent : public StepAgentBase<SwarmData> {
    * @param p Position to search for.
    * @return true if p appears in recent_positions.
    */
-  [[nodiscard]] bool in_recent(WorldPosition const& p) const {
+  [[nodiscard]] bool in_recent(WorldPosition const &p) const {
     return std::find(recent_positions.begin(), recent_positions.end(), p) !=
            recent_positions.end();
   }
@@ -78,25 +79,25 @@ class SwarmingAgent : public StepAgentBase<SwarmData> {
    * @param pos Current position.
    * @return Neighboring position selected from up, down, left, or right.
    */
-  WorldPosition get_random_neighbor(WorldPosition& pos) {
+  WorldPosition get_random_neighbor(WorldPosition &pos) {
     std::array<WorldPosition, 4> neighbors{pos.Up(), pos.Down(), pos.Left(),
                                            pos.Right()};
 
     std::vector<WorldPosition> candidates{};
 
-    for (auto const& n : neighbors) {  // check if all possible neighbors are in
-                                       // recent positions
+    for (auto const &n : neighbors) { // check if all possible neighbors are in
+                                      // recent positions
       if (!in_recent(n)) {
         candidates.push_back(n);
       }
     }
 
-    if (candidates.empty()) {  // if all in recent then any option works
+    if (candidates.empty()) { // if all in recent then any option works
       candidates.assign(neighbors.begin(), neighbors.end());
     }
 
     std::uniform_int_distribution<size_t> dist(
-        0, candidates.size() - 1);  // pick random movement of avaliable
+        0, candidates.size() - 1); // pick random movement of avaliable
     return candidates[dist(rng)];
   }
 
@@ -120,23 +121,24 @@ class SwarmingAgent : public StepAgentBase<SwarmData> {
   // "second choice" after already picking a primary). If every neighbor is
   // in recent history, we fall back to the closest cell overall so the
   // agent keeps swarming instead of freezing.
-  WorldPosition best_neighbor(WorldPosition const& pos,
-                              WorldPosition const& target,
-                              std::optional<WorldPosition> exclude) {
+  WorldPosition best_neighbor(WorldPosition const &pos,
+                              WorldPosition const &target,
+                              std::optional<WorldPosition> exclude) const {
     std::array<WorldPosition, 4> neighbors{pos.Up(), pos.Down(), pos.Left(),
                                            pos.Right()};
 
-    auto manhattan = [&](WorldPosition const& p) {
+    auto manhattan = [&](WorldPosition const &p) {
       return std::abs(target.X() - p.X()) + std::abs(target.Y() - p.Y());
     };
 
-    WorldPosition const* best_fresh = nullptr;
+    WorldPosition const *best_fresh = nullptr;
     double best_fresh_d = 0.0;
-    WorldPosition const* best_any = nullptr;
+    WorldPosition const *best_any = nullptr;
     double best_any_d = 0.0;
 
-    for (auto const& n : neighbors) {
-      if (exclude.has_value() && n == *exclude) continue;
+    for (auto const &n : neighbors) {
+      if (exclude.has_value() && n == *exclude)
+        continue;
       double d = manhattan(n);
       if (best_any == nullptr || d < best_any_d) {
         best_any = &n;
@@ -148,12 +150,14 @@ class SwarmingAgent : public StepAgentBase<SwarmData> {
       }
     }
 
-    if (best_fresh != nullptr) return *best_fresh;
-    if (best_any != nullptr) return *best_any;
-    return pos;  // only reached if `exclude` somehow matches all neighbors
+    if (best_fresh != nullptr)
+      return *best_fresh;
+    if (best_any != nullptr)
+      return *best_any;
+    return pos; // only reached if `exclude` somehow matches all neighbors
   }
 
- public:
+public:
   /**
    * @brief Construct a swarming agent with initial state and stable ID.
    * @param data Initial state object.
@@ -189,7 +193,7 @@ class SwarmingAgent : public StepAgentBase<SwarmData> {
     StepContainer container{};
 
     if (!this->mData.is_active) {
-      return container;  // empty container means no steps remain still
+      return container; // empty container means no steps remain still
     }
 
     // Remember where we are this turn so future detours can avoid looping
@@ -208,10 +212,10 @@ class SwarmingAgent : public StepAgentBase<SwarmData> {
     // REMOVED SWARM AWAY)
 
     // if we are already at the destination stay there
-    WorldPosition const& pos = this->mData.position;
-    WorldPosition const& dest = this->mData.destination.value();
+    WorldPosition const &pos = this->mData.position;
+    WorldPosition const &dest = this->mData.destination.value();
     if (pos == dest) {
-      return container;  // empty to stay in place
+      return container; // empty to stay in place
     }
 
     // Pick the best neighbor toward the destination preferring cells we
@@ -306,4 +310,4 @@ class SwarmingAgent : public StepAgentBase<SwarmData> {
   }
 };
 
-}  // namespace cse498
+} // namespace cse498

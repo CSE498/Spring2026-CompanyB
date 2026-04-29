@@ -31,8 +31,7 @@ using namespace agentlang::Types;
 using namespace agentlang::Symbols;
 using steps::MovementStep;
 
-template <IsDataClass DataClass>
-class ScriptedAgent;
+template <IsDataClass DataClass> class ScriptedAgent;
 
 struct AgentWrapper {
   enum class Env { TRAFFIC, INFECTION };
@@ -59,8 +58,7 @@ struct AgentWrapper {
     return node.Accept(*this);
   }
 
-  template <IsDataClass DataClass>
-  AgentWrapper(ScriptedAgent<DataClass> *i) {
+  template <IsDataClass DataClass> AgentWrapper(ScriptedAgent<DataClass> *i) {
     if constexpr (std::is_same_v<DataClass, TrafficData>) {
       m_Env = Env::TRAFFIC;
     } else {
@@ -74,21 +72,21 @@ struct AgentWrapper {
 template <IsDataClass DataClass>
 class ScriptedAgent : public StepAgentBase<DataClass> {
   // TODO: Actuall fill these out
-  std::unique_ptr<Node> mInit;
+  std::unique_ptr<Node> mInitNode; //< Node used to generate initialization logic
 
-  std::unique_ptr<Node> mTurn;
-  bool mCurrentlyInInit = false;  //< Whether we are currently parsing init
+  std::unique_ptr<Node> mTurnNode; //< Node used to generate turn logic
+  bool mCurrentlyInInit = false; //< Whether we are currently parsing init
 
-  std::unique_ptr<AgentWrapper> mAgentWrapper;
+  std::unique_ptr<AgentWrapper> mAgentWrapper; //< Wrapper used for visitors
 
-  StepContainer mCurrentTurn;
+  StepContainer mCurrentTurn; //< Current steps made in a turn
 
-  std::optional<Type> mCurrentRetval = {};
+  std::optional<Type> mCurrentRetval = {}; //< Current function return value
 
   /// Whether the agent has been initialized correctly
   bool mReady = false;
 
- public:
+public:
   ScriptedAgent(DataClass initial_state, size_t id)
       : StepAgentBase<DataClass>(initial_state, id),
         mAgentWrapper(std::make_unique<AgentWrapper>(this)) {}
@@ -96,35 +94,55 @@ class ScriptedAgent : public StepAgentBase<DataClass> {
   ~ScriptedAgent() = default;
 
   ScriptedAgent &SetInit(std::unique_ptr<Node> init) {
-    mInit = std::move(init);
+    if (!init) {
+      std::println("Fatal error: Attempted to set a null init for a scripted agent");
+      std::terminate();
+    }
+
+    mInitNode = std::move(init);
     mCurrentTurn = StepContainer{};
     mCurrentlyInInit = true;
-    mAgentWrapper->Evaluate(*mInit);
+
+    if (!mAgentWrapper->Evaluate(*mInitNode).has_value()) {
+      std::println("Fatal error: Scripted agent error on init");
+      std::terminate();
+    }
+    
     mCurrentlyInInit = false;
     mReady = true;
+    
     return *this;
   }
 
   ScriptedAgent &SetTurn(std::unique_ptr<Node> turn) {
-    mTurn = std::move(turn);
+    if (!turn) {
+      std::println("Fatal error: Attempted to set a null turn for a scripted agent");
+      std::terminate();
+    }
+
+    mTurnNode = std::move(turn);
     return *this;
   }
 
   /// Choose the action to take a step in the appropriate direction.
   StepContainer GetTurn() override {
-    mCurrentTurn = StepContainer{};  // Clear the container
+    mCurrentTurn = StepContainer{}; // Clear the container
 
     if (!mReady) {
       // Fatal : ScriptedAgent was not initialized
-      std::println("Fatal error: ScriptedAgent was never initialized!");
-      return std::move(mCurrentTurn);
+      std::println("Fatal error: Scripted agent was never initialized!");
+      std::terminate();
     }
 
-    auto res = mAgentWrapper->Evaluate(*mTurn);
+    if (!mTurnNode) {
+      std::println("Fatal error: Scripted agent turn never set");
+      std::terminate();
+    }
+
+    auto res = mAgentWrapper->Evaluate(*mTurnNode);
     if (!res.has_value()) {
       // TODO we do no move, but we need to report error
       std::cout << res.error().ToStr();
-      // std::terminate();
       return StepContainer{};
     };
 
@@ -144,9 +162,7 @@ class ScriptedAgent : public StepAgentBase<DataClass> {
                      std::unique_ptr<Node> &_Val,
                      std::shared_ptr<SymInfo> &_SymPtr,
                      ScriptedAgent<DataClass> &_AgentBase)
-        : mAgentWrapper(_AgentWrapper),
-          mVal(_Val),
-          mSymPtr(_SymPtr),
+        : mAgentWrapper(_AgentWrapper), mVal(_Val), mSymPtr(_SymPtr),
           mAgentBase(_AgentBase) {};
 
     std::expected<Type, InterpErr> operator()(VarSym v) {
@@ -172,40 +188,41 @@ class ScriptedAgent : public StepAgentBase<DataClass> {
       TRY_DECL(val_result, mVal->Accept(*mAgentWrapper));
 
       switch (m.m_Value) {
-        case Value::DESTINATION: {
-          // Ensure val_result is a point
-          if (!std::holds_alternative<PointTy>(val_result))
-            return RuntimeErr(
-                RuntimeErr::TYPE_MISMATCH,
-                std::format("Attempted to set magic value "
-                            "__destination__ to non-point type '{}'",
-                            TypeVariantToName(val_result)));
+      case Value::DESTINATION: {
+        // Ensure val_result is a point
+        if (!std::holds_alternative<PointTy>(val_result))
+          return RuntimeErr(
 
-          auto data = mAgentBase.GetState();
+              RuntimeErr::TYPE_MISMATCH,
+              std::format("Attempted to set magic value "
+                          "__destination__ to non-point type '{}'",
+                          TypeVariantToName(val_result)));
 
-          data.destination = std::get<PointTy>(val_result);
+        auto data = mAgentBase.GetState();
 
-          mAgentBase.SetState(data);
-          break;
-        }
-        case Value::SPAWN: {
-          if (!std::holds_alternative<PointTy>(val_result))
-            return RuntimeErr(RuntimeErr::TYPE_MISMATCH,
-                              std::format("Attempted to set magic value "
-                                          "__spawn__ to non-point type '{}'",
-                                          TypeVariantToName(val_result)));
-          if (!mAgentBase.mCurrentlyInInit)
-            return RuntimeErr(RuntimeErr::SPAWN_OUTSIDE_INIT,
-                              std::format("Attempted to set magic value "
-                                          "__spawn__ outside of init"));
-          auto data = mAgentBase.GetState();
-          data.position = std::get<PointTy>(val_result);
-          mAgentBase.SetState(data);
-          break;
-        }
-        default:
-          return RuntimeErr(RuntimeErr::MAGIC_ERR,
-                            "Attempted to set non-mutable magic value");
+        data.destination = std::get<PointTy>(val_result);
+
+        mAgentBase.SetState(data);
+        break;
+      }
+      case Value::SPAWN: {
+        if (!std::holds_alternative<PointTy>(val_result))
+          return RuntimeErr(RuntimeErr::TYPE_MISMATCH,
+                            std::format("Attempted to set magic value "
+                                        "__spawn__ to non-point type '{}'",
+                                        TypeVariantToName(val_result)));
+        if (!mAgentBase.mCurrentlyInInit)
+          return RuntimeErr(RuntimeErr::SPAWN_OUTSIDE_INIT,
+                            std::format("Attempted to set magic value "
+                                        "__spawn__ outside of init"));
+        auto data = mAgentBase.GetState();
+        data.position = std::get<PointTy>(val_result);
+        mAgentBase.SetState(data);
+        break;
+      }
+      default:
+        return RuntimeErr(RuntimeErr::MAGIC_ERR,
+                          "Attempted to set non-mutable magic value");
       };
 
       return val_result;
@@ -225,8 +242,7 @@ class ScriptedAgent : public StepAgentBase<DataClass> {
     SymGetVisitor(std::unique_ptr<AgentWrapper> &_AgentWrapper,
                   StepAgentBase<DataClass> &_AgentBase,
                   std::vector<Type> _Params)
-        : mAgentWrapper(_AgentWrapper),
-          mAgentBase(_AgentBase),
+        : mAgentWrapper(_AgentWrapper), mAgentBase(_AgentBase),
           mParams(_Params) {}
 
     std::expected<Type, InterpErr> operator()(VarSym v) { return v.m_Type; }
@@ -235,55 +251,54 @@ class ScriptedAgent : public StepAgentBase<DataClass> {
       auto data = mAgentBase.GetState();
 
       switch (m.m_Value) {
-        case MagicSym::Value::SPAWN:
-          return RuntimeErr(RuntimeErr::MAGIC_ERR,
-                            "__spawn__ is only writable, not readable");
-        case MagicSym::Value::POSITION:
-          return Type{data.position};
-        case MagicSym::Value::DESTINATION: {
-          auto ret = data.destination;
-          if (!ret.has_value())
-            return RuntimeErr(RuntimeErr::MAGIC_ERR, "Destination unset!");
-          // return NullType{};
-          else
-            return Type{ret.value()};
+      case MagicSym::Value::SPAWN:
+        return RuntimeErr(RuntimeErr::MAGIC_ERR,
+                          "__spawn__ is only writable, not readable");
+      case MagicSym::Value::POSITION:
+        return Type{data.position};
+      case MagicSym::Value::DESTINATION: {
+        auto ret = data.destination;
+        if (!ret.has_value())
+          return RuntimeErr(RuntimeErr::MAGIC_ERR, "Destination unset!");
+        // return NullType{};
+        else
+          return Type{ret.value()};
+      }
+      // case MagicSym::Value::SPAWN: {
+      // 	auto ret = data.spawn;
+      // };
+      case MagicSym::Value::INFECTED:
+        if constexpr (std::is_same_v<DataClass, DiseaseData>) {
+          return Type{data.health == HealthState::INFECTED};
         }
-        // case MagicSym::Value::SPAWN: {
-        // 	auto ret = data.spawn;
-        // };
-        case MagicSym::Value::INFECTED:
-          if constexpr (std::is_same_v<DataClass, DiseaseData>) {
-            return Type{data.health == HealthState::INFECTED};
-          }
-          break;
-        case MagicSym::Value::SUSCEPTIBLE:
-          if constexpr (std::is_same_v<DataClass, DiseaseData>) {
-            return Type{data.health == HealthState::SUSCEPTIBLE};
-          }
-          break;
-        case MagicSym::Value::RECOVERED:
-          if constexpr (std::is_same_v<DataClass, DiseaseData>) {
-            return Type{data.health == HealthState::RECOVERED};
-          }
-          break;
-        case MagicSym::Value::FACING:
-          if constexpr (std::is_same_v<DataClass, TrafficData>) {
-            switch (data.direction) {
-              case Direction::North:
-                return Type{Dir::UP};
-              case Direction::East:
-                return Type{Dir::RIGHT};
-              case Direction::South:
-                return Type{Dir::DOWN};
-              case Direction::West:
-                return Type{Dir::LEFT};
-              default:
-                return RuntimeErr(
-                    RuntimeErr::VALUE_ERR,
-                    std::format("Invalid facing state encountered"));
-            };
-          }
-          break;
+        break;
+      case MagicSym::Value::SUSCEPTIBLE:
+        if constexpr (std::is_same_v<DataClass, DiseaseData>) {
+          return Type{data.health == HealthState::SUSCEPTIBLE};
+        }
+        break;
+      case MagicSym::Value::RECOVERED:
+        if constexpr (std::is_same_v<DataClass, DiseaseData>) {
+          return Type{data.health == HealthState::RECOVERED};
+        }
+        break;
+      case MagicSym::Value::FACING:
+        if constexpr (std::is_same_v<DataClass, TrafficData>) {
+          switch (data.direction) {
+          case Direction::North:
+            return Type{Dir::UP};
+          case Direction::East:
+            return Type{Dir::RIGHT};
+          case Direction::South:
+            return Type{Dir::DOWN};
+          case Direction::West:
+            return Type{Dir::LEFT};
+          default:
+            return RuntimeErr(RuntimeErr::VALUE_ERR,
+                              std::format("Invalid facing state encountered"));
+          };
+        }
+        break;
       }
       // If we're here, the value requested is not valid in this dataclass
       return RuntimeErr(RuntimeErr::MAGIC_ERR,
@@ -327,17 +342,17 @@ class ScriptedAgent : public StepAgentBase<DataClass> {
     TRY_DECL(expr, node.m_Value->Accept(*mAgentWrapper));
 
     if (!node.m_Sym->mut)
-      return RuntimeErr(
-          RuntimeErr::IMMUTABLE_ERR,
-          std::format("Tried to modify immutable symbol '{}:{}'",
-                      node.m_Sym->sym.StateAsStr(), node.m_Sym->name));
+      return RuntimeErr(RuntimeErr::IMMUTABLE_ERR,
+                        std::format("Tried to modify immutable symbol '{}:{}'",
+                                    node.m_Sym->sym.StateAsStr(),
+                                    node.m_Sym->name));
 
     return std::visit(
         SymAssignVisitor(mAgentWrapper, node.m_Value, node.m_Sym, *this),
         node.m_Sym->sym);
   }
-  std::expected<Type, InterpErr> Visit(
-      [[maybe_unused]] AST::StmtAgentDef &node) {
+  std::expected<Type, InterpErr>
+  Visit([[maybe_unused]] AST::StmtAgentDef &node) {
     return RuntimeErr{
         RuntimeErr::ENCOUNTERED_AGENT_DEF,
         "Encountered an agent definition when evaluation agent turn"};
@@ -348,18 +363,18 @@ class ScriptedAgent : public StepAgentBase<DataClass> {
     if (Dir *direction = std::get_if<Dir>(&type)) {
       auto pos = this->GetState().position;
       switch (*direction) {
-        case Dir::LEFT:
-          pos = pos.Left();
-          break;
-        case Dir::RIGHT:
-          pos = pos.Right();
-          break;
-        case Dir::UP:
-          pos = pos.Up();
-          break;
-        case Dir::DOWN:
-          pos = pos.Down();
-          break;
+      case Dir::LEFT:
+        pos = pos.Left();
+        break;
+      case Dir::RIGHT:
+        pos = pos.Right();
+        break;
+      case Dir::UP:
+        pos = pos.Up();
+        break;
+      case Dir::DOWN:
+        pos = pos.Down();
+        break;
       }
       if (mCurrentTurn.empty()) {
         mCurrentTurn.add_step(MovementStep{pos});
@@ -482,6 +497,7 @@ class ScriptedAgent : public StepAgentBase<DataClass> {
       assert(mCurrentRetval.has_value());
       auto retval_tmp = mCurrentRetval.value();
       mCurrentRetval = {};
+
       return retval_tmp;
     } else if (!func_res.has_value()) {
       return func_res.error();
@@ -500,4 +516,4 @@ class ScriptedAgent : public StepAgentBase<DataClass> {
   void SetGoal([[maybe_unused]] WorldPosition pos) override {}
 };
 // clang-format on
-}  // End of namespace cse498
+} // End of namespace cse498

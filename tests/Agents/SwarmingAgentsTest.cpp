@@ -45,21 +45,21 @@ static bool IsCardinalNeighbor(WorldPosition from, WorldPosition to) {
 }
 
 /// Extract the next step and return it, requiring success.
-static Step NextStep(StepContainer& c) {
+static Step NextStep(StepContainer &c) {
   auto result = c.get_next();
   REQUIRE(result.has_value());
   return result.value();
 }
 
 /// Extract a MovementStep from the container.
-static MovementStep NextMovement(StepContainer& c) {
+static MovementStep NextMovement(StepContainer &c) {
   Step s = NextStep(c);
   REQUIRE(std::holds_alternative<MovementStep>(s));
   return std::get<MovementStep>(s);
 }
 
 /// Extract an InfoStep from the container.
-static InfoStep NextInfo(StepContainer& c) {
+static InfoStep NextInfo(StepContainer &c) {
   Step s = NextStep(c);
   REQUIRE(std::holds_alternative<InfoStep>(s));
   return std::get<InfoStep>(s);
@@ -187,7 +187,7 @@ TEST_CASE("Traffic agent heading left emits InfoStep for Left neighbor",
 TEST_CASE("Traffic agent heading up emits InfoStep for Up neighbor",
           "[SwarmingAgent]") {
   WorldPosition pos{5, 5};
-  WorldPosition dest{5, 2};  // Up means decreasing Y
+  WorldPosition dest{5, 2}; // Up means decreasing Y
   auto data = MakeTrafficData(pos, dest);
   SwarmingAgent<TrafficData> agent(data, 0);
 
@@ -201,7 +201,7 @@ TEST_CASE("Traffic agent heading up emits InfoStep for Up neighbor",
 TEST_CASE("Traffic agent heading down emits InfoStep for Down neighbor",
           "[SwarmingAgent]") {
   WorldPosition pos{5, 5};
-  WorldPosition dest{5, 8};  // Down means increasing Y
+  WorldPosition dest{5, 8}; // Down means increasing Y
   auto data = MakeTrafficData(pos, dest);
   SwarmingAgent<TrafficData> agent(data, 0);
 
