@@ -16,32 +16,32 @@ namespace cse498 {
 
 namespace {
 
-void AddSample(std::unordered_map<std::string, std::vector<double>> &samples,
-               const std::string &field, double value) {
+void AddSample(std::unordered_map<std::string, std::vector<double>>& samples,
+               const std::string& field, double value) {
   if (auto it = samples.find(field); it != samples.end()) {
     it->second.push_back(value);
   }
 }
 
-void AddSamples(std::unordered_map<std::string, std::vector<double>> &samples,
-                const std::string &field, std::vector<double> values) {
+void AddSamples(std::unordered_map<std::string, std::vector<double>>& samples,
+                const std::string& field, std::vector<double> values) {
   if (auto it = samples.find(field); it != samples.end()) {
     it->second = std::move(values);
   }
 }
 
-double Distance(const WorldPosition &a, const WorldPosition &b) {
+double Distance(const WorldPosition& a, const WorldPosition& b) {
   return std::hypot(a.X() - b.X(), a.Y() - b.Y());
 }
 
-} // namespace
+}  // namespace
 
 template <typename DataClass>
 void DataLog<DataClass>::AggregateData(
-    const std::vector<std::shared_ptr<StepAgentBase<DataClass>>> &agents) {
+    const std::vector<std::shared_ptr<StepAgentBase<DataClass>>>& agents) {
   // Collect per-field samples from all agents for this tick
   std::unordered_map<std::string, std::vector<double>> samples;
-  for (const auto &[fieldName, unused] : time_series) {
+  for (const auto& [fieldName, unused] : time_series) {
     samples[fieldName] = {};
   }
 
@@ -53,7 +53,7 @@ void DataLog<DataClass>::AggregateData(
     std::vector<double> arrival_samples;
     std::unordered_set<size_t> seen_agent_ids;
 
-    for (const auto &agent : agents) {
+    for (const auto& agent : agents) {
       const size_t id = agent->GetId();
       const TrafficData state = agent->GetState();
       seen_agent_ids.insert(id);
@@ -109,11 +109,11 @@ void DataLog<DataClass>::AggregateData(
   }
 
   // Compute TickStats for each declared field and append to the time series
-  for (auto &[fieldName, values] : samples) {
+  for (auto& [fieldName, values] : samples) {
     TickStats stats;
 
     if (values.empty()) {
-      time_series[fieldName].push_back(stats); // push zeroed stats
+      time_series[fieldName].push_back(stats);  // push zeroed stats
       continue;
     }
 
@@ -138,12 +138,12 @@ void DataLog<DataClass>::AggregateData(
 }
 
 template <typename DataClass>
-const std::unordered_map<std::string, std::vector<TickStats>> &
+const std::unordered_map<std::string, std::vector<TickStats>>&
 DataLog<DataClass>::GetAggregationData() const {
   return time_series;
 }
 
-} // namespace cse498
+}  // namespace cse498
 
 template class cse498::DataLog<cse498::TrafficData>;
 template class cse498::DataLog<cse498::DiseaseData>;

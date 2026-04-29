@@ -32,9 +32,9 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
     // any output, so we'll define & alias our return as such:
     using VisitRet = std::expected<void, WorldErr>;
 
-    StepAgentBase<TrafficData> &agent;
-    StepContainer &container;
-    StepTrafficWorld &world;
+    StepAgentBase<TrafficData>& agent;
+    StepContainer& container;
+    StepTrafficWorld& world;
 
     // NOTE: all this "typename StepVisitor::VisitRet" stuff (instead of just
     // "VisitRet") is for some reason required when adding "template <typename
@@ -44,8 +44,7 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
       if (!can_move.has_value()) {
         return std::unexpected<WorldErr>(can_move.error());
       }
-      if (!can_move.value())
-        return {};
+      if (!can_move.value()) return {};
 
       WorldPosition old_pos = agent.GetState().position;
       auto curr_state = agent.GetState();
@@ -59,84 +58,84 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
     typename StepVisitor::VisitRet operator()(steps::InfoStep step) {
       switch (step.aspect) {
         using Aspect = cse498::steps::InfoStep::Aspect;
-      case Aspect::LOC_AVAIL: {
-        container.inform(
-            world.CanMakeMoveAt(agent, step.target).value_or(false));
-        break;
-      }
-      // we consider a space to have a capacity of 2, since normally it should
-      // contain at most 2 agents (moving in opposite directions)
-      case Aspect::OCCUPANCY_FRAC: {
-        container.inform(static_cast<double>(std::ranges::count_if(
-                             world.agent_set,
-                             [=](AgentPtr const &ptr) {
-                               return ptr->GetState().position == step.target;
-                             })) /
-                         2.0);
-        break;
-      }
-      case Aspect::OCCUPANCY_RAW: {
-        container.inform(static_cast<int>(
-            std::ranges::count_if(world.agent_set, [=](AgentPtr const &ptr) {
-              return ptr->GetState().position == step.target;
-            })));
-        break;
-      }
+        case Aspect::LOC_AVAIL: {
+          container.inform(
+              world.CanMakeMoveAt(agent, step.target).value_or(false));
+          break;
+        }
+        // we consider a space to have a capacity of 2, since normally it should
+        // contain at most 2 agents (moving in opposite directions)
+        case Aspect::OCCUPANCY_FRAC: {
+          container.inform(static_cast<double>(std::ranges::count_if(
+                               world.agent_set,
+                               [=](AgentPtr const& ptr) {
+                                 return ptr->GetState().position == step.target;
+                               })) /
+                           2.0);
+          break;
+        }
+        case Aspect::OCCUPANCY_RAW: {
+          container.inform(static_cast<int>(
+              std::ranges::count_if(world.agent_set, [=](AgentPtr const& ptr) {
+                return ptr->GetState().position == step.target;
+              })));
+          break;
+        }
       };
       return {};
     }
 
-    typename StepVisitor::VisitRet
-    operator()([[maybe_unused]] steps::ConditionalStep step) {
+    typename StepVisitor::VisitRet operator()(
+        [[maybe_unused]] steps::ConditionalStep step) {
       // The compiler needs this, but this should never be reached. A
       // better solution is forthcoming, for now just leave empty.
       return {};
     }
 
-    typename StepVisitor::VisitRet
-    operator()([[maybe_unused]] steps::ReconStep step) {
+    typename StepVisitor::VisitRet operator()(
+        [[maybe_unused]] steps::ReconStep step) {
       // The compiler needs this, but this should (for now) never be
       // reached. A better solution is forthcoming, for now just leave empty.
       return {};
     }
   };
 
-protected:
-  size_t road_id{};  ///< ID of road cells, which agents can move on.
-  size_t grass_id{}; ///< ID of grass cells, which agents can't move on..
+ protected:
+  size_t road_id{};   ///< ID of road cells, which agents can move on.
+  size_t grass_id{};  ///< ID of grass cells, which agents can't move on..
 
   // Reworked by Claude — two cell types for traffic light phases,
   // with symbols showing which direction traffic may flow.
-  size_t traffic_light_vertical_id{};   ///< Traffic light allowing vertical
-                                        ///< movement ('|')
-  size_t traffic_light_horizontal_id{}; ///< Traffic light allowing horizontal
-                                        ///< movement ('-')
+  size_t traffic_light_vertical_id{};    ///< Traffic light allowing vertical
+                                         ///< movement ('|')
+  size_t traffic_light_horizontal_id{};  ///< Traffic light allowing horizontal
+                                         ///< movement ('-')
 
   // ID of cells that spawn agents.
-  size_t spawn_fast_id{}; // < Id for Fast spawners that uses the fast clock
+  size_t spawn_fast_id{};  // < Id for Fast spawners that uses the fast clock
   size_t
       spawn_normal_id{};  // < Id for Normal spawners that uses the normal clock
-  size_t spawn_slow_id{}; // < Id for Slow spawners that uses the Slow clock
-  size_t bus_spawner_id{}; ///< ID of bus-spawner tiles ('B').
+  size_t spawn_slow_id{};   // < Id for Slow spawners that uses the Slow clock
+  size_t bus_spawner_id{};  ///< ID of bus-spawner tiles ('B').
 
   // Containers for the 3 different types of spawners
   std::vector<WorldPosition>
-      fast_spawner_positions{}; // < fast Spawner location container
+      fast_spawner_positions{};  // < fast Spawner location container
   std::vector<WorldPosition>
-      normal_spawner_positions{}; // < normal Spawner location container
+      normal_spawner_positions{};  // < normal Spawner location container
   std::vector<WorldPosition>
-      slow_spawner_positions{}; // < slow Spawner location container
+      slow_spawner_positions{};  // < slow Spawner location container
   std::vector<WorldPosition>
-      bus_spawner_positions{}; ///< Positions of all bus-spawner tiles.
+      bus_spawner_positions{};  ///< Positions of all bus-spawner tiles.
 
-  size_t destination_id{}; ///< ID of cells which are destinations that agents
-                           ///< try to reach.
+  size_t destination_id{};  ///< ID of cells which are destinations that agents
+                            ///< try to reach.
   std::vector<WorldPosition>
-      traffic_light_positions{}; ///< Positions of all traffic lights.
+      traffic_light_positions{};  ///< Positions of all traffic lights.
   WeightedSet<WorldPosition>
-      destination_positions{}; // Weighted set to randomly assign destinations
+      destination_positions{};  // Weighted set to randomly assign destinations
   std::map<WorldPosition, std::string>
-      destination_colours{}; ///< Per-destination ANSI colour codes.
+      destination_colours{};  ///< Per-destination ANSI colour codes.
 
   /// @brief Indicates whether traffic lights in the world allow agents to pass
   /// through intersections vertically or horizontally.
@@ -197,7 +196,7 @@ protected:
   std::queue<size_t> despawned_agent_ids{};
   DataLog<TrafficData> traffic_data_log{WorldType::Traffic};
 
-private:
+ private:
   //  Pulled by Claude out of the preexisting constructor — registers cell types
   //  and scans the loaded grid for traffic lights, spawners, and destinations.
   void RegisterCellTypes() {
@@ -225,10 +224,10 @@ private:
   /// and destinations.
   void ScanGrid() {
     const std::vector<std::string> colour_palette = {
-        "\033[91m", // bright red
-        "\033[92m", // bright green
-        "\033[93m", // bright yellow
-        "\033[94m", // bright blue
+        "\033[91m",  // bright red
+        "\033[92m",  // bright green
+        "\033[93m",  // bright yellow
+        "\033[94m",  // bright blue
     };
     size_t colour_idx = 0;
 
@@ -249,7 +248,7 @@ private:
         } else if (main_grid[pos] == bus_spawner_id) {
           bus_spawner_positions.push_back(pos);
         } else if (cell == destination_id) {
-          destination_positions.Insert(pos, 1.0); // equal weight for now
+          destination_positions.Insert(pos, 1.0);  // equal weight for now
           destination_colours.emplace(
               pos, colour_palette[colour_idx % colour_palette.size()]);
           ++colour_idx;
@@ -258,11 +257,11 @@ private:
     }
   }
 
-public:
+ public:
   /// @brief Construct a TrafficWorld from a vector of strings representing
   /// the grid layout.
   /// Written by Claude.
-  explicit StepTrafficWorld(const std::vector<std::string> &grid_lines,
+  explicit StepTrafficWorld(const std::vector<std::string>& grid_lines,
                             bool use_buses = false) {
     RegisterCellTypes();
     main_grid.Load(grid_lines);
@@ -274,7 +273,7 @@ public:
 
   /// @brief Construct a TrafficWorld by reading a grid layout from a file.
   /// Written by Claude.
-  explicit StepTrafficWorld(const std::string &filepath,
+  explicit StepTrafficWorld(const std::string& filepath,
                             bool use_buses = false) {
     RegisterCellTypes();
     std::ifstream file(filepath);
@@ -290,14 +289,14 @@ public:
   [[nodiscard]] int GetNumSpawnedAgents() const { return num_spawned_agents; }
 
   /// @brief Return aggregated traffic metrics collected once per world update.
-  [[nodiscard]] const DataLog<TrafficData> &GetTrafficDataLog() const {
+  [[nodiscard]] const DataLog<TrafficData>& GetTrafficDataLog() const {
     return traffic_data_log;
   }
 
   /// @brief Return the ANSI colour code pre-assigned to a destination tile,
   ///        or an empty string if the position is not a destination.
-  [[nodiscard]] const std::string &
-  GetDestinationColour(const WorldPosition &pos) const {
+  [[nodiscard]] const std::string& GetDestinationColour(
+      const WorldPosition& pos) const {
     auto it = destination_colours.find(pos);
     if (it != destination_colours.end()) {
       return it->second;
@@ -312,8 +311,8 @@ public:
   /// @param pos Agent's current position
   /// @param new_pos Position the agent is attempting to move to
   /// @return Direction from pos to new_pos if move is valid, error otherwise
-  [[nodiscard]] std::expected<Direction, WorldErr>
-  GetNewDirection(WorldPosition pos, WorldPosition new_pos) const {
+  [[nodiscard]] std::expected<Direction, WorldErr> GetNewDirection(
+      WorldPosition pos, WorldPosition new_pos) const {
     double old_x = pos.X();
     double old_y = pos.Y();
     double new_x = new_pos.X();
@@ -368,8 +367,8 @@ public:
   /// directions, make turns at intersections as long as the street they're
   /// trying to turn onto only has cars in the opposite-direction lane, and so
   /// on.)
-  [[nodiscard]] std::expected<bool, WorldErr>
-  CanMakeMoveAt(const Agent &agent, const WorldPosition &new_pos) const {
+  [[nodiscard]] std::expected<bool, WorldErr> CanMakeMoveAt(
+      const Agent& agent, const WorldPosition& new_pos) const {
     if (!IsValid(new_pos) || IsGrass(new_pos)) {
       return false;
     }
@@ -401,37 +400,33 @@ public:
     return true;
   }
 
-  [[nodiscard]] bool IsValid(const WorldPosition &pos) const {
+  [[nodiscard]] bool IsValid(const WorldPosition& pos) const {
     return main_grid.IsValid(pos);
   }
 
-  [[nodiscard]] bool IsGrass(const WorldPosition &pos) const {
+  [[nodiscard]] bool IsGrass(const WorldPosition& pos) const {
     return main_grid.IsValid(pos) && main_grid[pos] == grass_id;
   }
   /// @brief Returns whether the given position has a traffic-light tile which
   /// is currently blocking horizontal traffic.
-  [[nodiscard]] bool HorizontalBlockedAt(const WorldPosition &pos) const {
+  [[nodiscard]] bool HorizontalBlockedAt(const WorldPosition& pos) const {
     return main_grid.IsValid(pos) &&
            main_grid[pos] == traffic_light_vertical_id;
   }
   /// @brief Returns whether the given position has a traffic-light tile which
   /// is currently blocking vertical traffic.
-  [[nodiscard]] bool VerticalBlockedAt(const WorldPosition &pos) const {
+  [[nodiscard]] bool VerticalBlockedAt(const WorldPosition& pos) const {
     return main_grid.IsValid(pos) &&
            main_grid[pos] == traffic_light_horizontal_id;
   }
   /// @brief Returns whether the given position is surrounded by grass on all
   /// but one side.
-  [[nodiscard]] bool IsDeadEnd(const WorldPosition &pos) const {
+  [[nodiscard]] bool IsDeadEnd(const WorldPosition& pos) const {
     int grass_count = 0;
-    if (IsGrass(pos.Up()))
-      grass_count++;
-    if (IsGrass(pos.Down()))
-      grass_count++;
-    if (IsGrass(pos.Left()))
-      grass_count++;
-    if (IsGrass(pos.Right()))
-      grass_count++;
+    if (IsGrass(pos.Up())) grass_count++;
+    if (IsGrass(pos.Down())) grass_count++;
+    if (IsGrass(pos.Left())) grass_count++;
+    if (IsGrass(pos.Right())) grass_count++;
 
     return grass_count == 3;
   }
@@ -443,12 +438,12 @@ public:
   }
 
   [[nodiscard]] bool CanCollideWithAgentAt(const Direction agent_direction,
-                                           const WorldPosition &pos) const {
+                                           const WorldPosition& pos) const {
     Direction opposite = GetOppositeDirection(agent_direction);
-    auto is_agent_at_position = [&](const AgentPtr &ptr) {
+    auto is_agent_at_position = [&](const AgentPtr& ptr) {
       return ptr->GetState().is_active && ptr->GetState().position == pos;
     };
-    auto not_opposite_direction = [&](const AgentPtr &ptr) {
+    auto not_opposite_direction = [&](const AgentPtr& ptr) {
       return ptr->GetState().direction != opposite;
     };
     return !std::ranges::empty(agent_set |
@@ -498,7 +493,7 @@ public:
     traffic_data_log.AggregateData(agent_set);
   }
 
-private:
+ private:
   // Reworked by Claude — swap traffic light cell types to update both
   // movement rules and display symbol in one step
   void UpdateTrafficLights() {
@@ -509,7 +504,7 @@ private:
               ? TrafficLightPhase::ALLOW_VERTICAL
               : TrafficLightPhase::ALLOW_HORIZONTAL;
       // Flip every traffic light to its opposite state
-      for (const auto &pos : traffic_light_positions) {
+      for (const auto& pos : traffic_light_positions) {
         main_grid[pos] = (main_grid[pos] == traffic_light_vertical_id)
                              ? traffic_light_horizontal_id
                              : traffic_light_vertical_id;
@@ -518,7 +513,7 @@ private:
   }
 
   [[nodiscard]] bool AgentExistsAt(WorldPosition pos) const {
-    auto agent_at = [&](const AgentPtr &ptr) {
+    auto agent_at = [&](const AgentPtr& ptr) {
       return ptr->GetState().position == pos;
     };
     return std::ranges::find_if(agent_set, agent_at) != agent_set.end();
@@ -527,8 +522,8 @@ private:
   /// Pulls out common logic for the spawners and simplifies the update spwaners
   /// go to each spawner without an agent currently on top of it and
   /// spawn a new DrivingAgent with a randomly chosen destination.
-  void SpawnFromPositions(const std::vector<WorldPosition> &positions) {
-    for (const WorldPosition &pos : positions) {
+  void SpawnFromPositions(const std::vector<WorldPosition>& positions) {
+    for (const WorldPosition& pos : positions) {
       if (!AgentExistsAt(pos) && num_spawned_agents < max_spawned_agents) {
         auto dest = destination_positions.GetRandomElement();
         if (dest.has_value()) {
@@ -568,8 +563,8 @@ private:
   // Pulls, from despawned_agent_ids, the ID of an agent that previously
   // despawned and is now inactive, then respawns that agent at the given
   // spawner with the given destination.
-  void RecycleDespawnedAgent(const WorldPosition &spawner_pos,
-                             const WorldPosition &dest_pos) {
+  void RecycleDespawnedAgent(const WorldPosition& spawner_pos,
+                             const WorldPosition& dest_pos) {
     assert(!despawned_agent_ids.empty());
     size_t reuse_id = despawned_agent_ids.front();
     despawned_agent_ids.pop();
@@ -591,7 +586,7 @@ private:
   /// then set their color to pink (for the terminal view) and activate them.
   void SetupBuses() {
     SetupScriptedAgents(GetAgentFileContents("buses.al"));
-    for (AgentPtr &ptr : agent_set) {
+    for (AgentPtr& ptr : agent_set) {
       auto state = ptr->GetState();
       state.symbol = '>';
       state.colour = "\033[95m";
@@ -620,14 +615,14 @@ private:
   /// facing that way, matching the symbols the old DrivingAgent used.
   static constexpr char DirectionSymbol(Direction dir) {
     switch (dir) {
-    case Direction::North:
-      return '^';
-    case Direction::East:
-      return '>';
-    case Direction::South:
-      return 'v';
-    case Direction::West:
-      return '<';
+      case Direction::North:
+        return '^';
+      case Direction::East:
+        return '>';
+      case Direction::South:
+        return 'v';
+      case Direction::West:
+        return '<';
     }
     return '?';
   }
@@ -654,16 +649,15 @@ private:
     // Colour destination tiles using the pre-assigned palette.
     for (size_t y = 0; y < H; ++y) {
       for (size_t x = 0; x < W; ++x) {
-        const std::string &col = GetDestinationColour(WorldPosition{x, y});
-        if (!col.empty())
-          colour_grid[y][x] = col;
+        const std::string& col = GetDestinationColour(WorldPosition{x, y});
+        if (!col.empty()) colour_grid[y][x] = col;
       }
     }
 
     // Colour spawner tiles with cyan shades, all displayed as 'S'
-    auto colourSpawners = [&](const std::vector<WorldPosition> &positions,
-                              const std::string &colour) {
-      for (const auto &pos : positions) {
+    auto colourSpawners = [&](const std::vector<WorldPosition>& positions,
+                              const std::string& colour) {
+      for (const auto& pos : positions) {
         size_t x = pos.CellX(), y = pos.CellY();
         symbol_grid[y][x] = 'S';
         colour_grid[y][x] = colour;
@@ -675,21 +669,19 @@ private:
     colourSpawners(slow_spawner_positions, slow_spawn_colour);
 
     // Display bus spawner tiles as 'B' in bright white
-    for (const auto &pos : bus_spawner_positions) {
+    for (const auto& pos : bus_spawner_positions) {
       size_t x = pos.CellX(), y = pos.CellY();
       symbol_grid[y][x] = '.';
     }
 
     // Stamp active agents onto the grid.
-    for (const auto &agent_ptr : agent_set) {
-      const TrafficData &state = agent_ptr->GetState();
-      if (!state.is_active)
-        continue;
+    for (const auto& agent_ptr : agent_set) {
+      const TrafficData& state = agent_ptr->GetState();
+      if (!state.is_active) continue;
 
       const size_t ax = state.position.CellX();
       const size_t ay = state.position.CellY();
-      if (ax >= W || ay >= H)
-        continue;
+      if (ax >= W || ay >= H) continue;
 
       symbol_grid[ay][ax] = DirectionSymbol(state.direction);
       if (!state.colour.empty()) {
@@ -704,7 +696,7 @@ private:
     for (size_t y = 0; y < H; ++y) {
       std::cout << '|';
       for (size_t x = 0; x < W; ++x) {
-        const std::string &col = colour_grid[y][x];
+        const std::string& col = colour_grid[y][x];
         if (!col.empty()) {
           std::cout << col << symbol_grid[y][x] << "\033[0m";
         } else {
@@ -717,9 +709,9 @@ private:
     std::cout.flush();
   }
 
-public:
+ public:
   /// Set the delay between displayed frames (default 200 ms).
-  StepTrafficWorld &SetFrameDelay(std::chrono::milliseconds delay) {
+  StepTrafficWorld& SetFrameDelay(std::chrono::milliseconds delay) {
     frame_delay = delay;
     return *this;
   }
@@ -749,4 +741,4 @@ public:
     }
   }
 };
-}; // namespace cse498
+};  // namespace cse498

@@ -19,8 +19,9 @@
 
 namespace cse498 {
 
-template <typename DataClass> class DataLog : public IDataLog<DataClass> {
-private:
+template <typename DataClass>
+class DataLog : public IDataLog<DataClass> {
+ private:
   std::unordered_map<std::string, std::vector<TickStats>> time_series;
   std::unordered_map<size_t, WorldPosition> previous_positions;
   std::unordered_map<size_t, double> cumulative_distance;
@@ -36,19 +37,19 @@ private:
       "time_to_arrive"};
 
   void InitFields(std::span<const std::string_view> fields) {
-    for (const auto &field : fields) {
+    for (const auto& field : fields) {
       time_series[std::string(field)] = {};
     }
   }
 
-public:
+ public:
   /// @brief Construct DataLog with a declared set of field names.
   /// The map is pre-keyed so the schema is known from tick 0.
   /// Only fields in this list will be aggregated; anything else from
   /// agent.describe() is ignored.
   /// @param fields constexpr array of field name string literals
   template <size_t N>
-  explicit DataLog(const std::array<std::string_view, N> &fields) {
+  explicit DataLog(const std::array<std::string_view, N>& fields) {
     InitFields(fields);
   }
 
@@ -58,12 +59,12 @@ public:
   /// @param worldType WorldType::Infection or WorldType::Traffic
   explicit DataLog(WorldType worldType) {
     switch (worldType) {
-    case WorldType::Infection:
-      InitFields(kInfectionFields);
-      break;
-    case WorldType::Traffic:
-      InitFields(kTrafficFields);
-      break;
+      case WorldType::Infection:
+        InitFields(kInfectionFields);
+        break;
+      case WorldType::Traffic:
+        InitFields(kTrafficFields);
+        break;
     }
   }
 
@@ -73,14 +74,14 @@ public:
   /// entry per declared field to the time series.
   /// @param agents Vector of agents in the world
   void AggregateData(
-      const std::vector<std::shared_ptr<StepAgentBase<DataClass>>> &agents)
+      const std::vector<std::shared_ptr<StepAgentBase<DataClass>>>& agents)
       override;
 
   /// @brief Returns the full time series for all declared fields.
   /// Index into the vector by tick number; call .back() for the latest tick.
   /// @returns Map of field name to vector of TickStats (one entry per tick)
-  const std::unordered_map<std::string, std::vector<TickStats>> &
+  const std::unordered_map<std::string, std::vector<TickStats>>&
   GetAggregationData() const override;
 };
 
-} // namespace cse498
+}  // namespace cse498
