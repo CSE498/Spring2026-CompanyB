@@ -148,12 +148,12 @@ void DataLog<DataClass>::AggregateData(
     stats.count = values.size();
     stats.sum = std::accumulate(values.begin(), values.end(), 0.0);
     stats.mean = stats.sum / static_cast<double>(stats.count);
-    stats.min = *std::min_element(values.begin(), values.end());
-    stats.max = *std::max_element(values.begin(), values.end());
+    stats.min = *std::ranges::min_element(values);
+    stats.max = *std::ranges::max_element(values);
 
     // Median
     std::vector<double> sorted = values;
-    std::sort(sorted.begin(), sorted.end());
+    std::ranges::sort(sorted);
     const size_t n = sorted.size();
     if (n % 2 == 0) {
       stats.median = (sorted[n / 2 - 1] + sorted[n / 2]) / 2.0;
