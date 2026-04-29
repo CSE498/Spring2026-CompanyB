@@ -6,8 +6,8 @@
 static int argc = 0;
 static QApplication app(argc, nullptr);
 
-static const QString kImg1 = "../../images/test1.png";
-static const QString kImg2 = "../../images/test2.png";
+static const QString kImg1 = QString::fromStdString(std::string(TEST_IMAGE_DIR)) + "/test1.png";
+static const QString kImg2 = QString::fromStdString(std::string(TEST_IMAGE_DIR)) + "/test2.png";
 
 TEST_CASE("Test ImageManager Constructor", "[ImageManager]") {
   cse498::ImageManager manager1;
