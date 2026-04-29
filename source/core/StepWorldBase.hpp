@@ -38,6 +38,8 @@ class StepWorldBase {
   std::vector<AgentPtr> agent_set;
   /// Main grid for this world
   WorldGrid main_grid;
+  /// Current tick/simulation step counter
+  uint64_t tick_count{0};
 
   /// Helper function that is run whenever a new agent is created.
   /// @note Override this function to provide agents with actions or other
@@ -110,11 +112,15 @@ class StepWorldBase {
   /// @note Override function to control which grid each agent receives.
   virtual void RunAgents(LogLevel loglevel = LogLevel::Normal,
                          uint64_t tick = 0) {
+    mCurrentTick = tick;
     for (const auto& agent_ptr : agent_set) {
       DataClass new_state = DoAction(agent_ptr);
       agent_ptr->SetState(new_state, loglevel, tick);
     }
   }
+
+  /// @brief Get the current simulation tick count.
+  [[nodiscard]] uint64_t GetTickCount() const noexcept { return mCurrentTick; }
 
   /// @brief UpdateWorld() is run after every agent has a turn.
   /// Override this function to manage background events for a world.
@@ -125,9 +131,11 @@ class StepWorldBase {
   virtual void Run() {
     SetupScriptedAgents();
     run_over = false;
+    mCurrentTick = 0;
     while (!run_over) {
-      RunAgents();
+      RunAgents(LogLevel::Normal, mCurrentTick);
       UpdateWorld();
+      ++mCurrentTick;
     }
   }
 };

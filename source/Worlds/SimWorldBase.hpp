@@ -26,7 +26,7 @@ class SimWorldBase : public StepWorldBase<DataClass> {
 
   size_t floor_id{};  ///< Easy access to floor CellType ID.
   size_t wall_id{};   ///< Easy access to wall CellType ID.
-  size_t tick_count{0};
+  //size_t tick_count{0};
 
  public:
   SimWorldBase() {
@@ -37,7 +37,7 @@ class SimWorldBase : public StepWorldBase<DataClass> {
 
   // -- Accessors --
 
-  [[nodiscard]] size_t GetTickCount() const { return tick_count; }
+  //[[nodiscard]] size_t GetTickCount() const { return tick_count; }
   [[nodiscard]] size_t GetFloorID() const { return floor_id; }
   [[nodiscard]] size_t GetWallID() const { return wall_id; }
   [[nodiscard]] size_t GetNumAgents() const { return agent_set.size(); }
