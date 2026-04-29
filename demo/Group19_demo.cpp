@@ -10,16 +10,22 @@
 using namespace cse498;
 
 int main() {
-  // At this point, there isn't much you can do with TrafficWorld besides make
-  // it. You can add agents in the same way as any world, but it spawns agents
-  // on its own, so you don't need to. Also note that TrafficWorld is only fully
-  // compatible with DrivingAgent right now. This is not something we want to
-  // have long-term, of course, but until the agent-world API is fully worked
-  // out, we figure we'll just use a single simple agent to show things off.
   TrafficWorld world("demo/DemoWorld.grid");
-  // AutoInterface is a little class we made to replace TrashInterface for the
-  // specific purpose of
   world.AddAgent<AutoInterface>("Viewer");
 
-  world.Run();
+  // Step the world a few times and print summary DataLog stats.
+  for (int tick = 0; tick < 5; ++tick) {
+    world.RunAgents();
+    world.UpdateWorld();
+
+    const auto& log = world.GetTrafficDataLog().GetAggregationData();
+    if (log.contains("active_count") && !log.at("active_count").empty()) {
+      const auto& stats = log.at("active_count").back();
+      std::cout << "Tick " << tick << " active_count=" << stats.sum
+                << " mean=" << stats.mean << " count=" << stats.count
+                << "\n";
+    }
+  }
+
+  return 0;
 }
