@@ -556,7 +556,7 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
     state.is_active = true;
     state.symbol = '>';
     state.colour = GetDestinationColour(dest_pos);
-    driver->SetState(state, LogLevel::Normal, world->GetTickCount());
+    driver->SetState(state, LogLevel::Normal, GetTickCount());
   }
 
   // =====================================================================

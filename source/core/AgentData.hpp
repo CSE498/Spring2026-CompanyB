@@ -9,10 +9,9 @@
 
 #pragma once
 
+#include <nlohmann/json.hpp>
 #include <optional>
 #include <string>
-#include <nlohmann/json.hpp>
-
 
 #include "../tools/StateGridPosition.hpp"
 #include "WorldPosition.hpp"
