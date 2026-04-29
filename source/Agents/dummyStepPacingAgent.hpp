@@ -96,8 +96,9 @@ class StepPacingAgent : public StepAgentBase<DiseaseData> {
   }
 
  public:
-  StepPacingAgent(DiseaseData data, size_t id)
-      : StepAgentBase<DiseaseData>(data, id) {}
+  StepPacingAgent(DiseaseData data, size_t id,
+                  LogLevel loglevel = LogLevel::Normal, uint64_t tick = 0)
+      : StepAgentBase<DiseaseData>(data, id, loglevel, tick) {}
   ~StepPacingAgent() override = default;
 
   StepPacingAgent& SetHorizontal() {
