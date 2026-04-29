@@ -154,9 +154,9 @@ TEST_CASE("Traffic agent at destination returns empty container",
   REQUIRE(turn.empty());
 }
 
-// Traffic agent with destination — InfoStep emission
+// Traffic agent with destination, ordered movement returns
 
-TEST_CASE("Traffic agent heading right emits InfoStep for Right neighbor",
+TEST_CASE("Traffic agent heading right emits Right as first movement option",
           "[SwarmingAgent]") {
   WorldPosition pos{5, 5};
   WorldPosition dest{8, 5};
@@ -164,13 +164,12 @@ TEST_CASE("Traffic agent heading right emits InfoStep for Right neighbor",
   SwarmingAgent<TrafficData> agent(data, 0);
 
   auto turn = agent.GetTurn();
-  InfoStep info = NextInfo(turn);
+  MovementStep move = NextMovement(turn);
 
-  REQUIRE(info.aspect == InfoStep::Aspect::LOC_AVAIL);
-  REQUIRE(info.target == pos.Right());
+  REQUIRE(move.loc == pos.Right());
 }
 
-TEST_CASE("Traffic agent heading left emits InfoStep for Left neighbor",
+TEST_CASE("Traffic agent heading left emits Left as first movement option",
           "[SwarmingAgent]") {
   WorldPosition pos{5, 5};
   WorldPosition dest{2, 5};
@@ -178,43 +177,40 @@ TEST_CASE("Traffic agent heading left emits InfoStep for Left neighbor",
   SwarmingAgent<TrafficData> agent(data, 0);
 
   auto turn = agent.GetTurn();
-  InfoStep info = NextInfo(turn);
+  MovementStep move = NextMovement(turn);
 
-  REQUIRE(info.aspect == InfoStep::Aspect::LOC_AVAIL);
-  REQUIRE(info.target == pos.Left());
+  REQUIRE(move.loc == pos.Left());
 }
 
-TEST_CASE("Traffic agent heading up emits InfoStep for Up neighbor",
+TEST_CASE("Traffic agent heading up emits Up as first movement option",
           "[SwarmingAgent]") {
   WorldPosition pos{5, 5};
-  WorldPosition dest{5, 2};  // Up means decreasing Y
+  WorldPosition dest{5, 2};
   auto data = MakeTrafficData(pos, dest);
   SwarmingAgent<TrafficData> agent(data, 0);
 
   auto turn = agent.GetTurn();
-  InfoStep info = NextInfo(turn);
+  MovementStep move = NextMovement(turn);
 
-  REQUIRE(info.aspect == InfoStep::Aspect::LOC_AVAIL);
-  REQUIRE(info.target == pos.Up());
+  REQUIRE(move.loc == pos.Up());
 }
 
-TEST_CASE("Traffic agent heading down emits InfoStep for Down neighbor",
+TEST_CASE("Traffic agent heading down emits Down as first movement option",
           "[SwarmingAgent]") {
   WorldPosition pos{5, 5};
-  WorldPosition dest{5, 8};  // Down means increasing Y
+  WorldPosition dest{5, 8};
   auto data = MakeTrafficData(pos, dest);
   SwarmingAgent<TrafficData> agent(data, 0);
 
   auto turn = agent.GetTurn();
-  InfoStep info = NextInfo(turn);
+  MovementStep move = NextMovement(turn);
 
-  REQUIRE(info.aspect == InfoStep::Aspect::LOC_AVAIL);
-  REQUIRE(info.target == pos.Down());
+  REQUIRE(move.loc == pos.Down());
 }
 
-// Conditional movement after InfoStep
+// Traffic agent with destination, ordered movement returns
 
-TEST_CASE("inform(true) yields MovementStep to primary neighbor",
+TEST_CASE("Traffic agent with destination emits four movement options",
           "[SwarmingAgent]") {
   WorldPosition pos{5, 5};
   WorldPosition dest{8, 5};
@@ -223,63 +219,27 @@ TEST_CASE("inform(true) yields MovementStep to primary neighbor",
 
   auto turn = agent.GetTurn();
 
-  // Consume InfoStep
-  NextInfo(turn);
+  MovementStep first = NextMovement(turn);
+  MovementStep second = NextMovement(turn);
+  MovementStep third = NextMovement(turn);
+  MovementStep fourth = NextMovement(turn);
 
-  // Inform the container that the location is available
-  turn.inform(true);
+  REQUIRE(IsCardinalNeighbor(pos, first.loc));
+  REQUIRE(IsCardinalNeighbor(pos, second.loc));
+  REQUIRE(IsCardinalNeighbor(pos, third.loc));
+  REQUIRE(IsCardinalNeighbor(pos, fourth.loc));
 
-  // Next should be a ConditionalStep handled internally, resolving to primary
-  MovementStep ms = NextMovement(turn);
-  REQUIRE(ms.loc == pos.Right());
-}
+  std::set<std::pair<double, double>> unique_moves;
+  unique_moves.insert({first.loc.X(), first.loc.Y()});
+  unique_moves.insert({second.loc.X(), second.loc.Y()});
+  unique_moves.insert({third.loc.X(), third.loc.Y()});
+  unique_moves.insert({fourth.loc.X(), fourth.loc.Y()});
 
-TEST_CASE("inform(false) yields MovementStep to backup neighbor",
-          "[SwarmingAgent]") {
-  WorldPosition pos{5, 5};
-  WorldPosition dest{8, 5};
-  auto data = MakeTrafficData(pos, dest);
-  SwarmingAgent<TrafficData> agent(data, 0);
+  REQUIRE(unique_moves.size() == 4);
 
-  auto turn = agent.GetTurn();
-
-  // Consume InfoStep
-  NextInfo(turn);
-
-  // Inform the container that the location is NOT available
-  turn.inform(false);
-
-  // Next should be the backup neighbor — best_neighbor with primary excluded.
-  // dest is (8,5), pos is (5,5). Primary is Right (6,5).
-  // Excluding Right, neighbors considered in array order: Up(5,4), Down(5,6),
-  // Left(4,5). Manhattan distances to (8,5): Up=|8-5|+|5-4|=4,
-  // Down=|8-5|+|5-6|=4, Left=|8-4|+|5-5|=4 All tied at 4 — first in array order
-  // wins: Up(5,4). But recent_positions may affect this; best_neighbor prefers
-  // "fresh" cells. On a fresh agent with no history other than pos and primary
-  // recorded, pos=(5,5) and primary=(6,5) are in recent. Up/Down/Left are all
-  // fresh and tied. First fresh in array order (Up) wins.
-  MovementStep ms = NextMovement(turn);
-  REQUIRE(ms.loc == pos.Up());
-}
-
-TEST_CASE("ConditionalStep without inform returns NOT_INFORMED error",
-          "[SwarmingAgent]") {
-  WorldPosition pos{5, 5};
-  WorldPosition dest{8, 5};
-  auto data = MakeTrafficData(pos, dest);
-  SwarmingAgent<TrafficData> agent(data, 0);
-
-  auto turn = agent.GetTurn();
-
-  // Consume InfoStep
-  NextInfo(turn);
-
-  // Do NOT call inform — the next get_next should error
-  auto result = turn.get_next();
-  // The ConditionalStep is next; without inform it should fail
-  // Actually get_next returns the ConditionalStep node which checks world_info
-  REQUIRE_FALSE(result.has_value());
-  REQUIRE(result.error().kind == StepErr::Kind::NOT_INFORMED);
+  auto extra = turn.get_next();
+  REQUIRE_FALSE(extra.has_value());
+  REQUIRE(extra.error().kind == StepErr::Kind::STEPS_EXHAUSTED);
 }
 
 // Disease agent behavior
