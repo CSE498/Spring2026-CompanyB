@@ -220,7 +220,7 @@ class WebCanvas : public WebElement {
   WebCanvas& Stroke();
 
   /**
-   * @brief Blit the contents of another WebCanvas onto this one. Used to
+   * @brief Bit Block Tranfer the contents of another WebCanvas onto this one. Used to
    * composite a cached static-layer canvas onto the visible canvas without
    * re-issuing every draw call.
    * @param src The source canvas to copy from.
