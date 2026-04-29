@@ -264,17 +264,7 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
     RegisterCellTypes();
     main_grid.Load(grid_lines);
     ScanGrid();
-    //SpawnBuses();
-    //SetupScriptedAgents("buses.al");
-    SetupScriptedAgents();
-    for (AgentPtr& ptr : agent_set) {
-      std::cout << "TEST" << std::endl;
-      auto state = ptr->GetState();
-      state.symbol = '>';
-      state.colour = "\033[95m";
-      state.is_active = true;
-      ptr->SetState(state);
-    }
+    SetupBuses();
   }
 
   /// @brief Construct a TrafficWorld by reading a grid layout from a file.
@@ -285,17 +275,7 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
     assert(file.is_open() && "TrafficWorld: could not open grid file");
     main_grid.Load(file);
     ScanGrid();
-    //SpawnBuses();
-    //SetupScriptedAgents("buses.al");
-    SetupScriptedAgents();
-    for (AgentPtr& ptr : agent_set) {
-      std::cout << "TEST" << std::endl;
-      auto state = ptr->GetState();
-      state.symbol = '>';
-      state.colour = "\033[95m";
-      state.is_active = true;
-      ptr->SetState(state);
-    }
+    SetupBuses();
   }
 
   /// @brief Return the number of currently active spawned agents.
@@ -605,6 +585,17 @@ if (new_x == old_x) {
     state.symbol = '>';
     state.colour = GetDestinationColour(dest_pos);
     driver->SetState(state);
+  }
+
+  void SetupBuses() {
+    SetupScriptedAgents(GetAgentFileContents("buses.al"));
+    for (AgentPtr& ptr : agent_set) {
+      auto state = ptr->GetState();
+      state.symbol = '>';
+      state.colour = "\033[95m";
+      state.is_active = true;
+      ptr->SetState(state);
+    }
   }
 
   /// @brief Spawn one ScriptedBusAgent at every 'B' tile found during ScanGrid.
