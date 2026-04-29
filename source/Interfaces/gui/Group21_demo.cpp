@@ -14,6 +14,8 @@ int main(int argc, char *argv[]) {
 
   cse498::StartScreen startScreen(backgroundImagePaths, tileSize,
                                   agentImagePath);
+
+  // startScreen.setWindowState(Qt::WindowMaximized);
   startScreen.show();
 
   return app.exec();
