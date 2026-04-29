@@ -194,7 +194,7 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
   /// Written by Claude.
   std::queue<size_t> despawned_agent_ids{};
 
-  private:
+ private:
   //  Pulled by Claude out of the preexisting constructor — registers cell types
   //  and scans the loaded grid for traffic lights, spawners, and destinations.
   void RegisterCellTypes() {
@@ -305,24 +305,7 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
     double new_x = new_pos.X();
     double new_y = new_pos.Y();
     Direction new_dir{};
-    /**
-if (new_x == old_x) {
-  if (new_y == old_y - 1.0) {
-    new_dir = Direction::North;
-  } else if (new_y == old_y + 1.0) {
-    new_dir = Direction::South;
-  } else {
-    return std::unexpected<WorldErr>("invalid move");
-  }
-} else if (new_y == old_y) {
-  if (new_x == old_x - 1.0) {
-    new_dir = Direction::West;
-  } else if (new_x == old_x + 1.0) {
-    new_dir = Direction::East;
-  } else {
-    return std::unexpected<WorldErr>("invalid move");
-  }
-    */
+
     // Avoids possible underflow by comparing after addition
     if (new_x == old_x) {
       if (old_y > 0 && new_y + 1 == old_y) {
@@ -585,7 +568,8 @@ if (new_x == old_x) {
     state.colour = GetDestinationColour(dest_pos);
     driver->SetState(state);
   }
-
+  /// @brief Spawn in the "bus" ScriptedAgents described in the buses script,
+  /// then set their color to pink (for the terminal view) and activate them.
   void SetupBuses() {
     SetupScriptedAgents(GetAgentFileContents("buses.al"));
     for (AgentPtr& ptr : agent_set) {
