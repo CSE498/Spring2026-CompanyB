@@ -88,7 +88,6 @@ TEST_CASE("InfectiousWorld: InfectAgent updates state", "[InfectiousWorld]") {
   CHECK(world.GetSusceptibleCount() == 0);
 }
 
-
 // ============================================================================
 // Spread
 // ============================================================================
