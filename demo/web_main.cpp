@@ -7,7 +7,9 @@
 #include <emscripten/val.h>
 
 #include <charconv>
+#include <fstream>
 #include <functional>
+#include <sstream>
 
 #include "WebButton.h"
 #include "WebCanvas.hpp"
@@ -100,6 +102,25 @@ static std::unique_ptr<WebTextboxOutputManager> logger;
 // Per-sim event tracking so we can emit logs when things change
 static size_t last_traffic_agent_count = 0;
 static std::vector<bool> traffic_reached_log;
+
+// Half-open ID range [scripted_lo, scripted_hi) of scripted cars to set colors appropriately
+static size_t scripted_traffic_lo = 0;
+static size_t scripted_traffic_hi = 0;
+
+// Forward declaration
+static const std::string& LoadAgentScript(const char* vfs_path);
+
+// Add the agentlang-defined cars into traffic_world and refresh the
+// scripted_traffic_lo/hi range. Call after every construction or reconstruction of
+// traffic_world so the range tracks the current agent_set ordering.
+static void AddTrafficScriptedAgents() {
+    const std::string& traffic_script = LoadAgentScript("scripts/traffic_script.al");
+    scripted_traffic_lo = traffic_world->GetNumAgents();
+    traffic_world->AddScriptedAgent(TrafficData{.is_active = true}, traffic_script, 0);
+    traffic_world->AddScriptedAgent(TrafficData{.is_active = true}, traffic_script, 1);
+    scripted_traffic_hi = traffic_world->GetNumAgents();
+}
+
 static std::vector<int> last_virus_health;
 static size_t sim_tick = 0;  // incremented each advance step
 
@@ -129,6 +150,21 @@ static int StepsThisFrame() {
         last_step_ms += steps * interval;
     }
     return steps;
+}
+
+// Read an agentlang script from the wasm virtual filesystem. Caches the script.
+static const std::string& LoadAgentScript(const char* vfs_path) {
+    static std::unordered_map<std::string, std::string> cache;
+    auto it = cache.find(vfs_path);
+    if (it != cache.end()) return it->second;
+    std::ifstream file(vfs_path);
+    if (!file) {
+        std::println("Failed to open agent script '{}'", vfs_path);
+        return cache.emplace(vfs_path, std::string{}).first->second;
+    }
+    std::ostringstream ss;
+    ss << file.rdbuf();
+    return cache.emplace(vfs_path, ss.str()).first->second;
 }
 
 // Parse a non-throwing int from a string. Returns true on full successful parse.
@@ -230,6 +266,7 @@ auto handle_sim_state = [](SimState next) {
             // Reset the active world to its initial state
             if (active_sim == ActiveSim::TRAFFIC) {
                 traffic_world = std::make_unique<WebTrafficWorld>("assets/grids/TrafficWorld_Web.grid");
+                AddTrafficScriptedAgents();
                 last_traffic_agent_count = 0;
                 traffic_reached_log.clear();
             } else if (active_sim == ActiveSim::VIRUS) {
@@ -289,7 +326,13 @@ void DrawTrafficSim() {
         WorldPosition pos = state.position;
         double cx = pos.CellX() * cell_w + cell_w / 2.0;
         double cy = pos.CellY() * cell_h + cell_h / 2.0;
-        GameCanvas->SetFillColor({255, 80, 80}).DrawCircle(cx, cy, radius * 0.75, true);
+        bool is_scripted = id >= scripted_traffic_lo && id < scripted_traffic_hi;
+        if (is_scripted) {
+            GameCanvas->SetFillColor({80, 120, 255});
+        } else {
+            GameCanvas->SetFillColor({255, 80, 80});
+        }
+        GameCanvas->DrawCircle(cx, cy, radius * 0.75, true);
     }
 
     if (sim_state == SimState::PLAYING) {
@@ -523,14 +566,20 @@ void SetupVirusWorld() {
     virus_world->SetClinicEntrance(WorldPosition{900, 700});
     virus_world->SetRecoveryExit(WorldPosition{780, 470});
 
-    // Resident pacers
-    using Pacer = ScriptedAgent<DiseaseData>;
-    virus_world->AddAgent<Pacer>(DiseaseData{WorldPosition{ 80, 200}});
-    virus_world->AddAgent<Pacer>(DiseaseData{WorldPosition{220, 200}});
-    virus_world->AddAgent<Pacer>(DiseaseData{WorldPosition{420, 200}});
-    virus_world->AddAgent<Pacer>(DiseaseData{WorldPosition{ 60, 700}});
-    virus_world->AddAgent<Pacer>(DiseaseData{WorldPosition{260, 700}});
-    virus_world->AddAgent<Pacer>(DiseaseData{WorldPosition{600, 200}});
+    const std::string& pacer_script = LoadAgentScript("scripts/infection_script.al");
+
+    struct PacerSpec { WorldPosition pos; size_t def_idx; };
+    const PacerSpec kPacers[] = {
+        {{ 80, 200}, 0},   // h_pacer
+        {{220, 200}, 0},   // h_pacer
+        {{420, 200}, 1},   // v_pacer
+        {{ 60, 700}, 1},   // v_pacer
+        {{260, 700}, 2},   // square_walker
+        {{600, 200}, 3},   // stander
+    };
+    for (const auto& p : kPacers) {
+      virus_world->AddScriptedAgent(DiseaseData{p.pos}, pacer_script, p.def_idx);
+    }
 
     // Initial swarming visitors
     using Swarm = SwarmingAgent<DiseaseData>;
@@ -729,6 +778,8 @@ void load_traffic_layout() {
     sim_state  = SimState::STOPPED;
     sim_tick   = 0;
     traffic_world = std::make_unique<WebTrafficWorld>("assets/grids/TrafficWorld_Web.grid");
+    AddTrafficScriptedAgents();
+
     last_traffic_agent_count = 0;
     traffic_reached_log.clear();
     set_active_layout(SimulationLayout(ActiveSim::TRAFFIC, load_traffic_layout, load_menu_layout));
