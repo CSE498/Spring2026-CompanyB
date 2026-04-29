@@ -718,7 +718,7 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
   }
 
   /// Needed for gui
-  [[nodiscard]] const WorldGrid &GetGrid() const { return main_grid; }
+  [[nodiscard]] const WorldGrid& GetGrid() const { return main_grid; }
   [[nodiscard]] size_t GetNumAgents() const { return agent_set.size(); }
   [[nodiscard]] TrafficData GetAgentState(size_t i) const {
     return agent_set[i]->GetState();
