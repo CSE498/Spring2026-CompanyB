@@ -17,18 +17,19 @@
 
 namespace cse498 {
 
+struct TrafficWorldErr {
+  std::string message = "";
+};
+
 template <typename SpawnedAgent>
 class StepTrafficWorld : public StepWorldBase<TrafficData> {
   using Agent = StepAgentBase<TrafficData>;
   using AgentPtr = std::shared_ptr<Agent>;
   // May want to change this later with e.g an enum of error codes, but since it
   // isn't being used too heavily this is probably fine for now
-  struct WorldErr {
-    std::string message = "";
-  };
 
   struct StepVisitor {
-    using VisitRet = std::expected<void, WorldErr>;
+    using VisitRet = std::expected<void, TrafficWorldErr>;
 
     StepAgentBase<TrafficData>& agent;
     StepContainer& container;
@@ -40,7 +41,7 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
     typename StepVisitor::VisitRet operator()(steps::MovementStep step) {
       auto can_move = world.CanMakeMoveAt(agent, step.loc);
       if (!can_move.has_value()) {
-        return std::unexpected<WorldErr>(can_move.error());
+        return std::unexpected<TrafficWorldErr>(can_move.error());
       }
       if (!can_move.value()) return {};
 
@@ -309,7 +310,7 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
   /// @param pos Agent's current position
   /// @param new_pos Position the agent is attempting to move to
   /// @return Direction from pos to new_pos if move is valid, error otherwise
-  [[nodiscard]] std::expected<Direction, WorldErr> GetNewDirection(
+  [[nodiscard]] std::expected<Direction, TrafficWorldErr> GetNewDirection(
       WorldPosition pos, WorldPosition new_pos) const {
     double old_x = pos.X();
     double old_y = pos.Y();
@@ -324,7 +325,7 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
       } else if (new_y == old_y + 1) {
         new_dir = Direction::South;
       } else {
-        return std::unexpected<WorldErr>("invalid move");
+        return std::unexpected<TrafficWorldErr>("invalid move");
       }
     } else if (new_y == old_y) {
       if (old_x > 0 && new_x + 1 == old_x) {
@@ -332,10 +333,10 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
       } else if (new_x == old_x + 1) {
         new_dir = Direction::East;
       } else {
-        return std::unexpected<WorldErr>("invalid move");
+        return std::unexpected<TrafficWorldErr>("invalid move");
       }
     } else {
-      return std::unexpected<WorldErr>("invalid move");
+      return std::unexpected<TrafficWorldErr>("invalid move");
     }
     return new_dir;
   }
@@ -365,17 +366,17 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
   /// directions, make turns at intersections as long as the street they're
   /// trying to turn onto only has cars in the opposite-direction lane, and so
   /// on.)
-  [[nodiscard]] std::expected<bool, WorldErr> CanMakeMoveAt(
+  [[nodiscard]] std::expected<bool, TrafficWorldErr> CanMakeMoveAt(
       const Agent& agent, const WorldPosition& new_pos) const {
     if (!IsValid(new_pos) || IsGrass(new_pos)) {
       return false;
     }
 
     WorldPosition pos = agent.GetState().position;
-    std::expected<Direction, WorldErr> new_dir_ret =
+    std::expected<Direction, TrafficWorldErr> new_dir_ret =
         GetNewDirection(pos, new_pos);
     if (!new_dir_ret.has_value()) {
-      return std::unexpected<WorldErr>(new_dir_ret.error());
+      return std::unexpected<TrafficWorldErr>(new_dir_ret.error());
     }
     Direction new_dir = new_dir_ret.value();
 
