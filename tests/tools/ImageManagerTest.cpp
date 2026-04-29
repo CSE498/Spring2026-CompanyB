@@ -33,16 +33,6 @@ TEST_CASE("Test ImageManager Load", "[ImageManager]") {
   CHECK(manager1.HasImage("image1"));
 }
 
-TEST_CASE("Test ImageManager HasImage", "[ImageManager]") {
-  cse498::ImageManager manager1;
-
-  CHECK(!manager1.HasImage("image1"));
-
-  CHECK(manager1.Load("image1", kImg1));
-  CHECK(manager1.HasImage("image1"));
-
-  CHECK(!manager1.HasImage("image2"));
-}
 
 TEST_CASE("Test ImageManager GetImage", "[ImageManager]") {
   cse498::ImageManager manager1;
