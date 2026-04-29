@@ -5,6 +5,7 @@
 #pragma once
 
 #include <any>
+#include <exception>
 #include <memory>
 #include <print>
 #include <ranges>
@@ -129,9 +130,7 @@ public:
     mCurrentTurn = StepContainer{}; // Clear the container
 
     if (!mReady) {
-      // Fatal : ScriptedAgent was not initialized
-      std::println("Fatal error: Scripted agent was never initialized!");
-      std::terminate();
+      return StepContainer{};
     }
 
     if (!mTurnNode) {

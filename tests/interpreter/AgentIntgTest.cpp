@@ -224,3 +224,95 @@ TEST_CASE("Infection built-ins reflect the current health state",
     }
   }
 }
+
+// ---------------------------------------------------------------------------
+// Helper: parse a full agent script, set init+turn, run one turn.
+// Returns the StepContainer produced (empty on any error).
+// ---------------------------------------------------------------------------
+static StepContainer run_traffic_turn(std::string const &script) {
+  auto [p, result] = parse(script);
+  if (!result.has_value() || result.value().empty()) return StepContainer{};
+
+  auto *root = dynamic_cast<StmtAgentDef *>(result.value()[0].get());
+  if (!root) return StepContainer{};
+  auto *init = dynamic_cast<StmtBlock *>(root->m_Init.get());
+  auto *turn = dynamic_cast<StmtBlock *>(root->m_Turn.get());
+  if (!init || !turn) return StepContainer{};
+
+  TrafficData data = {};
+  ScriptedAgent<TrafficData> agent(data, 0);
+
+  root->m_Init.release();
+  agent.SetInit(std::unique_ptr<StmtBlock>(init));
+  root->m_Turn.release();
+  agent.SetTurn(std::unique_ptr<StmtBlock>(turn));
+
+  return agent.GetTurn();
+}
+
+TEST_CASE("Two move() calls in one turn produces empty step container",
+          "[traffic][intg]") {
+  constexpr auto SCRIPT = R"V0G0N(
+world traffic;
+let double_mover : car {
+    init : { };
+    turn : {
+        move(right);
+        move(left);
+    };
+};
+)V0G0N";
+
+  auto steps = run_traffic_turn(SCRIPT);
+  CHECK(steps.empty());
+}
+
+TEST_CASE("Assigning wrong type to variable produces empty step container",
+          "[traffic][intg]") {
+  constexpr auto SCRIPT = R"V0G0N(
+world traffic;
+let type_mismatch_agent : car {
+    init : {
+        let counter : int = 0;
+    };
+    turn : {
+        counter = 3.14;
+    };
+};
+)V0G0N";
+
+  auto steps = run_traffic_turn(SCRIPT);
+  CHECK(steps.empty());
+}
+
+TEST_CASE("Preloaded function with too few args produces empty step container",
+          "[traffic][intg][preload]") {
+  constexpr auto SCRIPT = R"V0G0N(
+world traffic;
+let few_args_agent : car {
+    init : { };
+    turn : {
+        __destination__ = make_point(1);
+    };
+};
+)V0G0N";
+
+  auto steps = run_traffic_turn(SCRIPT);
+  CHECK(steps.empty());
+}
+
+TEST_CASE("Preloaded function with too many args produces empty step container",
+          "[traffic][intg][preload]") {
+  constexpr auto SCRIPT = R"V0G0N(
+world traffic;
+let many_args_agent : car {
+    init : { };
+    turn : {
+        __destination__ = make_point(1, 2, 3);
+    };
+};
+)V0G0N";
+
+  auto steps = run_traffic_turn(SCRIPT);
+  CHECK(steps.empty());
+}
