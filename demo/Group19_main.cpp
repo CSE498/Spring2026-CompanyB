@@ -7,6 +7,5 @@ int main() {
   // (with the target set to this file), then "./build/native/app".
   StepTrafficWorld<SwarmingAgent<TrafficData>> world(
       "assets/grids/DemoWorld.grid", true);
-  // StepTrafficWorld<SwarmingAgent<TrafficData>> world("TinyWorld.grid");
   world.RunWithDisplay();
 }

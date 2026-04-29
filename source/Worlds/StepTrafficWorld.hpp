@@ -28,8 +28,6 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
   };
 
   struct StepVisitor {
-    // We do want to represent failure, but don't need to represent
-    // any output, so we'll define & alias our return as such:
     using VisitRet = std::expected<void, WorldErr>;
 
     StepAgentBase<TrafficData>& agent;
@@ -566,13 +564,11 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
   void RecycleDespawnedAgent(const WorldPosition& spawner_pos,
                              const WorldPosition& dest_pos) {
     assert(!despawned_agent_ids.empty());
+
     size_t reuse_id = despawned_agent_ids.front();
     despawned_agent_ids.pop();
     auto driver = agent_set.at(reuse_id);
-    // Note for future use. Currently a non-DrivingAgent id should never make it
-    // into despawned_agent_ids since those are the only agents that support
-    // spawning, despawning, and destinations. In the future, with multiple
-    // agent types, we'll find a way to relax this.
+
     TrafficData state = driver->GetState();
     state.position = spawner_pos;
     state.destination = dest_pos;
