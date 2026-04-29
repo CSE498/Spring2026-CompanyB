@@ -61,10 +61,29 @@ body {
 }
 
 #tick-rate-control,
-#script-status-control {
+#script-status-control,
+#spawn-agent-control {
     color: white;
     margin-left: 1em;
     font-family: "Menlo", "Consolas", monospace;
+}
+
+.spawn-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    border: none;
+    background: #555;
+    color: white;
+    font-family: "Menlo", "Consolas", monospace;
+    font-size: 14px;
+    cursor: pointer;
+    margin: 0;
+    padding: 0;
+    filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.45));
+}
+.spawn-btn:hover {
+    background: #777;
 }
 
 /*Vertical separators between menu-bar items*/

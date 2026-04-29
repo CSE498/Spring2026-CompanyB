@@ -84,8 +84,9 @@ let cardinal_walker : car {
         let dir : int = 0;             // 0=down 1=up 2=left 3=right
         let last_x : int = -1;
         let last_y : int = -1;
-        __spawn__ = make_point(16, 389);
-        __destination__ = make_point(500, 500);
+        // __spawn__ and __destination__ intentionally unset here.
+        // web_main.cpp picks random 'S' and 'D' grid cells and passes them
+        // via TrafficData.
     };
     turn : {
         let x : int = get_x(__position__);

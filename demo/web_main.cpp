@@ -9,6 +9,7 @@
 #include <charconv>
 #include <fstream>
 #include <functional>
+#include <random>
 #include <sstream>
 
 #include "WebButton.h"
@@ -110,9 +111,8 @@ static std::unique_ptr<WebTextboxOutputManager> logger;
 static size_t last_traffic_agent_count = 0;
 static std::vector<bool> traffic_reached_log;
 
-// Half-open ID range [scripted_lo, scripted_hi) of scripted cars to set colors appropriately
-static size_t scripted_traffic_lo = 0;
-static size_t scripted_traffic_hi = 0;
+// IDs of scripted cars in the traffic world
+static std::unordered_set<size_t> scripted_traffic_ids;
 
 // Forward declaration
 static const std::string& LoadAgentScript(const char* vfs_path);
@@ -121,19 +121,60 @@ static const std::string& LoadAgentScript(const char* vfs_path);
 static std::string uploaded_script;
 static std::string uploaded_script_name = "none";
 
+// Number of agent definitions in the uploaded script. Used to render exactly
+// that many spawn buttons in the navbar.
+static size_t uploaded_script_def_count = 0;
+
 // Used to detect a switch between Traffic and Virus so we can
 // clear the uploaded script when crossing sim boundaries.
 static ActiveSim last_loaded_sim = ActiveSim::NONE;
 
-// Add the agentlang-defined cars into traffic_world and refresh the
-// scripted_traffic_lo/hi range. Call after every construction or reconstruction of
-// traffic_world so the range tracks the current agent_set ordering.
-static void AddTrafficScriptedAgents() {
-    scripted_traffic_lo = traffic_world->GetNumAgents();
-    if (!uploaded_script.empty()) {
-        traffic_world->AddScriptedAgent(TrafficData{.is_active = true}, uploaded_script, 2);
+// Traffic light cell positions captured at world build.
+static std::vector<WorldPosition> traffic_light_cells;
+
+static std::vector<WorldPosition> traffic_destination_cells;
+static std::vector<WorldPosition> traffic_spawn_cells;
+
+// Add the agentlang-defined cars into traffic_world and seed
+// scripted_traffic_ids
+static void ScanTrafficCells() {
+    traffic_light_cells.clear();
+    traffic_destination_cells.clear();
+    traffic_spawn_cells.clear();
+    if (!traffic_world) return;
+    const WorldGrid& grid = traffic_world->GetGrid();
+    const size_t gw = grid.GetWidth();
+    const size_t gh = grid.GetHeight();
+    for (size_t y = 0; y < gh; ++y) {
+        for (size_t x = 0; x < gw; ++x) {
+            char sym = grid.GetSymbol(WorldPosition{x, y});
+            if (sym == '|' || sym == '-') {
+                traffic_light_cells.push_back(WorldPosition{x, y});
+            } else if (sym == 'D') {
+                traffic_destination_cells.push_back(WorldPosition{x, y});
+            } else if (sym == 'S') {
+                traffic_spawn_cells.push_back(WorldPosition{x, y});
+            }
+        }
     }
-    scripted_traffic_hi = traffic_world->GetNumAgents();
+}
+
+// Build a TrafficData seeded with a random spawn cell and random destination
+// cell, if any are available in the current world
+static TrafficData BuildRandomTrafficData() {
+    static std::mt19937 rng{std::random_device{}()};
+    TrafficData data{.is_active = true};
+    if (!traffic_spawn_cells.empty()) {
+        std::uniform_int_distribution<size_t> pick(
+            0, traffic_spawn_cells.size() - 1);
+        data.position = traffic_spawn_cells[pick(rng)];
+    }
+    if (!traffic_destination_cells.empty()) {
+        std::uniform_int_distribution<size_t> pick(
+            0, traffic_destination_cells.size() - 1);
+        data.destination = traffic_destination_cells[pick(rng)];
+    }
+    return data;
 }
 
 static std::vector<int> last_virus_health;
@@ -342,9 +383,6 @@ static void BuildVirusStaticLayer();
 static std::shared_ptr<WebCanvas> traffic_static_layer;
 static std::shared_ptr<WebCanvas> virus_static_layer;
 
-// Traffic light cell positions extracted while building the static layer
-static std::vector<WorldPosition> traffic_light_cells;
-
 auto handle_sim_state = [](SimState next) {
     switch (next) {
         case SimState::PLAYING:
@@ -380,7 +418,8 @@ static void ResetActiveWorld() {
     if (active_sim == ActiveSim::TRAFFIC) {
         traffic_world = std::make_unique<WebTrafficWorld>("assets/grids/TrafficWorld_Web.grid");
         traffic_log = std::make_unique<DataLog<TrafficData>>(WorldType::Traffic);
-        AddTrafficScriptedAgents();
+        scripted_traffic_ids.clear();
+        ScanTrafficCells();
         prev_traffic_positions.clear();
         last_traffic_agent_count = 0;
         traffic_reached_log.clear();
@@ -403,7 +442,6 @@ static void BuildTrafficStaticLayer() {
     const int W = GameCanvas->GetWidth();
     const int H = GameCanvas->GetHeight();
     traffic_static_layer = std::make_shared<WebCanvas>(W, H);
-    traffic_light_cells.clear();
 
     const WorldGrid& grid = traffic_world->GetGrid();
     const size_t gw = grid.GetWidth();
@@ -423,8 +461,7 @@ static void BuildTrafficStaticLayer() {
                     break;
                 case '|':
                 case '-':
-                    // Traffic lights flip each phase
-                    traffic_light_cells.push_back(WorldPosition{x, y});
+                    // Traffic lights flip each phase — drawn dynamically.
                     break;
                 case 'S':
                     traffic_static_layer->SetFillColor({100, 100, 100})
@@ -525,8 +562,11 @@ static void BuildVirusStaticLayer() {
     }
 }
 
+// Number of spawn buttons rendered into the navbar at sim load
+constexpr size_t kSpawnButtonCount = 8;
+
 // Push the current script name into the nav-bar display, if it exists, and
-// show/hide the Clear button based on whether a script is currently loaded.
+// show/hide the Clear button + spawn buttons based on the loaded script.
 static void UpdateScriptDisplay() {
     emscripten::val doc = emscripten::val::global("document");
     emscripten::val name_el = doc.call<emscripten::val>(
@@ -541,12 +581,30 @@ static void UpdateScriptDisplay() {
                                uploaded_script.empty() ? std::string("none")
                                                        : std::string("block"));
     }
+
+    emscripten::val spawn_ctrl = doc.call<emscripten::val>(
+        "getElementById", std::string("spawn-agent-control"));
+    if (!spawn_ctrl.isNull() && !spawn_ctrl.isUndefined()) {
+        spawn_ctrl["style"].set(
+            "display",
+            uploaded_script_def_count == 0 ? std::string("none")
+                                           : std::string("flex"));
+    }
+    for (size_t i = 0; i < kSpawnButtonCount; ++i) {
+        std::string btn_id = "spawn-btn-" + std::to_string(i + 1);
+        emscripten::val btn = doc.call<emscripten::val>("getElementById", btn_id);
+        if (btn.isNull() || btn.isUndefined()) continue;
+        bool show = i < uploaded_script_def_count;
+        btn["style"].set("display",
+                         show ? std::string("inline-block") : std::string("none"));
+    }
 }
 
 // Reset the uploaded script back to "none".
 static void ResetScript() {
     uploaded_script.clear();
     uploaded_script_name = "none";
+    uploaded_script_def_count = 0;
     UpdateScriptDisplay();
 }
 
@@ -593,9 +651,14 @@ auto handle_upload = [](const std::string& filename, const std::string& content)
     }
     uploaded_script = content;
     uploaded_script_name = filename;
+    uploaded_script_def_count = result.value().size();
     UpdateScriptDisplay();
     ResetActiveWorld();
-    LogSim("Script", "Script uploaded: " + filename, "info");
+    LogSim("Script",
+           "Script uploaded: " + filename + " (" +
+               std::to_string(uploaded_script_def_count) + " agent type" +
+               (uploaded_script_def_count == 1 ? "" : "s") + ")",
+           "info");
 };
 
 // Clear the uploaded script
@@ -620,6 +683,34 @@ auto handle_clear_script = []() {
     ResetScript();
     ResetActiveWorld();
     LogSim("Script", "Script cleared. Script in use: none.", "info");
+};
+
+// Spawn one scripted traffic agent of the given def_idx with a random spawn
+// and destination drawn from the grid's S/D cells.
+auto handle_spawn = [](size_t def_idx) {
+    if (active_sim != ActiveSim::TRAFFIC || !traffic_world) {
+        LogSim("Spawn", "Spawn buttons only work in the traffic sim.", "warn");
+        return;
+    }
+    if (uploaded_script.empty()) {
+        LogSim("Spawn", "No script uploaded. Upload a .al script first.", "warn");
+        return;
+    }
+    size_t new_id = traffic_world->GetNumAgents();
+    auto* agent = traffic_world->AddScriptedAgent(BuildRandomTrafficData(),
+                                                  uploaded_script, def_idx);
+    if (!agent) {
+        LogSim("Spawn",
+               "Type " + std::to_string(def_idx + 1) +
+                   " not found in script (def_idx " + std::to_string(def_idx) +
+                   " out of range).",
+               "error");
+        return;
+    }
+    scripted_traffic_ids.insert(new_id);
+    LogSim("Spawn",
+           "Spawned scripted agent type " + std::to_string(def_idx + 1),
+           "info");
 };
 
 // Save the current simulation log to a downloaded JSON file.
@@ -689,10 +780,9 @@ void DrawTrafficSim() {
     const double agent_r = radius * 0.75;
     const size_t na = traffic_world->GetNumAgents();
 
-    // Batch agent draws into two color groups
     GameCanvas->BeginPath();
     for (size_t id = 0; id < na; ++id) {
-        if (id >= scripted_traffic_lo && id < scripted_traffic_hi) continue;
+        if (scripted_traffic_ids.count(id)) continue;
         TrafficData state = traffic_world->GetAgentState(id);
         if (!state.is_active) continue;
         double cx = state.position.CellX() * cell_w + cell_w / 2.0;
@@ -702,8 +792,8 @@ void DrawTrafficSim() {
     GameCanvas->SetFillColor({255, 80, 80}).Fill();
 
     GameCanvas->BeginPath();
-    for (size_t id = scripted_traffic_lo;
-         id < scripted_traffic_hi && id < na; ++id) {
+    for (size_t id : scripted_traffic_ids) {
+        if (id >= na) continue;
         TrafficData state = traffic_world->GetAgentState(id);
         if (!state.is_active) continue;
         double cx = state.position.CellX() * cell_w + cell_w / 2.0;
@@ -984,6 +1074,29 @@ std::shared_ptr<WebElement> ScriptStatusControl() {
     return layout->SetDirection("row").SetAlignItems("center").SetGap("6px");
 }
 
+std::shared_ptr<WebElement> SpawnAgentControl() {
+    std::vector<std::shared_ptr<WebElement>> buttons;
+    for (size_t i = 0; i < kSpawnButtonCount; ++i) {
+        size_t def_idx = i;
+        buttons.push_back(
+            UIItem<WebButton>(std::to_string(i + 1), WebOptions{
+                .id = "spawn-btn-" + std::to_string(i + 1),
+                .classes = {"spawn-btn"},
+            })->SetOnClick([def_idx]() { handle_spawn(def_idx); }));
+    }
+    auto layout = UIItem<WebLayout>(WebOptions{
+        .id = "spawn-agent-control",
+        .children = buttons,
+    });
+
+    emscripten::val document = emscripten::val::global("document");
+    emscripten::val label = document.call<emscripten::val>("createElement", std::string("span"));
+    label.set("innerText", std::string("Spawn Agent Type"));
+    layout->GetDOMElement().call<void>("prepend", label);
+
+    return layout->SetDirection("row").SetAlignItems("center").SetGap("4px");
+}
+
 // Here we create a function that creates the layout for the simulation screen
 // It takes a lambda as a parameter
 // This is a function we want to run when a button is clicked
@@ -1042,6 +1155,7 @@ std::shared_ptr<WebElement> SimulationLayout(ActiveSim sim, std::function<void()
                     UIItem<WebButton>("", WebOptions{ .id = "upload-btn", .classes={"button"} })->SetOnFileUploadWithName(handle_upload),
                     UIItem<WebButton>("", WebOptions{ .id = "save-btn", .classes={"button"} })->SetOnClick(handle_save),
                     TickRateControl(),
+                    SpawnAgentControl(),
                     ScriptStatusControl(),
                     UIItem<WebButton>("", WebOptions{ .id = "clear-script-btn", .classes={"button"} })->SetOnClick(handle_clear_script),
                     UIItem<WebButton>("", WebOptions{ .id = "exit-btn", .classes={"button"} })->SetOnClick(exit_lambda)
@@ -1133,7 +1247,8 @@ void load_traffic_layout() {
     sim_tick   = 0;
     traffic_world = std::make_unique<WebTrafficWorld>("assets/grids/TrafficWorld_Web.grid");
     traffic_log = std::make_unique<DataLog<TrafficData>>(WorldType::Traffic);
-    AddTrafficScriptedAgents();
+    scripted_traffic_ids.clear();
+    ScanTrafficCells();
     prev_traffic_positions.clear();
 
     last_traffic_agent_count = 0;
