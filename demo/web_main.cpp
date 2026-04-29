@@ -114,6 +114,11 @@ static std::vector<bool> traffic_reached_log;
 // IDs of scripted cars in the traffic world
 static std::unordered_set<size_t> scripted_traffic_ids;
 
+// IDs of scripted agents in the virus world. Tracked as a set because new
+// scripted agents can be spawned mid-sim and aren't contiguous with the
+// initial pacers.
+static std::unordered_set<size_t> scripted_virus_ids;
+
 // Forward declaration
 static const std::string& LoadAgentScript(const char* vfs_path);
 
@@ -160,7 +165,44 @@ static void ScanTrafficCells() {
 }
 
 // Build a TrafficData seeded with a random spawn cell and random destination
-// cell, if any are available in the current world
+// cell. Prevent them from spawning on top of each other.
+static WorldPosition PickSafeVirusSpawn() {
+    static std::mt19937 rng{std::random_device{}()};
+    constexpr long kMinDistSq   = 12L * 12L;
+    constexpr int  kMaxAttempts = 12;
+    constexpr int  kJitter      = 25;
+
+    std::uniform_int_distribution<size_t> src_pick(0, kSpawnSources - 1);
+    std::uniform_int_distribution<int>    jitter(-kJitter, kJitter);
+
+    WorldPosition best{};
+    const size_t n = virus_world ? virus_world->GetNumAgents() : 0;
+    for (int attempt = 0; attempt < kMaxAttempts; ++attempt) {
+        size_t src = src_pick(rng);
+        long x = static_cast<long>(kSpawnX[src]) + jitter(rng);
+        long y = static_cast<long>(kSpawnY[src]) + jitter(rng);
+        if (x < 1) x = 1;
+        if (y < 1) y = 1;
+        if (x > static_cast<long>(kGridW) - 2) x = kGridW - 2;
+        if (y > static_cast<long>(kGridH) - 2) y = kGridH - 2;
+        WorldPosition pos{static_cast<size_t>(x), static_cast<size_t>(y)};
+        best = pos;
+
+        bool too_close = false;
+        for (size_t id = 0; id < n; ++id) {
+            auto p = virus_world->GetAgentState(id).position;
+            long dx = static_cast<long>(pos.CellX()) - static_cast<long>(p.CellX());
+            long dy = static_cast<long>(pos.CellY()) - static_cast<long>(p.CellY());
+            if (dx * dx + dy * dy < kMinDistSq) {
+                too_close = true;
+                break;
+            }
+        }
+        if (!too_close) return pos;
+    }
+    return best;
+}
+
 static TrafficData BuildRandomTrafficData() {
     static std::mt19937 rng{std::random_device{}()};
     TrafficData data{.is_active = true};
@@ -441,7 +483,9 @@ static void BuildTrafficStaticLayer() {
     if (!GameCanvas || !traffic_world) return;
     const int W = GameCanvas->GetWidth();
     const int H = GameCanvas->GetHeight();
-    traffic_static_layer = std::make_shared<WebCanvas>(W, H);
+    traffic_static_layer = std::make_shared<WebCanvas>(W, H, WebOptions{
+        .style = {{"display", "none"}},
+    });
 
     const WorldGrid& grid = traffic_world->GetGrid();
     const size_t gw = grid.GetWidth();
@@ -485,7 +529,9 @@ static void BuildVirusStaticLayer() {
     if (!GameCanvas || !virus_world) return;
     const int W = GameCanvas->GetWidth();
     const int H = GameCanvas->GetHeight();
-    virus_static_layer = std::make_shared<WebCanvas>(W, H);
+    virus_static_layer = std::make_shared<WebCanvas>(W, H, WebOptions{
+        .style = {{"display", "none"}},
+    });
 
     const WorldGrid& grid = virus_world->GetGrid();
     const size_t gw = grid.GetWidth();
@@ -685,29 +731,42 @@ auto handle_clear_script = []() {
     LogSim("Script", "Script cleared. Script in use: none.", "info");
 };
 
-// Spawn one scripted traffic agent of the given def_idx with a random spawn
-// and destination drawn from the grid's S/D cells.
+// Spawn one scripted agent of the given def_idx in the active sim.
 auto handle_spawn = [](size_t def_idx) {
-    if (active_sim != ActiveSim::TRAFFIC || !traffic_world) {
-        LogSim("Spawn", "Spawn buttons only work in the traffic sim.", "warn");
-        return;
-    }
     if (uploaded_script.empty()) {
         LogSim("Spawn", "No script uploaded. Upload a .al script first.", "warn");
         return;
     }
-    size_t new_id = traffic_world->GetNumAgents();
-    auto* agent = traffic_world->AddScriptedAgent(BuildRandomTrafficData(),
-                                                  uploaded_script, def_idx);
-    if (!agent) {
-        LogSim("Spawn",
-               "Type " + std::to_string(def_idx + 1) +
-                   " not found in script (def_idx " + std::to_string(def_idx) +
-                   " out of range).",
-               "error");
+    if (active_sim == ActiveSim::TRAFFIC && traffic_world) {
+        size_t new_id = traffic_world->GetNumAgents();
+        auto* agent = traffic_world->AddScriptedAgent(BuildRandomTrafficData(),
+                                                      uploaded_script, def_idx);
+        if (!agent) {
+            LogSim("Spawn",
+                   "Type " + std::to_string(def_idx + 1) +
+                       " not found in script (def_idx " + std::to_string(def_idx) +
+                       " out of range).",
+                   "error");
+            return;
+        }
+        scripted_traffic_ids.insert(new_id);
+    } else if (active_sim == ActiveSim::VIRUS && virus_world) {
+        DiseaseData data{PickSafeVirusSpawn()};
+        size_t new_id = virus_world->GetNumAgents();
+        auto* agent = virus_world->AddScriptedAgent(data, uploaded_script, def_idx);
+        if (!agent) {
+            LogSim("Spawn",
+                   "Type " + std::to_string(def_idx + 1) +
+                       " not found in script (def_idx " + std::to_string(def_idx) +
+                       " out of range).",
+                   "error");
+            return;
+        }
+        scripted_virus_ids.insert(new_id);
+    } else {
+        LogSim("Spawn", "No active simulation to spawn into.", "warn");
         return;
     }
-    scripted_traffic_ids.insert(new_id);
     LogSim("Spawn",
            "Spawned scripted agent type " + std::to_string(def_idx + 1),
            "info");
@@ -849,7 +908,6 @@ void DrawVirusSim() {
     // Agents with a small fixed radius so 1-cell movement is visible.
     constexpr double kResidentR = 5.0;
     constexpr double kVisitorR  = 4.0;
-    const bool script_active = !uploaded_script.empty();
     size_t n = virus_world->GetNumAgents();
 
     // Batch by health color
@@ -858,7 +916,7 @@ void DrawVirusSim() {
         for (size_t id = 0; id < n; ++id) {
             DiseaseData state = virus_world->GetAgentState(id);
             if (state.health != target) continue;
-            bool is_scripted = script_active && id < kNumPacers;
+            bool is_scripted = scripted_virus_ids.count(id) != 0;
             double r = is_scripted ? kResidentR : kVisitorR;
             double cx = state.position.CellX() * cell_w + cell_w / 2.0;
             double cy = state.position.CellY() * cell_h + cell_h / 2.0;
@@ -870,11 +928,11 @@ void DrawVirusSim() {
     batch_fill(HealthState::INFECTED,    {230, 60, 60});
     batch_fill(HealthState::RECOVERED,   {90, 130, 240});
 
-    // Orange outline for scripted pacers
-    if (script_active) {
+    // Orange outline for scripted agents
+    if (!scripted_virus_ids.empty()) {
         GameCanvas->BeginPath();
-        size_t lim = n < kNumPacers ? n : kNumPacers;
-        for (size_t id = 0; id < lim; ++id) {
+        for (size_t id : scripted_virus_ids) {
+            if (id >= n) continue;
             DiseaseData state = virus_world->GetAgentState(id);
             double cx = state.position.CellX() * cell_w + cell_w / 2.0;
             double cy = state.position.CellY() * cell_h + cell_h / 2.0;
@@ -987,6 +1045,7 @@ void SetupVirusWorld() {
     virus_world->SetClinicEntrance(WorldPosition{900, 700});
     virus_world->SetRecoveryExit(WorldPosition{780, 470});
 
+    scripted_virus_ids.clear();
     if (!uploaded_script.empty()) {
         struct PacerSpec { WorldPosition pos; size_t def_idx; };
         const PacerSpec kPacers[] = {
@@ -998,7 +1057,10 @@ void SetupVirusWorld() {
             {{600, 200}, 3},   // stander
         };
         for (const auto& p : kPacers) {
-          virus_world->AddScriptedAgent(DiseaseData{p.pos}, uploaded_script, p.def_idx);
+          size_t new_id = virus_world->GetNumAgents();
+          if (virus_world->AddScriptedAgent(DiseaseData{p.pos}, uploaded_script, p.def_idx)) {
+              scripted_virus_ids.insert(new_id);
+          }
         }
     }
 
