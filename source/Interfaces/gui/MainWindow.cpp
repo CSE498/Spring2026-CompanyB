@@ -46,9 +46,8 @@ void MainWindow::setupAgents() {
   } else {
     auto &iw = static_cast<InfectiousWorld &>(mWorld);
 
-    //clears agents if restarting
+    // clears agents if restarting
     iw.ClearAgents();
-
 
     auto makeData = [](size_t x, size_t y) {
       DiseaseData d;
@@ -331,7 +330,7 @@ void MainWindow::onBackToMainMenu() {
     mTimer->stop();
   }
 
-  auto* startScreen = new StartScreen(mImagePaths, mTileSize, mAgentImagePath);
+  auto *startScreen = new StartScreen(mImagePaths, mTileSize, mAgentImagePath);
   startScreen->setAttribute(Qt::WA_DeleteOnClose);
   startScreen->show();
 
@@ -381,8 +380,7 @@ void MainWindow::onReplayRestart() {
 
 void MainWindow::onShowSimulationHelp() {
   QMessageBox::information(
-      this,
-      "Virus Simulation Help",
+      this, "Virus Simulation Help",
       "Current Simulation: Virus / Infection Simulation\n\n"
       "This simulation shows agents moving through a grid-based world while "
       "infection spreads between agents. The display updates every tick as "
@@ -400,12 +398,11 @@ void MainWindow::onSwitchToTrafficSimulation() {
     mTimer->stop();
   }
 
-  auto trafficWorld = std::make_unique<StepTrafficWorld<SwarmingAgent<TrafficData>>>(
-          "assets/grids/DemoWorld.grid"
-      );
-  auto* trafficWindow =
-      new TrafficMainWindow(*trafficWorld, mImagePaths, mTileSize,
-                            mAgentImagePath);
+  auto trafficWorld =
+      std::make_unique<StepTrafficWorld<SwarmingAgent<TrafficData>>>(
+          "assets/grids/DemoWorld.grid");
+  auto *trafficWindow = new TrafficMainWindow(*trafficWorld, mImagePaths,
+                                              mTileSize, mAgentImagePath);
 
   trafficWindow->setAttribute(Qt::WA_DeleteOnClose);
   trafficWindow->show();

@@ -682,9 +682,9 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
   }
 
   /**
- * @brief Remove all agents and reset spawn/despawn tracking state.
- * added for gui
-*/
+   * @brief Remove all agents and reset spawn/despawn tracking state.
+   * added for gui
+   */
   void ClearAgents() {
     agent_set.clear();
     num_spawned_agents = 0;

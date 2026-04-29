@@ -1,7 +1,7 @@
+#include <QApplication>
 #include <catch2/catch_test_macros.hpp>
 
 #include "../../source/Interfaces/gui/ImageManager.hpp"
-#include <QApplication>
 
 static int argc = 0;
 static QApplication app(argc, nullptr);
@@ -85,4 +85,3 @@ TEST_CASE("Test ImageManager Clear", "[ImageManager]") {
   CHECK(!manager1.HasImage("image1"));
   CHECK(!manager1.HasImage("image2"));
 }
-

@@ -101,7 +101,8 @@ void TrafficMainWindow::setMenuBar() {
   mMainMenu = menuBar()->addMenu("&Main Menu");
 
   mSwitchToTrafficAction = new QAction("&Switch to Traffic Simulation", this);
-  mSwitchToTrafficAction->setStatusTip("You are already in the traffic simulation");
+  mSwitchToTrafficAction->setStatusTip(
+      "You are already in the traffic simulation");
   mSwitchToTrafficAction->setEnabled(false);
 
   mSwitchToVirusAction = new QAction("&Switch to Virus Simulation", this);
@@ -324,8 +325,7 @@ void TrafficMainWindow::onReplayRestart() {
 
 void TrafficMainWindow::onShowSimulationHelp() {
   QMessageBox::information(
-      this,
-      "Traffic Simulation Help",
+      this, "Traffic Simulation Help",
       "Current Simulation: Traffic Simulation\n\n"
       "This simulation shows agents moving through a traffic-style grid. "
       "Different colors represent different terrain or blocked directions, "
@@ -347,9 +347,8 @@ void TrafficMainWindow::onSwitchToVirusSimulation() {
   // This example assumes InfectiousWorld has a default constructor.
   auto* virusWorld = new InfectiousWorld();
 
-  auto* virusWindow =
-      new MainWindow(*virusWorld, mImagePaths, mTileSize,
-                     mAgentImagePath, nullptr, 2);
+  auto* virusWindow = new MainWindow(*virusWorld, mImagePaths, mTileSize,
+                                     mAgentImagePath, nullptr, 2);
 
   virusWindow->setAttribute(Qt::WA_DeleteOnClose);
   virusWindow->show();
