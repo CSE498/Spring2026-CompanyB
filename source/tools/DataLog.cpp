@@ -106,6 +106,34 @@ void DataLog<DataClass>::AggregateData(
         it = previous_positions.erase(it);
       }
     }
+  } else if constexpr (std::is_same_v<DataClass, DiseaseData>) {
+    double infected_count = 0.0;
+    double susceptible_count = 0.0;
+    double recovered_count = 0.0;
+
+    for (const auto& agent : agents) {
+      const DiseaseData state = agent->GetState();
+      switch (state.health) {
+        case HealthState::INFECTED:
+          infected_count += 1.0;
+          break;
+        case HealthState::SUSCEPTIBLE:
+          susceptible_count += 1.0;
+          break;
+        case HealthState::RECOVERED:
+          recovered_count += 1.0;
+          break;
+      }
+    }
+
+    const double total_agents = static_cast<double>(agents.size());
+    const double infection_probability =
+        total_agents > 0.0 ? infected_count / total_agents : 0.0;
+
+    AddSample(samples, "infection_count", infected_count);
+    AddSample(samples, "susceptible_count", susceptible_count);
+    AddSample(samples, "cured_count", recovered_count);
+    AddSample(samples, "infection_probability", infection_probability);
   }
 
   // Compute TickStats for each declared field and append to the time series
