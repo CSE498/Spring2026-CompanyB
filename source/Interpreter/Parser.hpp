@@ -20,7 +20,7 @@ struct Parser {
   std::vector<std::unique_ptr<AST::StmtAgentDef>> m_AgentDefs;
 
   std::expected<std::vector<std::unique_ptr<AST::StmtAgentDef>>, InterpErr>
-  parse(std::istream &);
+  parse(std::istream&);
 
  private:
   cse498::AgentLexer::Lexer m_Lexer{};

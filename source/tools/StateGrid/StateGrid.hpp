@@ -26,7 +26,7 @@ class StateGrid {
    * @param premadeMap A 2D grid of characters describing the initial tile
    *symbols.
    ***********************************************/
-  StateGrid(const std::vector<std::vector<char>> &premadeMap);
+  StateGrid(const std::vector<std::vector<char>>& premadeMap);
 
   // ==================== Grid Info ====================
 
@@ -64,14 +64,14 @@ class StateGrid {
    *
    * @returns a const pointer to the tile, nullptr if out of bounds
    ************************************************/
-  [[nodiscard]] const Tile *getTile(size_t row, size_t col) const;
+  [[nodiscard]] const Tile* getTile(size_t row, size_t col) const;
 
   /***********************************************
    * All tile getter (const)
    *
    * @returns a const reference to the tiles vector
    ************************************************/
-  [[nodiscard]] const std::vector<std::vector<Tile>> &getAllTiles() const;
+  [[nodiscard]] const std::vector<std::vector<Tile>>& getAllTiles() const;
 
   // ==================== Tile Property Access ====================
 
@@ -93,7 +93,7 @@ class StateGrid {
    *
    * @returns const string ref, name of the tile
    ************************************************/
-  [[nodiscard]] const std::string &getName(size_t row, size_t col) const;
+  [[nodiscard]] const std::string& getName(size_t row, size_t col) const;
 
   /***********************************************
    * Gets the metadata of a tile
@@ -103,7 +103,7 @@ class StateGrid {
    *
    * @returns const MetaData ref
    ************************************************/
-  [[nodiscard]] const MetaData &getMetaData(size_t row, size_t col) const;
+  [[nodiscard]] const MetaData& getMetaData(size_t row, size_t col) const;
 
   /***********************************************
    * Gets whether a tile can be traversed
@@ -138,7 +138,7 @@ class StateGrid {
    *
    * @returns true if successful, false if the tile is already occupied
    ************************************************/
-  bool addAgent(size_t row, size_t col, std::unique_ptr<Agent> &agent);
+  bool addAgent(size_t row, size_t col, std::unique_ptr<Agent>& agent);
 
   /***********************************************
    * Removes and destroys the agent on a tile
@@ -171,7 +171,7 @@ class StateGrid {
    *
    * @returns raw pointer to the agent, nullptr if empty
    ************************************************/
-  [[nodiscard]] Agent *getAgent(size_t row, size_t col) const;
+  [[nodiscard]] Agent* getAgent(size_t row, size_t col) const;
 
   /***********************************************
    * Checks whether a tile has an agent

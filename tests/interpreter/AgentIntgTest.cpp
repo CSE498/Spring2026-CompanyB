@@ -21,14 +21,14 @@ using namespace cse498::AST;
 static std::pair<
     Parser,
     std::expected<std::vector<std::unique_ptr<StmtAgentDef>>, InterpErr>>
-parse(std::string const &stmts) {
+parse(std::string const& stmts) {
   Parser p;
   std::istringstream ss(stmts);
   auto result = p.parse(ss);
   return {std::move(p), std::move(result)};
 }
 
-const char *AGENT_CAR = R"V0G0N(
+const char* AGENT_CAR = R"V0G0N(
 
 world traffic;
 
@@ -57,14 +57,14 @@ TEST_CASE("Basic Agent Test", "[traffic][intg]") {
   // Init and Turn Exist (like AgentDefParserTest)
   CAPTURE(result);
   REQUIRE(result.has_value());
-  auto &defs = result.value();
+  auto& defs = result.value();
   REQUIRE(defs.size() == 1);
 
-  auto *root = dynamic_cast<StmtAgentDef *>(defs[0].get());
+  auto* root = dynamic_cast<StmtAgentDef*>(defs[0].get());
   REQUIRE(root);
-  auto *init = dynamic_cast<StmtBlock *>(root->m_Init.get());
+  auto* init = dynamic_cast<StmtBlock*>(root->m_Init.get());
   REQUIRE(init);
-  auto *turn = dynamic_cast<StmtBlock *>(root->m_Turn.get());
+  auto* turn = dynamic_cast<StmtBlock*>(root->m_Turn.get());
   REQUIRE(turn);
 
   TrafficData data = {};

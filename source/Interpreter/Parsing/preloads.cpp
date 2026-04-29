@@ -20,7 +20,7 @@ namespace cse498 {
  */
 template <size_t idx, typename Head, typename... Tail>
 std::expected<void, InterpErr> templ_recurse_typecheck(
-    std::vector<Type> const &args) {
+    std::vector<Type> const& args) {
   // Fail early if types don't match
   if (!std::holds_alternative<Head>(args.at(idx)))
     return RuntimeErr(RuntimeErr::TYPE_MISMATCH,
@@ -44,7 +44,7 @@ std::expected<void, InterpErr> templ_recurse_typecheck(
  */
 template <typename... Ts>
 std::expected<void, InterpErr> enforce_signature(
-    std::vector<Type> const &input) {
+    std::vector<Type> const& input) {
   // Fail early if numbers don't match
   if (input.size() < sizeof...(Ts))
     return RuntimeErr(RuntimeErr::TOO_FEW_ARGS);
@@ -64,19 +64,19 @@ std::expected<void, InterpErr> enforce_signature(
  */
 std::expected<void, InterpErr> Parser::preload_functions() {
   FuncSym preload_makepoint(
-      [](std::vector<Type> &&args) -> std::expected<Type, InterpErr> {
+      [](std::vector<Type>&& args) -> std::expected<Type, InterpErr> {
         TRY((enforce_signature<int, int>(args)));
 
         return PointTy{std::get<int>(args.at(0)), std::get<int>(args.at(1))};
       });
   FuncSym preload_getx(
-      [](std::vector<Type> &&args) -> std::expected<Type, InterpErr> {
+      [](std::vector<Type>&& args) -> std::expected<Type, InterpErr> {
         TRY((enforce_signature<PointTy>(args)));
 
         return static_cast<int>(std::get<PointTy>(args.at(0)).X());
       });
   FuncSym preload_gety(
-      [](std::vector<Type> &&args) -> std::expected<Type, InterpErr> {
+      [](std::vector<Type>&& args) -> std::expected<Type, InterpErr> {
         TRY((enforce_signature<PointTy>(args)));
 
         return static_cast<int>(std::get<PointTy>(args.at(0)).Y());

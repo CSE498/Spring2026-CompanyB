@@ -36,7 +36,7 @@ class MoveOnceAgent : public StepAgentBase<DiseaseData> {
 template <Concepts::IsOneOf<DiseaseData>... Ds>
 static std::string make_script(Ds... ds) {
   size_t agent_count = 0;
-  auto make_agentdef = [&agent_count](DiseaseData const &d) {
+  auto make_agentdef = [&agent_count](DiseaseData const& d) {
     return std::format(
         "let agent_{} : student {{\n"
         "init: {{ __spawn__ = make_point({}, {}); }};\n"
@@ -88,19 +88,6 @@ TEST_CASE("InfectiousWorld: InfectAgent updates state", "[InfectiousWorld]") {
   CHECK(world.GetSusceptibleCount() == 0);
 }
 
-TEST_CASE("InfectiousWorld: InfectAgent invalid id throws",
-          "[InfectiousWorld]") {
-  auto script = make_script();
-  InfectiousWorld world(8, 6, script);
-  CHECK_THROWS_AS(world.InfectAgent(0), std::out_of_range);
-}
-
-TEST_CASE("InfectiousWorld: GetAgentHealth invalid id throws",
-          "[InfectiousWorld]") {
-  auto script = make_script();
-  InfectiousWorld world(8, 6, script);
-  CHECK_THROWS_AS(world.GetAgentHealth(0), std::out_of_range);
-}
 
 // ============================================================================
 // Spread

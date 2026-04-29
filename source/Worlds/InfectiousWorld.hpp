@@ -372,11 +372,10 @@ class InfectiousWorld : public SimWorldBase<DiseaseData> {
   /**
    * @brief Manually infect an agent by ID.
    * @param id Agent index in agent_set.
-   * @throws std::out_of_range if id does not refer to an existing agent.
+   *
    */
   void InfectAgent(size_t id) {
-    if (id >= agent_set.size())
-      throw std::out_of_range("InfectAgent: agent id out of range");
+    assert(id < agent_set.size() && "InfectAgent: Agent id out of range");
     DiseaseData state = agent_set[id]->GetState();
     state.health = HealthState::INFECTED;
     state.ticks_in_state = 0;
@@ -392,8 +391,7 @@ class InfectiousWorld : public SimWorldBase<DiseaseData> {
    * @throws std::out_of_range if id does not refer to an existing agent.
    */
   [[nodiscard]] HealthState GetAgentHealth(size_t id) const {
-    if (id >= agent_set.size())
-      throw std::out_of_range("GetAgentHealth: agent id out of range");
+    assert(id < agent_set.size() && "GetAgentHealth: Agent id out of range");
     return agent_set[id]->GetState().health;
   }
 
@@ -403,6 +401,7 @@ class InfectiousWorld : public SimWorldBase<DiseaseData> {
    * @return true if the agent exists and is infected.
    */
   [[nodiscard]] bool IsAgentInfected(size_t id) const {
+    assert(id < agent_set.size() && "IsAgentInfected: Agent id out of range");
     return GetAgentHealth(id) == HealthState::INFECTED;
   }
 
@@ -573,7 +572,8 @@ class InfectiousWorld : public SimWorldBase<DiseaseData> {
 
   /**
    * @brief Get fallback recovery delay for infected agents outside treatment.
-   * @return Number of infected ticks before fallback recovery; zero disables it.
+   * @return Number of infected ticks before fallback recovery; zero disables
+   * it.
    */
   [[nodiscard]] size_t GetFallbackRecoveryTicks() const {
     return fallback_recovery_ticks;

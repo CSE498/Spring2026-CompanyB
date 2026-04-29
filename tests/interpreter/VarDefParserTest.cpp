@@ -25,7 +25,7 @@ using matchers::VariantState;
 static std::pair<
     Parser,
     std::expected<std::vector<std::unique_ptr<StmtAgentDef>>, InterpErr>>
-parse(std::string const &stmts) {
+parse(std::string const& stmts) {
   Parser p;
   std::istringstream ss("world traffic;\n" + stmts);
   auto result = p.parse(ss);
@@ -44,7 +44,7 @@ TEST_CASE("VarDef: int literal", "[vardef][parser]") {
   REQUIRE(result.has_value());
   REQUIRE(p.m_Nodes.size() == 1);
 
-  auto *assign = dynamic_cast<Assign *>(p.m_Nodes[0].get());
+  auto* assign = dynamic_cast<Assign*>(p.m_Nodes[0].get());
   REQUIRE(assign != nullptr);
 
   CHECK(assign->m_Sym->name == "i");
@@ -53,7 +53,7 @@ TEST_CASE("VarDef: int literal", "[vardef][parser]") {
   REQUIRE(
       std::holds_alternative<int>(std::get<VarSym>(assign->m_Sym->sym).m_Type));
 
-  CHECK(dynamic_cast<ValLiteral *>(assign->m_Value.get()) != nullptr);
+  CHECK(dynamic_cast<ValLiteral*>(assign->m_Value.get()) != nullptr);
 }
 
 TEST_CASE("VarDef: double literal", "[vardef][parser]") {
@@ -62,7 +62,7 @@ TEST_CASE("VarDef: double literal", "[vardef][parser]") {
   REQUIRE(result.has_value());
   REQUIRE(p.m_Nodes.size() == 1);
 
-  auto *assign = dynamic_cast<Assign *>(p.m_Nodes[0].get());
+  auto* assign = dynamic_cast<Assign*>(p.m_Nodes[0].get());
   REQUIRE(assign != nullptr);
 
   CHECK(assign->m_Sym->name == "x");
@@ -70,7 +70,7 @@ TEST_CASE("VarDef: double literal", "[vardef][parser]") {
   REQUIRE(assign->m_Sym->sym.IsA<VarSym>());
   REQUIRE_THAT(assign->m_Sym->sym.As<VarSym>().m_Type, VariantState<double>());
 
-  CHECK(dynamic_cast<ValLiteral *>(assign->m_Value.get()) != nullptr);
+  CHECK(dynamic_cast<ValLiteral*>(assign->m_Value.get()) != nullptr);
 }
 
 TEST_CASE("VarDef: bool from comparison expression", "[vardef][parser]") {
@@ -80,7 +80,7 @@ TEST_CASE("VarDef: bool from comparison expression", "[vardef][parser]") {
   REQUIRE(result.has_value());
   REQUIRE(p.m_Nodes.size() == 1);
 
-  auto *assign = dynamic_cast<Assign *>(p.m_Nodes[0].get());
+  auto* assign = dynamic_cast<Assign*>(p.m_Nodes[0].get());
   REQUIRE(assign != nullptr);
 
   CHECK(assign->m_Sym->name == "flag");
@@ -88,7 +88,7 @@ TEST_CASE("VarDef: bool from comparison expression", "[vardef][parser]") {
   REQUIRE(assign->m_Sym->sym.IsA<VarSym>());
   REQUIRE_THAT(assign->m_Sym->sym.As<VarSym>().m_Type, VariantState<bool>());
 
-  CHECK(dynamic_cast<ExprBinary *>(assign->m_Value.get()) != nullptr);
+  CHECK(dynamic_cast<ExprBinary*>(assign->m_Value.get()) != nullptr);
 }
 
 TEST_CASE("VarDef: string literal", "[vardef][parser]") {
@@ -97,7 +97,7 @@ TEST_CASE("VarDef: string literal", "[vardef][parser]") {
   REQUIRE(result.has_value());
   REQUIRE(p.m_Nodes.size() == 1);
 
-  auto *assign = dynamic_cast<Assign *>(p.m_Nodes[0].get());
+  auto* assign = dynamic_cast<Assign*>(p.m_Nodes[0].get());
   REQUIRE(assign != nullptr);
 
   CHECK(assign->m_Sym->name == "label");
@@ -106,7 +106,7 @@ TEST_CASE("VarDef: string literal", "[vardef][parser]") {
   REQUIRE_THAT(assign->m_Sym->sym.As<VarSym>().m_Type,
                VariantState<std::string>());
 
-  CHECK(dynamic_cast<ValLiteral *>(assign->m_Value.get()) != nullptr);
+  CHECK(dynamic_cast<ValLiteral*>(assign->m_Value.get()) != nullptr);
 }
 
 // ------------------------------------------------------------
@@ -119,7 +119,7 @@ TEST_CASE("VarDef: binary expression RHS", "[vardef][parser]") {
   REQUIRE(result.has_value());
   REQUIRE(p.m_Nodes.size() == 1);
 
-  auto *assign = dynamic_cast<Assign *>(p.m_Nodes[0].get());
+  auto* assign = dynamic_cast<Assign*>(p.m_Nodes[0].get());
   REQUIRE(assign != nullptr);
 
   CHECK(assign->m_Sym->name == "j");
@@ -127,7 +127,7 @@ TEST_CASE("VarDef: binary expression RHS", "[vardef][parser]") {
   REQUIRE(assign->m_Sym->sym.IsA<VarSym>());
   REQUIRE_THAT(assign->m_Sym->sym.As<VarSym>().m_Type, VariantState<int>());
 
-  CHECK(dynamic_cast<ExprBinary *>(assign->m_Value.get()) != nullptr);
+  CHECK(dynamic_cast<ExprBinary*>(assign->m_Value.get()) != nullptr);
 }
 
 TEST_CASE("VarDef: compound arithmetic expression RHS", "[vardef][parser]") {
@@ -136,9 +136,9 @@ TEST_CASE("VarDef: compound arithmetic expression RHS", "[vardef][parser]") {
   REQUIRE(result.has_value());
   REQUIRE(p.m_Nodes.size() == 1);
 
-  auto *assign = dynamic_cast<Assign *>(p.m_Nodes[0].get());
+  auto* assign = dynamic_cast<Assign*>(p.m_Nodes[0].get());
   REQUIRE(assign != nullptr);
-  CHECK(dynamic_cast<ExprBinary *>(assign->m_Value.get()) != nullptr);
+  CHECK(dynamic_cast<ExprBinary*>(assign->m_Value.get()) != nullptr);
 }
 
 // ------------------------------------------------------------
@@ -151,7 +151,7 @@ TEST_CASE("VarDef: multiple sequential definitions", "[vardef][parser]") {
   REQUIRE(result.has_value());
   REQUIRE(p.m_Nodes.size() == 2);
 
-  auto *assign1 = dynamic_cast<Assign *>(p.m_Nodes[0].get());
+  auto* assign1 = dynamic_cast<Assign*>(p.m_Nodes[0].get());
   REQUIRE(assign1 != nullptr);
 
   CHECK(assign1->m_Sym->name == "a");
@@ -159,7 +159,7 @@ TEST_CASE("VarDef: multiple sequential definitions", "[vardef][parser]") {
   REQUIRE(assign1->m_Sym->sym.IsA<VarSym>());
   REQUIRE_THAT(assign1->m_Sym->sym.As<VarSym>().m_Type, VariantState<int>());
 
-  auto *assign2 = dynamic_cast<Assign *>(p.m_Nodes[1].get());
+  auto* assign2 = dynamic_cast<Assign*>(p.m_Nodes[1].get());
   REQUIRE(assign2 != nullptr);
 
   CHECK(assign2->m_Sym->name == "b");
@@ -167,9 +167,9 @@ TEST_CASE("VarDef: multiple sequential definitions", "[vardef][parser]") {
   REQUIRE(assign2->m_Sym->sym.IsA<VarSym>());
   REQUIRE_THAT(assign2->m_Sym->sym.As<VarSym>().m_Type, VariantState<double>());
 
-  CHECK(dynamic_cast<ValLiteral *>(assign2->m_Value.get()) != nullptr);
+  CHECK(dynamic_cast<ValLiteral*>(assign2->m_Value.get()) != nullptr);
 
-  CHECK(dynamic_cast<ValLiteral *>(assign1->m_Value.get()) != nullptr);
+  CHECK(dynamic_cast<ValLiteral*>(assign1->m_Value.get()) != nullptr);
 }
 
 // ------------------------------------------------------------
@@ -183,7 +183,7 @@ TEST_CASE("VarDef: use previously defined variable in new definition",
   REQUIRE(result.has_value());
   REQUIRE(p.m_Nodes.size() == 2);
 
-  auto *assign = dynamic_cast<Assign *>(p.m_Nodes[1].get());
+  auto* assign = dynamic_cast<Assign*>(p.m_Nodes[1].get());
   REQUIRE(assign != nullptr);
 
   CHECK(assign->m_Sym->name == "j");
@@ -191,7 +191,7 @@ TEST_CASE("VarDef: use previously defined variable in new definition",
   REQUIRE(assign->m_Sym->sym.IsA<VarSym>());
   REQUIRE_THAT(assign->m_Sym->sym.As<VarSym>().m_Type, VariantState<int>());
 
-  CHECK(dynamic_cast<ValVariable *>(assign->m_Value.get()) != nullptr);
+  CHECK(dynamic_cast<ValVariable*>(assign->m_Value.get()) != nullptr);
 }
 
 TEST_CASE("VarDef: redefining a symbol is an error",

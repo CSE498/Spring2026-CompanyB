@@ -12,14 +12,14 @@ using namespace agentlang;
 static std::pair<
     Parser,
     std::expected<std::vector<std::unique_ptr<AST::StmtAgentDef>>, InterpErr>>
-parse(std::string const &stmts) {
+parse(std::string const& stmts) {
   Parser p;
   std::istringstream ss(stmts);
   auto result = p.parse(ss);
   return {std::move(p), std::move(result)};
 }
 
-const char *BASIC_FUNC_TESTS = R"V0G0N(
+const char* BASIC_FUNC_TESTS = R"V0G0N(
 world traffic;
 // Empty function, always returns 10;
 fn ten() : int {

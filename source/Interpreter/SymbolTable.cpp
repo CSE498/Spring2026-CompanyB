@@ -35,7 +35,7 @@ void SymbolTable::PopSymbolScope() {
  * `SymbolErr`.
  */
 [[nodiscard]] std::expected<SymInfoPtr, InterpErr> SymbolTable::GetSym(
-    const std::string &name) const {
+    const std::string& name) const {
   size_t idx;
 
   // Gives pointer to map w/ found symbol, otherwise end
@@ -66,8 +66,8 @@ void SymbolTable::PopSymbolScope() {
  * token `id_tok`'s lexeme, and the default-initialized `Type` object
  * corresponding to the given type `type_tok`.
  */
-std::expected<size_t, InterpErr> SymbolTable::AddSym(const Token &id_tok,
-                                                     const Token &type_tok) {
+std::expected<size_t, InterpErr> SymbolTable::AddSym(const Token& id_tok,
+                                                     const Token& type_tok) {
   auto type_opt = NameToType(type_tok);
   if (!type_opt) {
     return SymbolErr(SymbolErr::INVALID_TYPE,
@@ -81,10 +81,10 @@ std::expected<size_t, InterpErr> SymbolTable::AddSym(const Token &id_tok,
  * symbols.
  */
 std::expected<std::pair<std::string, size_t>, InterpErr> SymbolTable::PrepAdd(
-    std::string const &name) {
+    std::string const& name) {
   assert(m_ScopeStack.size() > 0);
   // Symbols focus on only CURRENT scope.
-  auto &symbols = m_ScopeStack.back();
+  auto& symbols = m_ScopeStack.back();
   if (symbols.contains(name)) {
     return SymbolErr(SymbolErr::REDEFINITION,
                      std::format("Redefinition of symbol {}", name));
@@ -98,20 +98,20 @@ std::expected<std::pair<std::string, size_t>, InterpErr> SymbolTable::PrepAdd(
 /** @brief Overload for `PrepAdd` which takes a token.
  */
 std::expected<std::pair<std::string, size_t>, InterpErr> SymbolTable::PrepAdd(
-    const Token &id_tok) {
+    const Token& id_tok) {
   return PrepAdd(id_tok.lexeme);
 };
 
 /** @brief Construct and add a `VarSym` symbol to the current scope, with the
  * name provided by the `id_tok` token and the value provided by `type`.
  */
-std::expected<size_t, InterpErr> SymbolTable::AddSym(const Token &id_tok,
+std::expected<size_t, InterpErr> SymbolTable::AddSym(const Token& id_tok,
                                                      Type type) {
   return AddSym(id_tok, VarSym(type));
 }
 /** @brief Directly add a `VarSym` symbol to the current scope.
  */
-std::expected<size_t, InterpErr> SymbolTable::AddSym(const Token &id_tok,
+std::expected<size_t, InterpErr> SymbolTable::AddSym(const Token& id_tok,
                                                      VarSym sym) {
   TRY_DECL(sym_pair, PrepAdd(id_tok));
   auto [name, idx] = sym_pair;
@@ -131,8 +131,8 @@ std::expected<size_t, InterpErr> SymbolTable::AddSym(std::string id,
 }
 /** @brief Directly add function symbol to the current scope by name.
  */
-std::expected<size_t, InterpErr> SymbolTable::AddSym(std::string const &id,
-                                                     FuncSym &&sym) {
+std::expected<size_t, InterpErr> SymbolTable::AddSym(std::string const& id,
+                                                     FuncSym&& sym) {
   TRY_DECL(sym_pair, PrepAdd(id));
   auto [name, idx] = sym_pair;
 
@@ -149,8 +149,8 @@ std::expected<size_t, InterpErr> SymbolTable::AddSym(std::string const &id,
 /** @brief Directly add function symbol to the current scope, with the name
  * provided by the `id_tok` token.
  */
-std::expected<size_t, InterpErr> SymbolTable::AddSym(const Token &id_tok,
-                                                     FuncSym &&sym) {
+std::expected<size_t, InterpErr> SymbolTable::AddSym(const Token& id_tok,
+                                                     FuncSym&& sym) {
   TRY_DECL(sym_pair, PrepAdd(id_tok));
   auto [name, idx] = sym_pair;
 
@@ -170,7 +170,7 @@ std::expected<size_t, InterpErr> SymbolTable::AddSym(const Token &id_tok,
  * placed in the functions vector.
  */
 std::expected<size_t, InterpErr> SymbolTable::AddFunc(
-    std::unique_ptr<AST::Node> &&node) {
+    std::unique_ptr<AST::Node>&& node) {
   m_Funcs.push_back(std::move(node));
   return m_Funcs.size() - 1;
 }

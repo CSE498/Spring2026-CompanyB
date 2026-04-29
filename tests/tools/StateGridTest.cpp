@@ -44,7 +44,7 @@ TEST_CASE("Test Tile") {
   auto Agent2 = std::make_unique<Agent>(2);
 
   // Save raw pointer before moving ownership
-  Agent *Agent1_raw = Agent1.get();
+  Agent* Agent1_raw = Agent1.get();
 
   // Sets agent and ensure only one may exist
   CHECK(Tile1.addAgent(Agent1) == true);
@@ -56,7 +56,7 @@ TEST_CASE("Test Tile") {
   CHECK(Agent2->getId() == 2);
 
   // Ensure that the agent is the same
-  Agent *found = Tile1.getAgent();
+  Agent* found = Tile1.getAgent();
   CHECK(found != nullptr);
   CHECK(found == Agent1_raw);
   CHECK(found->getId() == 1);
@@ -123,7 +123,7 @@ TEST_CASE("Test StateGrid, Tile Integration") {
   CHECK(Stategrid1.getAgent(1, 1) == nullptr);
 
   // Also verify via const getAllTiles
-  const auto &tiles = Stategrid1.getAllTiles();
+  const auto& tiles = Stategrid1.getAllTiles();
   CHECK(tiles[0][0].getRow() == 0);
   CHECK(tiles[0][0].getColumn() == 0);
   CHECK(tiles[1][1].getRow() == 1);
@@ -131,18 +131,18 @@ TEST_CASE("Test StateGrid, Tile Integration") {
 
   // Ensures mutability through StateGrid wrapper methods
   auto agent = std::make_unique<Agent>(42);
-  Agent *agent_raw = agent.get();
+  Agent* agent_raw = agent.get();
   CHECK(Stategrid1.addAgent(0, 0, agent) == true);
   CHECK(Stategrid1.hasAgent(0, 0) == true);
   CHECK(Stategrid1.getAgent(0, 0) == agent_raw);
 
   // Checks pulling single tiles, getTile with coords (now const)
-  const Tile *Tile_0_0_again = Stategrid1.getTile(0, 0);
+  const Tile* Tile_0_0_again = Stategrid1.getTile(0, 0);
   CHECK(Tile_0_0_again->hasAgent() == true);
   CHECK(Tile_0_0_again->getAgent() == agent_raw);
 
   // OOB tiles returns null ptr
-  const Tile *Tile_OOB = Stategrid1.getTile(5, 3);
+  const Tile* Tile_OOB = Stategrid1.getTile(5, 3);
   CHECK(Tile_OOB == nullptr);
 }
 
