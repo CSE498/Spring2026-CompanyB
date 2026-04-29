@@ -10,7 +10,6 @@
 #include <thread>
 #include <vector>
 
-#include "../Agents/ScriptedBusAgent.hpp"
 #include "../core/AgentData.hpp"
 #include "../core/StepWorldBase.hpp"
 #include "../tools/WeightedSet.hpp"
@@ -595,22 +594,6 @@ if (new_x == old_x) {
       state.colour = "\033[95m";
       state.is_active = true;
       ptr->SetState(state);
-    }
-  }
-
-  /// @brief Spawn one ScriptedBusAgent at every 'B' tile found during ScanGrid.
-  /// Buses have no destination so they never despawn; they are created once at
-  /// world construction time and run forever.
-  void SpawnBuses() {
-    for (const WorldPosition& pos : bus_spawner_positions) {
-      TrafficData state;
-      state.position = pos;
-      state.direction = Direction::East;
-      state.is_active = true;
-      state.symbol = '>';
-      state.colour = bus_colour;
-      state.destination = std::nullopt;
-      this->template AddAgent<ScriptedBusAgent>(state);
     }
   }
 
