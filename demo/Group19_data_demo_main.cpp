@@ -4,17 +4,16 @@
  * @note Status: PROPOSAL
  **/
 
-#include "../source/Interfaces/AutoInterface.hpp"
-#include "../source/Worlds/TrafficWorld.hpp"
+#include "../source/Agents/SwarmingAgent.hpp"
+#include "../source/Worlds/StepTrafficWorld.hpp"
 
 using namespace cse498;
 
 int main() {
-  TrafficWorld world("demo/DemoWorld.grid");
-  world.AddAgent<AutoInterface>("Viewer");
+  StepTrafficWorld<SwarmingAgent<TrafficData>> world("assets/DemoWorld.grid");
 
   // Step the world a few times and print summary DataLog stats.
-  for (int tick = 0; tick < 5; ++tick) {
+  for (int tick = 0; tick < 10; ++tick) {
     world.RunAgents();
     world.UpdateWorld();
 
@@ -22,8 +21,7 @@ int main() {
     if (log.contains("active_count") && !log.at("active_count").empty()) {
       const auto& stats = log.at("active_count").back();
       std::cout << "Tick " << tick << " active_count=" << stats.sum
-                << " mean=" << stats.mean << " count=" << stats.count
-                << "\n";
+                << " mean=" << stats.mean << " count=" << stats.count << "\n";
     }
   }
 
