@@ -76,3 +76,36 @@ let road_walker : car {
         last_y = y;
     };
 };
+
+// def_idx 2: Cardinal walker.
+// Picks a direction and sticks with it until a step is blocked
+let cardinal_walker : car {
+    init : {
+        let dir : int = 0;             // 0=down 1=up 2=left 3=right
+        let last_x : int = -1;
+        let last_y : int = -1;
+        __spawn__ = make_point(16, 389);
+        __destination__ = make_point(500, 500);
+    };
+    turn : {
+        let x : int = get_x(__position__);
+        let y : int = get_y(__position__);
+
+        // Detect blocked
+        if (last_x != -1) {
+            if (x == last_x) {
+                if (y == last_y) {
+                    dir = (dir + 1) % 4;
+                }
+            }
+        }
+
+        if      (dir == 0) move(down);
+        else if (dir == 1) move(up);
+        else if (dir == 2) move(left);
+        else               move(right);
+
+        last_x = x;
+        last_y = y;
+    };
+};

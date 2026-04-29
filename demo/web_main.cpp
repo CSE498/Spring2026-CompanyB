@@ -131,7 +131,7 @@ static ActiveSim last_loaded_sim = ActiveSim::NONE;
 static void AddTrafficScriptedAgents() {
     scripted_traffic_lo = traffic_world->GetNumAgents();
     if (!uploaded_script.empty()) {
-        traffic_world->AddScriptedAgent(TrafficData{.is_active = true}, uploaded_script, 0);
+        traffic_world->AddScriptedAgent(TrafficData{.is_active = true}, uploaded_script, 2);
     }
     scripted_traffic_hi = traffic_world->GetNumAgents();
 }
@@ -348,8 +348,8 @@ static std::vector<WorldPosition> traffic_light_cells;
 auto handle_sim_state = [](SimState next) {
     switch (next) {
         case SimState::PLAYING:
+            if (sim_state != SimState::PLAYING) LogSim("World", "Simulation started", "start");
             sim_state = SimState::PLAYING;
-            LogSim("World", "Simulation started", "start");
             break;
         case SimState::PAUSED:
             if (sim_state == SimState::PLAYING) {
@@ -654,24 +654,36 @@ void DrawTrafficSim() {
     const double cell_h = static_cast<double>(GameCanvas->GetHeight()) / H;
 
     // Redraw traffic lights every frame against current grid symbols
-    constexpr int kLightLineSpace = 10;
-    GameCanvas->SetPenColor({0, 0, 0});
+    constexpr double kArrowHalf = 10.0;
+    constexpr double kArrowHead = 5.0;
+    GameCanvas->SetPenColor({50, 100, 255}).SetLineWidth(2.0).BeginPath();
     for (const auto& pos : traffic_light_cells) {
         char sym = grid.GetSymbol(pos);
         double cx = pos.CellX() * cell_w;
         double cy = pos.CellY() * cell_h;
         if (sym == '|') {
-            GameCanvas->DrawLine({cx - kLightLineSpace, cy - kLightLineSpace},
-                                 {cx - kLightLineSpace, cy + kLightLineSpace})
-                       .DrawLine({cx + kLightLineSpace, cy - kLightLineSpace},
-                                 {cx + kLightLineSpace, cy + kLightLineSpace});
+            GameCanvas->AddLine({cx, cy - kArrowHalf}, {cx, cy + kArrowHalf})
+                       .AddLine({cx, cy - kArrowHalf},
+                                {cx - kArrowHead, cy - kArrowHalf + kArrowHead})
+                       .AddLine({cx, cy - kArrowHalf},
+                                {cx + kArrowHead, cy - kArrowHalf + kArrowHead})
+                       .AddLine({cx, cy + kArrowHalf},
+                                {cx - kArrowHead, cy + kArrowHalf - kArrowHead})
+                       .AddLine({cx, cy + kArrowHalf},
+                                {cx + kArrowHead, cy + kArrowHalf - kArrowHead});
         } else if (sym == '-') {
-            GameCanvas->DrawLine({cx - kLightLineSpace, cy - kLightLineSpace},
-                                 {cx + kLightLineSpace, cy - kLightLineSpace})
-                       .DrawLine({cx - kLightLineSpace, cy + kLightLineSpace},
-                                 {cx + kLightLineSpace, cy + kLightLineSpace});
+            GameCanvas->AddLine({cx - kArrowHalf, cy}, {cx + kArrowHalf, cy})
+                       .AddLine({cx - kArrowHalf, cy},
+                                {cx - kArrowHalf + kArrowHead, cy - kArrowHead})
+                       .AddLine({cx - kArrowHalf, cy},
+                                {cx - kArrowHalf + kArrowHead, cy + kArrowHead})
+                       .AddLine({cx + kArrowHalf, cy},
+                                {cx + kArrowHalf - kArrowHead, cy - kArrowHead})
+                       .AddLine({cx + kArrowHalf, cy},
+                                {cx + kArrowHalf - kArrowHead, cy + kArrowHead});
         }
     }
+    GameCanvas->Stroke();
 
     const double radius = std::max(std::min(cell_w, cell_h) * 0.4, 8.0);
     const double agent_r = radius * 0.75;
@@ -989,7 +1001,7 @@ std::shared_ptr<WebElement> SimulationLayout(ActiveSim sim, std::function<void()
 
     if (sim == ActiveSim::TRAFFIC) {
         game_children.push_back(
-            UIItem<WebImage>("assets/images/full_map.svg", "Game map", WebOptions{
+            UIItem<WebImage>("assets/images/full_map_no_road.svg", "Game map", WebOptions{
                 .id = "map-image",
             })
         );

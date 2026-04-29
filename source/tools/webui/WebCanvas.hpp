@@ -210,6 +210,13 @@ class WebCanvas : public WebElement {
   WebCanvas& AddCircle(double x, double y, double radius);
 
   /**
+   * @brief Append a line segment to the current path without committing it.
+   * Pairs with BeginPath()/Stroke() to draw many same-styled lines in one go.
+   **/
+  WebCanvas& AddLine(std::pair<double, double> start,
+                     std::pair<double, double> end);
+
+  /**
    * @brief Fill the current path using the current fill color.
    **/
   WebCanvas& Fill();

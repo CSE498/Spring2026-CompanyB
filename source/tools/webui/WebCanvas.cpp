@@ -239,6 +239,13 @@ WebCanvas& WebCanvas::AddCircle(double x, double y, double radius) {
   return *this;
 }
 
+WebCanvas& WebCanvas::AddLine(std::pair<double, double> start,
+                              std::pair<double, double> end) {
+  ctx.call<void>("moveTo", start.first, start.second);
+  ctx.call<void>("lineTo", end.first, end.second);
+  return *this;
+}
+
 WebCanvas& WebCanvas::Fill() {
   ctx.call<void>("fill");
   return *this;
