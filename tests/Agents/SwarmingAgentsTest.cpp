@@ -289,7 +289,8 @@ TEST_CASE("DiseaseAgent RECOVERED moves to cardinal neighbor",
 // Anti-looping / recent-history behavior
 
 TEST_CASE(
-    "Traffic agent with no destination avoids immediate repeat when fresh neighbors exist",
+    "Traffic agent with no destination avoids immediate repeat when fresh "
+    "neighbors exist",
     "[SwarmingAgent]") {
   WorldPosition pos{5, 5};
   auto data = MakeTrafficData(pos, std::nullopt);
