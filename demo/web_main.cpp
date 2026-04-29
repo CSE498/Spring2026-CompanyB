@@ -505,18 +505,27 @@ static void BuildTrafficStaticLayer() {
                     break;
                 case '|':
                 case '-':
-                    // Traffic lights flip each phase — drawn dynamically.
+                    // Traffic lights flip each phase -- drawn dynamically.
                     break;
                 case 'S':
-                    traffic_static_layer->SetFillColor({100, 100, 100})
-                        .DrawRect(cx - (10 * cell_w / 2), cy - (10 * cell_h / 2),
-                                  10 * cell_w, 10 * cell_h, true);
+                case 'F':
+                case 'N':
+                case 'D': {
+                    const double box_w = 10 * cell_w;
+                    const double box_h = 10 * cell_h;
+                    traffic_static_layer->SetFillColor({40, 40, 40})
+                        .DrawRect(cx - box_w / 2, cy - box_h / 2, box_w, box_h, true);
+                    const double mk_w = 6 * cell_w;
+                    const double mk_h = 6 * cell_h;
+                    WebCanvas::RGB color =
+                        sym == 'D' ? WebCanvas::RGB{60, 220, 100}    // green
+                      : sym == 'S' ? WebCanvas::RGB{180, 100, 220}   // purple
+                      : sym == 'N' ? WebCanvas::RGB{80, 220, 220}    // cyan
+                      :              WebCanvas::RGB{240, 100, 200};  // F = magenta
+                    traffic_static_layer->SetFillColor(color)
+                        .DrawRect(cx - mk_w / 2, cy - mk_h / 2, mk_w, mk_h, true);
                     break;
-                case 'D':
-                    traffic_static_layer->SetFillColor({200, 200, 200})
-                        .DrawRect(cx - (10 * cell_w / 2), cy - (10 * cell_h / 2),
-                                  10 * cell_w, 10 * cell_h, true);
-                    break;
+                }
                 default:
                     break;
             }
