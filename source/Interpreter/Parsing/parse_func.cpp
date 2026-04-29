@@ -118,6 +118,8 @@ std::expected<std::unique_ptr<AST::Node>, InterpErr> Parser::parse_func_call() {
           tok, func_sym_data.m_Params.at(arg_index), std::move(arg)));
       // func_call->add_node(std::move(arg));
 
+      ++arg_index;
+
       // Consume remaining comma unless next is paren close
       if (!m_Lexer.Is(IDs::ID_DELIM_PAREN_CLOSE)) {
         TRY(m_Lexer.UseIf(IDs::ID_DELIM_COMMA));
