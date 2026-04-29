@@ -11,6 +11,8 @@ let v_pacer : car {
         let last_y : int = -1;
         let side : int = 0;            // 0 = right, 1 = left
         __spawn__ = make_point(306, 142);
+        // Destination is set so DataLog counts this car under driving_count.
+        __destination__ = make_point(306, 200);
     };
     turn : {
         let y : int = get_y(__position__);

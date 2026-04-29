@@ -19,6 +19,7 @@
 #include "Worlds/StepTrafficWorld.hpp"
 #include "Worlds/InfectiousWorld.hpp"
 #include "Worlds/InfectiousBuildings.hpp"
+#include "tools/DataLog.hpp"
 #include "core/AgentData.hpp"
 #include "core/ItemBase.hpp"
 #include "Agents/ScriptedAgent.hpp"
@@ -96,6 +97,11 @@ static SimState  sim_state  = SimState::STOPPED;
 static std::shared_ptr<WebCanvas> GameCanvas;
 static std::unique_ptr<WebTrafficWorld> traffic_world;
 static std::unique_ptr<InfectiousWorld> virus_world;
+
+// DataLog instances aggregate per-tick stats from the live agent set. They
+// must be recreated alongside the world so their time-series start at tick 0.
+static std::unique_ptr<DataLog<TrafficData>> traffic_log;
+static std::unique_ptr<DataLog<DiseaseData>> virus_log;
 static std::shared_ptr<WebTextbox> log_textbox;
 static std::unique_ptr<WebTextboxOutputManager> logger;
 
@@ -116,8 +122,8 @@ static const std::string& LoadAgentScript(const char* vfs_path);
 static void AddTrafficScriptedAgents() {
     const std::string& traffic_script = LoadAgentScript("scripts/traffic_script.al");
     scripted_traffic_lo = traffic_world->GetNumAgents();
-    traffic_world->AddScriptedAgent(TrafficData{.is_active = true}, traffic_script, 0);
-    traffic_world->AddScriptedAgent(TrafficData{.is_active = true}, traffic_script, 1);
+    // traffic_world->AddScriptedAgent(TrafficData{.is_active = true}, traffic_script, 0);
+    // traffic_world->AddScriptedAgent(TrafficData{.is_active = true}, traffic_script, 1);
     scripted_traffic_hi = traffic_world->GetNumAgents();
 }
 
@@ -230,13 +236,68 @@ static std::unordered_map<std::string, std::shared_ptr<WebElement>> elements{};
 
 static double t = 0.0;
 static int count = 0;
-// static std::vector<double> bar_data{8, 4, 10, 6, 12};
+
+// Per-agent positions from the previous UpdateGraphs() call. Used to
+// distinguish cars that actually moved this tick from those stalled at a
+// light or wall, since is_active alone counts both as "active".
+static std::vector<WorldPosition> prev_traffic_positions;
 
 void UpdateGraphs() {
-  if (line_graph) {
-    line_graph->AddDataPoint(count, "Counting Test");
-    count++;
+  if (!line_graph) return;
+
+  // Safely read .back().sum from a DataLog field, 0 if missing/empty.
+  auto latest_sum =
+      [](const std::unordered_map<std::string, std::vector<TickStats>>& s,
+         const std::string& field) -> double {
+    auto it = s.find(field);
+    if (it == s.end() || it->second.empty()) return 0.0;
+    return it->second.back().sum;
+  };
+
+  if (active_sim == ActiveSim::TRAFFIC && traffic_world && traffic_log) {
+    // active_count comes from DataLog. "Moving" is
+    // computed locally from position deltas since DataLog doesn't expose
+    // position-change.
+    line_graph->SetChartType(InfoGraph::ChartType::Line);
+    traffic_log->AggregateData(traffic_world->GetAgents());
+    const auto& series = traffic_log->GetAggregationData();
+    const double active = latest_sum(series, "active_count");
+
+    size_t n = traffic_world->GetNumAgents();
+    if (prev_traffic_positions.size() < n) prev_traffic_positions.resize(n);
+    size_t moving = 0;
+    for (size_t id = 0; id < n; ++id) {
+      TrafficData state = traffic_world->GetAgentState(id);
+      if (state.is_active && state.position != prev_traffic_positions[id]) {
+        ++moving;
+      }
+      prev_traffic_positions[id] = state.position;
+    }
+    const double moving_d = static_cast<double>(moving);
+    const double idle = std::max(0.0, active - moving_d);
+    line_graph->AddDataPoints(
+        {moving_d, idle},
+        {InfoGraph::Color{80, 200, 120}, InfoGraph::Color{220, 90, 90}},
+        {"Moving", "Idle"},
+        "Cars / tick");
+  } else if (active_sim == ActiveSim::VIRUS && virus_world && virus_log) {
+    line_graph->SetChartType(InfoGraph::ChartType::Bar);
+    virus_log->AggregateData(virus_world->GetAgents());
+    const auto& series = virus_log->GetAggregationData();
+    InfoGraph::DataSeries snapshot = {
+        latest_sum(series, "susceptible_count"),
+        latest_sum(series, "infection_count"),
+        latest_sum(series, "cured_count"),
+    };
+    std::vector<InfoGraph::Color> bar_colors = {
+        {60, 220, 90},    // SUSCEPTIBLE - green
+        {230, 60, 60},    // INFECTED    - red
+        {90, 130, 240},   // RECOVERED   - blue
+    };
+    std::vector<std::string> bar_labels = {"S", "I", "R"};
+    line_graph->DrawBarChart(snapshot, bar_colors, bar_labels, "S / I / R");
   }
+  count++;
 }
 
 std::shared_ptr<WebElement> GameInfoCanvas(WebOptions options) {
@@ -266,7 +327,9 @@ auto handle_sim_state = [](SimState next) {
             // Reset the active world to its initial state
             if (active_sim == ActiveSim::TRAFFIC) {
                 traffic_world = std::make_unique<WebTrafficWorld>("assets/grids/TrafficWorld_Web.grid");
+                traffic_log = std::make_unique<DataLog<TrafficData>>(WorldType::Traffic);
                 AddTrafficScriptedAgents();
+    prev_traffic_positions.clear();
                 last_traffic_agent_count = 0;
                 traffic_reached_log.clear();
             } else if (active_sim == ActiveSim::VIRUS) {
@@ -521,6 +584,7 @@ void DrawVirusSim() {
 
 void SetupVirusWorld() {
     virus_world = std::make_unique<InfectiousWorld>(kGridW, kGridH);
+    virus_log = std::make_unique<DataLog<DiseaseData>>(WorldType::Infection);
     WorldGrid& grid = virus_world->GetGrid();
     size_t wall  = virus_world->GetWallID();
     size_t floor = virus_world->GetFloorID();
@@ -778,7 +842,9 @@ void load_traffic_layout() {
     sim_state  = SimState::STOPPED;
     sim_tick   = 0;
     traffic_world = std::make_unique<WebTrafficWorld>("assets/grids/TrafficWorld_Web.grid");
+    traffic_log = std::make_unique<DataLog<TrafficData>>(WorldType::Traffic);
     AddTrafficScriptedAgents();
+    prev_traffic_positions.clear();
 
     last_traffic_agent_count = 0;
     traffic_reached_log.clear();

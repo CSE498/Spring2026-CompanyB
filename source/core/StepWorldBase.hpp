@@ -82,6 +82,12 @@ class StepWorldBase {
   StepWorldBase() = default;
   virtual ~StepWorldBase() = default;
 
+  /// @brief Read-only view of the live agent set, for inspection by data logs
+  /// or visualization layers.
+  [[nodiscard]] const std::vector<AgentPtr>& GetAgents() const {
+    return agent_set;
+  }
+
   ///@ brief Add an agent to the world
   ///@param data DataClass to add to agent
   ///@note This signature or logic is may not final, since other logic may need
