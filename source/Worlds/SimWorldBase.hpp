@@ -51,6 +51,12 @@ class SimWorldBase : public StepWorldBase<DataClass> {
     return agent_set[id]->GetState();
   }
 
+  /// Const view of all agents
+  [[nodiscard]] const std::vector<std::shared_ptr<StepAgentBase<DataClass>>>&
+  GetAgents() const {
+    return agent_set;
+  }
+
   // -- Spatial queries (require DataClass to have a WorldPosition `position`)
 
   /// Return indices of all agents located in cell \p pos.

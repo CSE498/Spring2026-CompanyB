@@ -26,8 +26,9 @@
 
 #include "../core/AgentData.hpp"
 #include "../core/Step.hpp"
-#include "../tools/Box.hpp"      // quarantine zones with restricted movement
-#include "../tools/Circle.hpp"   // infection radius around each agent
+#include "../tools/Box.hpp"     // quarantine zones with restricted movement
+#include "../tools/Circle.hpp"  // infection radius around each agent
+#include "../tools/DataLog.hpp"
 #include "../tools/Point.hpp"    // continuous positions for geometry queries
 #include "../tools/Surface.hpp"  // overlap detection for infection spread
 #include "SimWorldBase.hpp"
@@ -64,6 +65,9 @@ class InfectiousWorld : public SimWorldBase<DiseaseData> {
 
   /// Observer called at the end of every UpdateWorld tick.
   std::function<void(const InfectiousWorld&)> tick_observer;
+
+  /// Single world-owned DataLog aggregated at end-of-tick.
+  DataLog<DiseaseData> datalog{WorldType::Infection};
 
   /// Probability that a susceptible nearby agent becomes infected per tick.
   double transmission_rate = 0.3;
@@ -346,18 +350,27 @@ class InfectiousWorld : public SimWorldBase<DiseaseData> {
   }
 
   /**
-   * @brief Advance the infectious world by one tick.
+   * @brief Advance the infectious world by one world-update tick.
+   *
+   * Call RunAgents() once before this each logical tick so movement reflects
+   * the current scripted/swarming turn.
+   *
+   * Per-tick order:
+   * 1. tick_count++
+   * 2. UpdateHealthTimers()
+   * 3. SpreadInfection()
+   * 4. tick_observer : tick_count is this tick's index.
    *
    * Timers run before spread so agents infected during this tick keep
-   * ticks_in_state == 0 until the next UpdateWorld() call. The optional
-   * observer is called after health and spread updates finish.
+   * ticks_in_state == 0 until the next UpdateWorld() call.
    */
   void UpdateWorld() override {
-    RunAgents();
     tick_count++;
     UpdateHealthTimers();
     SpreadInfection();
     if (tick_observer) tick_observer(*this);
+    // Aggregate after world update (end-of-tick snapshot).
+    datalog.AggregateData(agent_set);
   }
 
   /**
@@ -367,6 +380,14 @@ class InfectiousWorld : public SimWorldBase<DiseaseData> {
   void RegisterTickObserver(
       std::function<void(const InfectiousWorld&)> observer) {
     tick_observer = std::move(observer);
+  }
+
+  /**
+   * @brief Access the world-owned DataLog.
+   * @return Const reference to the per-tick aggregated data.
+   */
+  [[nodiscard]] const DataLog<DiseaseData>& GetDataLog() const {
+    return datalog;
   }
 
   /**

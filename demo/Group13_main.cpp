@@ -397,6 +397,7 @@ int RunInfectiousDemo() {
     }
 
     DrawWorld(world);
+    world.RunAgents();
     world.UpdateWorld();
     std::this_thread::sleep_for(
         std::chrono::milliseconds(demo::kFrameDelayMs));
