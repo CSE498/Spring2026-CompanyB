@@ -112,7 +112,7 @@ class StepWorldBase {
   /// @note Override function to control which grid each agent receives.
   virtual void RunAgents(LogLevel loglevel = LogLevel::Normal,
                          uint64_t tick = 0) {
-    mCurrentTick = tick;
+    tick_count = tick;
     for (const auto& agent_ptr : agent_set) {
       DataClass new_state = DoAction(agent_ptr);
       agent_ptr->SetState(new_state, loglevel, tick);
@@ -120,7 +120,7 @@ class StepWorldBase {
   }
 
   /// @brief Get the current simulation tick count.
-  [[nodiscard]] uint64_t GetTickCount() const noexcept { return mCurrentTick; }
+  [[nodiscard]] uint64_t GetTickCount() const noexcept { return tick_count; }
 
   /// @brief UpdateWorld() is run after every agent has a turn.
   /// Override this function to manage background events for a world.
@@ -131,11 +131,11 @@ class StepWorldBase {
   virtual void Run() {
     SetupScriptedAgents();
     run_over = false;
-    mCurrentTick = 0;
+    tick_count = 0;
     while (!run_over) {
-      RunAgents(LogLevel::Normal, mCurrentTick);
+      RunAgents(LogLevel::Normal, tick_count);
       UpdateWorld();
-      ++mCurrentTick;
+      ++tick_count;
     }
   }
 };

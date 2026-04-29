@@ -26,7 +26,7 @@ class SimWorldBase : public StepWorldBase<DataClass> {
 
   size_t floor_id{};  ///< Easy access to floor CellType ID.
   size_t wall_id{};   ///< Easy access to wall CellType ID.
-  //size_t tick_count{0};
+                      // size_t tick_count{0};
 
  public:
   SimWorldBase() {
