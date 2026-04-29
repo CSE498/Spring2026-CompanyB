@@ -53,25 +53,7 @@ struct TrafficData {
                           {"y", destination->CellY()}};
     }
     j["position"] = {{"x", position.CellX()}, {"y", position.CellY()}};
-
-    switch (direction) {
-      case cse498::Direction::North:
-        j["direction"] = "North";
-        break;
-      case cse498::Direction::South:
-        j["direction"] = "South";
-        break;
-      case cse498::Direction::West:
-        j["direction"] = "West";
-        break;
-      case cse498::Direction::East:
-        j["direction"] = "East";
-        break;
-      default:
-        j["direction"] = "North";
-        break;
-    }
-
+    j["direction"] = static_cast<int>(direction);
     j["is_active"] = is_active;
     j["symbol"] = std::string(1, symbol);
     j["colour"] = colour;
@@ -94,16 +76,11 @@ struct TrafficData {
             cse498::WorldPosition{p.at("x").get<int>(), p.at("y").get<int>()};
       }
     }
-    if (j.contains("direction") && j.at("direction").is_string()) {
-      std::string dir = j.at("direction").get<std::string>();
-      if (dir == "North")
-        data.direction = cse498::Direction::North;
-      else if (dir == "South")
-        data.direction = cse498::Direction::South;
-      else if (dir == "West")
-        data.direction = cse498::Direction::West;
-      else if (dir == "East")
-        data.direction = cse498::Direction::East;
+    if (j.contains("direction") && j.at("direction").is_number_integer()) {
+      int dirValue = j.at("direction").get<int>();
+      if (dirValue >= 0 && dirValue <= 3) {
+        data.direction = static_cast<cse498::Direction>(dirValue);
+      }
     }
     if (j.contains("is_active") && j.at("is_active").is_boolean()) {
       data.is_active = j.at("is_active").get<bool>();

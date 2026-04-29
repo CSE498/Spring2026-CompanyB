@@ -159,8 +159,8 @@ class SwarmingAgent : public StepAgentBase<SwarmData> {
    * @param data Initial state object.
    * @param id Stable ID assigned by the world.
    */
-  SwarmingAgent(SwarmData data, size_t id,
-                LogLevel loglevel = LogLevel::Normal, uint64_t tick = 0)
+  SwarmingAgent(SwarmData data, size_t id, LogLevel loglevel = LogLevel::Normal,
+                uint64_t tick = 0)
       : StepAgentBase<SwarmData>(data, id, loglevel, tick) {}
 
   /**

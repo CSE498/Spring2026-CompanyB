@@ -27,11 +27,12 @@ class StepAgentBase {
   }
 
   Direction DeserializeDirection(const nlohmann::json& dir) {
-    std::string direction = dir.get<std::string>();
-    if (direction == "North") return Direction::North;
-    if (direction == "South") return Direction::South;
-    if (direction == "West") return Direction::West;
-    if (direction == "East") return Direction::East;
+    if (dir.is_number_integer()) {
+      int dirValue = dir.get<int>();
+      if (dirValue >= 0 && dirValue <= 3) {
+        return static_cast<Direction>(dirValue);
+      }
+    }
     return Direction::North;  // Default direction if deserialization fails
   }
 
