@@ -335,6 +335,15 @@ std::shared_ptr<WebElement> GameInfoCanvas(WebOptions options) {
 
 void SetupVirusWorld();
 static void ResetActiveWorld();
+static void BuildTrafficStaticLayer();
+static void BuildVirusStaticLayer();
+
+// Offscreen canvases that hold the world's static geometry.
+static std::shared_ptr<WebCanvas> traffic_static_layer;
+static std::shared_ptr<WebCanvas> virus_static_layer;
+
+// Traffic light cell positions extracted while building the static layer
+static std::vector<WorldPosition> traffic_light_cells;
 
 auto handle_sim_state = [](SimState next) {
     switch (next) {
@@ -375,6 +384,7 @@ static void ResetActiveWorld() {
         prev_traffic_positions.clear();
         last_traffic_agent_count = 0;
         traffic_reached_log.clear();
+        BuildTrafficStaticLayer();
     } else if (active_sim == ActiveSim::VIRUS) {
         SetupVirusWorld();
         last_virus_health.clear();
@@ -383,6 +393,135 @@ static void ResetActiveWorld() {
     if (line_graph) {
         line_graph->ClearData();
         line_graph->DrawLineChart(std::vector<double>{}, "Cleared");
+    }
+}
+
+// Render the traffic world's grid into an offscreen canvas matching the
+// visible canvas's pixel size.
+static void BuildTrafficStaticLayer() {
+    if (!GameCanvas || !traffic_world) return;
+    const int W = GameCanvas->GetWidth();
+    const int H = GameCanvas->GetHeight();
+    traffic_static_layer = std::make_shared<WebCanvas>(W, H);
+    traffic_light_cells.clear();
+
+    const WorldGrid& grid = traffic_world->GetGrid();
+    const size_t gw = grid.GetWidth();
+    const size_t gh = grid.GetHeight();
+    const double cell_w = static_cast<double>(W) / gw;
+    const double cell_h = static_cast<double>(H) / gh;
+
+    for (size_t y = 0; y < gh; ++y) {
+        for (size_t x = 0; x < gw; ++x) {
+            double cx = x * cell_w;
+            double cy = y * cell_h;
+            char sym = grid.GetSymbol(WorldPosition{x, y});
+            switch (sym) {
+                case '.':
+                    traffic_static_layer->SetFillColor({40, 40, 40})
+                        .DrawRect(cx, cy, cell_w, cell_h, true);
+                    break;
+                case '|':
+                case '-':
+                    // Traffic lights flip each phase
+                    traffic_light_cells.push_back(WorldPosition{x, y});
+                    break;
+                case 'S':
+                    traffic_static_layer->SetFillColor({100, 100, 100})
+                        .DrawRect(cx - (10 * cell_w / 2), cy - (10 * cell_h / 2),
+                                  10 * cell_w, 10 * cell_h, true);
+                    break;
+                case 'D':
+                    traffic_static_layer->SetFillColor({200, 200, 200})
+                        .DrawRect(cx - (10 * cell_w / 2), cy - (10 * cell_h / 2),
+                                  10 * cell_w, 10 * cell_h, true);
+                    break;
+                default:
+                    break;
+            }
+        }
+    }
+}
+
+// Render the virus world's static geometry
+static void BuildVirusStaticLayer() {
+    if (!GameCanvas || !virus_world) return;
+    const int W = GameCanvas->GetWidth();
+    const int H = GameCanvas->GetHeight();
+    virus_static_layer = std::make_shared<WebCanvas>(W, H);
+
+    const WorldGrid& grid = virus_world->GetGrid();
+    const size_t gw = grid.GetWidth();
+    const size_t gh = grid.GetHeight();
+    const double cell_w = static_cast<double>(W) / gw;
+    const double cell_h = static_cast<double>(H) / gh;
+
+    // Quarantine overlay
+    virus_static_layer->SetFillColor({240, 200, 60})
+        .DrawRect(850, 540, 990 - 850, 900 - 540, true);
+
+    // Red Cedar River with bridges
+    virus_static_layer->SetFillColor({60, 110, 200});
+    const double river_x0 = 0.0;
+    const double river_x1 = 1000.0;
+    const double river_y = static_cast<double>(kRiverY1);
+    const double river_h_px = static_cast<double>(kRiverY2 - kRiverY1);
+    struct BridgeSpan { double x_lo, x_hi; };
+    constexpr BridgeSpan kBridges[] = {{80, 130}, {470, 520}, {770, 820}};
+    double cursor = river_x0;
+    for (auto& br : kBridges) {
+        if (br.x_lo > cursor) {
+            virus_static_layer->DrawRect(cursor, river_y, br.x_lo - cursor,
+                                         river_h_px, true);
+        }
+        cursor = br.x_hi;
+    }
+    if (cursor < river_x1) {
+        virus_static_layer->DrawRect(cursor, river_y, river_x1 - cursor,
+                                     river_h_px, true);
+    }
+
+    // Building outlines
+    virus_static_layer->SetPenColor({80, 80, 80});
+    constexpr double kDoorHalf = 4.0;
+    for (auto& b : infectious_buildings::kBuildings) {
+        double x1 = b.x1, y1 = b.y1, x2 = b.x2, y2 = b.y2;
+        double cxd = (x1 + x2) * 0.5, cyd = (y1 + y2) * 0.5;
+        virus_static_layer->DrawLine({x1, y1}, {cxd - kDoorHalf, y1});
+        virus_static_layer->DrawLine({cxd + kDoorHalf, y1}, {x2, y1});
+        virus_static_layer->DrawLine({x1, y2}, {cxd - kDoorHalf, y2});
+        virus_static_layer->DrawLine({cxd + kDoorHalf, y2}, {x2, y2});
+        virus_static_layer->DrawLine({x1, y1}, {x1, cyd - kDoorHalf});
+        virus_static_layer->DrawLine({x1, cyd + kDoorHalf}, {x1, y2});
+        virus_static_layer->DrawLine({x2, y1}, {x2, cyd - kDoorHalf});
+        virus_static_layer->DrawLine({x2, cyd + kDoorHalf}, {x2, y2});
+    }
+
+    // Per-building labels
+    constexpr double kBuildingLabelPx = 9.0;
+    virus_static_layer
+        ->SetFont(std::to_string(static_cast<int>(kBuildingLabelPx)) +
+                  "px monospace")
+        .SetFillColor({230, 230, 230});
+    for (size_t i = 0; i < infectious_buildings::kBuildings.size(); ++i) {
+        auto& b = infectious_buildings::kBuildings[i];
+        double cxd = (b.x1 + b.x2) * 0.5;
+        double cyd = (b.y1 + b.y2) * 0.5;
+        std::string txt = std::to_string(i);
+        virus_static_layer->DrawText(txt, cxd - txt.size() * 2.5,
+                                     cyd + kBuildingLabelPx * 0.35);
+    }
+
+    // River label
+    constexpr double kLabelFontPx = 18.0;
+    virus_static_layer
+        ->SetFont(std::to_string(static_cast<int>(kLabelFontPx)) +
+                  "px monospace")
+        .SetFillColor({0, 220, 220});
+    for (auto& lbl : kLabels) {
+        double lx = lbl.x * cell_w;
+        double ly = lbl.y * cell_h + kLabelFontPx * 0.85;
+        virus_static_layer->DrawText(lbl.text, lx, ly);
     }
 }
 
@@ -506,57 +645,60 @@ auto handle_save = []() {
 
 void DrawTrafficSim() {
     GameCanvas->Clear();
-    const WorldGrid& grid = traffic_world->GetGrid();
+    if (traffic_static_layer) GameCanvas->DrawCanvas(*traffic_static_layer);
 
+    const WorldGrid& grid = traffic_world->GetGrid();
     const size_t W = grid.GetWidth();
     const size_t H = grid.GetHeight();
-
     const double cell_w = static_cast<double>(GameCanvas->GetWidth())  / W;
     const double cell_h = static_cast<double>(GameCanvas->GetHeight()) / H;
 
-    for (size_t y = 0; y < H; ++y) {
-      for (size_t x = 0; x < W; ++x) {
-          double cx = x * cell_w;
-          double cy = y * cell_h;
-          int line_space = 10;
-          char sym = grid.GetSymbol(WorldPosition{x, y});
-          switch(sym) {
-              case '.':
-                  GameCanvas->SetFillColor({40, 40, 40}).DrawRect(cx, cy, cell_w, cell_h, true);
-                  break;
-              case '|':
-                  GameCanvas->SetPenColor({0, 0, 0}).DrawLine({cx - line_space, cy - line_space}, {cx - line_space, cy + line_space}).DrawLine({cx + line_space, cy - line_space}, {cx + line_space, cy + line_space});
-                  break;
-              case '-':
-                  GameCanvas->SetPenColor({0, 0, 0}).DrawLine({cx - line_space, cy - line_space}, {cx + line_space, cy - line_space}).DrawLine({cx - line_space, cy + line_space}, {cx + line_space, cy + line_space});
-                  break;
-              case 'S':
-                  GameCanvas->SetFillColor({100, 100, 100}).DrawRect(cx - (10*cell_w / 2), cy - (10*cell_h / 2), 10*cell_w, 10*cell_h, true);
-                  break;
-              case 'D':
-                  GameCanvas->SetFillColor({200, 200, 200}).DrawRect(cx - (10*cell_w / 2), cy - (10*cell_h / 2), 10*cell_w, 10*cell_h, true);
-                  break;
-              default:
-                  break;
-          }
-      }
+    // Redraw traffic lights every frame against current grid symbols
+    constexpr int kLightLineSpace = 10;
+    GameCanvas->SetPenColor({0, 0, 0});
+    for (const auto& pos : traffic_light_cells) {
+        char sym = grid.GetSymbol(pos);
+        double cx = pos.CellX() * cell_w;
+        double cy = pos.CellY() * cell_h;
+        if (sym == '|') {
+            GameCanvas->DrawLine({cx - kLightLineSpace, cy - kLightLineSpace},
+                                 {cx - kLightLineSpace, cy + kLightLineSpace})
+                       .DrawLine({cx + kLightLineSpace, cy - kLightLineSpace},
+                                 {cx + kLightLineSpace, cy + kLightLineSpace});
+        } else if (sym == '-') {
+            GameCanvas->DrawLine({cx - kLightLineSpace, cy - kLightLineSpace},
+                                 {cx + kLightLineSpace, cy - kLightLineSpace})
+                       .DrawLine({cx - kLightLineSpace, cy + kLightLineSpace},
+                                 {cx + kLightLineSpace, cy + kLightLineSpace});
+        }
     }
 
     const double radius = std::max(std::min(cell_w, cell_h) * 0.4, 8.0);
-    for (size_t id = 0; id < traffic_world->GetNumAgents(); ++id) {
+    const double agent_r = radius * 0.75;
+    const size_t na = traffic_world->GetNumAgents();
+
+    // Batch agent draws into two color groups
+    GameCanvas->BeginPath();
+    for (size_t id = 0; id < na; ++id) {
+        if (id >= scripted_traffic_lo && id < scripted_traffic_hi) continue;
         TrafficData state = traffic_world->GetAgentState(id);
-        if (!state.is_active) continue;  // skip despawned agents
-        WorldPosition pos = state.position;
-        double cx = pos.CellX() * cell_w + cell_w / 2.0;
-        double cy = pos.CellY() * cell_h + cell_h / 2.0;
-        bool is_scripted = id >= scripted_traffic_lo && id < scripted_traffic_hi;
-        if (is_scripted) {
-            GameCanvas->SetFillColor({80, 120, 255});
-        } else {
-            GameCanvas->SetFillColor({255, 80, 80});
-        }
-        GameCanvas->DrawCircle(cx, cy, radius * 0.75, true);
+        if (!state.is_active) continue;
+        double cx = state.position.CellX() * cell_w + cell_w / 2.0;
+        double cy = state.position.CellY() * cell_h + cell_h / 2.0;
+        GameCanvas->AddCircle(cx, cy, agent_r);
     }
+    GameCanvas->SetFillColor({255, 80, 80}).Fill();
+
+    GameCanvas->BeginPath();
+    for (size_t id = scripted_traffic_lo;
+         id < scripted_traffic_hi && id < na; ++id) {
+        TrafficData state = traffic_world->GetAgentState(id);
+        if (!state.is_active) continue;
+        double cx = state.position.CellX() * cell_w + cell_w / 2.0;
+        double cy = state.position.CellY() * cell_h + cell_h / 2.0;
+        GameCanvas->AddCircle(cx, cy, agent_r);
+    }
+    GameCanvas->SetFillColor({80, 120, 255}).Fill();
 
     if (sim_state == SimState::PLAYING) {
         int steps = StepsThisFrame();
@@ -564,7 +706,6 @@ void DrawTrafficSim() {
             traffic_world->RunAgents();
             traffic_world->UpdateWorld();
             sim_tick++;
-            UpdateGraphs();
 
             size_t n = traffic_world->GetNumAgents();
             if (traffic_reached_log.size() < n) {
@@ -589,106 +730,55 @@ void DrawTrafficSim() {
                 traffic_reached_log[id] = active;
             }
         }
+        if (steps > 0) UpdateGraphs();
     }
 }
 
 void DrawVirusSim() {
     GameCanvas->Clear();
-    const WorldGrid& grid = virus_world->GetGrid();
+    if (virus_static_layer) GameCanvas->DrawCanvas(*virus_static_layer);
 
+    const WorldGrid& grid = virus_world->GetGrid();
     const size_t W = grid.GetWidth();
     const size_t H = grid.GetHeight();
     const double cell_w = static_cast<double>(GameCanvas->GetWidth())  / W;
     const double cell_h = static_cast<double>(GameCanvas->GetHeight()) / H;
-
-    // Quarantine overlay
-    GameCanvas->SetFillColor({240, 200, 60})
-        .DrawRect(850, 540, 990 - 850, 900 - 540, true);
-
-    // Red Cedar River with bridges
-    GameCanvas->SetFillColor({60, 110, 200});
-    const double river_x0 = 0.0;
-    const double river_x1 = 1000.0;
-    const double river_y = static_cast<double>(kRiverY1);
-    const double river_h = static_cast<double>(kRiverY2 - kRiverY1);
-    struct BridgeSpan { double x_lo, x_hi; };
-    constexpr BridgeSpan kBridges[] = {{80, 130}, {470, 520}, {770, 820}};
-    double cursor = river_x0;
-    for (auto& br : kBridges) {
-        if (br.x_lo > cursor) {
-            GameCanvas->DrawRect(cursor, river_y, br.x_lo - cursor, river_h, true);
-        }
-        cursor = br.x_hi;
-    }
-    if (cursor < river_x1) {
-        GameCanvas->DrawRect(cursor, river_y, river_x1 - cursor, river_h, true);
-    }
-
-    // Building outlines
-    GameCanvas->SetPenColor({80, 80, 80});
-    constexpr double kDoorHalf = 4.0;  // half-width of door gap, in canvas px
-    for (auto& b : infectious_buildings::kBuildings) {
-        double x1 = b.x1, y1 = b.y1, x2 = b.x2, y2 = b.y2;
-        double cxd = (x1 + x2) * 0.5, cyd = (y1 + y2) * 0.5;
-        // Top edge
-        GameCanvas->DrawLine({x1, y1}, {cxd - kDoorHalf, y1});
-        GameCanvas->DrawLine({cxd + kDoorHalf, y1}, {x2, y1});
-        // Bottom edge
-        GameCanvas->DrawLine({x1, y2}, {cxd - kDoorHalf, y2});
-        GameCanvas->DrawLine({cxd + kDoorHalf, y2}, {x2, y2});
-        // Left edge
-        GameCanvas->DrawLine({x1, y1}, {x1, cyd - kDoorHalf});
-        GameCanvas->DrawLine({x1, cyd + kDoorHalf}, {x1, y2});
-        // Right edge
-        GameCanvas->DrawLine({x2, y1}, {x2, cyd - kDoorHalf});
-        GameCanvas->DrawLine({x2, cyd + kDoorHalf}, {x2, y2});
-    }
-
-    // Per building labels at the center of each box. Using the building index
-    constexpr double kBuildingLabelPx = 9.0;
-    GameCanvas->SetFont(std::to_string(static_cast<int>(kBuildingLabelPx)) + "px monospace")
-              .SetFillColor({230, 230, 230});
-    for (size_t i = 0; i < infectious_buildings::kBuildings.size(); ++i) {
-        auto& b = infectious_buildings::kBuildings[i];
-        double cxd = (b.x1 + b.x2) * 0.5;
-        double cyd = (b.y1 + b.y2) * 0.5;
-        std::string txt = std::to_string(i);
-        // Horizontal centering
-        GameCanvas->DrawText(txt, cxd - txt.size() * 2.5, cyd + kBuildingLabelPx * 0.35);
-    }
-
-    // Special location labels, river
-    constexpr double kLabelFontPx = 18.0;
-    GameCanvas->SetFont(std::to_string(static_cast<int>(kLabelFontPx)) + "px monospace")
-              .SetFillColor({0, 220, 220});
-    for (auto& lbl : kLabels) {
-        double lx = lbl.x * cell_w;
-        double ly = lbl.y * cell_h + kLabelFontPx * 0.85;
-        GameCanvas->DrawText(lbl.text, lx, ly);
-    }
 
     // Agents with a small fixed radius so 1-cell movement is visible.
     constexpr double kResidentR = 5.0;
     constexpr double kVisitorR  = 4.0;
     const bool script_active = !uploaded_script.empty();
     size_t n = virus_world->GetNumAgents();
-    for (size_t id = 0; id < n; ++id) {
-        DiseaseData state = virus_world->GetAgentState(id);
-        WorldPosition pos = state.position;
-        double cx = pos.CellX() * cell_w + cell_w / 2.0;
-        double cy = pos.CellY() * cell_h + cell_h / 2.0;
-        bool is_scripted = script_active && id < kNumPacers;
-        double r = is_scripted ? kResidentR : kVisitorR;
-        switch (state.health) {
-            case HealthState::SUSCEPTIBLE: GameCanvas->SetFillColor({60, 220, 90});  break;
-            case HealthState::INFECTED:    GameCanvas->SetFillColor({230, 60, 60});  break;
-            case HealthState::RECOVERED:   GameCanvas->SetFillColor({90, 130, 240}); break;
+
+    // Batch by health color
+    auto batch_fill = [&](HealthState target, WebCanvas::RGB color) {
+        GameCanvas->BeginPath();
+        for (size_t id = 0; id < n; ++id) {
+            DiseaseData state = virus_world->GetAgentState(id);
+            if (state.health != target) continue;
+            bool is_scripted = script_active && id < kNumPacers;
+            double r = is_scripted ? kResidentR : kVisitorR;
+            double cx = state.position.CellX() * cell_w + cell_w / 2.0;
+            double cy = state.position.CellY() * cell_h + cell_h / 2.0;
+            GameCanvas->AddCircle(cx, cy, r);
         }
-        GameCanvas->DrawCircle(cx, cy, r, true);
-        if (is_scripted) {
-            GameCanvas->SetPenColor({255, 140, 0}).SetLineWidth(2.0)
-                       .DrawCircle(cx, cy, r + 1.5, false);
+        GameCanvas->SetFillColor(color).Fill();
+    };
+    batch_fill(HealthState::SUSCEPTIBLE, {60, 220, 90});
+    batch_fill(HealthState::INFECTED,    {230, 60, 60});
+    batch_fill(HealthState::RECOVERED,   {90, 130, 240});
+
+    // Orange outline for scripted pacers
+    if (script_active) {
+        GameCanvas->BeginPath();
+        size_t lim = n < kNumPacers ? n : kNumPacers;
+        for (size_t id = 0; id < lim; ++id) {
+            DiseaseData state = virus_world->GetAgentState(id);
+            double cx = state.position.CellX() * cell_w + cell_w / 2.0;
+            double cy = state.position.CellY() * cell_h + cell_h / 2.0;
+            GameCanvas->AddCircle(cx, cy, kResidentR + 1.5);
         }
+        GameCanvas->SetPenColor({255, 140, 0}).SetLineWidth(2.0).Stroke();
     }
 
     if (sim_state == SimState::PLAYING) {
@@ -714,7 +804,6 @@ void DrawVirusSim() {
                 virus_world->UpdateWorld();
             }
             sim_tick++;
-            UpdateGraphs();
 
             size_t cur_n = virus_world->GetNumAgents();
             if (last_virus_health.size() < cur_n) last_virus_health.resize(cur_n, -1);
@@ -744,6 +833,7 @@ void DrawVirusSim() {
                        "info");
             }
         }
+        if (steps > 0) UpdateGraphs();
     }
 }
 
@@ -822,6 +912,8 @@ void SetupVirusWorld() {
 
     // Patient zero: first swarming agent.
     virus_world->InfectAgent(kNumPacers);
+
+    BuildVirusStaticLayer();
 }
 
 // We switch screens by holding a shared pointer to the active screen's
@@ -1013,6 +1105,8 @@ void load_menu_layout() {
     std::println("Loading menu layout");
     active_sim = ActiveSim::NONE;
     GameCanvas.reset();
+    traffic_static_layer.reset();
+    virus_static_layer.reset();
     logger.reset();
     log_textbox.reset();
     set_active_layout(MenuLayout());
@@ -1033,6 +1127,7 @@ void load_traffic_layout() {
     last_traffic_agent_count = 0;
     traffic_reached_log.clear();
     set_active_layout(SimulationLayout(ActiveSim::TRAFFIC, load_menu_layout));
+    BuildTrafficStaticLayer();
     logger = std::make_unique<WebTextboxOutputManager>(log_textbox);
     LogSim("World", "Traffic simulation loaded. Press start to begin.", "info");
     LogScriptStatus();
@@ -1049,6 +1144,7 @@ void load_virus_layout() {
     SetupVirusWorld();
     last_virus_health.clear();
     set_active_layout(SimulationLayout(ActiveSim::VIRUS, load_menu_layout));
+    BuildVirusStaticLayer();
     logger = std::make_unique<WebTextboxOutputManager>(log_textbox);
     LogSim("World", "Virus simulation loaded. Press start to begin.", "info");
     LogScriptStatus();

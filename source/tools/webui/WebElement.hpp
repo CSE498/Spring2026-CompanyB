@@ -121,5 +121,6 @@ class WebElement : public std::enable_shared_from_this<WebElement> {
    * @return The DOM Element emscripten::val
    */
   [[nodiscard]] emscripten::val& GetDOMElement() { return dom_element; }
+  [[nodiscard]] const emscripten::val& GetDOMElement() const { return dom_element; }
 };
 }  // namespace cse498
