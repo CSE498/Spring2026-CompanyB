@@ -41,10 +41,9 @@ std::expected<std::unique_ptr<AST::Node>, InterpErr> Parser::parse_expr(
     std::unique_ptr<AST::Node> node;
     if (cur_token.id == IDs::ID_OP_ASSIGN) {
       // Left side must be a variable or a magic val
-      AST::ValVariable *left_as_var;
+      AST::ValVariable* left_as_var;
 
-      if ((left_as_var =
-               dynamic_cast<AST::ValVariable *>(left.value().get()))) {
+      if ((left_as_var = dynamic_cast<AST::ValVariable*>(left.value().get()))) {
         node = std::make_unique<AST::Assign>(cur_token, left_as_var->m_Symbol,
                                              std::move(right.value()));
       } else {
@@ -89,7 +88,7 @@ std::expected<std::unique_ptr<AST::Node>, InterpErr> Parser::parse_term() {
   auto token_res = m_Lexer.Use();
   if (!token_res.has_value()) return token_res.error();
 
-  Token const &next_token = token_res.value();
+  Token const& next_token = token_res.value();
 
   // Check and try unary op
   if (OpInfo::IsOpToken(next_token)) {

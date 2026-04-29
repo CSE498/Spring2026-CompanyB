@@ -38,12 +38,12 @@ struct Node {
   /** @brief Force the derived node to call to the agent behind the given
    * `AgentWrapper` and return the resulting `Type` or error state `InterpErr`.
    */
-  virtual std::expected<Types::Type, InterpErr> Accept(AgentWrapper &) = 0;
+  virtual std::expected<Types::Type, InterpErr> Accept(AgentWrapper&) = 0;
   /** @brief Provide the derived node with a reference to the complete symbol
    * table upon the completion of parsing in order to finalize any remaining
    * missing information.
    */
-  virtual std::expected<void, InterpErr> Finalize(SymbolTable &) = 0;
+  virtual std::expected<void, InterpErr> Finalize(SymbolTable&) = 0;
 
   Node(emplex::Token token) : m_Token(token) {};
   virtual ~Node() = 0;
@@ -79,15 +79,15 @@ struct StmtBlock : public Node {
   /** @brief Add a node to the statement block. Moves the given block into the
    * vector.
    */
-  void add_node(std::unique_ptr<Node> &&node) {
+  void add_node(std::unique_ptr<Node>&& node) {
     m_Body.emplace_back(std::move(node));
   }
 
-  std::expected<Types::Type, InterpErr> Accept(AgentWrapper &) override;
-  std::expected<void, InterpErr> Finalize(SymbolTable &) override;
+  std::expected<Types::Type, InterpErr> Accept(AgentWrapper&) override;
+  std::expected<void, InterpErr> Finalize(SymbolTable&) override;
 
   StmtBlock(emplex::Token token) : Node(token), m_Body() {};
-  StmtBlock(emplex::Token token, std::vector<std::unique_ptr<Node>> &&body)
+  StmtBlock(emplex::Token token, std::vector<std::unique_ptr<Node>>&& body)
       : Node(token), m_Body(std::move(body)) {}
   ~StmtBlock() = default;
 };
@@ -98,12 +98,10 @@ struct StmtBlock : public Node {
  * statement).
  */
 struct EmptyNode : public Node {
-  std::expected<Types::Type, InterpErr> Accept(AgentWrapper &) override {
+  std::expected<Types::Type, InterpErr> Accept(AgentWrapper&) override {
     return Types::NullType{};
   };
-  std::expected<void, InterpErr> Finalize(SymbolTable &) override {
-    return {};
-  };
+  std::expected<void, InterpErr> Finalize(SymbolTable&) override { return {}; };
 
   EmptyNode(emplex::Token token) : Node(token) {}
   ~EmptyNode() = default;
@@ -118,8 +116,8 @@ struct ValLiteral : public TypedNode {
 
   // std::expected<size_t, InterpErr> ResolveType() override;
 
-  std::expected<Types::Type, InterpErr> Accept(AgentWrapper &) override;
-  std::expected<void, InterpErr> Finalize(SymbolTable &) override;
+  std::expected<Types::Type, InterpErr> Accept(AgentWrapper&) override;
+  std::expected<void, InterpErr> Finalize(SymbolTable&) override;
 
   // Construct from raw type value
   template <Types::TypeKind T>
@@ -139,8 +137,8 @@ struct ValLiteral : public TypedNode {
 struct ValVariable : public TypedNode {
   std::shared_ptr<Symbols::SymInfo> m_Symbol;
 
-  std::expected<Types::Type, InterpErr> Accept(AgentWrapper &) override;
-  std::expected<void, InterpErr> Finalize(SymbolTable &) override;
+  std::expected<Types::Type, InterpErr> Accept(AgentWrapper&) override;
+  std::expected<void, InterpErr> Finalize(SymbolTable&) override;
 
   ValVariable(emplex::Token token, std::shared_ptr<Symbols::SymInfo> symbol)
       : TypedNode(token), m_Symbol(symbol) {}
@@ -154,10 +152,10 @@ struct ExprUnary : public TypedNode {
   std::unique_ptr<Node> m_Left;
 
   // std::expected<size_t, InterpErr> ResolveType() override;
-  std::expected<Types::Type, InterpErr> Accept(AgentWrapper &) override;
-  std::expected<void, InterpErr> Finalize(SymbolTable &) override;
+  std::expected<Types::Type, InterpErr> Accept(AgentWrapper&) override;
+  std::expected<void, InterpErr> Finalize(SymbolTable&) override;
 
-  ExprUnary(emplex::Token token, std::unique_ptr<Node> &&left)
+  ExprUnary(emplex::Token token, std::unique_ptr<Node>&& left)
       : TypedNode(token), m_Left(std::move(left)) {};
   ~ExprUnary() = default;
 };
@@ -169,11 +167,11 @@ struct ExprBinary : public TypedNode {
   std::unique_ptr<Node> m_Right;
 
   // std::expected<size_t, InterpErr> ResolveType() override;
-  std::expected<Types::Type, InterpErr> Accept(AgentWrapper &) override;
-  std::expected<void, InterpErr> Finalize(SymbolTable &) override;
+  std::expected<Types::Type, InterpErr> Accept(AgentWrapper&) override;
+  std::expected<void, InterpErr> Finalize(SymbolTable&) override;
 
-  ExprBinary(emplex::Token token, std::unique_ptr<Node> &&left,
-             std::unique_ptr<Node> &&right)
+  ExprBinary(emplex::Token token, std::unique_ptr<Node>&& left,
+             std::unique_ptr<Node>&& right)
       : TypedNode(token), m_Left(std::move(left)), m_Right(std::move(right)) {};
   ~ExprBinary() = default;
 };
@@ -186,11 +184,11 @@ struct Assign : public TypedNode {
   std::shared_ptr<Symbols::SymInfo> m_Sym;
   std::unique_ptr<Node> m_Value;
 
-  std::expected<Types::Type, InterpErr> Accept(AgentWrapper &) override;
-  std::expected<void, InterpErr> Finalize(SymbolTable &) override;
+  std::expected<Types::Type, InterpErr> Accept(AgentWrapper&) override;
+  std::expected<void, InterpErr> Finalize(SymbolTable&) override;
 
-  Assign(emplex::Token const &token, std::shared_ptr<Symbols::SymInfo> sym,
-         std::unique_ptr<Node> &&value)
+  Assign(emplex::Token const& token, std::shared_ptr<Symbols::SymInfo> sym,
+         std::unique_ptr<Node>&& value)
       : TypedNode(token), m_Sym(sym), m_Value(std::move(value)) {}
   ~Assign() = default;
 };
@@ -204,11 +202,11 @@ struct StmtAgentDef : public Node {
   std::unique_ptr<Node> m_Init;
   std::unique_ptr<Node> m_Turn;
 
-  std::expected<Types::Type, InterpErr> Accept(AgentWrapper &) override;
-  std::expected<void, InterpErr> Finalize(SymbolTable &) override;
+  std::expected<Types::Type, InterpErr> Accept(AgentWrapper&) override;
+  std::expected<void, InterpErr> Finalize(SymbolTable&) override;
 
-  StmtAgentDef(emplex::Token token, std::unique_ptr<Node> &&init,
-               std::unique_ptr<Node> &&turn)
+  StmtAgentDef(emplex::Token token, std::unique_ptr<Node>&& init,
+               std::unique_ptr<Node>&& turn)
       : Node(token), m_Init(std::move(init)), m_Turn(std::move(turn)) {}
   ~StmtAgentDef() = default;
 };
@@ -223,10 +221,10 @@ struct StmtAction : public Node {
   // So this node MUST resolve to a direction
   std::unique_ptr<Node> m_Direction;
 
-  std::expected<Types::Type, InterpErr> Accept(AgentWrapper &) override;
-  std::expected<void, InterpErr> Finalize(SymbolTable &) override;
+  std::expected<Types::Type, InterpErr> Accept(AgentWrapper&) override;
+  std::expected<void, InterpErr> Finalize(SymbolTable&) override;
 
-  StmtAction(emplex::Token token, std::unique_ptr<Node> &&direction)
+  StmtAction(emplex::Token token, std::unique_ptr<Node>&& direction)
       : Node(token), m_Direction(std::move(direction)) {}
   ~StmtAction() = default;
 };
@@ -239,11 +237,11 @@ struct StmtWhile : public Node {
   std::unique_ptr<Node> m_Condition;
   std::unique_ptr<Node> m_Body;
 
-  std::expected<Types::Type, InterpErr> Accept(AgentWrapper &) override;
-  std::expected<void, InterpErr> Finalize(SymbolTable &) override;
+  std::expected<Types::Type, InterpErr> Accept(AgentWrapper&) override;
+  std::expected<void, InterpErr> Finalize(SymbolTable&) override;
 
-  StmtWhile(emplex::Token token, std::unique_ptr<Node> &&condition,
-            std::unique_ptr<Node> &&body)
+  StmtWhile(emplex::Token token, std::unique_ptr<Node>&& condition,
+            std::unique_ptr<Node>&& body)
       : Node(token),
         m_Condition(std::move(condition)),
         m_Body(std::move(body)) {}
@@ -263,8 +261,8 @@ struct StmtLoopCtl : public Node {
 
   Action m_Action;
 
-  std::expected<Types::Type, InterpErr> Accept(AgentWrapper &) override;
-  std::expected<void, InterpErr> Finalize(SymbolTable &) override;
+  std::expected<Types::Type, InterpErr> Accept(AgentWrapper&) override;
+  std::expected<void, InterpErr> Finalize(SymbolTable&) override;
 
   StmtLoopCtl(emplex::Token token, Action action)
       : Node(token), m_Action(action) {}
@@ -279,17 +277,17 @@ struct StmtIf : public Node {
   std::unique_ptr<Node> m_TBody;
   std::optional<std::unique_ptr<Node>> m_FBody;
 
-  std::expected<Types::Type, InterpErr> Accept(AgentWrapper &) override;
-  std::expected<void, InterpErr> Finalize(SymbolTable &) override;
+  std::expected<Types::Type, InterpErr> Accept(AgentWrapper&) override;
+  std::expected<void, InterpErr> Finalize(SymbolTable&) override;
 
-  StmtIf(emplex::Token token, std::unique_ptr<Node> &&condition,
-         std::unique_ptr<Node> &&t_body, std::unique_ptr<Node> &&f_body)
+  StmtIf(emplex::Token token, std::unique_ptr<Node>&& condition,
+         std::unique_ptr<Node>&& t_body, std::unique_ptr<Node>&& f_body)
       : Node(token),
         m_Condition(std::move(condition)),
         m_TBody(std::move(t_body)),
         m_FBody(std::move(f_body)) {}
-  StmtIf(emplex::Token token, std::unique_ptr<Node> &&condition,
-         std::unique_ptr<Node> &&t_body)
+  StmtIf(emplex::Token token, std::unique_ptr<Node>&& condition,
+         std::unique_ptr<Node>&& t_body)
       : Node(token),
         m_Condition(std::move(condition)),
         m_TBody(std::move(t_body)),
@@ -305,10 +303,10 @@ struct StmtIf : public Node {
 struct StmtReturn : public Node {
   std::unique_ptr<Node> m_Value;
 
-  std::expected<Types::Type, InterpErr> Accept(AgentWrapper &) override;
-  std::expected<void, InterpErr> Finalize(SymbolTable &) override;
+  std::expected<Types::Type, InterpErr> Accept(AgentWrapper&) override;
+  std::expected<void, InterpErr> Finalize(SymbolTable&) override;
 
-  StmtReturn(emplex::Token token, std::unique_ptr<Node> &&val)
+  StmtReturn(emplex::Token token, std::unique_ptr<Node>&& val)
       : Node(token), m_Value(std::move(val)) {}
   ~StmtReturn() = default;
 };
@@ -321,11 +319,11 @@ struct StmtFunc : public Node {
   std::shared_ptr<Symbols::SymInfo> m_Symbol;
   std::unique_ptr<Node> m_Body;
 
-  std::expected<Types::Type, InterpErr> Accept(AgentWrapper &) override;
-  std::expected<void, InterpErr> Finalize(SymbolTable &) override;
+  std::expected<Types::Type, InterpErr> Accept(AgentWrapper&) override;
+  std::expected<void, InterpErr> Finalize(SymbolTable&) override;
 
   StmtFunc(emplex::Token token, std::shared_ptr<Symbols::SymInfo> symbol,
-           std::unique_ptr<Node> &&body)
+           std::unique_ptr<Node>&& body)
       : Node(token), m_Symbol(symbol), m_Body(std::move(body)) {}
   ~StmtFunc() = default;
 };
@@ -341,10 +339,10 @@ struct StmtFuncCall : public Node {
   std::vector<std::unique_ptr<Node>> m_Args{};
   std::optional<std::shared_ptr<AST::Node>> m_Body;
 
-  std::expected<Types::Type, InterpErr> Accept(AgentWrapper &) override;
-  std::expected<void, InterpErr> Finalize(SymbolTable &) override;
+  std::expected<Types::Type, InterpErr> Accept(AgentWrapper&) override;
+  std::expected<void, InterpErr> Finalize(SymbolTable&) override;
 
-  void add_node(std::unique_ptr<Node> &&n) {
+  void add_node(std::unique_ptr<Node>&& n) {
     m_Args.emplace_back(std::move(n));
   }
 
@@ -353,30 +351,30 @@ struct StmtFuncCall : public Node {
   ~StmtFuncCall() = default;
 };
 
-[[maybe_unused]] static std::string IDNodeForTest(Node const *node) {
-  if (dynamic_cast<StmtBlock const *>(node)) {
+[[maybe_unused]] static std::string IDNodeForTest(Node const* node) {
+  if (dynamic_cast<StmtBlock const*>(node)) {
     return "StmtBlock";
-  } else if (dynamic_cast<EmptyNode const *>(node)) {
+  } else if (dynamic_cast<EmptyNode const*>(node)) {
     return "EmptyNode";
-  } else if (dynamic_cast<ExprUnary const *>(node)) {
+  } else if (dynamic_cast<ExprUnary const*>(node)) {
     return "ExprUnary";
-  } else if (dynamic_cast<ExprBinary const *>(node)) {
+  } else if (dynamic_cast<ExprBinary const*>(node)) {
     return "ExprBinary";
-  } else if (dynamic_cast<Assign const *>(node)) {
+  } else if (dynamic_cast<Assign const*>(node)) {
     return "Assign";
-  } else if (dynamic_cast<StmtAgentDef const *>(node)) {
+  } else if (dynamic_cast<StmtAgentDef const*>(node)) {
     return "StmtAgentDef";
-  } else if (dynamic_cast<StmtAction const *>(node)) {
+  } else if (dynamic_cast<StmtAction const*>(node)) {
     return "StmtAction";
-  } else if (dynamic_cast<StmtWhile const *>(node)) {
+  } else if (dynamic_cast<StmtWhile const*>(node)) {
     return "StmtWhile";
-  } else if (dynamic_cast<StmtLoopCtl const *>(node)) {
+  } else if (dynamic_cast<StmtLoopCtl const*>(node)) {
     return "StmtLoopCtl";
-  } else if (dynamic_cast<StmtIf const *>(node)) {
+  } else if (dynamic_cast<StmtIf const*>(node)) {
     return "StmtIf";
-  } else if (dynamic_cast<ValLiteral const *>(node)) {
+  } else if (dynamic_cast<ValLiteral const*>(node)) {
     return "ValLiteral";
-  } else if (dynamic_cast<ValVariable const *>(node)) {
+  } else if (dynamic_cast<ValVariable const*>(node)) {
     return "ValVariable";
   } else {
     return "Somehow none of the above";
