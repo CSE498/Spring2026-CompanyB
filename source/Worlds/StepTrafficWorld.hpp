@@ -12,6 +12,7 @@
 
 #include "../core/AgentData.hpp"
 #include "../core/StepWorldBase.hpp"
+#include "../tools/DataLog.hpp"
 #include "../tools/WeightedSet.hpp"
 
 namespace cse498 {
@@ -31,9 +32,9 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
     // any output, so we'll define & alias our return as such:
     using VisitRet = std::expected<void, WorldErr>;
 
-    StepAgentBase<TrafficData> &agent;
-    StepContainer &container;
-    StepTrafficWorld &world;
+    StepAgentBase<TrafficData>& agent;
+    StepContainer& container;
+    StepTrafficWorld& world;
 
     // NOTE: all this "typename StepVisitor::VisitRet" stuff (instead of just
     // "VisitRet") is for some reason required when adding "template <typename
@@ -67,7 +68,7 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
         case Aspect::OCCUPANCY_FRAC: {
           container.inform(static_cast<double>(std::ranges::count_if(
                                world.agent_set,
-                               [=](AgentPtr const &ptr) {
+                               [=](AgentPtr const& ptr) {
                                  return ptr->GetState().position == step.target;
                                })) /
                            2.0);
@@ -75,7 +76,7 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
         }
         case Aspect::OCCUPANCY_RAW: {
           container.inform(static_cast<int>(
-              std::ranges::count_if(world.agent_set, [=](AgentPtr const &ptr) {
+              std::ranges::count_if(world.agent_set, [=](AgentPtr const& ptr) {
                 return ptr->GetState().position == step.target;
               })));
           break;
@@ -114,7 +115,8 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
   size_t spawn_fast_id{};  // < Id for Fast spawners that uses the fast clock
   size_t
       spawn_normal_id{};  // < Id for Normal spawners that uses the normal clock
-  size_t spawn_slow_id{};  // < Id for Slow spawners that uses the Slow clock
+  size_t spawn_slow_id{};   // < Id for Slow spawners that uses the Slow clock
+  size_t bus_spawner_id{};  ///< ID of bus-spawner tiles ('B').
 
   // Containers for the 3 different types of spawners
   std::vector<WorldPosition>
@@ -123,6 +125,8 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
       normal_spawner_positions{};  // < normal Spawner location container
   std::vector<WorldPosition>
       slow_spawner_positions{};  // < slow Spawner location container
+  std::vector<WorldPosition>
+      bus_spawner_positions{};  ///< Positions of all bus-spawner tiles.
 
   size_t destination_id{};  ///< ID of cells which are destinations that agents
                             ///< try to reach.
@@ -176,6 +180,8 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
   inline static const std::string normal_spawn_colour = "\033[36m";
   /// @brief Dim Cyan for the slow spawner
   inline static const std::string slow_spawn_colour = "\033[2;36m";
+  /// @brief Bright white for bus agents
+  inline static const std::string bus_colour = "\033[95m";
 
   /// @brief The number of currently-active agents that have been spawned by
   /// spawner tiles. Incremented whenever a spawner spawns something,
@@ -188,10 +194,11 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
   /// @brief Queue of IDs of despawned agents available for recycling.
   /// Written by Claude.
   std::queue<size_t> despawned_agent_ids{};
+  DataLog<TrafficData> traffic_data_log{WorldType::Traffic};
 
  private:
-  // Pulled by Claude out of the preexisting constructor — registers cell types
-  // and scans the loaded grid for traffic lights, spawners, and destinations.
+  //  Pulled by Claude out of the preexisting constructor — registers cell types
+  //  and scans the loaded grid for traffic lights, spawners, and destinations.
   void RegisterCellTypes() {
     road_id = main_grid.AddCellType("road", "Road to drive in", '.');
     grass_id =
@@ -207,6 +214,8 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
     spawn_normal_id =
         main_grid.AddCellType("spawn_normal", "Normal spawner", 'N');
     spawn_slow_id = main_grid.AddCellType("spawn_slow", "Slow spawner", 'S');
+    bus_spawner_id =
+        main_grid.AddCellType("bus_spawner", "Bus spawner tile", 'B');
     destination_id = main_grid.AddCellType(
         "destination", "Destination for driving agents", 'D');
   }
@@ -214,32 +223,31 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
   /// @brief Scan the grid after loading to find traffic lights, spawners,
   /// and destinations.
   void ScanGrid() {
-    for (size_t y = 0; y < main_grid.GetHeight(); ++y) {
-      for (size_t x = 0; x < main_grid.GetWidth(); ++x) {
-        WorldPosition pos(x, y);
-        if (main_grid[pos] == traffic_light_vertical_id) {
-          traffic_light_positions.push_back(pos);
-        } else if (main_grid[pos] == spawn_fast_id) {
-          fast_spawner_positions.push_back(pos);
-        } else if (main_grid[pos] == spawn_normal_id) {
-          normal_spawner_positions.push_back(pos);
-        } else if (main_grid[pos] == spawn_slow_id) {
-          slow_spawner_positions.push_back(pos);
-        }
-      }
-    }
     const std::vector<std::string> colour_palette = {
         "\033[91m",  // bright red
         "\033[92m",  // bright green
         "\033[93m",  // bright yellow
         "\033[94m",  // bright blue
-        "\033[95m",  // bright magenta
     };
     size_t colour_idx = 0;
+
     for (size_t y = 0; y < main_grid.GetHeight(); ++y) {
       for (size_t x = 0; x < main_grid.GetWidth(); ++x) {
-        WorldPosition pos(x, y);
-        if (main_grid[pos] == destination_id) {
+        WorldPosition pos(static_cast<double>(x), static_cast<double>(y));
+        auto cell = main_grid[pos];
+
+        if (cell == traffic_light_vertical_id ||
+            cell == traffic_light_horizontal_id) {
+          traffic_light_positions.push_back(pos);
+        } else if (cell == spawn_fast_id) {
+          fast_spawner_positions.push_back(pos);
+        } else if (cell == spawn_normal_id) {
+          normal_spawner_positions.push_back(pos);
+        } else if (cell == spawn_slow_id) {
+          slow_spawner_positions.push_back(pos);
+        } else if (main_grid[pos] == bus_spawner_id) {
+          bus_spawner_positions.push_back(pos);
+        } else if (cell == destination_id) {
           destination_positions.Insert(pos, 1.0);  // equal weight for now
           destination_colours.emplace(
               pos, colour_palette[colour_idx % colour_palette.size()]);
@@ -253,26 +261,42 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
   /// @brief Construct a TrafficWorld from a vector of strings representing
   /// the grid layout.
   /// Written by Claude.
-  explicit StepTrafficWorld(const std::vector<std::string> &grid_lines) {
+  explicit StepTrafficWorld(const std::vector<std::string>& grid_lines,
+                            bool use_buses = false) {
     RegisterCellTypes();
     main_grid.Load(grid_lines);
     ScanGrid();
+    if (use_buses) {
+      SetupBuses();
+    };
   }
 
   /// @brief Construct a TrafficWorld by reading a grid layout from a file.
   /// Written by Claude.
-  explicit StepTrafficWorld(const std::string &filepath) {
+  explicit StepTrafficWorld(const std::string& filepath,
+                            bool use_buses = false) {
     RegisterCellTypes();
     std::ifstream file(filepath);
     assert(file.is_open() && "TrafficWorld: could not open grid file");
     main_grid.Load(file);
     ScanGrid();
+    if (use_buses) {
+      SetupBuses();
+    }
+  }
+
+  /// @brief Return the number of currently active spawned agents.
+  [[nodiscard]] int GetNumSpawnedAgents() const { return num_spawned_agents; }
+
+  /// @brief Return aggregated traffic metrics collected once per world update.
+  [[nodiscard]] const DataLog<TrafficData>& GetTrafficDataLog() const {
+    return traffic_data_log;
   }
 
   /// @brief Return the ANSI colour code pre-assigned to a destination tile,
   ///        or an empty string if the position is not a destination.
-  [[nodiscard]] const std::string &GetDestinationColour(
-      const WorldPosition &pos) const {
+  [[nodiscard]] const std::string& GetDestinationColour(
+      const WorldPosition& pos) const {
     auto it = destination_colours.find(pos);
     if (it != destination_colours.end()) {
       return it->second;
@@ -289,13 +313,15 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
   /// @return Direction from pos to new_pos if move is valid, error otherwise
   [[nodiscard]] std::expected<Direction, WorldErr> GetNewDirection(
       WorldPosition pos, WorldPosition new_pos) const {
-    size_t old_x = pos.CellX();
-    size_t old_y = pos.CellY();
-    size_t new_x = new_pos.CellX();
-    size_t new_y = new_pos.CellY();
+    double old_x = pos.X();
+    double old_y = pos.Y();
+    double new_x = new_pos.X();
+    double new_y = new_pos.Y();
     Direction new_dir{};
+
+    // Avoids possible underflow by comparing after addition
     if (new_x == old_x) {
-      if (new_y == old_y - 1) {
+      if (old_y > 0 && new_y + 1 == old_y) {
         new_dir = Direction::North;
       } else if (new_y == old_y + 1) {
         new_dir = Direction::South;
@@ -303,7 +329,7 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
         return std::unexpected<WorldErr>("invalid move");
       }
     } else if (new_y == old_y) {
-      if (new_x == old_x - 1) {
+      if (old_x > 0 && new_x + 1 == old_x) {
         new_dir = Direction::West;
       } else if (new_x == old_x + 1) {
         new_dir = Direction::East;
@@ -342,7 +368,7 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
   /// trying to turn onto only has cars in the opposite-direction lane, and so
   /// on.)
   [[nodiscard]] std::expected<bool, WorldErr> CanMakeMoveAt(
-      const Agent &agent, const WorldPosition &new_pos) const {
+      const Agent& agent, const WorldPosition& new_pos) const {
     if (!IsValid(new_pos) || IsGrass(new_pos)) {
       return false;
     }
@@ -374,28 +400,28 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
     return true;
   }
 
-  [[nodiscard]] bool IsValid(const WorldPosition &pos) const {
+  [[nodiscard]] bool IsValid(const WorldPosition& pos) const {
     return main_grid.IsValid(pos);
   }
 
-  [[nodiscard]] bool IsGrass(const WorldPosition &pos) const {
+  [[nodiscard]] bool IsGrass(const WorldPosition& pos) const {
     return main_grid.IsValid(pos) && main_grid[pos] == grass_id;
   }
   /// @brief Returns whether the given position has a traffic-light tile which
   /// is currently blocking horizontal traffic.
-  [[nodiscard]] bool HorizontalBlockedAt(const WorldPosition &pos) const {
+  [[nodiscard]] bool HorizontalBlockedAt(const WorldPosition& pos) const {
     return main_grid.IsValid(pos) &&
            main_grid[pos] == traffic_light_vertical_id;
   }
   /// @brief Returns whether the given position has a traffic-light tile which
   /// is currently blocking vertical traffic.
-  [[nodiscard]] bool VerticalBlockedAt(const WorldPosition &pos) const {
+  [[nodiscard]] bool VerticalBlockedAt(const WorldPosition& pos) const {
     return main_grid.IsValid(pos) &&
            main_grid[pos] == traffic_light_horizontal_id;
   }
   /// @brief Returns whether the given position is surrounded by grass on all
   /// but one side.
-  [[nodiscard]] bool IsDeadEnd(const WorldPosition &pos) const {
+  [[nodiscard]] bool IsDeadEnd(const WorldPosition& pos) const {
     int grass_count = 0;
     if (IsGrass(pos.Up())) grass_count++;
     if (IsGrass(pos.Down())) grass_count++;
@@ -412,12 +438,12 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
   }
 
   [[nodiscard]] bool CanCollideWithAgentAt(const Direction agent_direction,
-                                           const WorldPosition &pos) const {
+                                           const WorldPosition& pos) const {
     Direction opposite = GetOppositeDirection(agent_direction);
-    auto is_agent_at_position = [&](const AgentPtr &ptr) {
+    auto is_agent_at_position = [&](const AgentPtr& ptr) {
       return ptr->GetState().is_active && ptr->GetState().position == pos;
     };
-    auto not_opposite_direction = [&](const AgentPtr &ptr) {
+    auto not_opposite_direction = [&](const AgentPtr& ptr) {
       return ptr->GetState().direction != opposite;
     };
     return !std::ranges::empty(agent_set |
@@ -464,6 +490,7 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
   void UpdateWorld() override {
     UpdateTrafficLights();
     UpdateSpawners();
+    traffic_data_log.AggregateData(agent_set);
   }
 
  private:
@@ -476,20 +503,17 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
           traffic_light_phase == TrafficLightPhase::ALLOW_HORIZONTAL
               ? TrafficLightPhase::ALLOW_VERTICAL
               : TrafficLightPhase::ALLOW_HORIZONTAL;
-      // Swap the cell type at every traffic light position to match the new
-      // phase
-      const size_t new_type =
-          (traffic_light_phase == TrafficLightPhase::ALLOW_VERTICAL)
-              ? traffic_light_vertical_id
-              : traffic_light_horizontal_id;
-      for (const auto &pos : traffic_light_positions) {
-        main_grid[pos] = new_type;
+      // Flip every traffic light to its opposite state
+      for (const auto& pos : traffic_light_positions) {
+        main_grid[pos] = (main_grid[pos] == traffic_light_vertical_id)
+                             ? traffic_light_horizontal_id
+                             : traffic_light_vertical_id;
       }
     }
   }
 
   [[nodiscard]] bool AgentExistsAt(WorldPosition pos) const {
-    auto agent_at = [&](const AgentPtr &ptr) {
+    auto agent_at = [&](const AgentPtr& ptr) {
       return ptr->GetState().position == pos;
     };
     return std::ranges::find_if(agent_set, agent_at) != agent_set.end();
@@ -498,8 +522,8 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
   /// Pulls out common logic for the spawners and simplifies the update spwaners
   /// go to each spawner without an agent currently on top of it and
   /// spawn a new DrivingAgent with a randomly chosen destination.
-  void SpawnFromPositions(const std::vector<WorldPosition> &positions) {
-    for (const WorldPosition &pos : positions) {
+  void SpawnFromPositions(const std::vector<WorldPosition>& positions) {
+    for (const WorldPosition& pos : positions) {
       if (!AgentExistsAt(pos) && num_spawned_agents < max_spawned_agents) {
         auto dest = destination_positions.GetRandomElement();
         if (dest.has_value()) {
@@ -539,8 +563,8 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
   // Pulls, from despawned_agent_ids, the ID of an agent that previously
   // despawned and is now inactive, then respawns that agent at the given
   // spawner with the given destination.
-  void RecycleDespawnedAgent(const WorldPosition &spawner_pos,
-                             const WorldPosition &dest_pos) {
+  void RecycleDespawnedAgent(const WorldPosition& spawner_pos,
+                             const WorldPosition& dest_pos) {
     assert(!despawned_agent_ids.empty());
     size_t reuse_id = despawned_agent_ids.front();
     despawned_agent_ids.pop();
@@ -557,6 +581,18 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
     state.symbol = '>';
     state.colour = GetDestinationColour(dest_pos);
     driver->SetState(state);
+  }
+  /// @brief Spawn in the "bus" ScriptedAgents described in the buses script,
+  /// then set their color to pink (for the terminal view) and activate them.
+  void SetupBuses() {
+    SetupScriptedAgents(GetAgentFileContents("buses.al"));
+    for (AgentPtr& ptr : agent_set) {
+      auto state = ptr->GetState();
+      state.symbol = '>';
+      state.colour = "\033[95m";
+      state.is_active = true;
+      ptr->SetState(state);
+    }
   }
 
   // =====================================================================
@@ -613,15 +649,15 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
     // Colour destination tiles using the pre-assigned palette.
     for (size_t y = 0; y < H; ++y) {
       for (size_t x = 0; x < W; ++x) {
-        const std::string &col = GetDestinationColour(WorldPosition{x, y});
+        const std::string& col = GetDestinationColour(WorldPosition{x, y});
         if (!col.empty()) colour_grid[y][x] = col;
       }
     }
 
     // Colour spawner tiles with cyan shades, all displayed as 'S'
-    auto colourSpawners = [&](const std::vector<WorldPosition> &positions,
-                              const std::string &colour) {
-      for (const auto &pos : positions) {
+    auto colourSpawners = [&](const std::vector<WorldPosition>& positions,
+                              const std::string& colour) {
+      for (const auto& pos : positions) {
         size_t x = pos.CellX(), y = pos.CellY();
         symbol_grid[y][x] = 'S';
         colour_grid[y][x] = colour;
@@ -632,9 +668,15 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
     colourSpawners(normal_spawner_positions, normal_spawn_colour);
     colourSpawners(slow_spawner_positions, slow_spawn_colour);
 
+    // Display bus spawner tiles as 'B' in bright white
+    for (const auto& pos : bus_spawner_positions) {
+      size_t x = pos.CellX(), y = pos.CellY();
+      symbol_grid[y][x] = '.';
+    }
+
     // Stamp active agents onto the grid.
-    for (const auto &agent_ptr : agent_set) {
-      const TrafficData &state = agent_ptr->GetState();
+    for (const auto& agent_ptr : agent_set) {
+      const TrafficData& state = agent_ptr->GetState();
       if (!state.is_active) continue;
 
       const size_t ax = state.position.CellX();
@@ -654,7 +696,7 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
     for (size_t y = 0; y < H; ++y) {
       std::cout << '|';
       for (size_t x = 0; x < W; ++x) {
-        const std::string &col = colour_grid[y][x];
+        const std::string& col = colour_grid[y][x];
         if (!col.empty()) {
           std::cout << col << symbol_grid[y][x] << "\033[0m";
         } else {
@@ -669,7 +711,7 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
 
  public:
   /// Set the delay between displayed frames (default 200 ms).
-  StepTrafficWorld &SetFrameDelay(std::chrono::milliseconds delay) {
+  StepTrafficWorld& SetFrameDelay(std::chrono::milliseconds delay) {
     frame_delay = delay;
     return *this;
   }
