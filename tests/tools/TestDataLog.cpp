@@ -1,6 +1,5 @@
 #include <catch2/catch_approx.hpp>
 #include <catch2/catch_test_macros.hpp>
-
 #include <memory>
 #include <vector>
 
@@ -29,7 +28,8 @@ TEST_CASE("DataLog infection metrics aggregate from DiseaseData",
   recovered.health = HealthState::RECOVERED;
 
   agents.push_back(std::make_shared<SwarmingAgent<DiseaseData>>(infected, 0));
-  agents.push_back(std::make_shared<SwarmingAgent<DiseaseData>>(susceptible, 1));
+  agents.push_back(
+      std::make_shared<SwarmingAgent<DiseaseData>>(susceptible, 1));
   agents.push_back(std::make_shared<SwarmingAgent<DiseaseData>>(recovered, 2));
 
   DataLog<DiseaseData> datalog(WorldType::Infection);
