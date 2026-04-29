@@ -392,6 +392,22 @@ TEST_CASE("RunAgents", "[StepTrafficWorld][run_agents]") {
     tw.RunAgents();
     CHECK(a.GetState().position == WorldPosition{3, 1});
   }
+  SECTION("traffic data log records active and driving agents") {
+    TestWorld tw{kMinimal};
+    auto& a = tw.AddAgent<ScriptedTestAgent>(
+        Make(WorldPosition{2, 1}, WorldPosition{7, 1}, Direction::East));
+
+    tw.UpdateWorld();
+    static_cast<ScriptedTestAgent&>(a).SetNextMove(WorldPosition{3, 1});
+    tw.RunAgents();
+    tw.UpdateWorld();
+
+    const auto& series = tw.GetTrafficDataLog().GetAggregationData();
+    REQUIRE(series.at("active_count").size() == 2);
+    CHECK(series.at("active_count").back().mean == 1.0);
+    CHECK(series.at("driving_count").back().mean == 1.0);
+    CHECK(series.at("distance_driven").back().max == 1.0);
+  }
 }
 
 TEST_CASE("Edge cases", "[StepTrafficWorld][edge]") {

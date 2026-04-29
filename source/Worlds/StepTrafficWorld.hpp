@@ -12,6 +12,7 @@
 
 #include "../core/AgentData.hpp"
 #include "../core/StepWorldBase.hpp"
+#include "../tools/DataLog.hpp"
 #include "../tools/WeightedSet.hpp"
 
 namespace cse498 {
@@ -193,6 +194,7 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
   /// @brief Queue of IDs of despawned agents available for recycling.
   /// Written by Claude.
   std::queue<size_t> despawned_agent_ids{};
+  DataLog<TrafficData> traffic_data_log{WorldType::Traffic};
 
  private:
   //  Pulled by Claude out of the preexisting constructor — registers cell types
@@ -285,6 +287,11 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
 
   /// @brief Return the number of currently active spawned agents.
   [[nodiscard]] int GetNumSpawnedAgents() const { return num_spawned_agents; }
+
+  /// @brief Return aggregated traffic metrics collected once per world update.
+  [[nodiscard]] const DataLog<TrafficData>& GetTrafficDataLog() const {
+    return traffic_data_log;
+  }
 
   /// @brief Return the ANSI colour code pre-assigned to a destination tile,
   ///        or an empty string if the position is not a destination.
@@ -483,6 +490,7 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
   void UpdateWorld() override {
     UpdateTrafficLights();
     UpdateSpawners();
+    traffic_data_log.AggregateData(agent_set);
   }
 
  private:
