@@ -53,37 +53,16 @@ class SwarmingAgent : public StepAgentBase<SwarmData> {
   /// Set mirror of recent_positions for O(1) lookup in in_recent.
   std::unordered_set<WorldPosition> recent_positions_set;
 
-  /// Represents a grid position used as a key in hash maps
-  /// Stores X and Y coordinates extracted from WorldPosition
-  struct CellKey {
-    double x{};
-    double y{};
-
-    /// Equality comparison required for unordered_map keys
-    bool operator==(CellKey const& other) const {
-      return x == other.x && y == other.y;
-    }
-  };
-
-  /// Hash function for CellKey so it can be used in unordered_map
-  /// Combines hashes of x and y coordinates
-  struct CellKeyHash {
-    [[nodiscard]] std::size_t operator()(CellKey const& k) const {
-      std::size_t h1 = std::hash<double>{}(k.x);
-      std::size_t h2 = std::hash<double>{}(k.y);
-      return h1 ^ (h2 << 1);
-    }
-  };
-
-  /// Converts a WorldPosition into a CellKey for use in maps
-  /// Extracts X and Y coordinates
-  [[nodiscard]] static CellKey to_key(WorldPosition const& p) {
-    return CellKey{p.X(), p.Y()};
-  }
-
   /// Tracks how many times each position has been visited
   /// Higher counts will discourage revisiting the same cell
-  std::unordered_map<CellKey, std::size_t, CellKeyHash> visit_counts;
+  std::unordered_map<WorldPosition, std::size_t> visit_counts;
+
+  /// Number of recent cells retained for loop-avoidance.
+  static constexpr std::size_t history_size = 6;
+
+  /// Small random value added to movement scores to prevent ties and encourage
+  /// exploration.
+  static constexpr double tie_breaker = 0.001;
 
   /**
    * @brief Record a visit to a cell by incrementing its count and adding it to
@@ -100,11 +79,11 @@ class SwarmingAgent : public StepAgentBase<SwarmData> {
    * recorded as visited.
    */
   void record_visit(WorldPosition const& pos) {
-    visit_counts[to_key(pos)]++;
+    visit_counts[pos]++;
 
     recent_positions.push_back(pos);
     recent_positions_set.insert(pos);
-    if (recent_positions.size() > 6) {
+    while (recent_positions.size() > history_size) {
       WorldPosition const evicted = recent_positions.front();
       recent_positions.pop_front();
       if (std::count(recent_positions.begin(), recent_positions.end(),
@@ -124,23 +103,8 @@ class SwarmingAgent : public StepAgentBase<SwarmData> {
    * areas of the world and avoid congestion.
    */
   [[nodiscard]] std::size_t get_visit_count(WorldPosition const& pos) const {
-    auto it = visit_counts.find(to_key(pos));
+    auto it = visit_counts.find(pos);
     return (it == visit_counts.end()) ? 0 : it->second;
-  }
-
-  /**
-   * @brief Update the agent's visit history based on the current position.
-   * This method should be called at the beginning of each turn to update the
-   * agent's internal state based on the outcome of the previous turn. It
-   * records the current position as a visit, which will influence future
-   * movement decisions by increasing the visit count for that cell and adding
-   * it to the recent_positions queue. This allows the agent to learn from its
-   * movement history and avoid repeatedly visiting the same cells in a short
-   * period of time, which can help it escape loops and reduce congestion around
-   * its destination.
-   */
-  void update_from_previous_turn(WorldPosition const& current_pos) {
-    record_visit(current_pos);
   }
 
   /**
@@ -157,10 +121,8 @@ class SwarmingAgent : public StepAgentBase<SwarmData> {
       return std::abs(target.X() - p.X()) + std::abs(target.Y() - p.Y());
     };
 
-    double score = 0.0;
-
     // Base goal seeking
-    score += static_cast<double>(manhattan(candidate));
+    double score = static_cast<double>(manhattan(candidate));
 
     // Penalize revisiting overused cells
     score += visit_penalty * static_cast<double>(get_visit_count(candidate));
@@ -174,7 +136,7 @@ class SwarmingAgent : public StepAgentBase<SwarmData> {
    * @return An array of the four neighboring positions in the order: up, down,
    * left, right.
    */
-  std::array<WorldPosition, 4> get_neighbors(WorldPosition const& pos) const {
+  static std::array<WorldPosition, 4> get_neighbors(WorldPosition const& pos) {
     return {pos.Up(), pos.Down(), pos.Left(), pos.Right()};
   }
 
@@ -201,7 +163,7 @@ class SwarmingAgent : public StepAgentBase<SwarmData> {
     std::vector<Candidate> scored;
     scored.reserve(4);
 
-    std::uniform_real_distribution<double> jitter(0.0, 0.001);
+    std::uniform_real_distribution<double> jitter(0.0, tie_breaker);
 
     for (auto const& n : neighbors) {
       scored.push_back(Candidate{n, neighbor_score(n, target), jitter(rng)});
@@ -296,7 +258,7 @@ class SwarmingAgent : public StepAgentBase<SwarmData> {
     WorldPosition const& pos = this->mData.position;
 
     // First, learn from what happened last turn
-    update_from_previous_turn(pos);
+    record_visit(pos);
 
     if (!this->mData.destination.has_value()) {
       WorldPosition random_pos = get_random_neighbor(pos);
