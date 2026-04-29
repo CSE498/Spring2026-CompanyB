@@ -46,8 +46,10 @@ TEST_CASE("StepAgentBase - Single Action Logging", "[StepAgentBase]") {
     REQUIRE(initialAction.at("logLevel").get<int>() ==
             static_cast<int>(LogLevel::Normal));
     REQUIRE(initialAction.at("timestamp").get<uint64_t>() == 0);
-    REQUIRE(initialAction.at("details").at("position").get<WorldPosition>() ==
-            initialData.position);
+    REQUIRE(initialAction.at("details").at("position").at("x").get<int>() ==
+            initialData.position.CellX());
+    REQUIRE(initialAction.at("details").at("position").at("y").get<int>() ==
+            initialData.position.CellY());
   }
 
   SECTION("SetState logs one action") {
@@ -164,20 +166,20 @@ TEST_CASE("StepAgentBase - JSON Serialization", "[StepAgentBase]") {
 
   SECTION("Action can be serialized to JSON") {
     nlohmann::json j;
-    j["agentId"] = actions[0].agentId;
-    j["actionType"] = actions[0].actionType;
-    j["logLevel"] = static_cast<int>(actions[0].logLevel);
-    j["timestamp"] = actions[0].timestamp;
+    j["agentId"] = actions[0].at("agentId").get<std::string>();
+    j["actionType"] = actions[0].at("actionType").get<std::string>();
+    j["logLevel"] = static_cast<int>(actions[0].at("logLevel").get<int>());
+    j["timestamp"] = actions[0].at("timestamp").get<uint64_t>();
 
     REQUIRE(j["agentId"] == "77");
     REQUIRE(j["actionType"] == "initial_state");
     REQUIRE(j["logLevel"] == static_cast<int>(LogLevel::Normal));
     REQUIRE(j["timestamp"] == 0);
 
-    j["agentId"] = actions[1].agentId;
-    j["actionType"] = actions[1].actionType;
-    j["logLevel"] = static_cast<int>(actions[1].logLevel);
-    j["timestamp"] = actions[1].timestamp;
+    j["agentId"] = actions[1].at("agentId").get<std::string>();
+    j["actionType"] = actions[1].at("actionType").get<std::string>();
+    j["logLevel"] = static_cast<int>(actions[1].at("logLevel").get<int>());
+    j["timestamp"] = actions[1].at("timestamp").get<uint64_t>();
 
     REQUIRE(j["agentId"] == "77");
     REQUIRE(j["actionType"] == "movement");
@@ -199,7 +201,7 @@ TEST_CASE("StepAgentBase - Cached Agent ID Lifetime", "[StepAgentBase]") {
     agent.SetState(data, LogLevel::Normal, 100);
 
     const auto& action = agent.GetStates()[0];
-    std::string agentId(action.agentId);
+    std::string agentId(action.at("agentId").get<std::string>());
     REQUIRE(agentId == "555");
 
     agent.SetState(data, LogLevel::Normal, 200);

@@ -89,8 +89,9 @@ class ScriptedAgent : public StepAgentBase<DataClass> {
   bool mReady = false;
 
  public:
-  ScriptedAgent(DataClass initial_state, size_t id)
-      : StepAgentBase<DataClass>(initial_state, id),
+  ScriptedAgent(DataClass initial_state, size_t id,
+                LogLevel logLevel = LogLevel::Normal, uint64_t tick = 0)
+      : StepAgentBase<DataClass>(initial_state, id, logLevel, tick),
         mAgentWrapper(std::make_unique<AgentWrapper>(this)) {}
 
   ~ScriptedAgent() = default;

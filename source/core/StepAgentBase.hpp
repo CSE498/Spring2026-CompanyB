@@ -180,14 +180,6 @@ class StepAgentBase {
     mStates.push_back(eventData);
     mReplayStateIndex[eventData.at("timestamp").get<uint64_t>()] = index;
 
-    DataClass details{};
-
-    if constexpr (std::is_same_v<DataClass, TrafficData>) {
-      details = this->DeserializeTrafficData(eventData.at("details"));
-    } else if constexpr (std::is_same_v<DataClass, DiseaseData>) {
-      details = this->DeserializeDiseaseData(eventData.at("details"));
-    }
-
     // Apply initial state immediately so the agent starts correctly
     if (eventData.at("actionType").get<std::string>() == "initial_state") {
       mData = DataClass::FromJSON(eventData.at("details"));
@@ -195,9 +187,9 @@ class StepAgentBase {
 
     LogLevel logLevel = static_cast<LogLevel>(levelRaw);
     uint64_t tick = eventData.at("timestamp").get<uint64_t>();
-    mActions.push_back(
-        ActionEvent<DataClass>{std::string_view(mCachedAgentIdStr), "movement",
-                               logLevel, tick, details});
+    mActions.push_back(ActionEvent<DataClass>{
+        std::string_view(mCachedAgentIdStr), "movement", logLevel, tick,
+        DataClass::FromJSON(eventData.at("details"))});
   }
 
   // The main logic that separates the agents. When prompted for their turn,
