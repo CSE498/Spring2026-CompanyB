@@ -259,22 +259,28 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
   /// @brief Construct a TrafficWorld from a vector of strings representing
   /// the grid layout.
   /// Written by Claude.
-  explicit StepTrafficWorld(const std::vector<std::string>& grid_lines) {
+  explicit StepTrafficWorld(const std::vector<std::string>& grid_lines,
+                            bool use_buses = false) {
     RegisterCellTypes();
     main_grid.Load(grid_lines);
     ScanGrid();
-    SetupBuses();
+    if (use_buses) {
+      SetupBuses();
+    };
   }
 
   /// @brief Construct a TrafficWorld by reading a grid layout from a file.
   /// Written by Claude.
-  explicit StepTrafficWorld(const std::string& filepath) {
+  explicit StepTrafficWorld(const std::string& filepath,
+                            bool use_buses = false) {
     RegisterCellTypes();
     std::ifstream file(filepath);
     assert(file.is_open() && "TrafficWorld: could not open grid file");
     main_grid.Load(file);
     ScanGrid();
-    SetupBuses();
+    if (use_buses) {
+      SetupBuses();
+    }
   }
 
   /// @brief Return the number of currently active spawned agents.
