@@ -1,9 +1,9 @@
 #include <catch2/catch_test_macros.hpp>
 
 #include "../../source/Worlds/StepTrafficWorld.hpp"
-#include "../../source/tools/DataLog.hpp"
-#include "../../source/core/StepAgentBase.hpp"
 #include "../../source/core/AgentData.hpp"
+#include "../../source/core/StepAgentBase.hpp"
+#include "../../source/tools/DataLog.hpp"
 
 using namespace cse498;
 
@@ -15,14 +15,15 @@ TEST_CASE("Traffic world integrates with DataLog", "[DataLog][Traffic]") {
       "#########",
   };
 
-    // Provide a tiny concrete agent type so the world can instantiate agents.
-    struct TestTrafficAgent : public StepAgentBase<TrafficData> {
-        TestTrafficAgent(TrafficData d, size_t id) : StepAgentBase<TrafficData>(d, id) {}
-        steps::StepContainer GetTurn() override { return steps::StepContainer(); }
-        void SetGoal(WorldPosition) override {}
-    };
+  // Provide a tiny concrete agent type so the world can instantiate agents.
+  struct TestTrafficAgent : public StepAgentBase<TrafficData> {
+    TestTrafficAgent(TrafficData d, size_t id)
+        : StepAgentBase<TrafficData>(d, id) {}
+    steps::StepContainer GetTurn() override { return steps::StepContainer(); }
+    void SetGoal(WorldPosition) override {}
+  };
 
-    StepTrafficWorld<TestTrafficAgent> world{kMinimal};
+  StepTrafficWorld<TestTrafficAgent> world{kMinimal};
 
   // Let the world run a few ticks by stepping RunAgents()+UpdateWorld()
   for (int i = 0; i < 3; ++i) {
@@ -38,34 +39,40 @@ TEST_CASE("Traffic world integrates with DataLog", "[DataLog][Traffic]") {
   REQUIRE(log.contains("distance_driven"));
 }
 
-TEST_CASE("Infection DataLog aggregates declared fields", "[DataLog][Infection]") {
-    using namespace cse498;
+TEST_CASE("Infection DataLog aggregates declared fields",
+          "[DataLog][Infection]") {
+  using namespace cse498;
 
-    // Create a tiny set of disease agents with varied health states.
-    struct TestDiseaseAgent : public StepAgentBase<DiseaseData> {
-        TestDiseaseAgent(DiseaseData d, size_t id) : StepAgentBase<DiseaseData>(d, id) {}
-        steps::StepContainer GetTurn() override { return steps::StepContainer(); }
-        void SetGoal(WorldPosition) override {}
-    };
+  // Create a tiny set of disease agents with varied health states.
+  struct TestDiseaseAgent : public StepAgentBase<DiseaseData> {
+    TestDiseaseAgent(DiseaseData d, size_t id)
+        : StepAgentBase<DiseaseData>(d, id) {}
+    steps::StepContainer GetTurn() override { return steps::StepContainer(); }
+    void SetGoal(WorldPosition) override {}
+  };
 
-    std::vector<std::shared_ptr<StepAgentBase<DiseaseData>>> agents;
-    agents.push_back(std::make_shared<TestDiseaseAgent>(DiseaseData{WorldPosition{0, 0}, HealthState::SUSCEPTIBLE, 0}, 0));
-    agents.push_back(std::make_shared<TestDiseaseAgent>(DiseaseData{WorldPosition{1, 1}, HealthState::INFECTED, 0}, 1));
-    agents.push_back(std::make_shared<TestDiseaseAgent>(DiseaseData{WorldPosition{2, 2}, HealthState::RECOVERED, 0}, 2));
+  std::vector<std::shared_ptr<StepAgentBase<DiseaseData>>> agents;
+  agents.push_back(std::make_shared<TestDiseaseAgent>(
+      DiseaseData{WorldPosition{0, 0}, HealthState::SUSCEPTIBLE, 0}, 0));
+  agents.push_back(std::make_shared<TestDiseaseAgent>(
+      DiseaseData{WorldPosition{1, 1}, HealthState::INFECTED, 0}, 1));
+  agents.push_back(std::make_shared<TestDiseaseAgent>(
+      DiseaseData{WorldPosition{2, 2}, HealthState::RECOVERED, 0}, 2));
 
-    DataLog<DiseaseData> log{WorldType::Infection};
-    log.AggregateData(agents);
+  DataLog<DiseaseData> log{WorldType::Infection};
+  log.AggregateData(agents);
 
-    const auto& agg = log.GetAggregationData();
-    REQUIRE(agg.contains("infection_count"));
-    REQUIRE(agg.contains("susceptible_count"));
-    REQUIRE(agg.contains("cured_count"));
-    REQUIRE(agg.contains("infection_probability"));
+  const auto& agg = log.GetAggregationData();
+  REQUIRE(agg.contains("infection_count"));
+  REQUIRE(agg.contains("susceptible_count"));
+  REQUIRE(agg.contains("cured_count"));
+  REQUIRE(agg.contains("infection_probability"));
 
-    // Each declared field should have at least one tick recorded after aggregation
-    for (const auto& [k, v] : agg) {
-        REQUIRE_FALSE(v.empty());
-    }
+  // Each declared field should have at least one tick recorded after
+  // aggregation
+  for (const auto& [k, v] : agg) {
+    REQUIRE_FALSE(v.empty());
+  }
 }
 // #include <catch2/catch_test_macros.hpp>
 // #include <nlohmann/json.hpp>
