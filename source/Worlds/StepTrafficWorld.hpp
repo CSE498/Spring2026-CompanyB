@@ -178,7 +178,7 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
   inline static const std::string normal_spawn_colour = "\033[36m";
   /// @brief Dim Cyan for the slow spawner
   inline static const std::string slow_spawn_colour = "\033[2;36m";
-  /// @brief Bright white for bus agents
+  /// @brief Pink for bus agents
   inline static const std::string bus_colour = "\033[95m";
 
   /// @brief The number of currently-active agents that have been spawned by
@@ -530,8 +530,12 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
           if (!despawned_agent_ids.empty()) {
             RecycleDespawnedAgent(pos, dest_pos);
           } else {
-            TrafficData state = {dest_pos, pos, Direction::East,
-                                 true,     '>', GetDestinationColour(dest_pos)};
+            TrafficData state = {dest_pos,
+                                 pos,
+                                 Direction::East,
+                                 true,
+                                 DirectionSymbol(Direction::East),
+                                 GetDestinationColour(dest_pos)};
             AddAgent<SpawnedAgent>(state);
           }
           ++num_spawned_agents;
@@ -574,7 +578,7 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
     state.destination = dest_pos;
     state.direction = Direction::East;
     state.is_active = true;
-    state.symbol = '>';
+    state.symbol = DirectionSymbol(state.direction);
     state.colour = GetDestinationColour(dest_pos);
     driver->SetState(state);
   }
@@ -584,8 +588,8 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
     SetupScriptedAgents(GetAgentFileContents("buses.al"));
     for (AgentPtr& ptr : agent_set) {
       auto state = ptr->GetState();
-      state.symbol = '>';
-      state.colour = "\033[95m";
+      state.symbol = DirectionSymbol(state.direction);
+      state.colour = bus_colour;
       state.is_active = true;
       ptr->SetState(state);
     }
