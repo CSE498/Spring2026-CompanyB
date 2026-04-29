@@ -28,6 +28,7 @@
 #include "tools/Point.hpp"
 #include "InfoGraph.hpp"
 #include "WebTextboxOutputManager.hpp"
+#include "Interpreter/Parser.hpp"
 
 using namespace cse498;
 
@@ -116,14 +117,22 @@ static size_t scripted_traffic_hi = 0;
 // Forward declaration
 static const std::string& LoadAgentScript(const char* vfs_path);
 
+// User-uploaded agentlang script
+static std::string uploaded_script;
+static std::string uploaded_script_name = "none";
+
+// Used to detect a switch between Traffic and Virus so we can
+// clear the uploaded script when crossing sim boundaries.
+static ActiveSim last_loaded_sim = ActiveSim::NONE;
+
 // Add the agentlang-defined cars into traffic_world and refresh the
 // scripted_traffic_lo/hi range. Call after every construction or reconstruction of
 // traffic_world so the range tracks the current agent_set ordering.
 static void AddTrafficScriptedAgents() {
-    const std::string& traffic_script = LoadAgentScript("scripts/traffic_script.al");
     scripted_traffic_lo = traffic_world->GetNumAgents();
-    // traffic_world->AddScriptedAgent(TrafficData{.is_active = true}, traffic_script, 0);
-    // traffic_world->AddScriptedAgent(TrafficData{.is_active = true}, traffic_script, 1);
+    if (!uploaded_script.empty()) {
+        traffic_world->AddScriptedAgent(TrafficData{.is_active = true}, uploaded_script, 0);
+    }
     scripted_traffic_hi = traffic_world->GetNumAgents();
 }
 
@@ -300,6 +309,23 @@ void UpdateGraphs() {
   count++;
 }
 
+// Trigger a browser download of JSON as a file.
+static void DownloadJson(const std::string& filename, const std::string& json) {
+    EM_ASM({
+        var name = UTF8ToString($0);
+        var text = UTF8ToString($1);
+        var blob = new Blob([text], {type: 'application/json'});
+        var url = URL.createObjectURL(blob);
+        var a = document.createElement('a');
+        a.href = url;
+        a.download = name;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    }, filename.c_str(), json.c_str());
+}
+
 std::shared_ptr<WebElement> GameInfoCanvas(WebOptions options) {
   auto gameInfo = UIItem<InfoGraph>(500, 500, options);
   line_graph = gameInfo;
@@ -308,6 +334,7 @@ std::shared_ptr<WebElement> GameInfoCanvas(WebOptions options) {
 }
 
 void SetupVirusWorld();
+static void ResetActiveWorld();
 
 auto handle_sim_state = [](SimState next) {
     switch (next) {
@@ -323,24 +350,157 @@ auto handle_sim_state = [](SimState next) {
             break;
         case SimState::STOPPED:
             sim_state = SimState::STOPPED;
-            sim_tick  = 0;
-            // Reset the active world to its initial state
-            if (active_sim == ActiveSim::TRAFFIC) {
-                traffic_world = std::make_unique<WebTrafficWorld>("assets/grids/TrafficWorld_Web.grid");
-                traffic_log = std::make_unique<DataLog<TrafficData>>(WorldType::Traffic);
-                AddTrafficScriptedAgents();
-    prev_traffic_positions.clear();
-                last_traffic_agent_count = 0;
-                traffic_reached_log.clear();
-            } else if (active_sim == ActiveSim::VIRUS) {
-                SetupVirusWorld();
-                last_virus_health.clear();
-            }
-            count = 0;
-            line_graph->ClearData();
-            line_graph->DrawLineChart(std::vector<double> {}, "Cleared");
+            ResetActiveWorld();
+            if (logger) logger->Clear();
             LogSim("World", "Simulation stopped and reset", "stop");
             break;
+    }
+};
+
+// Log the current script status
+static void LogScriptStatus() {
+    LogSim("Script",
+           "In use: " + uploaded_script_name +
+               ". Upload a .al script at the start of a sim (before pressing start).",
+           "info");
+}
+
+// Rebuild the currently active world so changes take effect
+static void ResetActiveWorld() {
+    sim_tick = 0;
+    if (active_sim == ActiveSim::TRAFFIC) {
+        traffic_world = std::make_unique<WebTrafficWorld>("assets/grids/TrafficWorld_Web.grid");
+        traffic_log = std::make_unique<DataLog<TrafficData>>(WorldType::Traffic);
+        AddTrafficScriptedAgents();
+        prev_traffic_positions.clear();
+        last_traffic_agent_count = 0;
+        traffic_reached_log.clear();
+    } else if (active_sim == ActiveSim::VIRUS) {
+        SetupVirusWorld();
+        last_virus_health.clear();
+    }
+    count = 0;
+    if (line_graph) {
+        line_graph->ClearData();
+        line_graph->DrawLineChart(std::vector<double>{}, "Cleared");
+    }
+}
+
+// Push the current script name into the nav-bar display, if it exists, and
+// show/hide the Clear button based on whether a script is currently loaded.
+static void UpdateScriptDisplay() {
+    emscripten::val doc = emscripten::val::global("document");
+    emscripten::val name_el = doc.call<emscripten::val>(
+        "getElementById", std::string("active-script-name"));
+    if (!name_el.isNull() && !name_el.isUndefined()) {
+        name_el.set("innerText", uploaded_script_name);
+    }
+    emscripten::val clear_btn = doc.call<emscripten::val>(
+        "getElementById", std::string("clear-script-btn"));
+    if (!clear_btn.isNull() && !clear_btn.isUndefined()) {
+        clear_btn["style"].set("display",
+                               uploaded_script.empty() ? std::string("none")
+                                                       : std::string("block"));
+    }
+}
+
+// Reset the uploaded script back to "none".
+static void ResetScript() {
+    uploaded_script.clear();
+    uploaded_script_name = "none";
+    UpdateScriptDisplay();
+}
+
+// Handle a user-selected file from the upload button. Per-state behavior:
+// PLAYING: pause and tell the user to stop the sim before uploading.
+// PAUSED:  tell the user to stop the sim before uploading.
+// STOPPED: validate ".al" extension, parse with the agentlang Parser, and
+//            install the script on success. Any failure resets to "none".
+auto handle_upload = [](const std::string& filename, const std::string& content) {
+    if (sim_state == SimState::PLAYING) {
+        sim_state = SimState::PAUSED;
+        LogSim("Script",
+               "Simulation paused. End the simulation (press stop) to upload a script.",
+               "warn");
+        return;
+    }
+    if (sim_state == SimState::PAUSED) {
+        LogSim("Script",
+               "End the simulation (press stop) to upload a script.",
+               "warn");
+        return;
+    }
+    // STOPPED: accept upload attempt.
+    auto ends_with_al = [](const std::string& s) {
+        return s.size() >= 3 && s.compare(s.size() - 3, 3, ".al") == 0;
+    };
+    if (!ends_with_al(filename)) {
+        ResetScript();
+        LogSim("Script",
+               "Upload rejected (must end in .al). Script in use: none.",
+               "error");
+        return;
+    }
+    Parser parser;
+    std::stringstream ss{content};
+    auto result = parser.parse(ss);
+    if (!result.has_value()) {
+        ResetScript();
+        LogSim("Script",
+               "Failed to parse '" + filename + "': " + result.error().ToStr() +
+                   ". Script in use: none.",
+               "error");
+        return;
+    }
+    uploaded_script = content;
+    uploaded_script_name = filename;
+    UpdateScriptDisplay();
+    ResetActiveWorld();
+    LogSim("Script", "Script uploaded: " + filename, "info");
+};
+
+// Clear the uploaded script
+auto handle_clear_script = []() {
+    if (sim_state == SimState::PLAYING) {
+        sim_state = SimState::PAUSED;
+        LogSim("Script",
+               "Simulation paused. End the simulation (press stop) to clear the script.",
+               "warn");
+        return;
+    }
+    if (sim_state == SimState::PAUSED) {
+        LogSim("Script",
+               "End the simulation (press stop) to clear the script.",
+               "warn");
+        return;
+    }
+    if (uploaded_script.empty()) {
+        LogSim("Script", "No script to clear.", "info");
+        return;
+    }
+    ResetScript();
+    ResetActiveWorld();
+    LogSim("Script", "Script cleared. Script in use: none.", "info");
+};
+
+// Save the current simulation log to a downloaded JSON file.
+auto handle_save = []() {
+    if (!logger) return;
+    bool was_playing = (sim_state == SimState::PLAYING);
+    if (was_playing) {
+        sim_state = SimState::PAUSED;
+        LogSim("World", "Simulation paused for save", "pause");
+    }
+    std::string json = logger->GetBufferedLog().dump(2);
+    std::string prefix = (active_sim == ActiveSim::TRAFFIC) ? "traffic_log_"
+                       : (active_sim == ActiveSim::VIRUS)   ? "virus_log_"
+                                                            : "sim_log_";
+    std::string fname = prefix + std::to_string(sim_tick) + ".json";
+    DownloadJson(fname, json);
+    if (was_playing) {
+        LogSim("World", "Log downloaded. Press start to resume.", "info");
+    } else {
+        LogSim("World", "Log downloaded.", "info");
     }
 };
 
@@ -510,20 +670,25 @@ void DrawVirusSim() {
     // Agents with a small fixed radius so 1-cell movement is visible.
     constexpr double kResidentR = 5.0;
     constexpr double kVisitorR  = 4.0;
+    const bool script_active = !uploaded_script.empty();
     size_t n = virus_world->GetNumAgents();
     for (size_t id = 0; id < n; ++id) {
         DiseaseData state = virus_world->GetAgentState(id);
         WorldPosition pos = state.position;
         double cx = pos.CellX() * cell_w + cell_w / 2.0;
         double cy = pos.CellY() * cell_h + cell_h / 2.0;
-        bool is_resident = id < kNumPacers;
-        double r = is_resident ? kResidentR : kVisitorR;
+        bool is_scripted = script_active && id < kNumPacers;
+        double r = is_scripted ? kResidentR : kVisitorR;
         switch (state.health) {
             case HealthState::SUSCEPTIBLE: GameCanvas->SetFillColor({60, 220, 90});  break;
             case HealthState::INFECTED:    GameCanvas->SetFillColor({230, 60, 60});  break;
             case HealthState::RECOVERED:   GameCanvas->SetFillColor({90, 130, 240}); break;
         }
         GameCanvas->DrawCircle(cx, cy, r, true);
+        if (is_scripted) {
+            GameCanvas->SetPenColor({255, 140, 0}).SetLineWidth(2.0)
+                       .DrawCircle(cx, cy, r + 1.5, false);
+        }
     }
 
     if (sim_state == SimState::PLAYING) {
@@ -630,19 +795,19 @@ void SetupVirusWorld() {
     virus_world->SetClinicEntrance(WorldPosition{900, 700});
     virus_world->SetRecoveryExit(WorldPosition{780, 470});
 
-    const std::string& pacer_script = LoadAgentScript("scripts/infection_script.al");
-
-    struct PacerSpec { WorldPosition pos; size_t def_idx; };
-    const PacerSpec kPacers[] = {
-        {{ 80, 200}, 0},   // h_pacer
-        {{220, 200}, 0},   // h_pacer
-        {{420, 200}, 1},   // v_pacer
-        {{ 60, 700}, 1},   // v_pacer
-        {{260, 700}, 2},   // square_walker
-        {{600, 200}, 3},   // stander
-    };
-    for (const auto& p : kPacers) {
-      virus_world->AddScriptedAgent(DiseaseData{p.pos}, pacer_script, p.def_idx);
+    if (!uploaded_script.empty()) {
+        struct PacerSpec { WorldPosition pos; size_t def_idx; };
+        const PacerSpec kPacers[] = {
+            {{ 80, 200}, 0},   // h_pacer
+            {{220, 200}, 0},   // h_pacer
+            {{420, 200}, 1},   // v_pacer
+            {{ 60, 700}, 1},   // v_pacer
+            {{260, 700}, 2},   // square_walker
+            {{600, 200}, 3},   // stander
+        };
+        for (const auto& p : kPacers) {
+          virus_world->AddScriptedAgent(DiseaseData{p.pos}, uploaded_script, p.def_idx);
+        }
     }
 
     // Initial swarming visitors
@@ -695,13 +860,32 @@ std::shared_ptr<WebElement> TickRateControl() {
     return layout->SetDirection("row").SetAlignItems("center").SetGap("6px");
 }
 
+// Builds a nav-bar element showing the active script name and a clear button.
+std::shared_ptr<WebElement> ScriptStatusControl() {
+    auto layout = UIItem<WebLayout>(WebOptions{
+        .id = "script-status-control",
+    });
+
+    emscripten::val document = emscripten::val::global("document");
+    emscripten::val label = document.call<emscripten::val>("createElement", std::string("span"));
+    label.set("innerText", std::string("Script: "));
+
+    emscripten::val name = document.call<emscripten::val>("createElement", std::string("span"));
+    name.set("id", "active-script-name");
+    name.set("innerText", uploaded_script_name);
+
+    layout->GetDOMElement().call<void>("appendChild", label);
+    layout->GetDOMElement().call<void>("appendChild", name);
+
+    return layout->SetDirection("row").SetAlignItems("center").SetGap("6px");
+}
+
 // Here we create a function that creates the layout for the simulation screen
 // It takes a lambda as a parameter
 // This is a function we want to run when a button is clicked
 // We could take more lambdas if we want more types of button handlers
-// btn_lambda: generic handler for start/pause/stop/upload/save which can be updated later
 // exit_lambda: always goes back to the main menu for reselection of world or exit
-std::shared_ptr<WebElement> SimulationLayout(ActiveSim sim, std::function<void()> btn_lambda, std::function<void()> exit_lambda) {
+std::shared_ptr<WebElement> SimulationLayout(ActiveSim sim, std::function<void()> exit_lambda) {
     // Here we initialize our game info canvas with id, classes, and style properties.
     auto gameInfo = GameInfoCanvas(WebOptions{
         .id = "game-info",
@@ -751,13 +935,11 @@ std::shared_ptr<WebElement> SimulationLayout(ActiveSim sim, std::function<void()
                     UIItem<WebButton>("", WebOptions{ .id = "start-btn", .classes={"button"} })->SetOnClick([]{ handle_sim_state(SimState::PLAYING); }),
                     UIItem<WebButton>("", WebOptions{ .id = "pause-btn", .classes={"button"} })->SetOnClick([]{ handle_sim_state(SimState::PAUSED); }),
                     UIItem<WebButton>("", WebOptions{ .id = "stop-btn",  .classes={"button"} })->SetOnClick([]{ handle_sim_state(SimState::STOPPED); }),
-                    // Using SetOnFileUpload with a custom lambda
-                    UIItem<WebButton>("", WebOptions{ .id = "upload-btn", .classes={"button"} })->SetOnFileUpload([](const std::string& file_content) {
-                        std::println("SUCCESS! File uploaded to C++ backend. Length: {} characters.", file_content.length());
-                        // TODO: When the World object is available, do: world_ptr->LoadScript(file_content);
-                    }),
-                    UIItem<WebButton>("", WebOptions{ .id = "save-btn", .classes={"button"} })->SetOnClick(btn_lambda),
+                    UIItem<WebButton>("", WebOptions{ .id = "upload-btn", .classes={"button"} })->SetOnFileUploadWithName(handle_upload),
+                    UIItem<WebButton>("", WebOptions{ .id = "save-btn", .classes={"button"} })->SetOnClick(handle_save),
                     TickRateControl(),
+                    ScriptStatusControl(),
+                    UIItem<WebButton>("", WebOptions{ .id = "clear-script-btn", .classes={"button"} })->SetOnClick(handle_clear_script),
                     UIItem<WebButton>("", WebOptions{ .id = "exit-btn", .classes={"button"} })->SetOnClick(exit_lambda)
                 }
             })->SetHeight("80px").SetDirection("row").SetAlignItems("center").SetGap("10px"),
@@ -838,6 +1020,8 @@ void load_menu_layout() {
 
 void load_traffic_layout() {
     std::println("Loading traffic simulation");
+    if (last_loaded_sim == ActiveSim::VIRUS) ResetScript();
+    last_loaded_sim = ActiveSim::TRAFFIC;
     active_sim = ActiveSim::TRAFFIC;
     sim_state  = SimState::STOPPED;
     sim_tick   = 0;
@@ -848,21 +1032,27 @@ void load_traffic_layout() {
 
     last_traffic_agent_count = 0;
     traffic_reached_log.clear();
-    set_active_layout(SimulationLayout(ActiveSim::TRAFFIC, load_traffic_layout, load_menu_layout));
+    set_active_layout(SimulationLayout(ActiveSim::TRAFFIC, load_menu_layout));
     logger = std::make_unique<WebTextboxOutputManager>(log_textbox);
     LogSim("World", "Traffic simulation loaded. Press start to begin.", "info");
+    LogScriptStatus();
+    UpdateScriptDisplay();
 }
 
 void load_virus_layout() {
     std::println("Loading virus simulation");
+    if (last_loaded_sim == ActiveSim::TRAFFIC) ResetScript();
+    last_loaded_sim = ActiveSim::VIRUS;
     active_sim = ActiveSim::VIRUS;
     sim_state  = SimState::STOPPED;
     sim_tick   = 0;
     SetupVirusWorld();
     last_virus_health.clear();
-    set_active_layout(SimulationLayout(ActiveSim::VIRUS, load_virus_layout, load_menu_layout));
+    set_active_layout(SimulationLayout(ActiveSim::VIRUS, load_menu_layout));
     logger = std::make_unique<WebTextboxOutputManager>(log_textbox);
     LogSim("World", "Virus simulation loaded. Press start to begin.", "info");
+    LogScriptStatus();
+    UpdateScriptDisplay();
 }
 
 void MainLoop() {

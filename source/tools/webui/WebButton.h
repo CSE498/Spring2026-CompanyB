@@ -38,6 +38,8 @@ class WebButton : public WebElement {
 
   // NEW FILE UPLOAD METHODS
   WebButton& SetOnFileUpload(std::function<void(const std::string&)> callback);
+  WebButton& SetOnFileUploadWithName(
+      std::function<void(const std::string&, const std::string&)> callback);
 
   // Embind callbacks (must be public for JS to call them)
   void Click(emscripten::val arg);
@@ -52,6 +54,9 @@ class WebButton : public WebElement {
 
   // File Upload variables
   std::function<void(const std::string&)> on_file_upload_{};
+  std::function<void(const std::string&, const std::string&)>
+      on_file_upload_with_name_{};
+  std::string last_uploaded_filename_{};
   emscripten::val file_input_ = emscripten::val::null();
 
   /// @brief Allows us to remove event listeners on destruction.
