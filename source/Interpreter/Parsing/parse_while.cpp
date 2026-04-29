@@ -4,6 +4,9 @@
 
 namespace cse498 {
 
+/** @brief Parse and return an expected containing either the parsed while loop
+ * or an `InterpErr` describing the error which occured.
+ */
 std::expected<std::unique_ptr<AST::Node>, InterpErr> Parser::parse_while() {
   /*
   Assuming there's a curly-brace-enclosed body:

@@ -7,6 +7,11 @@
 
 namespace cse498 {
 
+/** @brief Parse and return an expected containing either the variable
+ * definition parsed or an `InterpErr` describing the error which occured.
+ *
+ * Variables may shadow symbols only from higher scopes than the current one.
+ */
 std::expected<std::unique_ptr<AST::Node>, InterpErr> Parser::parse_var_def() {
   /*
   ---

@@ -12,19 +12,18 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # TODO: This section might need work. I am not sure what to anticpate just yet.
 # Source files
 file(GLOB_RECURSE SOURCES
-    "${CMAKE_CURRENT_SOURCE_DIR}/*.cpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/*.c"
+        "${CMAKE_CURRENT_SOURCE_DIR}/*.cpp"
+        "${CMAKE_CURRENT_SOURCE_DIR}/*.c"
 )
 
 # Header directories
 set(HEADER_DIRS
-    ${CMAKE_CURRENT_SOURCE_DIR}
-    ${CMAKE_CURRENT_SOURCE_DIR}/agents
-    ${CMAKE_CURRENT_SOURCE_DIR}/core
-    ${CMAKE_CURRENT_SOURCE_DIR}/Interfaces
-    ${CMAKE_CURRENT_SOURCE_DIR}/tools
-    ${CMAKE_CURRENT_SOURCE_DIR}/tools/webui
-    ${CMAKE_CURRENT_SOURCE_DIR}/worlds
+        ${CMAKE_CURRENT_SOURCE_DIR}
+        ${CMAKE_CURRENT_SOURCE_DIR}/agents
+        ${CMAKE_CURRENT_SOURCE_DIR}/core
+        ${CMAKE_CURRENT_SOURCE_DIR}/Interfaces
+        ${CMAKE_CURRENT_SOURCE_DIR}/tools
+        ${CMAKE_CURRENT_SOURCE_DIR}/worlds
 )
 
 include(FetchContent)
@@ -156,6 +155,8 @@ elseif(BUILD_TESTS)
   add_executable(tests ${TEST_SOURCES})
   target_link_libraries(tests PRIVATE project_lib Catch2::Catch2WithMain)
   target_link_libraries(project_lib PUBLIC range-v3 nlohmann_json::nlohmann_json)
+  target_compile_definitions(tests PRIVATE
+    TEST_IMAGE_DIR="{CMAKE_SOURCE_DIR}/../images")
 
 elseif(DEFINED EMSCRIPTEN)
   # Exclude Qt GUI files (Qt can't be compiled by emcc)
@@ -248,7 +249,7 @@ else()
     # Skip Qt entirely and exclude GUI sources
     list(FILTER SOURCES EXCLUDE REGEX ".*/Interfaces/gui/.*")
   else()
-    find_package(Qt6 REQUIRED COMPONENTS Core Gui Widgets)
+    find_package(Qt6 REQUIRED COMPONENTS Core Gui Widgets Charts)
     set(CMAKE_AUTOMOC ON)
   endif()
 
@@ -256,7 +257,7 @@ else()
   target_link_libraries(app PRIVATE range-v3 nlohmann_json::nlohmann_json)
   target_include_directories(app PRIVATE ${HEADER_DIRS})
   if(NOT NO_QT)
-    target_link_libraries(app PRIVATE Qt6::Core Qt6::Gui Qt6::Widgets)
+    target_link_libraries(app PRIVATE Qt6::Core Qt6::Gui Qt6::Widgets Qt6::Charts)
   endif()
 
 endif()

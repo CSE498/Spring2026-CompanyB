@@ -4,6 +4,9 @@
 
 namespace cse498 {
 
+/** @brief Parse and return either a parsed agent definition, or an expected
+ * containing the first error encountered.
+ */
 std::expected<std::unique_ptr<AST::Node>, InterpErr> Parser::parse_agent_def() {
   // clang-format off
   /*
