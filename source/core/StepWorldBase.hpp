@@ -138,6 +138,12 @@ class StepWorldBase {
       ++tick_count;
     }
   }
+
+  /// @brief Remove all agents and reset the ID counter.
+  void ClearAgents() {
+    agent_set.clear();
+    next_id = 0;
+  }
 };
 
 }  // namespace cse498
