@@ -19,10 +19,10 @@ namespace cse498 {
 
 constexpr int INFECTIOUS_TIMEOUT = 4000;
 
-InfectiousWindow::InfectiousWindow(InfectiousWorld &world,
-                                   const std::vector<QString> &imagePaths,
-                                   int tileSize, const QString &agentImagePath,
-                                   QWidget *parent)
+InfectiousWindow::InfectiousWindow(InfectiousWorld& world,
+                                   const std::vector<QString>& imagePaths,
+                                   int tileSize, const QString& agentImagePath,
+                                   QWidget* parent)
     : QMainWindow(parent),
       mWorld(world),
       mImagePaths(imagePaths),
@@ -116,7 +116,7 @@ void InfectiousWindow::setupMainWidget() {
   mSidePanel = new QWidget(this);
   mSidePanel->setMinimumWidth(200);
 
-  auto *verticalSplitter = new QSplitter(Qt::Vertical, mSidePanel);
+  auto* verticalSplitter = new QSplitter(Qt::Vertical, mSidePanel);
 
   mMainGraph = new MainGraph(verticalSplitter);
   verticalSplitter->addWidget(mMainGraph);
@@ -140,7 +140,7 @@ void InfectiousWindow::setupMainWidget() {
   mSidePanelLayout->addWidget(verticalSplitter);
   mSidePanel->setLayout(mSidePanelLayout);
 
-  auto *splitter = new QSplitter(Qt::Horizontal, this);
+  auto* splitter = new QSplitter(Qt::Horizontal, this);
   splitter->addWidget(mSidePanel);
   splitter->addWidget(mGraphicsView);
   splitter->setStretchFactor(0, 1);
@@ -178,7 +178,7 @@ void InfectiousWindow::onTick() {
 void InfectiousWindow::redraw() {
   mGraphicsScene->clear();
 
-  const WorldGrid &grid = mWorld.GetGrid();
+  const WorldGrid& grid = mWorld.GetGrid();
   const int T = mTileSize;
   const size_t W = grid.GetWidth();
   const size_t H = grid.GetHeight();
@@ -230,7 +230,7 @@ void InfectiousWindow::redraw() {
   }
 }
 
-void InfectiousWindow::logCommand(const QString &message) {
+void InfectiousWindow::logCommand(const QString& message) {
   mCommandLog->append(message);
 }
 
@@ -279,7 +279,7 @@ void InfectiousWindow::onHelpAbout() {
 
 void InfectiousWindow::onBackToMainMenu() {
   if (mTimer) mTimer->stop();
-  auto *startScreen = new StartScreen(mImagePaths, mTileSize, mAgentImagePath);
+  auto* startScreen = new StartScreen(mImagePaths, mTileSize, mAgentImagePath);
   startScreen->setAttribute(Qt::WA_DeleteOnClose);
   startScreen->show();
   close();

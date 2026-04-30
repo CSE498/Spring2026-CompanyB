@@ -29,7 +29,7 @@ struct BaseErr {
   @tparam Self The type of the derived class.
   */
   template <typename T, typename E, typename Self>
-  operator std::expected<T, E>(this Self && self) {
+  operator std::expected<T, E>(this Self&& self) {
     return std::unexpected(std::forward<Self>(self));
   }
 

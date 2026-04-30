@@ -26,37 +26,37 @@ class ImageManager {
   ImageManager();
 
   /// Creates an ImageManager that uses an externally-owned QGraphicsScene.
-  explicit ImageManager(QGraphicsScene &scene);
+  explicit ImageManager(QGraphicsScene& scene);
 
   ~ImageManager() = default;
 
   /// delete them so that it doesn't cause errors later on if there's two
   /// ImageManager instances
-  ImageManager(const ImageManager &) = delete;
-  ImageManager &operator=(const ImageManager &) = delete;
-  ImageManager(ImageManager &&) = delete;
-  ImageManager &operator=(ImageManager &&) = delete;
+  ImageManager(const ImageManager&) = delete;
+  ImageManager& operator=(const ImageManager&) = delete;
+  ImageManager(ImageManager&&) = delete;
+  ImageManager& operator=(ImageManager&&) = delete;
 
   /// Loads an image from disk and stores it under imageId.
   /// returns true on success, false on any failure (logs via qWarning).
-  [[nodiscard]] bool Load(const QString &imageId, const QString &path);
+  [[nodiscard]] bool Load(const QString& imageId, const QString& path);
 
   /// Returns the stored pixmap for imageId, or std::nullopt if not found.
-  [[nodiscard]] std::optional<QPixmap> GetImage(const QString &imageId) const;
+  [[nodiscard]] std::optional<QPixmap> GetImage(const QString& imageId) const;
 
   /// Returns true if imageId is present in the manager.
-  [[nodiscard]] bool HasImage(const QString &imageId) const;
+  [[nodiscard]] bool HasImage(const QString& imageId) const;
 
   /// Removes imageId from the manager.
   /// @return true if the image existed and was removed, false if not found.
-  bool Remove(const QString &imageId);
+  bool Remove(const QString& imageId);
 
   /// Removes all stored images.
   void Clear();
 
  private:
   QGraphicsScene mOwnedScene;  /// used when default constructor
-  QGraphicsScene &mScene;      /// refers to active scene
+  QGraphicsScene& mScene;      /// refers to active scene
   std::unordered_map<QString, QPixmap> mImages;
 };
 

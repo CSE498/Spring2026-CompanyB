@@ -56,7 +56,7 @@ static std::string MakeScript(
 }
 
 static void DrawBuilding(
-    WorldGrid &grid, size_t wall_id, size_t floor_id, size_t x1, size_t y1,
+    WorldGrid& grid, size_t wall_id, size_t floor_id, size_t x1, size_t y1,
     size_t x2, size_t y2,
     std::initializer_list<std::pair<size_t, size_t>> doors) {
   for (size_t x = x1; x <= x2; ++x) {
@@ -70,8 +70,8 @@ static void DrawBuilding(
   for (auto [dx, dy] : doors) grid[dx, dy] = floor_id;
 }
 
-StartScreen::StartScreen(const std::vector<QString> &imagePaths, int tileSize,
-                         const QString &agentImagePath, QWidget *parent)
+StartScreen::StartScreen(const std::vector<QString>& imagePaths, int tileSize,
+                         const QString& agentImagePath, QWidget* parent)
     : QWidget(parent),
       mImagePaths(imagePaths),
       mTileSize(tileSize),
@@ -80,14 +80,14 @@ StartScreen::StartScreen(const std::vector<QString> &imagePaths, int tileSize,
   setMinimumSize(640, 480);
   resize(800, 480);
 
-  auto *outerLayout = new QVBoxLayout(this);
+  auto* outerLayout = new QVBoxLayout(this);
   outerLayout->setContentsMargins(10, 10, 10, 10);
 
-  auto *menuLabel = new QLabel("Main Menu", this);
+  auto* menuLabel = new QLabel("Main Menu", this);
   menuLabel->setStyleSheet("color: white; font-size: 16px;");
   outerLayout->addWidget(menuLabel);
 
-  auto *card = new QWidget(this);
+  auto* card = new QWidget(this);
   card->setObjectName("card");
   card->setStyleSheet(R"(
         QWidget#card {
@@ -98,11 +98,11 @@ StartScreen::StartScreen(const std::vector<QString> &imagePaths, int tileSize,
     )");
   outerLayout->addWidget(card);
 
-  auto *cardLayout = new QVBoxLayout(card);
+  auto* cardLayout = new QVBoxLayout(card);
   cardLayout->setContentsMargins(40, 40, 40, 40);
 
   cardLayout->addStretch();
-  auto *title = new QLabel("Simulation Tool", card);
+  auto* title = new QLabel("Simulation Tool", card);
   title->setAlignment(Qt::AlignCenter);
   title->setStyleSheet(
       "color: white; font-size: 30px; font-weight: 300; letter-spacing: 2px;");
@@ -129,7 +129,7 @@ StartScreen::StartScreen(const std::vector<QString> &imagePaths, int tileSize,
   mTrafficBtn->setStyleSheet(btnStyle);
   mVirusBtn->setStyleSheet(btnStyle);
 
-  auto *btnRow = new QHBoxLayout();
+  auto* btnRow = new QHBoxLayout();
   btnRow->setAlignment(Qt::AlignCenter);
   btnRow->setSpacing(16);
   btnRow->addWidget(mTrafficBtn);
@@ -155,7 +155,7 @@ void StartScreen::launchMainWindow(int mode) {
         std::make_unique<StepTrafficWorld<SwarmingAgent<TrafficData>>>(
             "source/DemoWorld.grid");
 
-    auto *win = new TrafficMainWindow(*mTrafficWorld, mImagePaths, mTileSize,
+    auto* win = new TrafficMainWindow(*mTrafficWorld, mImagePaths, mTileSize,
                                       mAgentImagePath);
     win->mOwnedWorld = std::move(mTrafficWorld);
     win->setWindowTitle("Group 21 Demo - Traffic");
@@ -170,7 +170,7 @@ void StartScreen::launchMainWindow(int mode) {
         MakeScript({{7, 6}, {20, 7}, {37, 6}, {5, 24}, {22, 23}, {52, 6}});
 
     mDiseaseWorld = std::make_unique<InfectiousWorld>(kGridW, kGridH, script);
-    WorldGrid &grid = mDiseaseWorld->GetGrid();
+    WorldGrid& grid = mDiseaseWorld->GetGrid();
     size_t wall = mDiseaseWorld->GetWallID();
     size_t floor = mDiseaseWorld->GetFloorID();
 
@@ -258,7 +258,7 @@ void StartScreen::launchMainWindow(int mode) {
     // patient zero
     mDiseaseWorld->InfectAgent(6);
 
-    auto *win = new InfectiousWindow(*mDiseaseWorld, mImagePaths, mTileSize,
+    auto* win = new InfectiousWindow(*mDiseaseWorld, mImagePaths, mTileSize,
                                      mAgentImagePath);
     win->mOwnedWorld = std::move(mDiseaseWorld);
     win->setWindowTitle("Group 21 Demo - Virus");
