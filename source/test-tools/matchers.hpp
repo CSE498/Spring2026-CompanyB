@@ -28,14 +28,14 @@ enum class CheckOpt {
 };
 template <typename T>
 struct OptNotNull : Catch::Matchers::MatcherGenericBase {
-  bool match(std::optional<T> const &other) const { return other.has_value(); }
+  bool match(std::optional<T> const& other) const { return other.has_value(); }
 
   std::string describe() const override { return "Has value (is not empty)"; }
 };
 
 struct ExpNotErr : Catch::Matchers::MatcherGenericBase {
   template <typename T, typename E>
-  bool match(std::expected<T, E> const &other) const {
+  bool match(std::expected<T, E> const& other) const {
     return other.has_value();
   }
 
@@ -44,7 +44,7 @@ struct ExpNotErr : Catch::Matchers::MatcherGenericBase {
 
 struct ExpIsErr : Catch::Matchers::MatcherGenericBase {
   template <typename T, typename E>
-  bool match(std::expected<T, E> const &other) const {
+  bool match(std::expected<T, E> const& other) const {
     return !other.has_value();
   }
 
@@ -56,30 +56,30 @@ struct ExpIsErr : Catch::Matchers::MatcherGenericBase {
 template <typename State, CheckExp DoCheckExp = CheckExp::NO>
 struct VariantState : Catch::Matchers::MatcherGenericBase {
   template <typename... Types>
-  bool match(std::variant<Types...> const &other) const {
+  bool match(std::variant<Types...> const& other) const {
     return std::holds_alternative<State>(other);
   }
 
   template <typename... Types>
-  bool match(std::optional<std::variant<Types...>> const &other) const {
+  bool match(std::optional<std::variant<Types...>> const& other) const {
     return std::holds_alternative<State>(other.value());
   }
 
   template <typename... Types, typename E>
     requires(DoCheckExp == CheckExp::SUCCESS)
-  bool match(std::expected<std::variant<Types...>, E> const &other) const {
+  bool match(std::expected<std::variant<Types...>, E> const& other) const {
     return std::holds_alternative<State>(other.value());
   }
 
   template <typename... Types, typename S>
     requires(DoCheckExp == CheckExp::ERROR)
-  bool match(std::expected<S, std::variant<Types...>> const &other) const {
+  bool match(std::expected<S, std::variant<Types...>> const& other) const {
     return std::holds_alternative<State>(other.error());
   }
 
   template <typename S, typename E>
     requires(DoCheckExp == CheckExp::NO)
-  bool match(std::expected<S, E> const &) const {
+  bool match(std::expected<S, E> const&) const {
     return false;
   }
 
@@ -109,30 +109,30 @@ struct VariantHas : Catch::Matchers::MatcherGenericBase {
   VariantHas(State cmp) : m_Cmp(cmp) {};
 
   template <VariantLike V>
-  bool match(V const &other) const {
+  bool match(V const& other) const {
     return (std::get<State>(other) == m_Cmp);
   }
 
   template <VariantLike V>
-  bool match(std::optional<V> const &other) const {
+  bool match(std::optional<V> const& other) const {
     return (std::get<State>(other.value()) == m_Cmp);
   }
 
   template <VariantLike V, typename E>
     requires(DoCheckExp == CheckExp::SUCCESS)
-  bool match(std::expected<V, E> const &other) const {
+  bool match(std::expected<V, E> const& other) const {
     return (std::get<State>(other.value()) == m_Cmp);
   }
 
   template <VariantLike V, typename S>
     requires(DoCheckExp == CheckExp::ERROR)
-  bool match(std::expected<S, V> const &other) const {
+  bool match(std::expected<S, V> const& other) const {
     return (std::get<State>(other.error()) == m_Cmp);
   }
 
   template <typename S, typename E>
     requires(DoCheckExp == CheckExp::NO)
-  bool match(std::expected<S, E> const &) const {
+  bool match(std::expected<S, E> const&) const {
     return false;
   }
 

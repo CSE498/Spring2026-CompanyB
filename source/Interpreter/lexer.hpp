@@ -33,7 +33,7 @@ class Lexer {
   };
   /** @brief Populate the lexer with the tokenization of `i`.
    */
-  std::expected<void, InterpErr> Tokenize(std::istream &i) {
+  std::expected<void, InterpErr> Tokenize(std::istream& i) {
     m_Lexer.Tokenize(i);
     return {};
   };
@@ -88,7 +88,7 @@ class Lexer {
       m_Lexer.token_id = 0;
   }
 
-  const Token &Peek(size_t skip_count = 0) const {
+  const Token& Peek(size_t skip_count = 0) const {
     return m_Lexer.Peek(skip_count);
   };
 };

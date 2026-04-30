@@ -17,9 +17,9 @@ namespace cse498 {
 
 constexpr const int TIMEOUT = 4000;
 
-MainWindow::MainWindow(SimWorldBase<DiseaseData> &world,
-                       const std::vector<QString> &imagePaths, int tileSize,
-                       const QString &agentImagePath, QWidget *parent, int mode)
+MainWindow::MainWindow(SimWorldBase<DiseaseData>& world,
+                       const std::vector<QString>& imagePaths, int tileSize,
+                       const QString& agentImagePath, QWidget* parent, int mode)
     : QMainWindow(parent),
       mWorld(world),
       mImagePaths(imagePaths),
@@ -44,7 +44,7 @@ MainWindow::MainWindow(SimWorldBase<DiseaseData> &world,
 void MainWindow::setupAgents() {
   if (mMode == 1) {
   } else {
-    auto &iw = static_cast<InfectiousWorld &>(mWorld);
+    auto& iw = static_cast<InfectiousWorld&>(mWorld);
 
     // clears agents if restarting
     iw.ClearAgents();
@@ -186,7 +186,7 @@ void MainWindow::setMainWidget() {
   mSidePanel = new QWidget(this);
   mSidePanel->setMinimumWidth(200);
 
-  auto *verticalSplitter = new QSplitter(Qt::Vertical, mSidePanel);
+  auto* verticalSplitter = new QSplitter(Qt::Vertical, mSidePanel);
 
   mMainGraph = new MainGraph(verticalSplitter);
   verticalSplitter->addWidget(mMainGraph);
@@ -209,7 +209,7 @@ void MainWindow::setMainWidget() {
   mSidePanelLayout->addWidget(verticalSplitter);
   mSidePanel->setLayout(mSidePanelLayout);
 
-  auto *splitter = new QSplitter(Qt::Horizontal, this);
+  auto* splitter = new QSplitter(Qt::Horizontal, this);
   splitter->addWidget(mSidePanel);
   splitter->addWidget(mGraphicsView);
   splitter->setStretchFactor(0, 1);
@@ -330,7 +330,7 @@ void MainWindow::onBackToMainMenu() {
     mTimer->stop();
   }
 
-  auto *startScreen = new StartScreen(mImagePaths, mTileSize, mAgentImagePath);
+  auto* startScreen = new StartScreen(mImagePaths, mTileSize, mAgentImagePath);
   startScreen->setAttribute(Qt::WA_DeleteOnClose);
   startScreen->show();
 
@@ -338,7 +338,7 @@ void MainWindow::onBackToMainMenu() {
   deleteLater();
 }
 
-void MainWindow::logCommand(const QString &message) {
+void MainWindow::logCommand(const QString& message) {
   mCommandLog->append(message);
 }
 
@@ -401,7 +401,7 @@ void MainWindow::onSwitchToTrafficSimulation() {
   auto trafficWorld =
       std::make_unique<StepTrafficWorld<SwarmingAgent<TrafficData>>>(
           "assets/grids/DemoWorld.grid");
-  auto *trafficWindow = new TrafficMainWindow(*trafficWorld, mImagePaths,
+  auto* trafficWindow = new TrafficMainWindow(*trafficWorld, mImagePaths,
                                               mTileSize, mAgentImagePath);
 
   trafficWindow->setAttribute(Qt::WA_DeleteOnClose);

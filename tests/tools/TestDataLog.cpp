@@ -156,124 +156,60 @@ TEST_CASE("DataLog Reset clears all entries and statistics", "[DataLog]") {
     REQUIRE(!dataLog.GetMean().has_value());
 }
 
-TEST_CASE("DataLog handles entry without duration field", "[DataLog]") {
-    cse498::DataLog dataLog;
+TEST_CASE(
+    "InfectiousWorld aggregates into world-owned DataLog after UpdateWorld",
+    "[datalog][infection][world-hook]") {
+  InfectiousWorld world(10, 8);
 
-    nlohmann::json entryWithoutDuration = {
-        {"agentId", "agent_1"},
-        {"actionType", "move"},
-        {"summary", "No duration"}
-    };
+  DiseaseData a{};
+  a.position = WorldPosition{2, 2};
+  DiseaseData b{};
+  b.position = WorldPosition{4, 3};
 
-    nlohmann::json entryWithDuration = {
-        {"agentId", "agent_2"},
-        {"actionType", "turn"},
-        {"duration", 5.0},
-        {"summary", "Has duration"}
-    };
+  world.AddAgent<SwarmingAgent<DiseaseData>>(a);
+  world.AddAgent<SwarmingAgent<DiseaseData>>(b);
 
-    dataLog.AddEntry(entryWithoutDuration);
-    REQUIRE(dataLog.GetCount() == 0);  // Entry stored but not in statistics
-    REQUIRE(dataLog.GetEntries().size() == 1);  // Entry still in log
+  world.RunAgents();
+  world.UpdateWorld();
 
-    dataLog.AddEntry(entryWithDuration);
-    REQUIRE(dataLog.GetCount() == 1);  // Only the one with duration is counted
-    REQUIRE(dataLog.GetEntries().size() == 2);  // Both entries in log
+  auto const& data = world.GetDataLog().GetAggregationData();
+  for (auto const& kv : data) {
+    REQUIRE(kv.second.size() == 1);
+    CHECK(kv.second.back().count == 2);
+  }
 }
 
-TEST_CASE("DataLog ignores non-numeric duration field", "[DataLog]") {
-    cse498::DataLog dataLog;
+TEST_CASE("DataLog traffic metrics aggregate from TrafficData",
+          "[datalog][traffic]") {
+  std::vector<std::shared_ptr<StepAgentBase<TrafficData>>> agents;
 
-    nlohmann::json entryWithStringDuration = {
-        {"agentId", "agent_1"},
-        {"actionType", "move"},
-        {"duration", "five seconds"},
-        {"summary", "String duration"}
-    };
+  TrafficData driving{};
+  driving.position = WorldPosition{1, 1};
+  driving.destination = WorldPosition{4, 1};
+  driving.is_active = true;
 
-    nlohmann::json entryWithNumericDuration = {
-        {"agentId", "agent_2"},
-        {"actionType", "turn"},
-        {"duration", 5.0},
-        {"summary", "Numeric duration"}
-    };
+  TrafficData waiting{};
+  waiting.position = WorldPosition{3, 2};
+  waiting.destination = std::nullopt;
+  waiting.is_active = false;
 
-    dataLog.AddEntry(entryWithStringDuration);
-    REQUIRE(dataLog.GetCount() == 0);  // String duration ignored
+  agents.push_back(std::make_shared<SwarmingAgent<TrafficData>>(driving, 0));
+  agents.push_back(std::make_shared<SwarmingAgent<TrafficData>>(waiting, 1));
 
-    dataLog.AddEntry(entryWithNumericDuration);
-    REQUIRE(dataLog.GetCount() == 1);  // Only numeric duration counted
-}
+  DataLog<TrafficData> datalog(WorldType::Traffic);
+  datalog.AggregateData(agents);
 
-TEST_CASE("DataLog calculates median correctly with even number of entries",
-"[DataLog]") { cse498::DataLog dataLog;
+  auto const& data = datalog.GetAggregationData();
 
-    // Add 4 entries: [1.0, 2.0, 3.0, 4.0]
-    // Median should be average of middle two: (2.0 + 3.0) / 2.0 = 2.5
-    dataLog.AddEntry({{"duration", 1.0}});
-    dataLog.AddEntry({{"duration", 4.0}});
-    dataLog.AddEntry({{"duration", 2.0}});
-    dataLog.AddEntry({{"duration", 3.0}});
+  REQUIRE(data.at("waiting_count").size() == 1);
+  REQUIRE(data.at("driving_count").size() == 1);
+  REQUIRE(data.at("active_count").size() == 1);
+  REQUIRE(data.at("distance_driven").size() == 1);
+  REQUIRE(data.at("time_to_arrive").size() == 1);
 
-    REQUIRE(dataLog.GetCount() == 4);
-    REQUIRE(dataLog.GetMedian().has_value());
-    REQUIRE(dataLog.GetMedian().value() == 2.5);
-}
-
-TEST_CASE("DataLog handles zero duration", "[DataLog]") {
-    cse498::DataLog dataLog;
-
-    nlohmann::json zeroEntry = {
-        {"agentId", "agent_1"},
-        {"actionType", "instant"},
-        {"duration", 0.0},
-        {"summary", "Instant action"}
-    };
-
-    nlohmann::json normalEntry = {
-        {"agentId", "agent_2"},
-        {"actionType", "move"},
-        {"duration", 5.0},
-        {"summary", "Normal action"}
-    };
-
-    dataLog.AddEntry(zeroEntry);
-    dataLog.AddEntry(normalEntry);
-
-    REQUIRE(dataLog.GetCount() == 2);
-    REQUIRE(dataLog.GetMin().has_value());
-    REQUIRE(dataLog.GetMin().value() == 0.0);  // Zero is a valid minimum
-    REQUIRE(dataLog.GetMax().has_value());
-    REQUIRE(dataLog.GetMax().value() == 5.0);
-}
-
-TEST_CASE("DataLog ignores negative duration", "[DataLog]") {
-    cse498::DataLog dataLog;
-
-    nlohmann::json negativeEntry = {
-        {"agentId", "agent_1"},
-        {"actionType", "rewind"},
-        {"duration", -2.0},
-        {"summary", "Negative duration"}
-    };
-
-    nlohmann::json positiveEntry = {
-        {"agentId", "agent_2"},
-        {"actionType", "move"},
-        {"duration", 3.0},
-        {"summary", "Positive duration"}
-    };
-
-    dataLog.AddEntry(negativeEntry);
-    REQUIRE(dataLog.GetCount() == 0);  // Negative duration ignored
-    REQUIRE(dataLog.GetEntries().size() == 1);  // Entry still stored in log
-
-    dataLog.AddEntry(positiveEntry);
-    REQUIRE(dataLog.GetCount() == 1);  // Only positive duration counted
-    REQUIRE(dataLog.GetMin().has_value());
-    REQUIRE(dataLog.GetMin().value() == 3.0);
-    REQUIRE(dataLog.GetMax().has_value());
-    REQUIRE(dataLog.GetMax().value() == 3.0);
-}
-
-*/
+  CHECK(data.at("waiting_count").back().sum == 1.0);
+  CHECK(data.at("driving_count").back().sum == 1.0);
+  CHECK(data.at("active_count").back().sum == 1.0);
+  CHECK(data.at("distance_driven").back().sum == 0.0);
+  CHECK(data.at("time_to_arrive").back().sum == 3.0);
+}*/

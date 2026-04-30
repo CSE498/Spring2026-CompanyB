@@ -22,9 +22,9 @@ class StartScreen : public QWidget {
   Q_OBJECT
 
  public:
-  explicit StartScreen(const std::vector<QString> &imagePaths, int tileSize,
-                       const QString &agentImagePath,
-                       QWidget *parent = nullptr);
+  explicit StartScreen(const std::vector<QString>& imagePaths, int tileSize,
+                       const QString& agentImagePath,
+                       QWidget* parent = nullptr);
 
  private slots:
   void onTrafficClicked();
@@ -39,9 +39,9 @@ class StartScreen : public QWidget {
   std::unique_ptr<InfectiousWorld> mDiseaseWorld{};
   std::unique_ptr<StepTrafficWorld<SwarmingAgent<TrafficData>>> mTrafficWorld{};
 
-  QPushButton *mTrafficBtn{};
-  QPushButton *mVirusBtn{};
-  QPushButton *mGearBtn{};
+  QPushButton* mTrafficBtn{};
+  QPushButton* mVirusBtn{};
+  QPushButton* mGearBtn{};
 };
 
 }  // namespace cse498

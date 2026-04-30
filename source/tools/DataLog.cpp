@@ -143,6 +143,10 @@ DataLog<DataClass>::GetAggregationData() const {
   return time_series;
 }
 
+// Explicit template instantiations for DiseaseData and TrafficData
+// template class DataLog<DiseaseData>;
+// template class DataLog<TrafficData>;
+
 }  // namespace cse498
 
 template class cse498::DataLog<cse498::TrafficData>;

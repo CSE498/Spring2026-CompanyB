@@ -70,9 +70,9 @@ inline std::string_view TypeToName() {
  * variant.
  * @param t Type to retrieve the agentlang keyword representation of.
  */
-inline std::string_view TypeVariantToName(const Type &t) {
+inline std::string_view TypeVariantToName(const Type& t) {
   return std::visit(
-      [](auto &&v) { return TypeToName<std::decay_t<decltype(v)>>(); }, t);
+      [](auto&& v) { return TypeToName<std::decay_t<decltype(v)>>(); }, t);
 }
 
 /** @brief Retrieve a default-constructed instance of the `Type` object
@@ -80,7 +80,7 @@ inline std::string_view TypeVariantToName(const Type &t) {
  * `Optional`.
  * @param type_tok The token containing the desired type.
  */
-inline std::optional<Type> NameToType(const emplex::Token &type_tok) {
+inline std::optional<Type> NameToType(const emplex::Token& type_tok) {
   static const std::unordered_map<std::string, Type> type_map = {
       {"bool", bool{}}, {"int", int{}},         {"double", double{}},
       {"str", str{}},   {"point", PointTy{}},   {"direction", Dir{}},
@@ -127,7 +127,7 @@ struct OpInfo {
    *   @param token The token containing the desired operator.
    */
   static std::expected<OpInfo, InterpErr> FromBinary(
-      AgentLexer::Token const &token) {
+      AgentLexer::Token const& token) {
     using AgentLexer::IDs;
     // Use fallthrough to evaluate as logical-or
     switch (token.id) {
@@ -161,7 +161,7 @@ struct OpInfo {
    *   @param token The token containing the desired operator.
    */
   static std::expected<OpInfo, InterpErr> FromUnary(
-      AgentLexer::Token const &token) {
+      AgentLexer::Token const& token) {
     using AgentLexer::IDs;
     // Use fallthrough to evaluate as logical-or
     switch (token.id) {
@@ -185,7 +185,7 @@ struct OpInfo {
    *   either unary or binary.
    *   @param token The token to check.
    */
-  static bool IsOpToken(AgentLexer::Token const &token) {
+  static bool IsOpToken(AgentLexer::Token const& token) {
     return ((token.id <= MAX_OP) && (token.id >= MIN_OP));
   }
 };
@@ -219,19 +219,19 @@ struct FuncSym {
   std::vector<std::shared_ptr<SymInfo>> m_Params;
   size_t m_BodyIdx;
   std::optional<
-      std::function<std::expected<Type, InterpErr>(std::vector<Type> &&)>>
+      std::function<std::expected<Type, InterpErr>(std::vector<Type>&&)>>
       m_PreloadFunc = {};
 
   FuncSym() : m_Params({}) {}
   FuncSym(std::vector<std::shared_ptr<SymInfo>> params)
       : m_Params(std::move(params)) {};
-  FuncSym(std::vector<std::shared_ptr<SymInfo>> &&params, size_t idx)
+  FuncSym(std::vector<std::shared_ptr<SymInfo>>&& params, size_t idx)
       : m_Params(std::move(params)), m_BodyIdx(idx) {};
 
   template <typename Func>
     requires std::is_convertible_v<Func,
                                    std::function<std::expected<Type, InterpErr>(
-                                       std::vector<Type> &&)>>
+                                       std::vector<Type>&&)>>
   FuncSym(Func f) : m_Params({}), m_BodyIdx(0), m_PreloadFunc(f) {}
 };
 
@@ -351,11 +351,11 @@ struct SymInfo {
   bool mut = true;
 
   template <typename T>
-  SymInfo(std::string _name, size_t _line_def, T &&_sym)
+  SymInfo(std::string _name, size_t _line_def, T&& _sym)
       : name(_name), line_def(_line_def), sym(std::forward<T>(_sym)) {}
 
   template <typename T>
-  SymInfo(std::string _name, size_t _line_def, T &&_sym, bool _mut)
+  SymInfo(std::string _name, size_t _line_def, T&& _sym, bool _mut)
       : name(_name),
         line_def(_line_def),
         sym(std::forward<T>(_sym)),

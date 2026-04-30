@@ -104,7 +104,7 @@ TEST_CASE("WebTextbox: The Naughty String List", "[edge_case]") {
                                               std::string("\0", 1),
                                               "USER\0NAME"};
 
-  for (const auto &nasty : naughty_strings) {
+  for (const auto& nasty : naughty_strings) {
     REQUIRE_NOTHROW(box.SetText(nasty));
     REQUIRE(box.GetText().value() == nasty);
 
@@ -173,7 +173,7 @@ TEST_CASE("WebTextbox: Templates and Lambdas", "[webui]") {
   REQUIRE(box.GetText().value() == "404");
 
   // Testing the Lambda (Appending "Error" using a lambda transformation)
-  auto add_error_label = [](const std::string &str) { return str + " Error"; };
+  auto add_error_label = [](const std::string& str) { return str + " Error"; };
 
   box.TransformText(add_error_label);
   REQUIRE(box.GetText().value() == "404 Error");

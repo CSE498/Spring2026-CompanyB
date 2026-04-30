@@ -54,7 +54,7 @@ class DrivingAgent : public AgentBase {
   WeightedSet<int> move_options{};
 
  public:
-  DrivingAgent(size_t id, const std::string &name, const WorldBase &world)
+  DrivingAgent(size_t id, const std::string& name, const WorldBase& world)
       : AgentBase(id, name, world) {
     SetDirection(Direction::East);
     road_cell_id = world.GetGrid().GetCellTypeID("road");
@@ -68,7 +68,7 @@ class DrivingAgent : public AgentBase {
   ~DrivingAgent() = default;
 
   /// @brief Set the agent's initial facing direction.
-  DrivingAgent &SetDirection(Direction dir) {
+  DrivingAgent& SetDirection(Direction dir) {
     grid_pos.SetDirection(dir);
     SetSymbol(direction_symbols.at(grid_pos.GetDirection()));
     return *this;
@@ -86,14 +86,14 @@ class DrivingAgent : public AgentBase {
 
   /// @brief Set the agent's initial grid position (col, row) and optional
   /// direction.
-  DrivingAgent &SetGridPosition(size_t col, size_t row,
+  DrivingAgent& SetGridPosition(size_t col, size_t row,
                                 Direction dir = Direction::North) {
     grid_pos = StateGridPosition(col, row, dir);
     SetSymbol(direction_symbols.at(grid_pos.GetDirection()));
     return *this;
   }
 
-  DrivingAgent &SetGridDestination(size_t col, size_t row) {
+  DrivingAgent& SetGridDestination(size_t col, size_t row) {
     destination_pos = StateGridPosition(col, row);
     return *this;
   }
@@ -115,7 +115,7 @@ class DrivingAgent : public AgentBase {
   ///
   /// Strategy: try to move forward (in the current facing direction).
   /// If the last forward move failed, turn left and try again.
-  size_t SelectAction(const WorldGrid &grid) override {
+  size_t SelectAction(const WorldGrid& grid) override {
     grid_pos.SetLocation(GetLocation().AsWorldPosition());
 
     // Stay put when the world signals that we were blocked last turn, e.g. by a
@@ -162,14 +162,14 @@ class DrivingAgent : public AgentBase {
     grid_pos.TurnRight();
     SetSymbol(direction_symbols.at(grid_pos.GetDirection()));
   }
-  DrivingAgent &SetColour(const std::string &c) {
+  DrivingAgent& SetColour(const std::string& c) {
     colour = c;
     return *this;
   }
-  [[nodiscard]] const std::string &GetColour() const { return colour; }
+  [[nodiscard]] const std::string& GetColour() const { return colour; }
 
   // In DrivingAgent, public section:
-  [[nodiscard]] const StateGridPosition &GetDestination() const {
+  [[nodiscard]] const StateGridPosition& GetDestination() const {
     return destination_pos;
   }
 
