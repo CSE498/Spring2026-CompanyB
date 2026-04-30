@@ -69,6 +69,7 @@ jobs:
         uses: jurplel/install-qt-action@v4
         with:
           version: "6.*"
+          modules: "qtcharts"
           cache: true
           install-deps: true
 
