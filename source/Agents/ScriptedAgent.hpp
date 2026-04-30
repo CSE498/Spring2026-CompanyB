@@ -97,7 +97,7 @@ class ScriptedAgent : public StepAgentBase<DataClass> {
 
   ~ScriptedAgent() = default;
 
-  ScriptedAgent &SetInit(std::unique_ptr<Node> init) {
+  ScriptedAgent& SetInit(std::unique_ptr<Node> init) {
     if (!init) {
       std::println(
           "Fatal error: Attempted to set a null init for a scripted agent");
@@ -119,7 +119,7 @@ class ScriptedAgent : public StepAgentBase<DataClass> {
     return *this;
   }
 
-  ScriptedAgent &SetTurn(std::unique_ptr<Node> turn) {
+  ScriptedAgent& SetTurn(std::unique_ptr<Node> turn) {
     if (!turn) {
       std::println(
           "Fatal error: Attempted to set a null turn for a scripted agent");
