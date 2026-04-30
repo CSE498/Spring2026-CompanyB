@@ -25,8 +25,8 @@ using namespace cse498;
 
 int main() {
   TrafficData test_data{
-      cse498::WorldPosition{7, 5}, // destination (open floor, reachable)
-      cse498::WorldPosition{3, 1}, // position    (open floor)
+      cse498::WorldPosition{7, 5},  // destination (open floor, reachable)
+      cse498::WorldPosition{3, 1},  // position    (open floor)
       cse498::Direction::North, true};
 
   MazeWorld world;

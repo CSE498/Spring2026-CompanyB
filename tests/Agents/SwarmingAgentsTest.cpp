@@ -187,7 +187,7 @@ TEST_CASE("Traffic agent heading left emits InfoStep for Left neighbor",
 TEST_CASE("Traffic agent heading up emits InfoStep for Up neighbor",
           "[SwarmingAgent]") {
   WorldPosition pos{5, 5};
-  WorldPosition dest{5, 2}; // Up means decreasing Y
+  WorldPosition dest{5, 2};  // Up means decreasing Y
   auto data = MakeTrafficData(pos, dest);
   SwarmingAgent<TrafficData> agent(data, 0);
 
@@ -201,7 +201,7 @@ TEST_CASE("Traffic agent heading up emits InfoStep for Up neighbor",
 TEST_CASE("Traffic agent heading down emits InfoStep for Down neighbor",
           "[SwarmingAgent]") {
   WorldPosition pos{5, 5};
-  WorldPosition dest{5, 8}; // Down means increasing Y
+  WorldPosition dest{5, 8};  // Down means increasing Y
   auto data = MakeTrafficData(pos, dest);
   SwarmingAgent<TrafficData> agent(data, 0);
 

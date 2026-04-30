@@ -108,7 +108,8 @@ TEST_CASE("Parser reuse: success after failure produces clean state",
           "[parser][reuse]") {
   Parser p;
 
-  std::istringstream ss_bad("world traffic;\nlet a : int = 1;\nlet a : int = 2;");
+  std::istringstream ss_bad(
+      "world traffic;\nlet a : int = 1;\nlet a : int = 2;");
   auto bad = p.parse(ss_bad);
   REQUIRE_FALSE(bad.has_value());
 
