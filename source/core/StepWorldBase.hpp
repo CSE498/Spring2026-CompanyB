@@ -8,7 +8,7 @@
 #include <thread>
 #include <vector>
 
-#include "Agents/ScriptedAgent.hpp"
+#include "../Agents/ScriptedAgent.hpp"
 #include "Interpreter/Parser.hpp"
 #include "Step.hpp"
 #include "StepAgentBase.hpp"
@@ -126,6 +126,12 @@ class StepWorldBase {
       RunAgents();
       UpdateWorld();
     }
+  }
+
+  /// @brief Remove all agents and reset the ID counter.
+  void ClearAgents() {
+    agent_set.clear();
+    next_id = 0;
   }
 };
 
