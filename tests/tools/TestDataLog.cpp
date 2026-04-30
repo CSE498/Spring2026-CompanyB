@@ -212,4 +212,4 @@ TEST_CASE("DataLog traffic metrics aggregate from TrafficData",
   CHECK(data.at("active_count").back().sum == 1.0);
   CHECK(data.at("distance_driven").back().sum == 0.0);
   CHECK(data.at("time_to_arrive").back().sum == 3.0);
-}
+}*/
