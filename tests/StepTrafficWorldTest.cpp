@@ -216,6 +216,20 @@ TEST_CASE("DoAction", "[StepTrafficWorld][do_action]") {
     a->SetNextMove(WorldPosition{1, 1});  // west while facing east
     CHECK(tw.DoAction(a).position == WorldPosition{2, 1});
   }
+  SECTION("U-turn (backward move) allowed at dead end") {
+    static const std::vector<std::string> kDeadEnd = {
+        "###",
+        "#.#",  // (1,1) is road
+        "#.#",  // (1,2) is road
+        "###",  // (1,3) is grass
+    };
+    // (1,2) has grass at (0,2), (2,2), (1,3). Road at (1,1).
+    TestWorld tw{kDeadEnd};
+    auto a = std::make_shared<ScriptedTestAgent>(
+        Make(WorldPosition{1, 2}, {}, Direction::South), 0);
+    a->SetNextMove(WorldPosition{1, 1});  // North, which is backward
+    CHECK(tw.DoAction(a).position == WorldPosition{1, 1});
+  }
   SECTION("diagonal move rejected") {
     TestWorld tw{kMinimal};
     auto a = std::make_shared<ScriptedTestAgent>(
@@ -287,6 +301,12 @@ TEST_CASE("CanCollideWithAgentAt", "[StepTrafficWorld][collision]") {
     tw.AddAgent<StillAgent>(Make(WorldPosition{3, 1}, {}, Direction::East));
     CHECK(tw.CanCollideWithAgentAt(Direction::East, WorldPosition{3, 1}));
   }
+  SECTION("opposite-direction active agent ahead: no collision") {
+    // Opposite-facing agents may share a tile to represent two-way traffic.
+    TestWorld tw{kLine};
+    tw.AddAgent<StillAgent>(Make(WorldPosition{3, 1}, {}, Direction::West));
+    CHECK_FALSE(tw.CanCollideWithAgentAt(Direction::East, WorldPosition{3, 1}));
+  }
   SECTION("inactive agent at target: no collision") {
     // Inactive agents are treated as absent for collision purposes.
     TestWorld tw{kLine};
@@ -299,6 +319,19 @@ TEST_CASE("CanCollideWithAgentAt", "[StepTrafficWorld][collision]") {
 // traffic_light_period == 3.  Initial phase: ALLOW_VERTICAL, so '|' blocks east
 // moves
 TEST_CASE("UpdateWorld — traffic lights", "[StepTrafficWorld][update]") {
+  SECTION("ScanGrid picks up horizontal lights too") {
+    static const std::vector<std::string> kHorizOnly = {
+        "###",
+        "#-D",
+        "###",
+    };
+    TestWorld tw{kHorizOnly};
+    CHECK(tw.VerticalBlockedAt(WorldPosition{1, 1}));
+    for (int i = 0; i < 3; ++i) tw.UpdateWorld();
+    // After flip, it should be ALLOW_HORIZONTAL
+    CHECK_FALSE(tw.VerticalBlockedAt(WorldPosition{1, 1}));
+    CHECK(tw.HorizontalBlockedAt(WorldPosition{1, 1}));
+  }
   SECTION("period-1 ticks: light unchanged, east move still blocked") {
     TestWorld tw{kMinimal};
     for (int i = 0; i < 2; ++i) tw.UpdateWorld();
@@ -332,11 +365,37 @@ TEST_CASE("UpdateWorld — spawners", "[StepTrafficWorld][update]") {
       for (int i = 0; i < 60; ++i) tw.UpdateWorld();
     }());
   }
-  SECTION("max_spawned_agents cap (== 3) respected over many ticks") {
+  SECTION("fast spawner waits 9 ticks and spawns on tick 10") {
+    TestWorld tw{std::vector<std::string>{"#####", "#F.D#", "#####"}};
+    for (int i = 0; i < 9; ++i) tw.UpdateWorld();
+    CHECK(tw.GetNumSpawnedAgents() == 0);
+    tw.UpdateWorld();
+    CHECK(tw.GetNumSpawnedAgents() == 1);
+  }
+  SECTION("normal spawner waits 19 ticks and spawns on tick 20") {
+    TestWorld tw{std::vector<std::string>{"#####", "#N.D#", "#####"}};
+    for (int i = 0; i < 19; ++i) tw.UpdateWorld();
+    CHECK(tw.GetNumSpawnedAgents() == 0);
+    tw.UpdateWorld();
+    CHECK(tw.GetNumSpawnedAgents() == 1);
+  }
+  SECTION("slow spawner waits 29 ticks and spawns on tick 30") {
+    TestWorld tw{std::vector<std::string>{"#####", "#S.D#", "#####"}};
+    for (int i = 0; i < 29; ++i) tw.UpdateWorld();
+    CHECK(tw.GetNumSpawnedAgents() == 0);
+    tw.UpdateWorld();
+    CHECK(tw.GetNumSpawnedAgents() == 1);
+  }
+  SECTION("spawner actually spawns an agent") {
+    TestWorld tw{kMinimal};  // S is at (1,1)
+    CHECK(tw.GetNumSpawnedAgents() == 0);
+    for (int i = 0; i < 30; ++i) tw.UpdateWorld();
+    CHECK(tw.GetNumSpawnedAgents() == 1);
+  }
+  SECTION("max_spawned_agents cap (== 50) respected over many ticks") {
     TestWorld tw{kMulti};
-    for (int i = 0; i < 400; ++i) tw.UpdateWorld();
-    // We can only verify this doesn't crash since agent internals are private
-    CHECK_NOTHROW((void)0);
+    for (int i = 0; i < 1000; ++i) tw.UpdateWorld();
+    CHECK(tw.GetNumSpawnedAgents() <= 50);
   }
 }
 
@@ -360,11 +419,46 @@ TEST_CASE("RunAgents", "[StepTrafficWorld][run_agents]") {
     tw.RunAgents();
     CHECK(a.GetState().position == WorldPosition{3, 1});
   }
+  SECTION("traffic data log records active and driving agents") {
+    TestWorld tw{kMinimal};
+    auto& a = tw.AddAgent<ScriptedTestAgent>(
+        Make(WorldPosition{2, 1}, WorldPosition{7, 1}, Direction::East));
+
+    tw.UpdateWorld();
+    static_cast<ScriptedTestAgent&>(a).SetNextMove(WorldPosition{3, 1});
+    tw.RunAgents();
+    tw.UpdateWorld();
+
+    const auto& series = tw.GetTrafficDataLog().GetAggregationData();
+    REQUIRE(series.at("active_count").size() == 2);
+    CHECK(series.at("active_count").back().mean == 1.0);
+    CHECK(series.at("driving_count").back().mean == 1.0);
+    CHECK(series.at("distance_driven").back().max == 1.0);
+  }
 }
 
 TEST_CASE("Edge cases", "[StepTrafficWorld][edge]") {
   SECTION("SetFrameDelay is chainable and does not crash") {
     TestWorld tw{kMinimal};
     CHECK_NOTHROW(tw.SetFrameDelay(std::chrono::milliseconds{0}));
+  }
+  SECTION("ClearAgents removes agents and resets spawn clocks") {
+    TestWorld tw{std::vector<std::string>{"#####", "#F.D#", "#####"}};
+
+    for (int i = 0; i < 10; ++i) tw.UpdateWorld();
+    REQUIRE(tw.GetNumAgents() == 1);
+    REQUIRE(tw.GetNumSpawnedAgents() == 1);
+
+    tw.ClearAgents();
+    CHECK(tw.GetNumAgents() == 0);
+    CHECK(tw.GetNumSpawnedAgents() == 0);
+
+    for (int i = 0; i < 9; ++i) tw.UpdateWorld();
+    CHECK(tw.GetNumAgents() == 0);
+    CHECK(tw.GetNumSpawnedAgents() == 0);
+
+    tw.UpdateWorld();
+    CHECK(tw.GetNumAgents() == 1);
+    CHECK(tw.GetNumSpawnedAgents() == 1);
   }
 }

@@ -6,12 +6,35 @@
 #include <memory>
 #include <numeric>
 #include <string>
+#include <type_traits>
+#include <unordered_set>
 #include <vector>
 
 #include "../core/AgentData.hpp"
-#include "nlohmann/json.hpp"
 
 namespace cse498 {
+
+namespace {
+
+void AddSample(std::unordered_map<std::string, std::vector<double>>& samples,
+               const std::string& field, double value) {
+  if (auto it = samples.find(field); it != samples.end()) {
+    it->second.push_back(value);
+  }
+}
+
+void AddSamples(std::unordered_map<std::string, std::vector<double>>& samples,
+                const std::string& field, std::vector<double> values) {
+  if (auto it = samples.find(field); it != samples.end()) {
+    it->second = std::move(values);
+  }
+}
+
+double Distance(const WorldPosition& a, const WorldPosition& b) {
+  return std::hypot(a.X() - b.X(), a.Y() - b.Y());
+}
+
+}  // namespace
 
 template <typename DataClass>
 void DataLog<DataClass>::AggregateData(
@@ -22,48 +45,65 @@ void DataLog<DataClass>::AggregateData(
     samples[fieldName] = {};
   }
 
-  for (const auto& agent : agents) {
-    nlohmann::json state = nlohmann::json::object();
+  if constexpr (std::is_same_v<DataClass, TrafficData>) {
+    double active_count = 0.0;
+    double driving_count = 0.0;
+    double waiting_count = 0.0;
+    std::vector<double> distance_samples;
+    std::vector<double> arrival_samples;
+    std::unordered_set<size_t> seen_agent_ids;
 
-    if constexpr (std::is_same_v<DataClass, DiseaseData>) {
-      auto st = agent->GetState();
-      const bool infected = st.health == HealthState::INFECTED;
-      const bool susceptible = st.health == HealthState::SUSCEPTIBLE;
-      const bool recovered = st.health == HealthState::RECOVERED;
+    for (const auto& agent : agents) {
+      const size_t id = agent->GetId();
+      const TrafficData state = agent->GetState();
+      seen_agent_ids.insert(id);
 
-      state = {
-          {"infection_count", infected ? 1.0 : 0.0},
-          {"susceptible_count", susceptible ? 1.0 : 0.0},
-          {"cured_count", recovered ? 1.0 : 0.0},
-          {"infection_probability", infected ? 1.0 : 0.0},
-      };
-    } else if constexpr (std::is_same_v<DataClass, TrafficData>) {
-      auto st = agent->GetState();
-      double eta = 0.0;
-      const bool driving = st.is_active && st.destination.has_value();
-      if (st.destination.has_value()) {
-        const auto& d = st.destination.value();
-        eta = std::abs(static_cast<double>(d.X() - st.position.X())) +
-              std::abs(static_cast<double>(d.Y() - st.position.Y()));
+      const auto previous_it = previous_positions.find(id);
+      const bool has_previous = previous_it != previous_positions.end();
+      const bool moved = has_previous && previous_it->second != state.position;
+
+      if (has_previous && moved) {
+        cumulative_distance[id] +=
+            Distance(previous_it->second, state.position);
+      } else {
+        cumulative_distance.try_emplace(id, 0.0);
       }
 
-      state = {
-          {"waiting_count", st.is_active ? 0.0 : 1.0},
-          {"driving_count", driving ? 1.0 : 0.0},
-          {"active_count", st.is_active ? 1.0 : 0.0},
-          {"distance_driven", 0.0},
-          {"time_to_arrive", eta},
-      };
+      if (state.is_active) {
+        ++active_count;
+        ++active_ticks[id];
+        if (moved) {
+          ++driving_count;
+        } else if (has_previous) {
+          ++waiting_count;
+        }
+      } else if (has_previous && state.destination.has_value() &&
+                 state.position == *state.destination &&
+                 !completed_agents.contains(id)) {
+        arrival_samples.push_back(
+            static_cast<double>(active_ticks.try_emplace(id, 0).first->second));
+        completed_agents.insert(id);
+      }
+
+      distance_samples.push_back(cumulative_distance[id]);
+      previous_positions[id] = state.position;
     }
 
-    for (auto it = state.begin(); it != state.end(); ++it) {
-      std::string fieldKey = it.key();
-      if (samples.contains(fieldKey)) {
-        if (it.value().is_number()) {
-          samples[fieldKey].push_back(it.value().get<double>());
-        } else if (it.value().is_boolean()) {
-          samples[fieldKey].push_back(it.value().get<bool>() ? 1.0 : 0.0);
-        }
+    AddSample(samples, "active_count", active_count);
+    AddSample(samples, "driving_count", driving_count);
+    AddSample(samples, "waiting_count", waiting_count);
+    AddSamples(samples, "distance_driven", std::move(distance_samples));
+    AddSamples(samples, "time_to_arrive", std::move(arrival_samples));
+
+    for (auto it = previous_positions.begin();
+         it != previous_positions.end();) {
+      if (seen_agent_ids.contains(it->first)) {
+        ++it;
+      } else {
+        cumulative_distance.erase(it->first);
+        active_ticks.erase(it->first);
+        completed_agents.erase(it->first);
+        it = previous_positions.erase(it);
       }
     }
   }
@@ -104,7 +144,10 @@ DataLog<DataClass>::GetAggregationData() const {
 }
 
 // Explicit template instantiations for DiseaseData and TrafficData
-template class DataLog<DiseaseData>;
-template class DataLog<TrafficData>;
+// template class DataLog<DiseaseData>;
+// template class DataLog<TrafficData>;
 
 }  // namespace cse498
+
+template class cse498::DataLog<cse498::TrafficData>;
+template class cse498::DataLog<cse498::DiseaseData>;
