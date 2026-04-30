@@ -289,23 +289,23 @@ TEST_CASE("DiseaseAgent RECOVERED moves to cardinal neighbor",
 // Anti-looping / recent-history behavior
 
 TEST_CASE(
-    "Traffic agent avoids recently visited positions when fresh neighbors "
-    "exist",
+    "Traffic agent with no destination avoids immediate repeat when fresh "
+    "neighbors exist",
     "[SwarmingAgent]") {
-  // Agent with no destination wanders randomly but avoids recent positions.
-  // Over many turns from a fixed position, it should visit more than one
-  // distinct neighbor (demonstrating it doesn't just repeat one cell).
   WorldPosition pos{5, 5};
   auto data = MakeTrafficData(pos, std::nullopt);
   SwarmingAgent<TrafficData> agent(data, 0);
 
-  std::set<std::pair<double, double>> visited;
-  for (int i = 0; i < 30; ++i) {
-    auto turn = agent.GetTurn();
-    MovementStep ms = NextMovement(turn);
-    visited.insert({ms.loc.X(), ms.loc.Y()});
-  }
+  auto first_turn = agent.GetTurn();
+  MovementStep first = NextMovement(first_turn);
 
-  // With anti-looping, the agent should visit more than 1 distinct neighbor
-  REQUIRE(visited.size() > 1);
+  auto second_turn = agent.GetTurn();
+  MovementStep second = NextMovement(second_turn);
+
+  REQUIRE(IsCardinalNeighbor(pos, first.loc));
+  REQUIRE(IsCardinalNeighbor(pos, second.loc));
+
+  // Since there are four possible neighbors and only one is recent,
+  // the next random move should avoid repeating the same neighbor.
+  REQUIRE(second.loc != first.loc);
 }

@@ -17,20 +17,19 @@
 
 namespace cse498 {
 
+struct TrafficWorldErr {
+  std::string message = "";
+};
+
 template <typename SpawnedAgent>
 class StepTrafficWorld : public StepWorldBase<TrafficData> {
   using Agent = StepAgentBase<TrafficData>;
   using AgentPtr = std::shared_ptr<Agent>;
   // May want to change this later with e.g an enum of error codes, but since it
   // isn't being used too heavily this is probably fine for now
-  struct WorldErr {
-    std::string message = "";
-  };
 
   struct StepVisitor {
-    // We do want to represent failure, but don't need to represent
-    // any output, so we'll define & alias our return as such:
-    using VisitRet = std::expected<void, WorldErr>;
+    using VisitRet = std::expected<void, TrafficWorldErr>;
 
     StepAgentBase<TrafficData>& agent;
     StepContainer& container;
@@ -42,7 +41,7 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
     typename StepVisitor::VisitRet operator()(steps::MovementStep step) {
       auto can_move = world.CanMakeMoveAt(agent, step.loc);
       if (!can_move.has_value()) {
-        return std::unexpected<WorldErr>(can_move.error());
+        return std::unexpected<TrafficWorldErr>(can_move.error());
       }
       if (!can_move.value()) return {};
 
@@ -180,7 +179,7 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
   inline static const std::string normal_spawn_colour = "\033[36m";
   /// @brief Dim Cyan for the slow spawner
   inline static const std::string slow_spawn_colour = "\033[2;36m";
-  /// @brief Bright white for bus agents
+  /// @brief Pink for bus agents
   inline static const std::string bus_colour = "\033[95m";
 
   /// @brief The number of currently-active agents that have been spawned by
@@ -311,7 +310,7 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
   /// @param pos Agent's current position
   /// @param new_pos Position the agent is attempting to move to
   /// @return Direction from pos to new_pos if move is valid, error otherwise
-  [[nodiscard]] std::expected<Direction, WorldErr> GetNewDirection(
+  [[nodiscard]] std::expected<Direction, TrafficWorldErr> GetNewDirection(
       WorldPosition pos, WorldPosition new_pos) const {
     double old_x = pos.X();
     double old_y = pos.Y();
@@ -326,7 +325,7 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
       } else if (new_y == old_y + 1) {
         new_dir = Direction::South;
       } else {
-        return std::unexpected<WorldErr>("invalid move");
+        return std::unexpected<TrafficWorldErr>("invalid move");
       }
     } else if (new_y == old_y) {
       if (old_x > 0 && new_x + 1 == old_x) {
@@ -334,10 +333,10 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
       } else if (new_x == old_x + 1) {
         new_dir = Direction::East;
       } else {
-        return std::unexpected<WorldErr>("invalid move");
+        return std::unexpected<TrafficWorldErr>("invalid move");
       }
     } else {
-      return std::unexpected<WorldErr>("invalid move");
+      return std::unexpected<TrafficWorldErr>("invalid move");
     }
     return new_dir;
   }
@@ -367,17 +366,17 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
   /// directions, make turns at intersections as long as the street they're
   /// trying to turn onto only has cars in the opposite-direction lane, and so
   /// on.)
-  [[nodiscard]] std::expected<bool, WorldErr> CanMakeMoveAt(
+  [[nodiscard]] std::expected<bool, TrafficWorldErr> CanMakeMoveAt(
       const Agent& agent, const WorldPosition& new_pos) const {
     if (!IsValid(new_pos) || IsGrass(new_pos)) {
       return false;
     }
 
     WorldPosition pos = agent.GetState().position;
-    std::expected<Direction, WorldErr> new_dir_ret =
+    std::expected<Direction, TrafficWorldErr> new_dir_ret =
         GetNewDirection(pos, new_pos);
     if (!new_dir_ret.has_value()) {
-      return std::unexpected<WorldErr>(new_dir_ret.error());
+      return std::unexpected<TrafficWorldErr>(new_dir_ret.error());
     }
     Direction new_dir = new_dir_ret.value();
 
@@ -532,8 +531,12 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
           if (!despawned_agent_ids.empty()) {
             RecycleDespawnedAgent(pos, dest_pos);
           } else {
-            TrafficData state = {dest_pos, pos, Direction::East,
-                                 true,     '>', GetDestinationColour(dest_pos)};
+            TrafficData state = {dest_pos,
+                                 pos,
+                                 Direction::East,
+                                 true,
+                                 DirectionSymbol(Direction::East),
+                                 GetDestinationColour(dest_pos)};
             AddAgent<SpawnedAgent>(state);
           }
           ++num_spawned_agents;
@@ -566,19 +569,17 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
   void RecycleDespawnedAgent(const WorldPosition& spawner_pos,
                              const WorldPosition& dest_pos) {
     assert(!despawned_agent_ids.empty());
+
     size_t reuse_id = despawned_agent_ids.front();
     despawned_agent_ids.pop();
     auto driver = agent_set.at(reuse_id);
-    // Note for future use. Currently a non-DrivingAgent id should never make it
-    // into despawned_agent_ids since those are the only agents that support
-    // spawning, despawning, and destinations. In the future, with multiple
-    // agent types, we'll find a way to relax this.
+
     TrafficData state = driver->GetState();
     state.position = spawner_pos;
     state.destination = dest_pos;
     state.direction = Direction::East;
     state.is_active = true;
-    state.symbol = '>';
+    state.symbol = DirectionSymbol(state.direction);
     state.colour = GetDestinationColour(dest_pos);
     driver->SetState(state);
   }
@@ -588,8 +589,8 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
     SetupScriptedAgents(GetAgentFileContents("buses.al"));
     for (AgentPtr& ptr : agent_set) {
       auto state = ptr->GetState();
-      state.symbol = '>';
-      state.colour = "\033[95m";
+      state.symbol = DirectionSymbol(state.direction);
+      state.colour = bus_colour;
       state.is_active = true;
       ptr->SetState(state);
     }
@@ -714,6 +715,27 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
   StepTrafficWorld& SetFrameDelay(std::chrono::milliseconds delay) {
     frame_delay = delay;
     return *this;
+  }
+
+  /// Needed for gui
+  [[nodiscard]] const WorldGrid& GetGrid() const { return main_grid; }
+  [[nodiscard]] size_t GetNumAgents() const { return agent_set.size(); }
+  [[nodiscard]] TrafficData GetAgentState(size_t i) const {
+    return agent_set[i]->GetState();
+  }
+
+  /**
+   * @brief Remove all agents and reset spawn/despawn tracking state.
+   * added for gui
+   */
+  void ClearAgents() {
+    agent_set.clear();
+    num_spawned_agents = 0;
+    while (!despawned_agent_ids.empty()) despawned_agent_ids.pop();
+    fast_spawn_clock = 0;
+    normal_spawn_clock = 0;
+    slow_spawn_clock = 0;
+    traffic_light_clock = 0;
   }
 
   /// Run the simulation with terminal display.

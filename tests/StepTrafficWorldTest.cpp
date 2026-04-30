@@ -301,6 +301,12 @@ TEST_CASE("CanCollideWithAgentAt", "[StepTrafficWorld][collision]") {
     tw.AddAgent<StillAgent>(Make(WorldPosition{3, 1}, {}, Direction::East));
     CHECK(tw.CanCollideWithAgentAt(Direction::East, WorldPosition{3, 1}));
   }
+  SECTION("opposite-direction active agent ahead: no collision") {
+    // Opposite-facing agents may share a tile to represent two-way traffic.
+    TestWorld tw{kLine};
+    tw.AddAgent<StillAgent>(Make(WorldPosition{3, 1}, {}, Direction::West));
+    CHECK_FALSE(tw.CanCollideWithAgentAt(Direction::East, WorldPosition{3, 1}));
+  }
   SECTION("inactive agent at target: no collision") {
     // Inactive agents are treated as absent for collision purposes.
     TestWorld tw{kLine};
@@ -359,6 +365,27 @@ TEST_CASE("UpdateWorld — spawners", "[StepTrafficWorld][update]") {
       for (int i = 0; i < 60; ++i) tw.UpdateWorld();
     }());
   }
+  SECTION("fast spawner waits 9 ticks and spawns on tick 10") {
+    TestWorld tw{std::vector<std::string>{"#####", "#F.D#", "#####"}};
+    for (int i = 0; i < 9; ++i) tw.UpdateWorld();
+    CHECK(tw.GetNumSpawnedAgents() == 0);
+    tw.UpdateWorld();
+    CHECK(tw.GetNumSpawnedAgents() == 1);
+  }
+  SECTION("normal spawner waits 19 ticks and spawns on tick 20") {
+    TestWorld tw{std::vector<std::string>{"#####", "#N.D#", "#####"}};
+    for (int i = 0; i < 19; ++i) tw.UpdateWorld();
+    CHECK(tw.GetNumSpawnedAgents() == 0);
+    tw.UpdateWorld();
+    CHECK(tw.GetNumSpawnedAgents() == 1);
+  }
+  SECTION("slow spawner waits 29 ticks and spawns on tick 30") {
+    TestWorld tw{std::vector<std::string>{"#####", "#S.D#", "#####"}};
+    for (int i = 0; i < 29; ++i) tw.UpdateWorld();
+    CHECK(tw.GetNumSpawnedAgents() == 0);
+    tw.UpdateWorld();
+    CHECK(tw.GetNumSpawnedAgents() == 1);
+  }
   SECTION("spawner actually spawns an agent") {
     TestWorld tw{kMinimal};  // S is at (1,1)
     CHECK(tw.GetNumSpawnedAgents() == 0);
@@ -414,5 +441,24 @@ TEST_CASE("Edge cases", "[StepTrafficWorld][edge]") {
   SECTION("SetFrameDelay is chainable and does not crash") {
     TestWorld tw{kMinimal};
     CHECK_NOTHROW(tw.SetFrameDelay(std::chrono::milliseconds{0}));
+  }
+  SECTION("ClearAgents removes agents and resets spawn clocks") {
+    TestWorld tw{std::vector<std::string>{"#####", "#F.D#", "#####"}};
+
+    for (int i = 0; i < 10; ++i) tw.UpdateWorld();
+    REQUIRE(tw.GetNumAgents() == 1);
+    REQUIRE(tw.GetNumSpawnedAgents() == 1);
+
+    tw.ClearAgents();
+    CHECK(tw.GetNumAgents() == 0);
+    CHECK(tw.GetNumSpawnedAgents() == 0);
+
+    for (int i = 0; i < 9; ++i) tw.UpdateWorld();
+    CHECK(tw.GetNumAgents() == 0);
+    CHECK(tw.GetNumSpawnedAgents() == 0);
+
+    tw.UpdateWorld();
+    CHECK(tw.GetNumAgents() == 1);
+    CHECK(tw.GetNumSpawnedAgents() == 1);
   }
 }
