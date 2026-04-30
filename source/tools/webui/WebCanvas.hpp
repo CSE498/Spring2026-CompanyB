@@ -227,9 +227,9 @@ class WebCanvas : public WebElement {
   WebCanvas& Stroke();
 
   /**
-   * @brief Bit Block Tranfer the contents of another WebCanvas onto this one. Used to
-   * composite a cached static-layer canvas onto the visible canvas without
-   * re-issuing every draw call.
+   * @brief Bit Block Tranfer the contents of another WebCanvas onto this one.
+   *Used to composite a cached static-layer canvas onto the visible canvas
+   *without re-issuing every draw call.
    * @param src The source canvas to copy from.
    * @param x Destination x in this canvas's coordinate space.
    * @param y Destination y in this canvas's coordinate space.

@@ -83,8 +83,7 @@ void InfoGraph::DrawAxes(double max_value, const std::string& title) {
     const size_t visible_count = end_index - view_start_index_;
     if (visible_count > 1) {
       const double plot_width = width - kLeftMargin - right_pad;
-      const double x_step =
-          plot_width / static_cast<double>(visible_count - 1);
+      const double x_step = plot_width / static_cast<double>(visible_count - 1);
       const double last_x = kLeftMargin + (visible_count - 1) * x_step;
       DrawText(std::to_string(end_index - 1), last_x - 8, y0 + 16);
     }
@@ -286,8 +285,7 @@ void InfoGraph::DrawBarChart(const DataSeries& values,
     const double y = baseline_y - scaled_height;
     const double w = std::max(1.0, bar_width - 8.0);
 
-    const Color c =
-        i < bar_colors.size() ? bar_colors[i] : Color{80, 170, 120};
+    const Color c = i < bar_colors.size() ? bar_colors[i] : Color{80, 170, 120};
     auto [r, g, b] = c;
     SetFillColor({r, g, b});
     DrawRect(x, y, w, scaled_height, true);

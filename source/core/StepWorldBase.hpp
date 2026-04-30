@@ -117,8 +117,8 @@ class StepWorldBase {
     std::stringstream ss{script};
     auto parse_res = local_parser.parse(ss);
     if (!parse_res.has_value()) {
-      std::cout << "AddScriptedAgent parse error: "
-                << parse_res.error().ToStr() << "\n";
+      std::cout << "AddScriptedAgent parse error: " << parse_res.error().ToStr()
+                << "\n";
       return nullptr;
     }
     auto& defs = parse_res.value();
