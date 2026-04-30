@@ -674,6 +674,27 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
     return *this;
   }
 
+  /// Needed for gui
+  [[nodiscard]] const WorldGrid &GetGrid() const { return main_grid; }
+  [[nodiscard]] size_t GetNumAgents() const { return agent_set.size(); }
+  [[nodiscard]] TrafficData GetAgentState(size_t i) const {
+    return agent_set[i]->GetState();
+  }
+
+  /**
+   * @brief Remove all agents and reset spawn/despawn tracking state.
+   * added for gui
+   */
+  void ClearAgents() {
+    agent_set.clear();
+    num_spawned_agents = 0;
+    while (!despawned_agent_ids.empty()) despawned_agent_ids.pop();
+    fast_spawn_clock = 0;
+    normal_spawn_clock = 0;
+    slow_spawn_clock = 0;
+    traffic_light_clock = 0;
+  }
+
   /// Run the simulation with terminal display.
   /// This replaces the old pattern of adding an AutoInterface agent to
   /// the world: it calls RunAgents() and UpdateWorld() in a loop and

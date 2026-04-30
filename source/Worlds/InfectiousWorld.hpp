@@ -443,6 +443,14 @@ class InfectiousWorld : public SimWorldBase<DiseaseData> {
     quarantine_zones.clear();
   }
 
+  void ClearAgents() {
+    for (auto sid : agent_surface_ids) {
+      surface.RemoveShape(sid);
+    }
+    agent_surface_ids.clear();
+    surface_to_agent_idx.clear();
+    Base::ClearAgents();
+  }
   /**
    * @brief Access registered quarantine zones.
    * @return Const reference to the stored quarantine boxes.

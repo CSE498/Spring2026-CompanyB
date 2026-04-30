@@ -27,6 +27,7 @@ services:
       - ./source:/app/source:ro
       - ./demo:/app/demo:ro
       - ./build:/app/build
+      - ./images:/app/images:ro
       - ./assets:/app/assets:ro
       - ./logs:/app/logs
       - ./scripts/docker-entrypoint.sh:/app/docker-entrypoint.sh:ro

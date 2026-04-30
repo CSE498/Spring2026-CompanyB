@@ -1,5 +1,6 @@
 # Local files
 /.vscode/
+.vscode/
 
 # Build system outputs
 /output/
