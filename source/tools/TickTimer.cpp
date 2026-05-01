@@ -22,6 +22,10 @@ void TickTimer::Stop() {
   assert(mIsRunning && "TickTimer is not running");
 
   const uint64_t endTime = GlobalClock::GetTime();
+
+  // Guard against GlobalClock resetting while running
+  assert(endTime >= mStartTime &&
+         "GlobalClock was reset while TickTimer was running!");
   if (!mIsPaused) {
     // Calculate total accumulated time while running
     mAccumulatedTime += (endTime - mStartTime);
@@ -36,6 +40,10 @@ void TickTimer::Pause() {
   assert(!mIsPaused && "TickTimer is already paused");
 
   const uint64_t pauseTime = GlobalClock::GetTime();
+
+  // Guard against GlobalClock resetting while running
+  assert(pauseTime >= mStartTime &&
+         "GlobalClock was reset before TickTimer was paused!");
   mAccumulatedTime += (pauseTime - mStartTime);
   mIsPaused = true;
 }
@@ -58,8 +66,14 @@ uint64_t TickTimer::GetTotalTime() const {
   if (!mIsRunning || mIsPaused) {
     return mAccumulatedTime;
   }
+  const uint64_t currentTime = GlobalClock::GetTime();
+
+  // Guard against GlobalClock resetting while running
+  assert(currentTime >= mStartTime &&
+         "GlobalClock was reset while fetching total time!");
+
   // If running and not paused, add the current interval to the accumulated time
-  return mAccumulatedTime + (GlobalClock::GetTime() - mStartTime);
+  return mAccumulatedTime + (currentTime - mStartTime);
 }
 
 const std::string& TickTimer::GetName() const { return mName; }

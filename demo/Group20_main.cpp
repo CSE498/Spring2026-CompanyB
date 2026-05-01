@@ -7,7 +7,7 @@
 
 // Compile with:
 // mkdir -p build/native
-// g++ -std=c++2b -Wall -Wextra -Wpedantic ./demo/Group20-DRIVER.cpp ./source/tools/OutputManager.cpp ./source/tools/DataLog.cpp ./source/tools/ReplayDriver.cpp -I third-party/include -I ./source/ -o build/native/group20_demo
+// g++ -std=c++2b -Wall -Wextra -Wpedantic ./demo/Group20-DRIVER.cpp ./source/tools/OutputManager.cpp ./source/tools/DataLog.cpp -I third-party/include -I ./source/ -o build/native/group20_demo
 // Run with:
 // ./build/native/group20_demo
 
@@ -30,11 +30,31 @@ using namespace cse498;
 namespace {
 
 
+/// @brief Base struct for action events, containing common fields.
+struct ActionEventBase {
+/// @brief Unique identifier for the agent performing the action.
+std::string_view agentId = "";
+/// @brief Type of action being performed; indicates details type.
+std::string_view actionType = "";
+/// @brief Severity level of the log message.
+LogLevel logLevel = LogLevel::Silent;
+/// @brief Timestamp of when the action occurred (determined by world ticks).
+uint64_t timestamp = 0;
+};
+/// @brief Struct for action events, generic for action-specific details.
+/// @tparam Details Action-specific details type, allowing for flexible event
+/// payloads.
+template <typename Details>
+struct ActionEvent : ActionEventBase {
+/// @brief Action-specific details, allowing for flexible event payloads.
+Details details;
+};
+
 /// @brief Example action details struct for movement actions
 struct MovementDetails {
   std::string direction;
-  int dx = 0;
-  int dy = 0;
+  int x = 0;
+  int y = 0;
 };
 
 using MovementEvent = ActionEvent<MovementDetails>;
@@ -48,27 +68,32 @@ class DemoAgent {
  private:
   int mNumericId;
   std::string mAgentId;
-  std::vector<MovementEvent> mActions;
+  std::vector<nlohmann::json> mStates;
 
  public:
   DemoAgent(int id, std::string_view label)
       : mNumericId(id), mAgentId(label) {}
 
-  void AddMovementAction(std::string_view direction, int dx, int dy,
+  void AddMovementAction(std::string_view direction, int x, int y,
                          uint64_t tick, LogLevel level = LogLevel::Normal) {
-    mActions.push_back({mAgentId, "movement", level, tick,
-                        MovementDetails{std::string(direction), dx, dy}});
+    mStates.push_back({{"agentId", mAgentId},
+                       {"actionType", "movement"},
+                       {"logLevel", static_cast<int>(level)},
+                       {"timestamp", tick},
+                       {"details", {{"direction", std::string(direction)},
+                                    {"x", x},
+                                    {"y", y}}}});
   }
 
   void PrintActions() const {
-    std::cout << "   Agent " << mNumericId << " recorded " << mActions.size()
+    std::cout << "   Agent " << mNumericId << " recorded " << mStates.size()
               << " actions\n";
-    for (const auto& action : mActions) {
-      std::cout << "      tick=" << action.timestamp
-                << " type='" << action.actionType << "'"
-                << " dir='" << action.details.direction << "'"
-                << " delta=(" << action.details.dx << ", "
-                << action.details.dy << ")\n";
+    for (const auto& action : mStates) {
+      std::cout << "      tick=" << action["timestamp"]
+                << " type='" << action["actionType"] << "'"
+                << " dir='" << action["details"]["direction"] << "'"
+                << " delta=(" << action["details"]["x"] << ", "
+                << action["details"]["y"] << ")\n";
     }
   }
 
@@ -77,7 +102,7 @@ class DemoAgent {
   // --------------------------------------------------------------------
   const std::string& getId() const { return mAgentId; }
 
-  const std::vector<MovementEvent>& GetActions() const { return mActions; }
+  const std::vector<nlohmann::json>& GetStates() const { return mStates; }
 
   // ReplayDriver passes one event object at a time. Logger output only stores
   // base fields, so details are optional during replay.
@@ -105,22 +130,22 @@ class DemoAgent {
     }
 
     std::string direction = "replayed";
-    int dx = 0;
-    int dy = 0;
+    int x = 0;
+    int y = 0;
     if (eventData.contains("details") && eventData.at("details").is_object()) {
       const auto& details = eventData.at("details");
       if (details.contains("direction") && details.at("direction").is_string()) {
         direction = details.at("direction").get<std::string>();
       }
-      if (details.contains("dx") && details.at("dx").is_number_integer()) {
-        dx = details.at("dx").get<int>();
+      if (details.contains("x") && details.at("x").is_number_integer()) {
+        x = details.at("x").get<int>();
       }
-      if (details.contains("dy") && details.at("dy").is_number_integer()) {
-        dy = details.at("dy").get<int>();
+      if (details.contains("y") && details.at("y").is_number_integer()) {
+        y = details.at("y").get<int>();
       }
     }
 
-    AddMovementAction(direction, dx, dy,
+    AddMovementAction(direction, x, y,
                       eventData.at("timestamp").get<uint64_t>(),
                       static_cast<LogLevel>(levelRaw));
   }
@@ -187,8 +212,8 @@ bool RunLoadScenario(const std::filesystem::path& replayPath) {
   agents[1].PrintActions();
   std::cout << "   Replay input file: " << replayPath << "\n\n";
 
-  const bool expectedLoaded = replayOk && agents[0].GetActions().size() == 2 &&
-      agents[1].GetActions().size() == 2;
+  const bool expectedLoaded = replayOk && agents[0].GetStates().size() == 2 &&
+      agents[1].GetStates().size() == 2;
   return expectedLoaded;
 }
 

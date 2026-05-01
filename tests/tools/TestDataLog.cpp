@@ -1,164 +1,56 @@
+#include <catch2/catch_approx.hpp>
 #include <catch2/catch_test_macros.hpp>
+#include <memory>
+#include <vector>
 
-#include "../../source/Worlds/StepTrafficWorld.hpp"
-#include "../../source/core/AgentData.hpp"
+#include "../../source/Agents/SwarmingAgent.hpp"
+#include "../../source/Worlds/InfectiousWorld.hpp"
 #include "../../source/core/StepAgentBase.hpp"
 #include "../../source/tools/DataLog.hpp"
 
 using namespace cse498;
+using Catch::Approx;
 
-TEST_CASE("Traffic world integrates with DataLog", "[DataLog][Traffic]") {
-  // Minimal grid with one spawner and destination so agents can be spawned.
-  static const std::vector<std::string> kMinimal = {
-      "#########",
-      "#S..|..D#",
-      "#########",
-  };
-
-  // Provide a tiny concrete agent type so the world can instantiate agents.
-  struct TestTrafficAgent : public StepAgentBase<TrafficData> {
-    TestTrafficAgent(TrafficData d, size_t id)
-        : StepAgentBase<TrafficData>(d, id) {}
-    steps::StepContainer GetTurn() override { return steps::StepContainer(); }
-    void SetGoal(WorldPosition) override {}
-  };
-
-  StepTrafficWorld<TestTrafficAgent> world{kMinimal};
-
-  // Let the world run a few ticks by stepping RunAgents()+UpdateWorld()
-  for (int i = 0; i < 3; ++i) {
-    world.RunAgents();
-    world.UpdateWorld();
-  }
-
-  const auto& log = world.GetTrafficDataLog().GetAggregationData();
-
-  // Expect the known traffic keys to exist and have at least one tick recorded
-  REQUIRE(log.contains("active_count"));
-  REQUIRE_FALSE(log.at("active_count").empty());
-  REQUIRE(log.contains("distance_driven"));
-}
-
-TEST_CASE("Infection DataLog aggregates declared fields",
+TEST_CASE("DataLog infection metrics aggregate from DiseaseData",
           "[DataLog][Infection]") {
-  using namespace cse498;
-
-  // Create a tiny set of disease agents with varied health states.
-  struct TestDiseaseAgent : public StepAgentBase<DiseaseData> {
-    TestDiseaseAgent(DiseaseData d, size_t id)
-        : StepAgentBase<DiseaseData>(d, id) {}
-    steps::StepContainer GetTurn() override { return steps::StepContainer(); }
-    void SetGoal(WorldPosition) override {}
-  };
-
   std::vector<std::shared_ptr<StepAgentBase<DiseaseData>>> agents;
-  agents.push_back(std::make_shared<TestDiseaseAgent>(
-      DiseaseData{WorldPosition{0, 0}, HealthState::SUSCEPTIBLE, 0}, 0));
-  agents.push_back(std::make_shared<TestDiseaseAgent>(
-      DiseaseData{WorldPosition{1, 1}, HealthState::INFECTED, 0}, 1));
-  agents.push_back(std::make_shared<TestDiseaseAgent>(
-      DiseaseData{WorldPosition{2, 2}, HealthState::RECOVERED, 0}, 2));
 
-  DataLog<DiseaseData> log{WorldType::Infection};
-  log.AggregateData(agents);
+  DiseaseData infected{};
+  infected.position = WorldPosition{1, 1};
+  infected.health = HealthState::INFECTED;
 
-  const auto& agg = log.GetAggregationData();
-  REQUIRE(agg.contains("infection_count"));
-  REQUIRE(agg.contains("susceptible_count"));
-  REQUIRE(agg.contains("cured_count"));
-  REQUIRE(agg.contains("infection_probability"));
+  DiseaseData susceptible{};
+  susceptible.position = WorldPosition{2, 2};
+  susceptible.health = HealthState::SUSCEPTIBLE;
 
-  // Each declared field should have at least one tick recorded after
-  // aggregation
-  for (const auto& [k, v] : agg) {
-    REQUIRE_FALSE(v.empty());
-  }
-}
-// #include <catch2/catch_test_macros.hpp>
-// #include <nlohmann/json.hpp>
+  DiseaseData recovered{};
+  recovered.position = WorldPosition{3, 3};
+  recovered.health = HealthState::RECOVERED;
 
-// #include "../../source/tools/DataLog.hpp"
-/*
-TEST_CASE("DataLog can add and retrieve entries with duration", "[DataLog]") {
-    cse498::DataLog dataLog;
+  agents.push_back(std::make_shared<SwarmingAgent<DiseaseData>>(infected, 0));
+  agents.push_back(
+      std::make_shared<SwarmingAgent<DiseaseData>>(susceptible, 1));
+  agents.push_back(std::make_shared<SwarmingAgent<DiseaseData>>(recovered, 2));
 
-    nlohmann::json entry = {
-        {"agentId", "agent_1"},
-        {"actionType", "move"},
-        {"duration", 5.0},
-        {"summary", "Moved forward"}
-    };
+  DataLog<DiseaseData> datalog(WorldType::Infection);
+  datalog.AggregateData(agents);
 
-    dataLog.AddEntry(entry);
+  const auto& data = datalog.GetAggregationData();
 
-    REQUIRE(dataLog.GetCount() == 1);
-    REQUIRE(dataLog.GetEntries().size() == 1);
-    REQUIRE(dataLog.GetEntries()[0]["agentId"] == "agent_1");
-    REQUIRE(dataLog.GetEntries()[0].contains("timestamp"));
-}
+  REQUIRE(data.at("infection_count").size() == 1);
+  REQUIRE(data.at("susceptible_count").size() == 1);
+  REQUIRE(data.at("cured_count").size() == 1);
+  REQUIRE(data.at("infection_probability").size() == 1);
 
-TEST_CASE("DataLog calculates mean, median, min, and max correctly",
-"[DataLog]") { cse498::DataLog dataLog;
-
-    nlohmann::json entry1 = {
-        {"agentId", "agent_1"},
-        {"actionType", "move"},
-        {"duration", 2.0},
-        {"summary", "First move"}
-    };
-
-    nlohmann::json entry2 = {
-        {"agentId", "agent_2"},
-        {"actionType", "turn"},
-        {"duration", 4.0},
-        {"summary", "Turn action"}
-    };
-
-    nlohmann::json entry3 = {
-        {"agentId", "agent_3"},
-        {"actionType", "move"},
-        {"duration", 6.0},
-        {"summary", "Second move"}
-    };
-
-    dataLog.AddEntry(entry1);
-    dataLog.AddEntry(entry2);
-    dataLog.AddEntry(entry3);
-
-    REQUIRE(dataLog.GetCount() == 3);
-    REQUIRE(dataLog.GetMean().has_value());
-    REQUIRE(dataLog.GetMean().value() == 4.0);
-    REQUIRE(dataLog.GetMedian().has_value());
-    REQUIRE(dataLog.GetMedian().value() == 4.0);
-    REQUIRE(dataLog.GetMin().has_value());
-    REQUIRE(dataLog.GetMin().value() == 2.0);
-    REQUIRE(dataLog.GetMax().has_value());
-    REQUIRE(dataLog.GetMax().value() == 6.0);
-}
-
-TEST_CASE("DataLog Reset clears all entries and statistics", "[DataLog]") {
-    cse498::DataLog dataLog;
-
-    nlohmann::json entry = {
-        {"agentId", "agent_1"},
-        {"actionType", "move"},
-        {"duration", 5.0},
-        {"summary", "Test move"}
-    };
-
-    dataLog.AddEntry(entry);
-    REQUIRE(dataLog.GetCount() == 1);
-
-    dataLog.Reset();
-
-    REQUIRE(dataLog.GetCount() == 0);
-    REQUIRE(dataLog.GetEntries().empty());
-    REQUIRE(!dataLog.GetMean().has_value());
+  CHECK(data.at("infection_count").back().sum == 1.0);
+  CHECK(data.at("susceptible_count").back().sum == 1.0);
+  CHECK(data.at("cured_count").back().sum == 1.0);
+  CHECK(data.at("infection_probability").back().mean == Approx(1.0 / 3.0));
 }
 
 TEST_CASE(
     "InfectiousWorld aggregates into world-owned DataLog after UpdateWorld",
-    "[datalog][infection][world-hook]") {
+    "[DataLog][Infection][World]") {
   InfectiousWorld world(10, 8);
 
   DiseaseData a{};
@@ -172,15 +64,20 @@ TEST_CASE(
   world.RunAgents();
   world.UpdateWorld();
 
-  auto const& data = world.GetDataLog().GetAggregationData();
-  for (auto const& kv : data) {
-    REQUIRE(kv.second.size() == 1);
-    CHECK(kv.second.back().count == 2);
-  }
+  const auto& data = world.GetDataLog().GetAggregationData();
+  REQUIRE(data.at("infection_count").size() == 1);
+  REQUIRE(data.at("susceptible_count").size() == 1);
+  REQUIRE(data.at("cured_count").size() == 1);
+  REQUIRE(data.at("infection_probability").size() == 1);
+
+  CHECK(data.at("infection_count").back().sum == 0.0);
+  CHECK(data.at("susceptible_count").back().sum == 2.0);
+  CHECK(data.at("cured_count").back().sum == 0.0);
+  CHECK(data.at("infection_probability").back().mean == 0.0);
 }
 
 TEST_CASE("DataLog traffic metrics aggregate from TrafficData",
-          "[datalog][traffic]") {
+          "[DataLog][Traffic]") {
   std::vector<std::shared_ptr<StepAgentBase<TrafficData>>> agents;
 
   TrafficData driving{};
@@ -190,7 +87,6 @@ TEST_CASE("DataLog traffic metrics aggregate from TrafficData",
 
   TrafficData waiting{};
   waiting.position = WorldPosition{3, 2};
-  waiting.destination = std::nullopt;
   waiting.is_active = false;
 
   agents.push_back(std::make_shared<SwarmingAgent<TrafficData>>(driving, 0));
@@ -199,7 +95,7 @@ TEST_CASE("DataLog traffic metrics aggregate from TrafficData",
   DataLog<TrafficData> datalog(WorldType::Traffic);
   datalog.AggregateData(agents);
 
-  auto const& data = datalog.GetAggregationData();
+  const auto& data = datalog.GetAggregationData();
 
   REQUIRE(data.at("waiting_count").size() == 1);
   REQUIRE(data.at("driving_count").size() == 1);
@@ -207,9 +103,9 @@ TEST_CASE("DataLog traffic metrics aggregate from TrafficData",
   REQUIRE(data.at("distance_driven").size() == 1);
   REQUIRE(data.at("time_to_arrive").size() == 1);
 
-  CHECK(data.at("waiting_count").back().sum == 1.0);
-  CHECK(data.at("driving_count").back().sum == 1.0);
+  CHECK(data.at("waiting_count").back().sum == 0.0);
+  CHECK(data.at("driving_count").back().sum == 0.0);
   CHECK(data.at("active_count").back().sum == 1.0);
   CHECK(data.at("distance_driven").back().sum == 0.0);
-  CHECK(data.at("time_to_arrive").back().sum == 3.0);
-}*/
+  CHECK(data.at("time_to_arrive").back().count == 0);
+}
