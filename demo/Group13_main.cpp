@@ -13,7 +13,9 @@
 #include <cstddef>
 #include <iomanip>
 #include <iostream>
+#include <format>
 #include <string>
+#include <string_view>
 #include <thread>
 #include <vector>
 
@@ -64,7 +66,66 @@ constexpr const char* YELLOW    = "\033[33m";
 constexpr const char* GREY      = "\033[90m";
 constexpr const char* BG_BLUE   = "\033[44m";
 constexpr const char* BG_YELLOW = "\033[43m";
+constexpr const char* CLEAR_SCREEN = "\033[2J\033[H";
 }  // namespace ansi
+
+/** @brief Generate a script for any number of scripted agents which spawn at
+ * the given points and do nothing.
+ */
+constexpr std::string_view BASE_SCRIPT = R"V0G0N(
+world infection;
+
+// We'll define some functions to base the agents' actions on
+
+// Return opposite of prev_dir
+fn opp_dir(prev_dir : direction) : direction {
+  if (prev_dir == left) return right;
+  else if (prev_dir == right) return left;
+  else if (prev_dir == up) return down;
+  else return up;
+};
+
+)V0G0N";
+// Format parameters:
+//  - 0 : agent num
+//  - 1 : agent spawn x
+//  - 2 : agent spawn y
+constexpr std::string_view AGENT_FORMAT_STR = R"V0G0N(
+// This will be a format-string, so single curly braces which
+// should be left as-is need to be doubled: {{ and }}
+
+// Agent moves left-right if uninfected, stays stationary
+// if infected, and moves up-down if recovered
+let agent_{} : student {{
+  init: {{
+    __spawn__ = make_point({}, {});
+    let prev_dir_lr : direction = left;
+    let prev_dir_ud : direction = up;
+  }};
+  turn: {{
+    prev_dir_lr = opp_dir(prev_dir_lr);
+    prev_dir_ud = opp_dir(prev_dir_ud);
+
+    if (__recovered__) move(prev_dir_ud);
+    else if (!__infected__) move(prev_dir_lr);
+  }};
+}};
+
+)V0G0N";
+template <Concepts::IsOneOf<WorldPosition>... Ps>
+static std::string make_script(Ps... ps) {
+  size_t agent_count = 0;
+  auto make_agentdef = [&agent_count](WorldPosition const& p) {
+    return std::format(
+	AGENT_FORMAT_STR,
+        agent_count++, static_cast<int>(p.X()),
+        static_cast<int>(p.Y()));
+  };
+  if constexpr (sizeof...(Ps) > 0)
+    return std::string{BASE_SCRIPT} + (make_agentdef(ps) + ...);
+  else
+    return "world infection;";
+}
 
 // ----------------------------------
 // Draw
@@ -138,7 +199,7 @@ void DrawWorld(const InfectiousWorld& world) {
   }
 
   // 3. Render
-  std::cout << "\033[2J\033[H";
+  std::cout << ansi::CLEAR_SCREEN;
   std::cout << ansi::BOLD
             << "=== MSU Campus Infectious Disease Simulation (Group 13) ===\n"
             << ansi::RESET;
@@ -202,7 +263,16 @@ static void DrawBuilding(
 
 // Campus setup 
 int RunInfectiousDemo() {
-  InfectiousWorld world(demo::kGridW, demo::kGridH);
+  // Create script which initializes the intended do-nothing scripted agents
+  auto script = make_script(WorldPosition{7, 6},
+			    WorldPosition{20, 7},
+			    WorldPosition{37, 6},
+			    WorldPosition{5, 24},
+			    WorldPosition{22, 23},
+			    WorldPosition{52, 6});
+  
+
+  InfectiousWorld world(demo::kGridW, demo::kGridH, script);
   WorldGrid& grid  = world.GetGrid();
   size_t wall  = world.GetWallID();
   size_t floor = world.GetFloorID();
@@ -292,37 +362,27 @@ int RunInfectiousDemo() {
   // AGENTS
   // =========================================================================
 
-  // Add one resident scripted agent at the given position.
-  auto add_pacer = [&](WorldPosition pos) -> ScriptedAgent<DiseaseData>& {
-    return world.AddAgent<ScriptedAgent<DiseaseData>>(DiseaseData{pos});
-  };
-
- 
-  add_pacer(WorldPosition{ 7,  6});           // Wells Hall
-  add_pacer(WorldPosition{20,  7});           // MSU Union
-  add_pacer(WorldPosition{37,  6});           // Berkey Hall
-  add_pacer(WorldPosition{ 5, 24});           // Engineering Building
-  add_pacer(WorldPosition{22, 23});           // Brody Hall
-  add_pacer(WorldPosition{52,  6});           // Shaw Hall dorm
-
   // Swarming agents
 
+  world.AddAgent<SwarmingAgent<DiseaseData>>(
+      DiseaseData{WorldPosition{14, 12}});
+  world.AddAgent<SwarmingAgent<DiseaseData>>(
+      DiseaseData{WorldPosition{44, 12}});
+  world.AddAgent<SwarmingAgent<DiseaseData>>(
+      DiseaseData{WorldPosition{68, 12}});
 
-  world.AddAgent<SwarmingAgent<DiseaseData>>(DiseaseData{WorldPosition{14, 12}});
-  world.AddAgent<SwarmingAgent<DiseaseData>>(DiseaseData{WorldPosition{44, 12}});
-  world.AddAgent<SwarmingAgent<DiseaseData>>(DiseaseData{WorldPosition{68, 12}});
+  world.AddAgent<SwarmingAgent<DiseaseData>>(
+      DiseaseData{WorldPosition{16, 17}});
+  world.AddAgent<SwarmingAgent<DiseaseData>>(
+      DiseaseData{WorldPosition{44, 17}});
+  world.AddAgent<SwarmingAgent<DiseaseData>>(
+      DiseaseData{WorldPosition{62, 17}});
 
+  world.AddAgent<SwarmingAgent<DiseaseData>>(
+      DiseaseData{WorldPosition{47, 19}}); // Stadium
 
-  world.AddAgent<SwarmingAgent<DiseaseData>>(DiseaseData{WorldPosition{16, 17}});
-  world.AddAgent<SwarmingAgent<DiseaseData>>(DiseaseData{WorldPosition{44, 17}});
-  world.AddAgent<SwarmingAgent<DiseaseData>>(DiseaseData{WorldPosition{62, 17}});
-
-
-  world.AddAgent<SwarmingAgent<DiseaseData>>(DiseaseData{WorldPosition{47, 19}});  // Stadium
-
-  // Patient zero — infected 
-  world.InfectAgent(demo::kNumPacers);  
-
+  // Patient zero — infected
+  world.InfectAgent(demo::kNumPacers);
 
   // SIMULATION LOOP
 
@@ -352,6 +412,6 @@ int RunInfectiousDemo() {
   return 0;
 }
 
-#if defined(DEMO_GROUP13)
+// #if defined(DEMO_GROUP13)
 int main() { return RunInfectiousDemo(); }
-#endif
+// #endif

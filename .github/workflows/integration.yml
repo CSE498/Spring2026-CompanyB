@@ -52,10 +52,22 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Install GCC 14
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y software-properties-common
+          sudo apt-get install -y gcc-14 g++-14
+
+      - name: Use GCC 14
+        run: |
+          echo "CC=gcc-14" >> $GITHUB_ENV
+          echo "CXX=g++-14" >> $GITHUB_ENV
+          
       - name: Install Qt6
         uses: jurplel/install-qt-action@v4
         with:
           version: "6.*"
+          modules: "qtcharts"
           cache: true
           install-deps: true
 

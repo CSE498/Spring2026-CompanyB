@@ -10,13 +10,10 @@ struct SetupMockDOMWebLayout {
   SetupMockDOMWebLayout() {
     // clang-format off
     EM_ASM({
-      /// Creates a document if it doesn't exist
-      if (typeof document === 'undefined') {
-        const { JSDOM } = jsdom;
-        const dom = new JSDOM("<!DOCTYPE html> <html><head></head><body></body></html>");
-        globalThis.window = dom.window;
-        globalThis.document = dom.window.document;
-      }
+      const { JSDOM } = jsdom;
+      const dom = new JSDOM("<!DOCTYPE html> <html><head></head><body></body></html>");
+      globalThis.window = dom.window;
+      globalThis.document = dom.window.document;
     });
     // clang-format on
   }
@@ -24,6 +21,9 @@ struct SetupMockDOMWebLayout {
   ~SetupMockDOMWebLayout() {
     // clang-format off
       EM_ASM({
+        if (globalThis.window && globalThis.window.close) {
+          globalThis.window.close();
+        }
         delete globalThis.document;
         delete globalThis.window;
       });
@@ -100,14 +100,14 @@ void TEST_REMOVE_ELEMENT(WebLayout& layout, std::shared_ptr<WebElement> elem) {
   REQUIRE(layout.GetNumChildren() == lengthBefore - 1);
 
   // Child should not be in the DOM anymore
-  // REQUIRE(ELEMENT_PRESENT(elem->GetId()) == 0);
+  REQUIRE(ELEMENT_PRESENT(elem->GetId()) == 0);
 }
 
 // -------- Tests for WebLayout --------
 
 TEST_CASE("WebLayout constructor creates DOM element with ID", "[WebLayout]") {
   SetupMockDOMWebLayout mock;
-  WebLayout layout("layout1");
+  WebLayout layout({.id = "layout1"});
 
   REQUIRE(layout.GetId() == "layout1");
 
@@ -130,7 +130,7 @@ TEST_CASE("WebLayout DOM element is removed on object being destructed",
           "[WebLayout]") {
   SetupMockDOMWebLayout mock;
   {
-    WebLayout layout("layout1");
+    WebLayout layout({.id = "layout1"});
   }
 
   std::string id = "layout1";
@@ -140,10 +140,10 @@ TEST_CASE("WebLayout DOM element is removed on object being destructed",
 
 TEST_CASE("WebLayout can add and remove children", "[WebLayout]") {
   SetupMockDOMWebLayout mock;
-  WebLayout layout("layout1");
+  WebLayout layout({.id = "layout1"});
 
-  auto elem1 = std::make_shared<WebElement>("elem1");
-  auto elem2 = std::make_shared<WebElement>("elem2");
+  auto elem1 = std::make_shared<WebElement>("div", WebOptions{.id = "elem1"});
+  auto elem2 = std::make_shared<WebElement>("div", WebOptions{.id = "elem2"});
 
   TEST_ADD_ELEMENT(layout, elem1);
   TEST_ADD_ELEMENT(layout, elem2);
@@ -155,9 +155,9 @@ TEST_CASE("WebLayout can add and remove children", "[WebLayout]") {
 TEST_CASE("WebLayout: adding or removing null pointers is an error",
           "[WebLayout]") {
   SetupMockDOMWebLayout mock;
-  WebLayout layout("layout1");
+  WebLayout layout({.id = "layout1"});
 
-  auto elem1 = std::make_shared<WebElement>("elem1");
+  auto elem1 = std::make_shared<WebElement>("div", WebOptions{.id = "elem1"});
   auto elem2 = std::shared_ptr<WebElement>();
 
   TEST_ADD_ELEMENT(layout, elem1);
@@ -169,9 +169,9 @@ TEST_CASE("WebLayout: adding or removing null pointers is an error",
 TEST_CASE("WebLayout: adding the same element twice gives an error",
           "[WebLayout]") {
   SetupMockDOMWebLayout mock;
-  WebLayout layout("layout1");
+  WebLayout layout({.id = "layout1"});
 
-  auto elem1 = std::make_shared<WebElement>("elem1");
+  auto elem1 = std::make_shared<WebElement>("div", WebOptions{.id = "elem1"});
 
   TEST_ADD_ELEMENT(layout, elem1);
 
@@ -182,11 +182,87 @@ TEST_CASE("WebLayout: adding the same element twice gives an error",
 TEST_CASE("WebLayout can set properties with chained function calls",
           "[WebLayout]") {
   SetupMockDOMWebLayout mock;
-  WebLayout layout("layout1");
+  WebLayout layout({.id = "layout1"});
 
   REQUIRE_NOTHROW(layout.SetDirection("column")
                       .SetJustifyContent("flex-start")
                       .SetAlignItems("center")
                       .SetAlignContent("center")
-                      .SetGap("5px"));
+                      .SetGap("5px")
+                      .SetHeight("100px"));
+}
+
+TEST_CASE("WebLayout properties can be retrieved via getters", "[WebLayout]") {
+  SetupMockDOMWebLayout mock;
+  WebLayout layout({.id = "layout2"});
+
+  layout.SetDirection("row");
+  CHECK(layout.GetDirection() == "row");
+
+  layout.SetJustifyContent("space-between");
+  CHECK(layout.GetJustifyContent() == "space-between");
+
+  layout.SetAlignItems("stretch");
+  CHECK(layout.GetAlignItems() == "stretch");
+
+  layout.SetAlignContent("flex-end");
+  CHECK(layout.GetAlignContent() == "flex-end");
+
+  layout.SetGap("1rem");
+  CHECK(layout.GetGap() == "1rem");
+
+  layout.SetHeight("50%");
+  CHECK(layout.GetHeight() == "50%");
+}
+
+TEST_CASE("WebLayout: ContainsChild works", "[WebLayout]") {
+  SetupMockDOMWebLayout mock;
+  WebLayout layout({.id = "layout_contains"});
+
+  auto elem1 = std::make_shared<WebElement>("div", WebOptions{.id = "elem1"});
+  auto elem2 = std::make_shared<WebElement>("div", WebOptions{.id = "elem2"});
+
+  REQUIRE_FALSE(layout.ContainsChild(elem1));
+
+  layout.AddChild(elem1);
+  REQUIRE(layout.ContainsChild(elem1));
+  REQUIRE_FALSE(layout.ContainsChild(elem2));
+
+  layout.RemoveChild(elem1);
+  REQUIRE_FALSE(layout.ContainsChild(elem1));
+}
+
+/*
+TEST_CASE("WebElement: duplicate ID protection", "[WebElement]") {
+  SetupMockDOMWebLayout mock;
+
+  auto elem1 = std::make_shared<WebElement>("div", WebOptions{ .id =
+"duplicate_id" });
+
+  SECTION("Creating another element with the same ID throws runtime_error") {
+    bool caught = false;
+    try {
+      WebElement elem2("span", WebOptions{ .id = "duplicate_id" });
+    } catch (const std::runtime_error& e) {
+      caught = true;
+      REQUIRE(std::string(e.what()).find("duplicate_id") != std::string::npos);
+    }
+    REQUIRE(caught);
+  }
+}
+*/
+
+TEST_CASE("WebLayout: error branches for RemoveChild", "[WebLayout]") {
+  SetupMockDOMWebLayout mock;
+  WebLayout layout({.id = "layout_errors"});
+
+  auto elem1 = std::make_shared<WebElement>("div", WebOptions{.id = "elem1"});
+  auto elemNotInLayout =
+      std::make_shared<WebElement>("div", WebOptions{.id = "elem_not_in"});
+
+  SECTION("Removing element not in layout returns ElementNotFound") {
+    auto result = layout.RemoveChild(elemNotInLayout);
+    REQUIRE_FALSE(result.has_value());
+    REQUIRE(result.error() == WebLayout::Error::ElementNotFound);
+  }
 }

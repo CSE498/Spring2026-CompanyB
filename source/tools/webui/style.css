@@ -1,0 +1,201 @@
+@import url("https://fonts.googleapis.com/css2?family=Gugi&display=swap");
+
+body {
+    margin: 0;
+    padding: 0;
+    min-height: 100vh;
+    background-color: #85b790;
+    background-image: url("assets/images/contour-map.svg");
+    background-size: 100vw 100vh;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+    background-position: top left;
+}
+
+#main-layout {
+    width: 100%;
+}
+
+.textbox,
+.game-info {
+    position: relative !important;
+    border-radius: 20px;
+    background: #555 !important;
+    font-size: 13px;
+    overflow-y: auto;
+    border: none !important;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+    padding: 1em;
+    box-sizing: border-box;
+}
+
+#top-textbox,
+#game-info {
+    background: #363636 !important;
+    border: 6px solid #1a1a1a !important;
+    border-radius: 18px;
+    padding: 0.75em 1em;
+    font-family: "Mono", "Consolas", "Courier New", monospace;
+    font-size: 14px;
+    line-height: 1.5;
+    color: #e5e5e5;
+}
+
+#top-textbox span {
+    display: inline-block;
+}
+
+#game-area {
+    position: relative !important;
+    flex: 3 1 0;
+    min-width: 50%;
+    height: 100%;
+    border-radius: 24px;
+    overflow: hidden;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+    background-color: #1a1a1a;
+    background-image: url("assets/images/full_map.svg");
+    background-size: 100% 100%;
+    background-repeat: no-repeat;
+    background-position: center;
+}
+
+#tick-rate-control {
+    color: white;
+    margin-left: 1em;
+    font-family: "Menlo", "Consolas", monospace;
+}
+
+#tick-rate-input {
+    width: 70px;
+    padding: 6px 8px;
+    border-radius: 6px;
+    border: 1px solid #555;
+    background: #1a1a1a;
+    color: white;
+    font-family: "Menlo", "Consolas", monospace;
+    font-size: 14px;
+    color-scheme: dark;
+}
+
+#left-column {
+    flex: 2 1 0 !important;
+    min-width: 0;
+}
+
+#map-image,
+#game-area > img {
+    display: none !important;
+}
+
+#game-canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+}
+
+.button {
+    width: 48px;
+    height: 48px;
+    margin-left: 1em;
+    border-radius: 10px;
+    border: none;
+    background-color: transparent;
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    cursor: pointer;
+}
+
+#start-btn {
+    background-image: url("assets/images/start.svg");
+}
+#pause-btn {
+    background-image: url("assets/images/pause.svg");
+    margin-top: 0.5em;
+}
+#stop-btn {
+    background-image: url("assets/images/stop.svg");
+}
+#upload-btn {
+    background-image: url("assets/images/upload.svg");
+}
+#save-btn {
+    background-image: url("assets/images/save.svg");
+    margin-top: 0.5em;
+}
+#exit-btn {
+    background-image: url("assets/images/exit.svg");
+    margin-left: auto;
+    margin-right: 1em;
+}
+
+.log-info {
+    color: #569cd6;
+}
+.log-warn {
+    color: #ce9178;
+}
+.log-error {
+    color: #f87171;
+}
+.log-start {
+    color: #4ade80;
+}
+.log-pause {
+    color: #fbbf24;
+}
+.log-stop {
+    color: #ef4444;
+}
+
+#traffic-btn,
+#virus-btn {
+    width: 300px;
+    height: 120px;
+    font-size: 40px;
+    border-radius: 24px;
+    background-color: #555;
+    color: white;
+    cursor: pointer;
+    border: 6px solid #4a7a50;
+}
+
+#traffic-btn:hover,
+#virus-btn:hover {
+    background-color: #6e6d6d;
+}
+
+#menu-title {
+    position: absolute;
+    top: 35vh;
+    left: 50%;
+    transform: translateX(-50%);
+    border: none !important;
+    text-shadow: 3px 3px 8px rgba(0, 0, 0, 0.6);
+}
+
+#world-buttons {
+    position: absolute;
+    top: 50vh;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+#menu-img-top {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: auto;
+}
+
+#menu-img-bottom {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: auto;
+}

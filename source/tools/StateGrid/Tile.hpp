@@ -53,7 +53,7 @@ class Tile {
 
  public:
   Tile(size_t row, size_t column, char symbol, bool canTraverse,
-       const std::string &name, const MetaData &metaData);
+       const std::string& name, const MetaData& metaData);
 
   /***********************************************
    *  Sets the agent pointer. Only moves the pointer on success,
@@ -63,7 +63,7 @@ class Tile {
    *
    * @returns True if successful, false if it is occupied
    ***********************************************/
-  [[nodiscard]] bool addAgent(std::unique_ptr<Agent> &newAgent);
+  [[nodiscard]] bool addAgent(std::unique_ptr<Agent>& newAgent);
 
   /***********************************************
    *  Removes the agent
@@ -84,7 +84,7 @@ class Tile {
    *
    * @returns raw pointer to the agent, nullptr if empty
    ***********************************************/
-  [[nodiscard]] Agent *getAgent() const;
+  [[nodiscard]] Agent* getAgent() const;
 
   /***********************************************
    *  Returns whether this tile stores an agent
@@ -133,13 +133,13 @@ class Tile {
    *
    * @returns string ref, name of the tile
    ***********************************************/
-  [[nodiscard]] const std::string &getName() const;
+  [[nodiscard]] const std::string& getName() const;
 
   /***********************************************
    *  MetaData getter
    *
    * @returns MetaData ref, metadata of the tile
    ***********************************************/
-  [[nodiscard]] const MetaData &getMetaData() const;
+  [[nodiscard]] const MetaData& getMetaData() const;
 };
 }  // namespace cse498
