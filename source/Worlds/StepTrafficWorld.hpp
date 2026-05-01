@@ -14,6 +14,8 @@
 #include "../core/StepWorldBase.hpp"
 #include "../tools/WeightedSet.hpp"
 
+#include "../tools/DataLog.hpp"
+
 namespace cse498 {
 
 template <typename SpawnedAgent>
@@ -190,6 +192,9 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
   std::queue<size_t> despawned_agent_ids{};
 
  private:
+  
+  DataLog<TrafficData> traffic_data_log{WorldType::Traffic};
+
   // Pulled by Claude out of the preexisting constructor — registers cell types
   // and scans the loaded grid for traffic lights, spawners, and destinations.
   void RegisterCellTypes() {
@@ -250,6 +255,11 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
   }
 
  public:
+
+  [[nodiscard]] const DataLog<TrafficData>& GetTrafficDataLog() const {
+    return traffic_data_log;
+  }
+
   /// @brief Construct a TrafficWorld from a vector of strings representing
   /// the grid layout.
   /// Written by Claude.
@@ -464,6 +474,7 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
   void UpdateWorld() override {
     UpdateTrafficLights();
     UpdateSpawners();
+    traffic_data_log.AggregateData(agent_set);
   }
 
  private:

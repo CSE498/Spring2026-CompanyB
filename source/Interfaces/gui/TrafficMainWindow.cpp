@@ -382,37 +382,86 @@ void TrafficMainWindow::onSwitchToVirusSimulation() {
 }
 
 void TrafficMainWindow::onShowWaitingGraph() {
-    std::vector<double> dummyData = {5, 4, 6, 3, 7, 5, 4, 6};
-    mMainGraph->ShowLineGraph("Waiting Count Over Time", "Waiting", dummyData);
+    const auto& data = mWorld.GetTrafficDataLog().GetAggregationData();
+    if (data.contains("waiting_count")) {
+        const auto& ticks = data.at("waiting_count");
+        if (!ticks.empty()) {
+            std::vector<double> values;
+            for (const auto& stat : ticks) values.push_back(stat.mean);
+            mMainGraph->ShowLineGraph("Waiting Count Over Time", "Waiting", values, QColor(255, 200, 0));
+            return;
+        }
+    }
 }
 
 void TrafficMainWindow::onShowDrivingGraph() {
-    std::vector<double> dummyData = {3, 5, 4, 7, 6, 8, 7, 9};
-    mMainGraph->ShowLineGraph("Driving Count Over Time", "Driving", dummyData);
+    const auto& data = mWorld.GetTrafficDataLog().GetAggregationData();
+    if (data.contains("driving_count")) {
+        const auto& ticks = data.at("driving_count");
+        if (!ticks.empty()) {
+            std::vector<double> values;
+            for (const auto& stat : ticks) values.push_back(stat.mean);
+            mMainGraph->ShowLineGraph("Driving Count Over Time", "Driving", values, QColor(0, 0, 139));
+            return;
+        }
+    }
 }
 
 void TrafficMainWindow::onShowActiveGraph() {
-    std::vector<double> dummyData = {8, 9, 10, 10, 13, 13, 11, 15};
-    mMainGraph->ShowLineGraph("Active Count Over Time", "Active", dummyData);
+    const auto& data = mWorld.GetTrafficDataLog().GetAggregationData();
+    if (data.contains("active_count")) {
+        const auto& ticks = data.at("active_count");
+        if (!ticks.empty()) {
+            std::vector<double> values;
+            for (const auto& stat : ticks) values.push_back(stat.mean);
+            mMainGraph->ShowLineGraph("Active Count Over Time", "Active", values, QColor(0, 200, 200));
+            return;
+        }
+    }
 }
 
 void TrafficMainWindow::onShowDistanceGraph() {
-    std::vector<double> dummyData = {2, 5, 8, 12, 17, 23, 30, 38};
-    mMainGraph->ShowLineGraph("Distance Driven Over Time", "Distance", dummyData);
+    const auto& data = mWorld.GetTrafficDataLog().GetAggregationData();
+    if (data.contains("distance_driven")) {
+        const auto& ticks = data.at("distance_driven");
+        if (!ticks.empty()) {
+            std::vector<double> values;
+            for (const auto& stat : ticks) values.push_back(stat.mean);
+            mMainGraph->ShowLineGraph("Distance Driven Over Time", "Distance", values, QColor(0, 0, 139));
+            return;
+        }
+    }
 }
 
 void TrafficMainWindow::onShowTimeToArriveGraph() {
-    std::vector<double> dummyData = {10, 9, 8, 7, 7, 6, 5, 4};
-    mMainGraph->ShowLineGraph("Time to Arrive Over Time", "Time", dummyData);
+    const auto& data = mWorld.GetTrafficDataLog().GetAggregationData();
+    if (data.contains("time_to_arrive")) {
+        const auto& ticks = data.at("time_to_arrive");
+        if (!ticks.empty()) {
+            std::vector<double> values;
+            for (const auto& stat : ticks) values.push_back(stat.mean);
+            mMainGraph->ShowLineGraph("Time to Arrive Over Time", "Time", values, QColor(128, 0, 128));
+            return;
+        }
+    }
 }
 
 void TrafficMainWindow::onShowCarActivityBreakdown() {
-    std::vector<std::pair<QString, double>> slices = {
-        {"Waiting", 4.0},
-        {"Driving", 7.0},
-        {"Active", 3.0}
-    };
-    mMainGraph->ShowPieChart("Current Car Activity Breakdown", slices);
+    const auto& data = mWorld.GetTrafficDataLog().GetAggregationData();
+    if (data.contains("waiting_count") && data.contains("driving_count") && data.contains("active_count")) {
+        const auto& waitingVec = data.at("waiting_count");
+        const auto& drivingVec = data.at("driving_count");
+        const auto& activeVec = data.at("active_count");
+        if (!waitingVec.empty() && !drivingVec.empty() && !activeVec.empty()) {
+            std::vector<std::pair<QString, double>> slices = {
+                {"Waiting", waitingVec.back().mean},
+                {"Driving", drivingVec.back().mean},
+                {"Active", activeVec.back().mean}
+            };
+            mMainGraph->ShowPieChart("Current Car Activity Breakdown", slices, {QColor(255, 200, 0), QColor(0, 0, 139), QColor(0, 200, 200)});
+            return;
+        }
+    }
 }
 
 }  // namespace cse498

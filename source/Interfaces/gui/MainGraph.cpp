@@ -12,9 +12,10 @@ MainGraph::MainGraph(QWidget* parent) : QWidget(parent) {
     setLayout(mLayout);
 }
 
-void MainGraph::ShowLineGraph(const QString& title, const QString& seriesName, const std::vector<double>& data) {
+void MainGraph::ShowLineGraph(const QString& title, const QString& seriesName, const std::vector<double>& data, QColor color) {
     auto* series = new QLineSeries();
     series->setName(seriesName);
+    series->setColor(color);
 
     for (int i = 0; i < static_cast<int>(data.size()); ++i) {
         double yValue = data[i];
@@ -37,7 +38,7 @@ void MainGraph::ShowLineGraph(const QString& title, const QString& seriesName, c
     mLayout->addWidget(mChartView);
 }
 
-void MainGraph::ShowPieChart(const QString& title, const std::vector<std::pair<QString, double>>& slices) {
+void MainGraph::ShowPieChart(const QString& title, const std::vector<std::pair<QString, double>>& slices, const std::vector<QColor>& colors) {
     auto* series = new QPieSeries();
 
     for (const auto& slice : slices) {
@@ -49,6 +50,13 @@ void MainGraph::ShowPieChart(const QString& title, const std::vector<std::pair<Q
     auto* chart = new QChart();
     chart->addSeries(series);
     chart->setTitle(title);
+
+    if (!colors.empty()) {
+    QList<QPieSlice*> sliceList = series->slices();
+    for (int i = 0; i < sliceList.size() && i < colors.size(); ++i) {
+        sliceList[i]->setColor(colors[i]);
+    }
+    }
 
     auto* newView = new QChartView(chart, this);
 
