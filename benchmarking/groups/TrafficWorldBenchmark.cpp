@@ -161,7 +161,7 @@ void RunSimulation(InfectiousWorld& world, std::size_t max_agents, std::size_t t
 
 int main() {
 	cse498::benchmarking::BenchRunner runner{};
-	const std::string benchmark_id = "group13_infectious_world_logic";
+	const std::string benchmark_id = "group19_traffic_world";
 
 	const auto registration = runner.Register(benchmark_id, [](cse498::benchmarking::Params& params) {
 		if (cse498::benchmarking::BENCH_START() != cse498::benchmarking::MetricCollectorError::Ok) {
@@ -193,7 +193,7 @@ int main() {
 	const auto run_result = runner.RunBenchmarkAndWriteReport(
 			benchmark_id,
 			params,
-			"Group13TrafficWorld",
+			"Group19TrafficWorld",
 			"../benchmarking/groups/results",
 			cse498::benchmarking::ReportFormat::Csv);
 
