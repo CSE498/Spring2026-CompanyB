@@ -23,6 +23,7 @@
 #include "../../Worlds/SimWorldBase.hpp"
 #include "ImageGrid.hpp"
 #include "MainGraph.hpp"
+#include "../../core/AgentData.hpp"
 
 namespace cse498 {
 
@@ -67,6 +68,20 @@ class MainWindow : public QMainWindow {
 
   void onReplayToggle();
 
+  // infection graphs
+  void onShowInfectedGraph();
+  void onShowSusceptibleGraph();
+  void onShowCuredGraph();
+  void onShowInfectionBreakdown();
+
+  // traffic graphs
+  void onShowWaitingGraph();
+  void onShowDrivingGraph();
+  void onShowActiveGraph();
+  void onShowDistanceGraph();
+  void onShowTimeToArriveGraph();
+  void onShowCarActivityBreakdown();
+
   QTimer* mTimer = nullptr;
   int mTickInterval = 150;
 
@@ -78,6 +93,7 @@ class MainWindow : public QMainWindow {
 
   QMenu* mFileMenu;
   QMenu* mHelpMenu;
+  QMenu* mGraphsMenu;
   QMenu* mMainMenu = nullptr;
 
   QAction* mSwitchToTrafficAction = nullptr;
@@ -91,6 +107,20 @@ class MainWindow : public QMainWindow {
   QAction* mExitAction;
   QAction* mAboutAction;
   QAction* mBackToMenuAction;
+
+  // infection graphs
+  QAction* mInfectedGraphAction;
+  QAction* mSusceptibleGraphAction;
+  QAction* mCuredGraphAction;
+  QAction* mInfectionBreakdownAction;
+
+  // traffic graphs
+  QAction* mWaitingGraphAction;
+  QAction* mDrivingGraphAction;
+  QAction* mActiveGraphAction;
+  QAction* mDistanceGraphAction;
+  QAction* mTimeToArriveGraphAction;
+  QAction* mCarActivityBreakdownAction;
 
   QToolBar* mToolBar;
 

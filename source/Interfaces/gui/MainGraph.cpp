@@ -2,32 +2,63 @@
 
 #include <QVBoxLayout>
 #include <QtCharts/QChart>
+#include <QtCharts/QPieSlice>
 
 namespace cse498 {
 
 MainGraph::MainGraph(QWidget* parent) : QWidget(parent) {
-  mSeries = new QLineSeries();
-  mSeries->setName("[Placeholder Traffic data value]");
-
-  // dummy data
-  mSeries->append(0, 0);
-  mSeries->append(1, 4);
-  mSeries->append(2, 6);
-  mSeries->append(3, 2);
-  mSeries->append(4, 10);
-
-  QChart* chart = new QChart();
-  chart->addSeries(mSeries);
-  chart->setTitle("[Placeholder Traffic data title]");
-  chart->createDefaultAxes();
-
-  mChartView = new QChartView(chart, this);
-
-  QVBoxLayout* layout = new QVBoxLayout(this);
-  layout->addWidget(mChartView);
-  setLayout(layout);
+    mLayout = new QVBoxLayout(this);
+    mChartView = nullptr;
+    setLayout(mLayout);
 }
 
-void MainGraph::AddDataPoint(double x, double y) { mSeries->append(x, y); }
+void MainGraph::ShowLineGraph(const QString& title, const QString& seriesName, const std::vector<double>& data) {
+    auto* series = new QLineSeries();
+    series->setName(seriesName);
 
-}  // namespace cse498
+    for (int i = 0; i < static_cast<int>(data.size()); ++i) {
+        double yValue = data[i];
+        series->append(i, yValue);
+    }
+
+    auto* chart = new QChart();
+    chart->addSeries(series);
+    chart->setTitle(title);
+    chart->createDefaultAxes();
+
+    auto* newView = new QChartView(chart, this);
+
+    if (mChartView) {
+        mLayout->removeWidget(mChartView);
+        delete mChartView;
+    }
+
+    mChartView = newView;
+    mLayout->addWidget(mChartView);
+}
+
+void MainGraph::ShowPieChart(const QString& title, const std::vector<std::pair<QString, double>>& slices) {
+    auto* series = new QPieSeries();
+
+    for (const auto& slice : slices) {
+        QString label = slice.first;
+        double value = slice.second;
+        series->append(label, value);
+    }
+
+    auto* chart = new QChart();
+    chart->addSeries(series);
+    chart->setTitle(title);
+
+    auto* newView = new QChartView(chart, this);
+
+    if (mChartView) {
+        mLayout->removeWidget(mChartView);
+        delete mChartView;
+    }
+
+    mChartView = newView;
+    mLayout->addWidget(mChartView);
+}
+
+}

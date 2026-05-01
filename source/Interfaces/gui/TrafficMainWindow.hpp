@@ -21,6 +21,7 @@
 #include "../../Agents/SwarmingAgent.hpp"
 #include "../../Worlds/StepTrafficWorld.hpp"
 #include "MainGraph.hpp"
+#include "../../tools/DataLog.hpp"
 
 namespace cse498 {
 
@@ -55,6 +56,13 @@ class TrafficMainWindow : public QMainWindow {
   void onSwitchToTrafficSimulation();
   void onSwitchToVirusSimulation();
   void onShowSimulationHelp();
+  
+  void onShowWaitingGraph();
+  void onShowDrivingGraph();
+  void onShowActiveGraph();
+  void onShowDistanceGraph();
+  void onShowTimeToArriveGraph();
+  void onShowCarActivityBreakdown();
 
  private:
   void setMenuBar();
@@ -85,6 +93,14 @@ class TrafficMainWindow : public QMainWindow {
   QMenu* mHelpMenu{};
   QToolBar* mToolBar{};
   QMenu* mMainMenu = nullptr;
+
+  QMenu* mGraphsMenu{};
+  QAction* mWaitingGraphAction{};
+  QAction* mDrivingGraphAction{};
+  QAction* mActiveGraphAction{};
+  QAction* mDistanceGraphAction{};
+  QAction* mTimeToArriveGraphAction{};
+  QAction* mCarActivityBreakdownAction{};
 
   QAction* mSwitchToTrafficAction = nullptr;
   QAction* mSwitchToVirusAction = nullptr;

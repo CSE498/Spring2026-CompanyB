@@ -11,9 +11,11 @@
 #include <string>
 #include <string_view>
 #include <unordered_map>
+#include <unordered_set>
 #include <vector>
 
 #include "../Interfaces/IDataLog.hpp"
+#include "../core/WorldPosition.hpp"
 
 namespace cse498 {
 
@@ -21,6 +23,10 @@ template <typename DataClass>
 class DataLog : public IDataLog<DataClass> {
  private:
   std::unordered_map<std::string, std::vector<TickStats>> time_series;
+  std::unordered_map<size_t, WorldPosition> previous_positions;
+  std::unordered_map<size_t, double> cumulative_distance;
+  std::unordered_map<size_t, size_t> active_ticks;
+  std::unordered_set<size_t> completed_agents;
 
   static constexpr std::array<std::string_view, 4> kInfectionFields = {
       "infection_count", "susceptible_count", "cured_count",

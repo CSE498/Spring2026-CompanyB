@@ -136,6 +136,29 @@ void TrafficMainWindow::setMenuBar() {
   connect(mReplayRestartAction, &QAction::triggered, this,
           &TrafficMainWindow::onReplayRestart);
   mToolBar->addAction(mReplayRestartAction);
+
+  mGraphsMenu = menuBar()->addMenu("&Graphs");
+
+  mWaitingGraphAction = new QAction("Waiting Count Over Time", this);
+  mDrivingGraphAction = new QAction("Driving Count Over Time", this);
+  mActiveGraphAction = new QAction("Active Count Over Time", this);
+  mDistanceGraphAction = new QAction("Distance Driven Over Time", this);
+  mTimeToArriveGraphAction = new QAction("Time to Arrive Over Time", this);
+  mCarActivityBreakdownAction = new QAction("Current Car Activity Breakdown", this);
+
+  mGraphsMenu->addAction(mWaitingGraphAction);
+  mGraphsMenu->addAction(mDrivingGraphAction);
+  mGraphsMenu->addAction(mActiveGraphAction);
+  mGraphsMenu->addAction(mDistanceGraphAction);
+  mGraphsMenu->addAction(mTimeToArriveGraphAction);
+  mGraphsMenu->addAction(mCarActivityBreakdownAction);
+
+  connect(mWaitingGraphAction, &QAction::triggered, this, &TrafficMainWindow::onShowWaitingGraph);
+  connect(mDrivingGraphAction, &QAction::triggered, this, &TrafficMainWindow::onShowDrivingGraph);
+  connect(mActiveGraphAction, &QAction::triggered, this, &TrafficMainWindow::onShowActiveGraph);
+  connect(mDistanceGraphAction, &QAction::triggered, this, &TrafficMainWindow::onShowDistanceGraph);
+  connect(mTimeToArriveGraphAction, &QAction::triggered, this, &TrafficMainWindow::onShowTimeToArriveGraph);
+  connect(mCarActivityBreakdownAction, &QAction::triggered, this, &TrafficMainWindow::onShowCarActivityBreakdown);
 }
 
 void TrafficMainWindow::setMainWidget() {
@@ -176,6 +199,8 @@ void TrafficMainWindow::setMainWidget() {
   splitter->setStretchFactor(0, 1);
   splitter->setStretchFactor(1, 3);
   setCentralWidget(splitter);
+
+  onShowActiveGraph();
 }
 
 void TrafficMainWindow::setStatusBar() {
@@ -354,6 +379,40 @@ void TrafficMainWindow::onSwitchToVirusSimulation() {
   virusWindow->show();
 
   close();
+}
+
+void TrafficMainWindow::onShowWaitingGraph() {
+    std::vector<double> dummyData = {5, 4, 6, 3, 7, 5, 4, 6};
+    mMainGraph->ShowLineGraph("Waiting Count Over Time", "Waiting", dummyData);
+}
+
+void TrafficMainWindow::onShowDrivingGraph() {
+    std::vector<double> dummyData = {3, 5, 4, 7, 6, 8, 7, 9};
+    mMainGraph->ShowLineGraph("Driving Count Over Time", "Driving", dummyData);
+}
+
+void TrafficMainWindow::onShowActiveGraph() {
+    std::vector<double> dummyData = {8, 9, 10, 10, 13, 13, 11, 15};
+    mMainGraph->ShowLineGraph("Active Count Over Time", "Active", dummyData);
+}
+
+void TrafficMainWindow::onShowDistanceGraph() {
+    std::vector<double> dummyData = {2, 5, 8, 12, 17, 23, 30, 38};
+    mMainGraph->ShowLineGraph("Distance Driven Over Time", "Distance", dummyData);
+}
+
+void TrafficMainWindow::onShowTimeToArriveGraph() {
+    std::vector<double> dummyData = {10, 9, 8, 7, 7, 6, 5, 4};
+    mMainGraph->ShowLineGraph("Time to Arrive Over Time", "Time", dummyData);
+}
+
+void TrafficMainWindow::onShowCarActivityBreakdown() {
+    std::vector<std::pair<QString, double>> slices = {
+        {"Waiting", 4.0},
+        {"Driving", 7.0},
+        {"Active", 3.0}
+    };
+    mMainGraph->ShowPieChart("Current Car Activity Breakdown", slices);
 }
 
 }  // namespace cse498
