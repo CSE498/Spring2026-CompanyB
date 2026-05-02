@@ -18,13 +18,19 @@ file(GLOB_RECURSE SOURCES
 
 # Header directories
 set(HEADER_DIRS
-        ${CMAKE_CURRENT_SOURCE_DIR}
-        ${CMAKE_CURRENT_SOURCE_DIR}/agents
-        ${CMAKE_CURRENT_SOURCE_DIR}/core
-        ${CMAKE_CURRENT_SOURCE_DIR}/Interfaces
-        ${CMAKE_CURRENT_SOURCE_DIR}/tools
-        ${CMAKE_CURRENT_SOURCE_DIR}/tools/webui
-        ${CMAKE_CURRENT_SOURCE_DIR}/worlds
+    ${CMAKE_CURRENT_SOURCE_DIR}
+    ${CMAKE_CURRENT_SOURCE_DIR}/../benchmarking
+    ${CMAKE_CURRENT_SOURCE_DIR}/../benchmarking/core
+    ${CMAKE_CURRENT_SOURCE_DIR}/agents
+    ${CMAKE_CURRENT_SOURCE_DIR}/core
+    ${CMAKE_CURRENT_SOURCE_DIR}/Interfaces
+    ${CMAKE_CURRENT_SOURCE_DIR}/tools
+    ${CMAKE_CURRENT_SOURCE_DIR}/tools/webui
+    ${CMAKE_CURRENT_SOURCE_DIR}/worlds
+)
+
+file(GLOB_RECURSE BENCHMARK_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/../benchmarking/core/*.cpp"
 )
 
 include(FetchContent)
@@ -120,9 +126,11 @@ elseif(BUILD_TESTS)
     set(CMAKE_AUTOMOC ON) # Necessary for QT macro searches
   endif()
 
-  # Fetch Catch2 v3 from GitHub
-  include(FetchContent)
-  FetchContent_Declare(
+    list(APPEND SOURCES ${BENCHMARK_SOURCES})
+
+    # Fetch Catch2 v3 from GitHub
+    include(FetchContent)
+    FetchContent_Declare(
         Catch2
         GIT_REPOSITORY https://github.com/catchorg/Catch2.git
         GIT_TAG v3.12.0
@@ -144,6 +152,8 @@ elseif(BUILD_TESTS)
 
   # Native tests from tests/ (excluding tests/wasm/)
   file(GLOB_RECURSE TEST_SOURCES "../tests/*.cpp")
+    file(GLOB_RECURSE BENCHMARK_TEST_SOURCES "../benchmarking/tests/*.cpp")
+    list(APPEND TEST_SOURCES ${BENCHMARK_TEST_SOURCES})
   list(FILTER TEST_SOURCES EXCLUDE REGEX ".*/wasm/.*")
   if(NO_QT)
     # Exclude tests for Qt GUI components
@@ -253,6 +263,8 @@ else()
     find_package(Qt6 REQUIRED COMPONENTS Core Gui Widgets Charts)
     set(CMAKE_AUTOMOC ON)
   endif()
+
+    list(APPEND SOURCES ${BENCHMARK_SOURCES})
 
   add_executable(app ${SOURCES})
   target_link_libraries(app PRIVATE range-v3 nlohmann_json::nlohmann_json)
