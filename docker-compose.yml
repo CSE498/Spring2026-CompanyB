@@ -122,3 +122,21 @@ services:
       - TARGET_MAIN=${TARGET_MAIN:-}
     working_dir: /app
     command: shell
+
+  # Run the native Qt binary
+  run-native:
+    build:
+      context: .
+    user: "${HOST_UID:-1000}:${HOST_GID:-1000}"
+    entrypoint: /app/build/docker-native/app
+    volumes:
+      - ./build:/app/build
+      - ./assets:/app/assets:ro
+      - /tmp/.X11-unix:/tmp/.X11-unix
+      - /mnt/wslg:/mnt/wslg
+    environment:
+      - DISPLAY=${DISPLAY:-:0}
+      - WAYLAND_DISPLAY=${WAYLAND_DISPLAY:-wayland-0}
+      - XDG_RUNTIME_DIR=/tmp/xdg-runtime
+      - QT_QPA_PLATFORM=${QT_QPA_PLATFORM:-xcb}
+      - PULSE_SERVER=${PULSE_SERVER:-}
