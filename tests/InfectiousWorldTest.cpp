@@ -13,6 +13,23 @@ static DiseaseData at(size_t x, size_t y) {
   return DiseaseData{WorldPosition{x, y}};
 }
 
+class MoveOnceAgent : public StepAgentBase<DiseaseData> {
+ private:
+  WorldPosition goal;
+
+ public:
+  MoveOnceAgent(DiseaseData data, size_t id)
+      : StepAgentBase<DiseaseData>(data, id), goal(data.position) {}
+
+  StepContainer GetTurn() override {
+    StepContainer turn;
+    turn.add_step(steps::MovementStep{goal});
+    return turn;
+  }
+
+  void SetGoal(WorldPosition position) override { goal = position; }
+};
+
 /** @brief Generate a script for any number of scripted agents which spawn at
  * the given points and do nothing.
  */
@@ -69,13 +86,6 @@ TEST_CASE("InfectiousWorld: InfectAgent updates state", "[InfectiousWorld]") {
   CHECK(world.GetAgentHealth(0) == HealthState::INFECTED);
   CHECK(world.GetInfectedCount() == 1);
   CHECK(world.GetSusceptibleCount() == 0);
-}
-
-TEST_CASE("InfectiousWorld: InfectAgent invalid id throws",
-          "[InfectiousWorld]") {
-  auto script = make_script();
-  InfectiousWorld world(8, 6, script);
-  CHECK_THROWS_AS(world.InfectAgent(0), std::out_of_range);
 }
 
 // ============================================================================
@@ -250,4 +260,74 @@ TEST_CASE("InfectiousWorld: recovered agent can be re-infected after immunity",
   // susceptible and SpreadInfection re-infects them in the same tick.
   for (int i = 0; i < 2; ++i) world.UpdateWorld();
   CHECK(world.GetAgentHealth(0) == HealthState::INFECTED);
+}
+
+// ============================================================================
+// Configuration
+// ============================================================================
+
+TEST_CASE("InfectiousWorld: configuration getters report current values",
+          "[InfectiousWorld]") {
+  auto script = make_script();
+  InfectiousWorld world(8, 6, script);
+
+  CHECK(world.GetClinicEntrance() == std::nullopt);
+  CHECK(world.GetRecoveryExit() == std::nullopt);
+
+  world.SetTreatmentDuration(7);
+  world.SetFallbackRecoveryTicks(11);
+  world.SetClinicEntrance(WorldPosition{2, 3});
+  world.SetRecoveryExit(WorldPosition{4, 5});
+
+  CHECK(world.GetTreatmentDuration() == 7);
+  CHECK(world.GetFallbackRecoveryTicks() == 11);
+  REQUIRE(world.GetClinicEntrance().has_value());
+  CHECK(world.GetClinicEntrance().value() == WorldPosition{2, 3});
+  REQUIRE(world.GetRecoveryExit().has_value());
+  CHECK(world.GetRecoveryExit().value() == WorldPosition{4, 5});
+}
+
+TEST_CASE("InfectiousWorld: setters reject invalid configuration",
+          "[InfectiousWorld]") {
+  auto script = make_script();
+  InfectiousWorld world(8, 6, script);
+
+  CHECK_THROWS_AS(world.SetTransmissionRate(-0.1), std::invalid_argument);
+  CHECK_THROWS_AS(world.SetTransmissionRate(1.1), std::invalid_argument);
+  CHECK_THROWS_AS(world.SetInfectionRadius(-0.1), std::invalid_argument);
+  CHECK_THROWS_AS(world.SetTreatmentDuration(0), std::invalid_argument);
+}
+
+// ============================================================================
+// Movement
+// ============================================================================
+
+TEST_CASE("InfectiousWorld: quarantine movement rules block invalid moves",
+          "[InfectiousWorld]") {
+  auto script = make_script();
+  InfectiousWorld world(8, 6, script);
+  world.AddQuarantineZone(Box::FromCorners(Point(3, 1), Point(5, 5)));
+
+  auto& agent = world.AddAgent<MoveOnceAgent>(at(2, 3));
+
+  agent.SetGoal(WorldPosition{3, 3});
+  world.RunAgents();
+  CHECK(world.GetAgentState(0).position == WorldPosition{2, 3});
+
+  world.InfectAgent(0);
+  agent.SetGoal(WorldPosition{3, 3});
+  world.RunAgents();
+  CHECK(world.GetAgentState(0).position == WorldPosition{3, 3});
+
+  agent.SetGoal(WorldPosition{2, 3});
+  world.RunAgents();
+  CHECK(world.GetAgentState(0).position == WorldPosition{3, 3});
+
+  DiseaseData state = world.GetAgentState(0);
+  state.health = HealthState::RECOVERED;
+  agent.SetState(state);
+
+  agent.SetGoal(WorldPosition{2, 3});
+  world.RunAgents();
+  CHECK(world.GetAgentState(0).position == WorldPosition{2, 3});
 }

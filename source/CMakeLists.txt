@@ -18,13 +18,13 @@ file(GLOB_RECURSE SOURCES
 
 # Header directories
 set(HEADER_DIRS
-    ${CMAKE_CURRENT_SOURCE_DIR}
-    ${CMAKE_CURRENT_SOURCE_DIR}/agents
-    ${CMAKE_CURRENT_SOURCE_DIR}/core
-    ${CMAKE_CURRENT_SOURCE_DIR}/Interfaces
-    ${CMAKE_CURRENT_SOURCE_DIR}/tools
-    ${CMAKE_CURRENT_SOURCE_DIR}/tools/webui
-    ${CMAKE_CURRENT_SOURCE_DIR}/worlds
+        ${CMAKE_CURRENT_SOURCE_DIR}
+        ${CMAKE_CURRENT_SOURCE_DIR}/agents
+        ${CMAKE_CURRENT_SOURCE_DIR}/core
+        ${CMAKE_CURRENT_SOURCE_DIR}/Interfaces
+        ${CMAKE_CURRENT_SOURCE_DIR}/tools
+        ${CMAKE_CURRENT_SOURCE_DIR}/tools/webui
+        ${CMAKE_CURRENT_SOURCE_DIR}/worlds
 )
 
 include(FetchContent)

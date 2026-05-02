@@ -12,7 +12,7 @@
 // #include "../tools/DataLog.hpp"
 #include <nlohmann/json.hpp>
 
-#include "IActionLog.hpp"  // For LogLevel definition and ActionEventBase
+#include "IActionLog.hpp"  // For LogLevel definition
 
 namespace cse498 {
 

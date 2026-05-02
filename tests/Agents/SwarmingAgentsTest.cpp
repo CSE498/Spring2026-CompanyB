@@ -299,13 +299,18 @@ TEST_CASE(
   auto first_turn = agent.GetTurn();
   MovementStep first = NextMovement(first_turn);
 
+  // Simulate the world applying the move
+  auto state = agent.GetState();
+  state.position = first.loc;
+  agent.SetState(state);
+
   auto second_turn = agent.GetTurn();
   MovementStep second = NextMovement(second_turn);
 
   REQUIRE(IsCardinalNeighbor(pos, first.loc));
-  REQUIRE(IsCardinalNeighbor(pos, second.loc));
+  REQUIRE(IsCardinalNeighbor(first.loc, second.loc));
 
-  // Since there are four possible neighbors and only one is recent,
-  // the next random move should avoid repeating the same neighbor.
-  REQUIRE(second.loc != first.loc);
+  // Since the agent started at 'pos', 'pos' is in recent history.
+  // The next random move should avoid returning to 'pos'.
+  REQUIRE(second.loc != pos);
 }

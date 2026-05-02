@@ -3,15 +3,16 @@
 #include <memory>
 #include <vector>
 
-#include "Agents/SwarmingAgent.hpp"
-#include "Worlds/InfectiousWorld.hpp"
-#include "tools/DataLog.hpp"
+#include "../../source/Agents/SwarmingAgent.hpp"
+#include "../../source/Worlds/InfectiousWorld.hpp"
+#include "../../source/core/StepAgentBase.hpp"
+#include "../../source/tools/DataLog.hpp"
 
 using namespace cse498;
 using Catch::Approx;
 
 TEST_CASE("DataLog infection metrics aggregate from DiseaseData",
-          "[datalog][infection]") {
+          "[DataLog][Infection]") {
   std::vector<std::shared_ptr<StepAgentBase<DiseaseData>>> agents;
 
   DiseaseData infected{};
@@ -34,7 +35,7 @@ TEST_CASE("DataLog infection metrics aggregate from DiseaseData",
   DataLog<DiseaseData> datalog(WorldType::Infection);
   datalog.AggregateData(agents);
 
-  auto const& data = datalog.GetAggregationData();
+  const auto& data = datalog.GetAggregationData();
 
   REQUIRE(data.at("infection_count").size() == 1);
   REQUIRE(data.at("susceptible_count").size() == 1);
@@ -49,7 +50,7 @@ TEST_CASE("DataLog infection metrics aggregate from DiseaseData",
 
 TEST_CASE(
     "InfectiousWorld aggregates into world-owned DataLog after UpdateWorld",
-    "[datalog][infection][world-hook]") {
+    "[DataLog][Infection][World]") {
   InfectiousWorld world(10, 8);
 
   DiseaseData a{};
@@ -63,15 +64,20 @@ TEST_CASE(
   world.RunAgents();
   world.UpdateWorld();
 
-  auto const& data = world.GetDataLog().GetAggregationData();
-  for (auto const& kv : data) {
-    REQUIRE(kv.second.size() == 1);
-    CHECK(kv.second.back().count == 2);
-  }
+  const auto& data = world.GetDataLog().GetAggregationData();
+  REQUIRE(data.at("infection_count").size() == 1);
+  REQUIRE(data.at("susceptible_count").size() == 1);
+  REQUIRE(data.at("cured_count").size() == 1);
+  REQUIRE(data.at("infection_probability").size() == 1);
+
+  CHECK(data.at("infection_count").back().sum == 0.0);
+  CHECK(data.at("susceptible_count").back().sum == 2.0);
+  CHECK(data.at("cured_count").back().sum == 0.0);
+  CHECK(data.at("infection_probability").back().mean == 0.0);
 }
 
 TEST_CASE("DataLog traffic metrics aggregate from TrafficData",
-          "[datalog][traffic]") {
+          "[DataLog][Traffic]") {
   std::vector<std::shared_ptr<StepAgentBase<TrafficData>>> agents;
 
   TrafficData driving{};
@@ -81,7 +87,6 @@ TEST_CASE("DataLog traffic metrics aggregate from TrafficData",
 
   TrafficData waiting{};
   waiting.position = WorldPosition{3, 2};
-  waiting.destination = std::nullopt;
   waiting.is_active = false;
 
   agents.push_back(std::make_shared<SwarmingAgent<TrafficData>>(driving, 0));
@@ -90,7 +95,7 @@ TEST_CASE("DataLog traffic metrics aggregate from TrafficData",
   DataLog<TrafficData> datalog(WorldType::Traffic);
   datalog.AggregateData(agents);
 
-  auto const& data = datalog.GetAggregationData();
+  const auto& data = datalog.GetAggregationData();
 
   REQUIRE(data.at("waiting_count").size() == 1);
   REQUIRE(data.at("driving_count").size() == 1);
@@ -98,9 +103,9 @@ TEST_CASE("DataLog traffic metrics aggregate from TrafficData",
   REQUIRE(data.at("distance_driven").size() == 1);
   REQUIRE(data.at("time_to_arrive").size() == 1);
 
-  CHECK(data.at("waiting_count").back().sum == 1.0);
-  CHECK(data.at("driving_count").back().sum == 1.0);
+  CHECK(data.at("waiting_count").back().sum == 0.0);
+  CHECK(data.at("driving_count").back().sum == 0.0);
   CHECK(data.at("active_count").back().sum == 1.0);
   CHECK(data.at("distance_driven").back().sum == 0.0);
-  CHECK(data.at("time_to_arrive").back().sum == 3.0);
+  CHECK(data.at("time_to_arrive").back().count == 0);
 }

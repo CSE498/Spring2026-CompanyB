@@ -12,10 +12,10 @@ ImageManager::ImageManager() : mOwnedScene(), mScene(mOwnedScene) {}
 
 /// ImageManager does not own scene, use this to share scene with other
 /// components
-ImageManager::ImageManager(QGraphicsScene &scene)
+ImageManager::ImageManager(QGraphicsScene& scene)
     : mOwnedScene(), mScene(scene) {}
 
-bool ImageManager::Load(const QString &imageId, const QString &path) {
+bool ImageManager::Load(const QString& imageId, const QString& path) {
   if (imageId.isEmpty()) {
     qWarning() << "Error: Image ID is empty";
     return false;
@@ -36,7 +36,7 @@ bool ImageManager::Load(const QString &imageId, const QString &path) {
   return true;
 }
 
-std::optional<QPixmap> ImageManager::GetImage(const QString &imageId) const {
+std::optional<QPixmap> ImageManager::GetImage(const QString& imageId) const {
   auto it = mImages.find(imageId);
   if (it == mImages.end()) {
     return std::nullopt;  // was throwing, now consistent with Load/Remove
@@ -44,14 +44,14 @@ std::optional<QPixmap> ImageManager::GetImage(const QString &imageId) const {
   return it->second;
 }
 
-bool ImageManager::HasImage(const QString &imageId) const {
+bool ImageManager::HasImage(const QString& imageId) const {
   return mImages.contains(imageId);
 }
 
-bool ImageManager::Remove(const QString &imageId) {
+bool ImageManager::Remove(const QString& imageId) {
   // std::erase_if with lambda (Advanced C++ Features)
   const size_t removed = std::erase_if(
-      mImages, [&imageId](const auto &pair) { return pair.first == imageId; });
+      mImages, [&imageId](const auto& pair) { return pair.first == imageId; });
 
   if (removed == 0) {
     qWarning() << "Error: Image '" << imageId << "' not found";

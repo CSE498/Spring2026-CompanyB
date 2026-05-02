@@ -61,7 +61,7 @@ jobs:
         run: |
           echo "CC=gcc-14" >> $GITHUB_ENV
           echo "CXX=g++-14" >> $GITHUB_ENV
-          
+
       - name: Install Qt6
         uses: jurplel/install-qt-action@v4
         with:
