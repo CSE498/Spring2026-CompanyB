@@ -13,7 +13,6 @@
 #include "../core/AgentData.hpp"
 #include "../core/StepWorldBase.hpp"
 #include "../tools/DataLog.hpp"
-#include "../tools/DataLog.hpp"
 #include "../tools/WeightedSet.hpp"
 
 namespace cse498 {
@@ -260,7 +259,7 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
   }
 
  public:
-  [[nodiscard]] const DataLog<TrafficData> &GetTrafficDataLog() const {
+  [[nodiscard]] const DataLog<TrafficData>& GetTrafficDataLog() const {
     return traffic_data_log;
   }
 

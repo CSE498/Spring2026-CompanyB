@@ -262,7 +262,7 @@ void StartScreen::launchMainWindow(int mode) {
     auto *win = new InfectiousWindow(*mDiseaseWorld, mImagePaths, mTileSize,
                                      mAgentImagePath);
                                      */
-    auto *win = new MainWindow(*mDiseaseWorld, mImagePaths, mTileSize,
+    auto* win = new MainWindow(*mDiseaseWorld, mImagePaths, mTileSize,
                                mAgentImagePath, nullptr, 2);
     win->mOwnedWorld = std::move(mDiseaseWorld);
     win->setWindowTitle("Group 21 Demo - Virus");
