@@ -147,7 +147,7 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
   TrafficLightPhase traffic_light_phase{};
   /// @brief The number of turns that pass before all traffic lights flip to the
   /// opposite of what they currently are.
-  static constexpr int traffic_light_period = 3;
+  static constexpr int traffic_light_period = 150;
   /// @brief Counts up each turn and gets reset when it reaches
   /// traffic_light_period.
   int traffic_light_clock = 0;

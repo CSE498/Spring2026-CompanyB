@@ -208,6 +208,7 @@ WebCanvas& WebCanvas::SetPenColor(RGB rgb) {
   assert(r >= 0 && r <= 255 && "Red value must be 0-255");
   assert(g >= 0 && g <= 255 && "Green value must be 0-255");
   assert(b >= 0 && b <= 255 && "Blue value must be 0-255");
+  if (pen_color == rgb) return *this;
   pen_color = rgb;
   ctx.set("strokeStyle", RgbString(rgb));
   return *this;
@@ -218,9 +219,46 @@ WebCanvas& WebCanvas::SetFillColor(RGB rgb) {
   assert(r >= 0 && r <= 255 && "Red value must be 0-255");
   assert(g >= 0 && g <= 255 && "Green value must be 0-255");
   assert(b >= 0 && b <= 255 && "Blue value must be 0-255");
+  if (fill_color == rgb) return *this;
   fill_color = rgb;
   ctx.set("fillStyle", RgbString(rgb));
 
+  return *this;
+}
+
+WebCanvas& WebCanvas::BeginPath() {
+  ctx.call<void>("beginPath");
+  return *this;
+}
+
+WebCanvas& WebCanvas::AddCircle(double x, double y, double radius) {
+  // moveTo before each arc so consecutive circles don't get joined into one
+  // continuous sub-path
+  ctx.call<void>("moveTo", x + radius, y);
+  ctx.call<void>("arc", x, y, radius, 0.0, 2 * M_PI);
+  return *this;
+}
+
+WebCanvas& WebCanvas::AddLine(std::pair<double, double> start,
+                              std::pair<double, double> end) {
+  ctx.call<void>("moveTo", start.first, start.second);
+  ctx.call<void>("lineTo", end.first, end.second);
+  return *this;
+}
+
+WebCanvas& WebCanvas::Fill() {
+  ctx.call<void>("fill");
+  return *this;
+}
+
+WebCanvas& WebCanvas::Stroke() {
+  ctx.call<void>("stroke");
+  return *this;
+}
+
+WebCanvas& WebCanvas::DrawCanvas(const WebCanvas& src, double x, double y) {
+  ctx.call<void>("drawImage", src.GetDOMElement(), x, y,
+                 static_cast<double>(width), static_cast<double>(height));
   return *this;
 }
 

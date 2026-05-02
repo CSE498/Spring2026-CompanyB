@@ -5,6 +5,7 @@
 #pragma once
 
 #include <any>
+#include <exception>
 #include <memory>
 #include <print>
 #include <ranges>
@@ -74,16 +75,17 @@ struct AgentWrapper {
 template <IsDataClass DataClass>
 class ScriptedAgent : public StepAgentBase<DataClass> {
   // TODO: Actuall fill these out
-  std::unique_ptr<Node> mInit;
+  std::unique_ptr<Node>
+      mInitNode;  //< Node used to generate initialization logic
 
-  std::unique_ptr<Node> mTurn;
-  bool mCurrentlyInInit = false;  //< Whether we are currently parsing init
+  std::unique_ptr<Node> mTurnNode;  //< Node used to generate turn logic
+  bool mCurrentlyInInit = false;    //< Whether we are currently parsing init
 
-  std::unique_ptr<AgentWrapper> mAgentWrapper;
+  std::unique_ptr<AgentWrapper> mAgentWrapper;  //< Wrapper used for visitors
 
-  StepContainer mCurrentTurn;
+  StepContainer mCurrentTurn;  //< Current steps made in a turn
 
-  std::optional<Type> mCurrentRetval = {};
+  std::optional<Type> mCurrentRetval = {};  //< Current function return value
 
   /// Whether the agent has been initialized correctly
   bool mReady = false;
@@ -96,17 +98,35 @@ class ScriptedAgent : public StepAgentBase<DataClass> {
   ~ScriptedAgent() = default;
 
   ScriptedAgent& SetInit(std::unique_ptr<Node> init) {
-    mInit = std::move(init);
+    if (!init) {
+      std::println(
+          "Fatal error: Attempted to set a null init for a scripted agent");
+      std::terminate();
+    }
+
+    mInitNode = std::move(init);
     mCurrentTurn = StepContainer{};
     mCurrentlyInInit = true;
-    mAgentWrapper->Evaluate(*mInit);
+
+    if (!mAgentWrapper->Evaluate(*mInitNode).has_value()) {
+      std::println("Fatal error: Scripted agent error on init");
+      std::terminate();
+    }
+
     mCurrentlyInInit = false;
     mReady = true;
+
     return *this;
   }
 
   ScriptedAgent& SetTurn(std::unique_ptr<Node> turn) {
-    mTurn = std::move(turn);
+    if (!turn) {
+      std::println(
+          "Fatal error: Attempted to set a null turn for a scripted agent");
+      std::terminate();
+    }
+
+    mTurnNode = std::move(turn);
     return *this;
   }
 
@@ -115,16 +135,18 @@ class ScriptedAgent : public StepAgentBase<DataClass> {
     mCurrentTurn = StepContainer{};  // Clear the container
 
     if (!mReady) {
-      // Fatal : ScriptedAgent was not initialized
-      std::println("Fatal error: ScriptedAgent was never initialized!");
-      return std::move(mCurrentTurn);
+      return StepContainer{};
     }
 
-    auto res = mAgentWrapper->Evaluate(*mTurn);
+    if (!mTurnNode) {
+      std::println("Fatal error: Scripted agent turn never set");
+      std::terminate();
+    }
+
+    auto res = mAgentWrapper->Evaluate(*mTurnNode);
     if (!res.has_value()) {
       // TODO we do no move, but we need to report error
       std::cout << res.error().ToStr();
-      // std::terminate();
       return StepContainer{};
     };
 
@@ -175,11 +197,11 @@ class ScriptedAgent : public StepAgentBase<DataClass> {
         case Value::DESTINATION: {
           // Ensure val_result is a point
           if (!std::holds_alternative<PointTy>(val_result))
-            return InterpErr{RuntimeErr(
-                RuntimeErr::TYPE_MISMATCH,
-                std::format("Attempted to set magic value "
-                            "__destination__ to non-point type '{}')",
-                            TypeVariantToName(val_result)))};
+            return InterpErr{
+                RuntimeErr(RuntimeErr::TYPE_MISMATCH,
+                           std::format("Attempted to set magic value "
+                                       "__destination__ to non-point type '{}'",
+                                       TypeVariantToName(val_result)))};
 
           auto data = mAgentBase.GetState();
 
@@ -488,6 +510,7 @@ class ScriptedAgent : public StepAgentBase<DataClass> {
       assert(mCurrentRetval.has_value());
       auto retval_tmp = mCurrentRetval.value();
       mCurrentRetval = {};
+
       return retval_tmp;
     } else if (!func_res.has_value()) {
       return func_res.error();
