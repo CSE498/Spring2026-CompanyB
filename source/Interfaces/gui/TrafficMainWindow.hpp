@@ -20,8 +20,8 @@
 
 #include "../../Agents/SwarmingAgent.hpp"
 #include "../../Worlds/StepTrafficWorld.hpp"
-#include "MainGraph.hpp"
 #include "../../tools/DataLog.hpp"
+#include "MainGraph.hpp"
 
 namespace cse498 {
 
@@ -56,7 +56,7 @@ class TrafficMainWindow : public QMainWindow {
   void onSwitchToTrafficSimulation();
   void onSwitchToVirusSimulation();
   void onShowSimulationHelp();
-  
+
   void onShowWaitingGraph();
   void onShowDrivingGraph();
   void onShowActiveGraph();

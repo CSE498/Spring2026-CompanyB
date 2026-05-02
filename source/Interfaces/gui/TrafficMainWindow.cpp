@@ -144,7 +144,8 @@ void TrafficMainWindow::setMenuBar() {
   mActiveGraphAction = new QAction("Active Count Over Time", this);
   mDistanceGraphAction = new QAction("Distance Driven Over Time", this);
   mTimeToArriveGraphAction = new QAction("Time to Arrive Over Time", this);
-  mCarActivityBreakdownAction = new QAction("Current Car Activity Breakdown", this);
+  mCarActivityBreakdownAction =
+      new QAction("Current Car Activity Breakdown", this);
 
   mGraphsMenu->addAction(mWaitingGraphAction);
   mGraphsMenu->addAction(mDrivingGraphAction);
@@ -153,12 +154,18 @@ void TrafficMainWindow::setMenuBar() {
   mGraphsMenu->addAction(mTimeToArriveGraphAction);
   mGraphsMenu->addAction(mCarActivityBreakdownAction);
 
-  connect(mWaitingGraphAction, &QAction::triggered, this, &TrafficMainWindow::onShowWaitingGraph);
-  connect(mDrivingGraphAction, &QAction::triggered, this, &TrafficMainWindow::onShowDrivingGraph);
-  connect(mActiveGraphAction, &QAction::triggered, this, &TrafficMainWindow::onShowActiveGraph);
-  connect(mDistanceGraphAction, &QAction::triggered, this, &TrafficMainWindow::onShowDistanceGraph);
-  connect(mTimeToArriveGraphAction, &QAction::triggered, this, &TrafficMainWindow::onShowTimeToArriveGraph);
-  connect(mCarActivityBreakdownAction, &QAction::triggered, this, &TrafficMainWindow::onShowCarActivityBreakdown);
+  connect(mWaitingGraphAction, &QAction::triggered, this,
+          &TrafficMainWindow::onShowWaitingGraph);
+  connect(mDrivingGraphAction, &QAction::triggered, this,
+          &TrafficMainWindow::onShowDrivingGraph);
+  connect(mActiveGraphAction, &QAction::triggered, this,
+          &TrafficMainWindow::onShowActiveGraph);
+  connect(mDistanceGraphAction, &QAction::triggered, this,
+          &TrafficMainWindow::onShowDistanceGraph);
+  connect(mTimeToArriveGraphAction, &QAction::triggered, this,
+          &TrafficMainWindow::onShowTimeToArriveGraph);
+  connect(mCarActivityBreakdownAction, &QAction::triggered, this,
+          &TrafficMainWindow::onShowCarActivityBreakdown);
 }
 
 void TrafficMainWindow::setMainWidget() {
@@ -382,86 +389,93 @@ void TrafficMainWindow::onSwitchToVirusSimulation() {
 }
 
 void TrafficMainWindow::onShowWaitingGraph() {
-    const auto& data = mWorld.GetTrafficDataLog().GetAggregationData();
-    if (data.contains("waiting_count")) {
-        const auto& ticks = data.at("waiting_count");
-        if (!ticks.empty()) {
-            std::vector<double> values;
-            for (const auto& stat : ticks) values.push_back(stat.mean);
-            mMainGraph->ShowLineGraph("Waiting Count Over Time", "Waiting", values, QColor(255, 200, 0));
-            return;
-        }
+  const auto& data = mWorld.GetTrafficDataLog().GetAggregationData();
+  if (data.contains("waiting_count")) {
+    const auto& ticks = data.at("waiting_count");
+    if (!ticks.empty()) {
+      std::vector<double> values;
+      for (const auto& stat : ticks) values.push_back(stat.mean);
+      mMainGraph->ShowLineGraph("Waiting Count Over Time", "Waiting", values,
+                                QColor(255, 200, 0));
+      return;
     }
+  }
 }
 
 void TrafficMainWindow::onShowDrivingGraph() {
-    const auto& data = mWorld.GetTrafficDataLog().GetAggregationData();
-    if (data.contains("driving_count")) {
-        const auto& ticks = data.at("driving_count");
-        if (!ticks.empty()) {
-            std::vector<double> values;
-            for (const auto& stat : ticks) values.push_back(stat.mean);
-            mMainGraph->ShowLineGraph("Driving Count Over Time", "Driving", values, QColor(0, 0, 139));
-            return;
-        }
+  const auto& data = mWorld.GetTrafficDataLog().GetAggregationData();
+  if (data.contains("driving_count")) {
+    const auto& ticks = data.at("driving_count");
+    if (!ticks.empty()) {
+      std::vector<double> values;
+      for (const auto& stat : ticks) values.push_back(stat.mean);
+      mMainGraph->ShowLineGraph("Driving Count Over Time", "Driving", values,
+                                QColor(0, 0, 139));
+      return;
     }
+  }
 }
 
 void TrafficMainWindow::onShowActiveGraph() {
-    const auto& data = mWorld.GetTrafficDataLog().GetAggregationData();
-    if (data.contains("active_count")) {
-        const auto& ticks = data.at("active_count");
-        if (!ticks.empty()) {
-            std::vector<double> values;
-            for (const auto& stat : ticks) values.push_back(stat.mean);
-            mMainGraph->ShowLineGraph("Active Count Over Time", "Active", values, QColor(0, 200, 200));
-            return;
-        }
+  const auto& data = mWorld.GetTrafficDataLog().GetAggregationData();
+  if (data.contains("active_count")) {
+    const auto& ticks = data.at("active_count");
+    if (!ticks.empty()) {
+      std::vector<double> values;
+      for (const auto& stat : ticks) values.push_back(stat.mean);
+      mMainGraph->ShowLineGraph("Active Count Over Time", "Active", values,
+                                QColor(0, 200, 200));
+      return;
     }
+  }
 }
 
 void TrafficMainWindow::onShowDistanceGraph() {
-    const auto& data = mWorld.GetTrafficDataLog().GetAggregationData();
-    if (data.contains("distance_driven")) {
-        const auto& ticks = data.at("distance_driven");
-        if (!ticks.empty()) {
-            std::vector<double> values;
-            for (const auto& stat : ticks) values.push_back(stat.mean);
-            mMainGraph->ShowLineGraph("Distance Driven Over Time", "Distance", values, QColor(0, 0, 139));
-            return;
-        }
+  const auto& data = mWorld.GetTrafficDataLog().GetAggregationData();
+  if (data.contains("distance_driven")) {
+    const auto& ticks = data.at("distance_driven");
+    if (!ticks.empty()) {
+      std::vector<double> values;
+      for (const auto& stat : ticks) values.push_back(stat.mean);
+      mMainGraph->ShowLineGraph("Distance Driven Over Time", "Distance", values,
+                                QColor(0, 0, 139));
+      return;
     }
+  }
 }
 
 void TrafficMainWindow::onShowTimeToArriveGraph() {
-    const auto& data = mWorld.GetTrafficDataLog().GetAggregationData();
-    if (data.contains("time_to_arrive")) {
-        const auto& ticks = data.at("time_to_arrive");
-        if (!ticks.empty()) {
-            std::vector<double> values;
-            for (const auto& stat : ticks) values.push_back(stat.mean);
-            mMainGraph->ShowLineGraph("Time to Arrive Over Time", "Time", values, QColor(128, 0, 128));
-            return;
-        }
+  const auto& data = mWorld.GetTrafficDataLog().GetAggregationData();
+  if (data.contains("time_to_arrive")) {
+    const auto& ticks = data.at("time_to_arrive");
+    if (!ticks.empty()) {
+      std::vector<double> values;
+      for (const auto& stat : ticks) values.push_back(stat.mean);
+      mMainGraph->ShowLineGraph("Time to Arrive Over Time", "Time", values,
+                                QColor(128, 0, 128));
+      return;
     }
+  }
 }
 
 void TrafficMainWindow::onShowCarActivityBreakdown() {
-    const auto& data = mWorld.GetTrafficDataLog().GetAggregationData();
-    if (data.contains("waiting_count") && data.contains("driving_count") && data.contains("active_count")) {
-        const auto& waitingVec = data.at("waiting_count");
-        const auto& drivingVec = data.at("driving_count");
-        const auto& activeVec = data.at("active_count");
-        if (!waitingVec.empty() && !drivingVec.empty() && !activeVec.empty()) {
-            std::vector<std::pair<QString, double>> slices = {
-                {"Waiting", waitingVec.back().mean},
-                {"Driving", drivingVec.back().mean},
-                {"Active", activeVec.back().mean}
-            };
-            mMainGraph->ShowPieChart("Current Car Activity Breakdown", slices, {QColor(255, 200, 0), QColor(0, 0, 139), QColor(0, 200, 200)});
-            return;
-        }
+  const auto& data = mWorld.GetTrafficDataLog().GetAggregationData();
+  if (data.contains("waiting_count") && data.contains("driving_count") &&
+      data.contains("active_count")) {
+    const auto& waitingVec = data.at("waiting_count");
+    const auto& drivingVec = data.at("driving_count");
+    const auto& activeVec = data.at("active_count");
+    if (!waitingVec.empty() && !drivingVec.empty() && !activeVec.empty()) {
+      std::vector<std::pair<QString, double>> slices = {
+          {"Waiting", waitingVec.back().mean},
+          {"Driving", drivingVec.back().mean},
+          {"Active", activeVec.back().mean}};
+      mMainGraph->ShowPieChart(
+          "Current Car Activity Breakdown", slices,
+          {QColor(255, 200, 0), QColor(0, 0, 139), QColor(0, 200, 200)});
+      return;
     }
+  }
 }
 
 }  // namespace cse498

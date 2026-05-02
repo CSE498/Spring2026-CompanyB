@@ -21,9 +21,9 @@
 #include "../../Agents/dummyStepPacingAgent.hpp"
 #include "../../Worlds/InfectiousWorld.hpp"
 #include "../../Worlds/SimWorldBase.hpp"
+#include "../../core/AgentData.hpp"
 #include "ImageGrid.hpp"
 #include "MainGraph.hpp"
-#include "../../core/AgentData.hpp"
 
 namespace cse498 {
 

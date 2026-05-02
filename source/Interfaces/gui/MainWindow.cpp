@@ -17,9 +17,9 @@ namespace cse498 {
 
 constexpr const int TIMEOUT = 4000;
 
-MainWindow::MainWindow(SimWorldBase<DiseaseData> &world,
-                       const std::vector<QString> &imagePaths, int tileSize,
-                       const QString &agentImagePath, QWidget *parent, int mode)
+MainWindow::MainWindow(SimWorldBase<DiseaseData>& world,
+                       const std::vector<QString>& imagePaths, int tileSize,
+                       const QString& agentImagePath, QWidget* parent, int mode)
     : QMainWindow(parent),
       mWorld(world),
       mImagePaths(imagePaths),
@@ -44,7 +44,7 @@ MainWindow::MainWindow(SimWorldBase<DiseaseData> &world,
 void MainWindow::setupAgents() {
   if (mMode == 1) {
   } else {
-    auto &iw = static_cast<InfectiousWorld &>(mWorld);
+    auto& iw = static_cast<InfectiousWorld&>(mWorld);
 
     // clears agents if restarting
     iw.ClearAgents();
@@ -183,17 +183,22 @@ void MainWindow::setMenuBar() {
     mInfectedGraphAction = new QAction("Infected Count Over Time", this);
     mSusceptibleGraphAction = new QAction("Susceptible Count Over Time", this);
     mCuredGraphAction = new QAction("Cured Count Over Time", this);
-    mInfectionBreakdownAction = new QAction("Current Infection Breakdown", this);
+    mInfectionBreakdownAction =
+        new QAction("Current Infection Breakdown", this);
 
     mGraphsMenu->addAction(mInfectedGraphAction);
     mGraphsMenu->addAction(mSusceptibleGraphAction);
     mGraphsMenu->addAction(mCuredGraphAction);
     mGraphsMenu->addAction(mInfectionBreakdownAction);
 
-    connect(mInfectedGraphAction, &QAction::triggered, this, &MainWindow::onShowInfectedGraph);
-    connect(mSusceptibleGraphAction, &QAction::triggered, this, &MainWindow::onShowSusceptibleGraph);
-    connect(mCuredGraphAction, &QAction::triggered, this, &MainWindow::onShowCuredGraph);
-    connect(mInfectionBreakdownAction, &QAction::triggered, this, &MainWindow::onShowInfectionBreakdown);
+    connect(mInfectedGraphAction, &QAction::triggered, this,
+            &MainWindow::onShowInfectedGraph);
+    connect(mSusceptibleGraphAction, &QAction::triggered, this,
+            &MainWindow::onShowSusceptibleGraph);
+    connect(mCuredGraphAction, &QAction::triggered, this,
+            &MainWindow::onShowCuredGraph);
+    connect(mInfectionBreakdownAction, &QAction::triggered, this,
+            &MainWindow::onShowInfectionBreakdown);
   }
 }
 
@@ -205,7 +210,7 @@ void MainWindow::setMainWidget() {
   mSidePanel = new QWidget(this);
   mSidePanel->setMinimumWidth(200);
 
-  auto *verticalSplitter = new QSplitter(Qt::Vertical, mSidePanel);
+  auto* verticalSplitter = new QSplitter(Qt::Vertical, mSidePanel);
 
   mMainGraph = new MainGraph(verticalSplitter);
   verticalSplitter->addWidget(mMainGraph);
@@ -228,7 +233,7 @@ void MainWindow::setMainWidget() {
   mSidePanelLayout->addWidget(verticalSplitter);
   mSidePanel->setLayout(mSidePanelLayout);
 
-  auto *splitter = new QSplitter(Qt::Horizontal, this);
+  auto* splitter = new QSplitter(Qt::Horizontal, this);
   splitter->addWidget(mSidePanel);
   splitter->addWidget(mGraphicsView);
   splitter->setStretchFactor(0, 1);
@@ -351,7 +356,7 @@ void MainWindow::onBackToMainMenu() {
     mTimer->stop();
   }
 
-  auto *startScreen = new StartScreen(mImagePaths, mTileSize, mAgentImagePath);
+  auto* startScreen = new StartScreen(mImagePaths, mTileSize, mAgentImagePath);
   startScreen->setAttribute(Qt::WA_DeleteOnClose);
   startScreen->show();
 
@@ -359,7 +364,7 @@ void MainWindow::onBackToMainMenu() {
   deleteLater();
 }
 
-void MainWindow::logCommand(const QString &message) {
+void MainWindow::logCommand(const QString& message) {
   mCommandLog->append(message);
 }
 
@@ -401,64 +406,73 @@ void MainWindow::onReplayRestart() {
 
 // infection graphs
 void MainWindow::onShowInfectedGraph() {
-    const auto& data = static_cast<InfectiousWorld&>(mWorld).GetDataLog().GetAggregationData();
-    if (data.contains("infection_count")) {
-        const auto& ticks = data.at("infection_count");
-        if (!ticks.empty()) {
-            std::vector<double> values;
-            for (const auto& stat : ticks) values.push_back(stat.mean);
-            mMainGraph->ShowLineGraph("Infected Count Over Time", "Infected", values, QColor(220, 50, 50));
-            return;
-        }
+  const auto& data =
+      static_cast<InfectiousWorld&>(mWorld).GetDataLog().GetAggregationData();
+  if (data.contains("infection_count")) {
+    const auto& ticks = data.at("infection_count");
+    if (!ticks.empty()) {
+      std::vector<double> values;
+      for (const auto& stat : ticks) values.push_back(stat.mean);
+      mMainGraph->ShowLineGraph("Infected Count Over Time", "Infected", values,
+                                QColor(220, 50, 50));
+      return;
     }
+  }
 }
 
 void MainWindow::onShowSusceptibleGraph() {
-    const auto& data = static_cast<InfectiousWorld&>(mWorld).GetDataLog().GetAggregationData();
-    if (data.contains("susceptible_count")) {
-        const auto& ticks = data.at("susceptible_count");
-        if (!ticks.empty()) {
-            std::vector<double> values;
-            for (const auto& stat : ticks) {
-                values.push_back(stat.mean);
-            }
-            mMainGraph->ShowLineGraph("Susceptible Count Over Time", "Susceptible", values, QColor(255, 165, 0));
-            return;
-        }
+  const auto& data =
+      static_cast<InfectiousWorld&>(mWorld).GetDataLog().GetAggregationData();
+  if (data.contains("susceptible_count")) {
+    const auto& ticks = data.at("susceptible_count");
+    if (!ticks.empty()) {
+      std::vector<double> values;
+      for (const auto& stat : ticks) {
+        values.push_back(stat.mean);
+      }
+      mMainGraph->ShowLineGraph("Susceptible Count Over Time", "Susceptible",
+                                values, QColor(255, 165, 0));
+      return;
     }
+  }
 }
 
 void MainWindow::onShowCuredGraph() {
-    const auto& data = static_cast<InfectiousWorld&>(mWorld).GetDataLog().GetAggregationData();
-    if (data.contains("cured_count")) {
-        const auto& ticks = data.at("cured_count");
-        if (!ticks.empty()) {
-            std::vector<double> values;
-            for (const auto& stat : ticks) {
-                values.push_back(stat.mean);
-            }
-            mMainGraph->ShowLineGraph("Cured Count Over Time", "Cured", values, QColor(50, 180, 50));
-            return;
-        }
+  const auto& data =
+      static_cast<InfectiousWorld&>(mWorld).GetDataLog().GetAggregationData();
+  if (data.contains("cured_count")) {
+    const auto& ticks = data.at("cured_count");
+    if (!ticks.empty()) {
+      std::vector<double> values;
+      for (const auto& stat : ticks) {
+        values.push_back(stat.mean);
+      }
+      mMainGraph->ShowLineGraph("Cured Count Over Time", "Cured", values,
+                                QColor(50, 180, 50));
+      return;
     }
+  }
 }
 
 void MainWindow::onShowInfectionBreakdown() {
-    const auto& data = static_cast<InfectiousWorld&>(mWorld).GetDataLog().GetAggregationData();
-    if (data.contains("infection_count") && data.contains("susceptible_count") && data.contains("cured_count")) {
-        const auto& infectedVec = data.at("infection_count");
-        const auto& susceptibleVec = data.at("susceptible_count");
-        const auto& curedVec = data.at("cured_count");
-        if (!infectedVec.empty() && !susceptibleVec.empty() && !curedVec.empty()) {
-            std::vector<std::pair<QString, double>> slices = {
-                {"Infected", infectedVec.back().mean},
-                {"Susceptible", susceptibleVec.back().mean},
-                {"Cured", curedVec.back().mean}
-            };
-            mMainGraph->ShowPieChart("Current Infection Breakdown", slices, {QColor(220, 50, 50), QColor(255, 165, 0), QColor(50, 180, 50)});
-            return;
-        }
+  const auto& data =
+      static_cast<InfectiousWorld&>(mWorld).GetDataLog().GetAggregationData();
+  if (data.contains("infection_count") && data.contains("susceptible_count") &&
+      data.contains("cured_count")) {
+    const auto& infectedVec = data.at("infection_count");
+    const auto& susceptibleVec = data.at("susceptible_count");
+    const auto& curedVec = data.at("cured_count");
+    if (!infectedVec.empty() && !susceptibleVec.empty() && !curedVec.empty()) {
+      std::vector<std::pair<QString, double>> slices = {
+          {"Infected", infectedVec.back().mean},
+          {"Susceptible", susceptibleVec.back().mean},
+          {"Cured", curedVec.back().mean}};
+      mMainGraph->ShowPieChart(
+          "Current Infection Breakdown", slices,
+          {QColor(220, 50, 50), QColor(255, 165, 0), QColor(50, 180, 50)});
+      return;
     }
+  }
 }
 
 void MainWindow::onShowSimulationHelp() {
@@ -484,7 +498,7 @@ void MainWindow::onSwitchToTrafficSimulation() {
   auto trafficWorld =
       std::make_unique<StepTrafficWorld<SwarmingAgent<TrafficData>>>(
           "assets/grids/DemoWorld.grid");
-  auto *trafficWindow = new TrafficMainWindow(*trafficWorld, mImagePaths,
+  auto* trafficWindow = new TrafficMainWindow(*trafficWorld, mImagePaths,
                                               mTileSize, mAgentImagePath);
 
   trafficWindow->setAttribute(Qt::WA_DeleteOnClose);

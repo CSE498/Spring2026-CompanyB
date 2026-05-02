@@ -12,9 +12,8 @@
 
 #include "../core/AgentData.hpp"
 #include "../core/StepWorldBase.hpp"
-#include "../tools/WeightedSet.hpp"
-
 #include "../tools/DataLog.hpp"
+#include "../tools/WeightedSet.hpp"
 
 namespace cse498 {
 
@@ -192,7 +191,6 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
   std::queue<size_t> despawned_agent_ids{};
 
  private:
-  
   DataLog<TrafficData> traffic_data_log{WorldType::Traffic};
 
   // Pulled by Claude out of the preexisting constructor — registers cell types
@@ -255,8 +253,7 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
   }
 
  public:
-
-  [[nodiscard]] const DataLog<TrafficData>& GetTrafficDataLog() const {
+  [[nodiscard]] const DataLog<TrafficData> &GetTrafficDataLog() const {
     return traffic_data_log;
   }
 
