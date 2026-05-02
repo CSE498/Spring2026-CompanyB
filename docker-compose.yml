@@ -9,6 +9,7 @@ services:
       - ./build:/app/build
       - ./assets:/app/assets:ro
       - ./logs:/app/logs
+      - ./scripts/agentlang:/app/scripts/agentlang:ro
       - ./scripts/docker-entrypoint.sh:/app/docker-entrypoint.sh:ro
     environment:
       - HOST_UID=${HOST_UID}
@@ -85,6 +86,7 @@ services:
       - ./build:/app/build
       - ./assets:/app/assets:ro
       - ./logs:/app/logs
+      - ./scripts/agentlang:/app/scripts/agentlang:ro
       - ./scripts/docker-entrypoint.sh:/app/docker-entrypoint.sh:ro
     environment:
       - SERVE_PORT=8080
@@ -109,6 +111,7 @@ services:
       - ./build:/app/build
       - ./assets:/app/assets:ro
       - ./logs:/app/logs
+      - ./scripts/agentlang:/app/scripts/agentlang:ro
       - ./scripts/docker-entrypoint.sh:/app/docker-entrypoint.sh:ro
     environment:
       - HOST_UID=${HOST_UID}

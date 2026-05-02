@@ -316,8 +316,8 @@ TEST_CASE("CanCollideWithAgentAt", "[StepTrafficWorld][collision]") {
   }
 }
 
-// traffic_light_period == 3.  Initial phase: ALLOW_VERTICAL, so '|' blocks east
-// moves
+// traffic_light_period == 150.  Initial phase: ALLOW_VERTICAL, so '|' blocks
+// east moves
 TEST_CASE("UpdateWorld — traffic lights", "[StepTrafficWorld][update]") {
   SECTION("ScanGrid picks up horizontal lights too") {
     static const std::vector<std::string> kHorizOnly = {
@@ -327,30 +327,30 @@ TEST_CASE("UpdateWorld — traffic lights", "[StepTrafficWorld][update]") {
     };
     TestWorld tw{kHorizOnly};
     CHECK(tw.VerticalBlockedAt(WorldPosition{1, 1}));
-    for (int i = 0; i < 3; ++i) tw.UpdateWorld();
+    for (int i = 0; i < 150; ++i) tw.UpdateWorld();
     // After flip, it should be ALLOW_HORIZONTAL
     CHECK_FALSE(tw.VerticalBlockedAt(WorldPosition{1, 1}));
     CHECK(tw.HorizontalBlockedAt(WorldPosition{1, 1}));
   }
   SECTION("period-1 ticks: light unchanged, east move still blocked") {
     TestWorld tw{kMinimal};
-    for (int i = 0; i < 2; ++i) tw.UpdateWorld();
+    for (int i = 0; i < 149; ++i) tw.UpdateWorld();
     auto a = std::make_shared<ScriptedTestAgent>(
         Make(WorldPosition{3, 1}, {}, Direction::East), 0);
     a->SetNextMove(WorldPosition{4, 1});
     CHECK(tw.DoAction(a).position == WorldPosition{3, 1});
   }
-  SECTION("after 3 ticks: light flips, east move succeeds") {
+  SECTION("after 150 ticks: light flips, east move succeeds") {
     TestWorld tw{kMinimal};
-    for (int i = 0; i < 3; ++i) tw.UpdateWorld();
+    for (int i = 0; i < 150; ++i) tw.UpdateWorld();
     auto a = std::make_shared<ScriptedTestAgent>(
         Make(WorldPosition{3, 1}, {}, Direction::East), 0);
     a->SetNextMove(WorldPosition{4, 1});
     CHECK(tw.DoAction(a).position == WorldPosition{4, 1});
   }
-  SECTION("after 6 ticks: light back to original, east move blocked again") {
+  SECTION("after 300 ticks: light back to original, east move blocked again") {
     TestWorld tw{kMinimal};
-    for (int i = 0; i < 6; ++i) tw.UpdateWorld();
+    for (int i = 0; i < 300; ++i) tw.UpdateWorld();
     auto a = std::make_shared<ScriptedTestAgent>(
         Make(WorldPosition{3, 1}, {}, Direction::East), 0);
     a->SetNextMove(WorldPosition{4, 1});

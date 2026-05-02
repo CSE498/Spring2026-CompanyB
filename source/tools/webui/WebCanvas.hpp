@@ -197,6 +197,46 @@ class WebCanvas : public WebElement {
                        double width, double height);
 
   /**
+   * @brief Begin a new path. Subsequent AddCircle/AddLine calls accumulate
+   * into this path until Fill() or Stroke() commits it. Use this to batch
+   * many same-styled shapes into a single fill or stroke call.
+   **/
+  WebCanvas& BeginPath();
+
+  /**
+   * @brief Append a full circle to the current path without committing it.
+   * Pairs with BeginPath()/Fill()/Stroke() to draw many circles in one go.
+   **/
+  WebCanvas& AddCircle(double x, double y, double radius);
+
+  /**
+   * @brief Append a line segment to the current path without committing it.
+   * Pairs with BeginPath()/Stroke() to draw many same-styled lines in one go.
+   **/
+  WebCanvas& AddLine(std::pair<double, double> start,
+                     std::pair<double, double> end);
+
+  /**
+   * @brief Fill the current path using the current fill color.
+   **/
+  WebCanvas& Fill();
+
+  /**
+   * @brief Stroke the current path using the current pen color and line width.
+   **/
+  WebCanvas& Stroke();
+
+  /**
+   * @brief Bit Block Tranfer the contents of another WebCanvas onto this one.
+   *Used to composite a cached static-layer canvas onto the visible canvas
+   *without re-issuing every draw call.
+   * @param src The source canvas to copy from.
+   * @param x Destination x in this canvas's coordinate space.
+   * @param y Destination y in this canvas's coordinate space.
+   **/
+  WebCanvas& DrawCanvas(const WebCanvas& src, double x = 0, double y = 0);
+
+  /**
    * @brief Set the stroke color used for lines and shape outlines.
    * @param rgb An (r, g, b) tuple with values in the range [0, 255].
    **/

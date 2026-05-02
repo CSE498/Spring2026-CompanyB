@@ -7,7 +7,10 @@
 #include <emscripten/val.h>
 
 #include <charconv>
+#include <fstream>
 #include <functional>
+#include <random>
+#include <sstream>
 
 #include "WebButton.h"
 #include "WebCanvas.hpp"
@@ -17,6 +20,7 @@
 #include "Worlds/StepTrafficWorld.hpp"
 #include "Worlds/InfectiousWorld.hpp"
 #include "Worlds/InfectiousBuildings.hpp"
+#include "tools/DataLog.hpp"
 #include "core/AgentData.hpp"
 #include "core/ItemBase.hpp"
 #include "Agents/ScriptedAgent.hpp"
@@ -25,6 +29,7 @@
 #include "tools/Point.hpp"
 #include "InfoGraph.hpp"
 #include "WebTextboxOutputManager.hpp"
+#include "Interpreter/Parser.hpp"
 
 using namespace cse498;
 
@@ -94,12 +99,126 @@ static SimState  sim_state  = SimState::STOPPED;
 static std::shared_ptr<WebCanvas> GameCanvas;
 static std::unique_ptr<WebTrafficWorld> traffic_world;
 static std::unique_ptr<InfectiousWorld> virus_world;
+
+// DataLog instances aggregate per-tick stats from the live agent set. They
+// must be recreated alongside the world so their time-series start at tick 0.
+static std::unique_ptr<DataLog<TrafficData>> traffic_log;
+static std::unique_ptr<DataLog<DiseaseData>> virus_log;
 static std::shared_ptr<WebTextbox> log_textbox;
 static std::unique_ptr<WebTextboxOutputManager> logger;
 
 // Per-sim event tracking so we can emit logs when things change
 static size_t last_traffic_agent_count = 0;
 static std::vector<bool> traffic_reached_log;
+
+// IDs of scripted cars in the traffic world
+static std::unordered_set<size_t> scripted_traffic_ids;
+
+// IDs of scripted agents in the virus world. Tracked as a set because new
+// scripted agents can be spawned mid-sim and aren't contiguous with the
+// initial pacers.
+static std::unordered_set<size_t> scripted_virus_ids;
+
+// Forward declaration
+static const std::string& LoadAgentScript(const char* vfs_path);
+
+// User-uploaded agentlang script
+static std::string uploaded_script;
+static std::string uploaded_script_name = "none";
+
+// Number of agent definitions in the uploaded script. Used to render exactly
+// that many spawn buttons in the navbar.
+static size_t uploaded_script_def_count = 0;
+
+// Used to detect a switch between Traffic and Virus so we can
+// clear the uploaded script when crossing sim boundaries.
+static ActiveSim last_loaded_sim = ActiveSim::NONE;
+
+// Traffic light cell positions captured at world build.
+static std::vector<WorldPosition> traffic_light_cells;
+
+static std::vector<WorldPosition> traffic_destination_cells;
+static std::vector<WorldPosition> traffic_spawn_cells;
+
+// Add the agentlang-defined cars into traffic_world and seed
+// scripted_traffic_ids
+static void ScanTrafficCells() {
+    traffic_light_cells.clear();
+    traffic_destination_cells.clear();
+    traffic_spawn_cells.clear();
+    if (!traffic_world) return;
+    const WorldGrid& grid = traffic_world->GetGrid();
+    const size_t gw = grid.GetWidth();
+    const size_t gh = grid.GetHeight();
+    for (size_t y = 0; y < gh; ++y) {
+        for (size_t x = 0; x < gw; ++x) {
+            char sym = grid.GetSymbol(WorldPosition{x, y});
+            if (sym == '|' || sym == '-') {
+                traffic_light_cells.push_back(WorldPosition{x, y});
+            } else if (sym == 'D') {
+                traffic_destination_cells.push_back(WorldPosition{x, y});
+            } else if (sym == 'S') {
+                traffic_spawn_cells.push_back(WorldPosition{x, y});
+            }
+        }
+    }
+}
+
+// Build a TrafficData seeded with a random spawn cell and random destination
+// cell. Prevent them from spawning on top of each other.
+static WorldPosition PickSafeVirusSpawn() {
+    static std::mt19937 rng{std::random_device{}()};
+    constexpr long kMinDistSq   = 12L * 12L;
+    constexpr int  kMaxAttempts = 12;
+    constexpr int  kJitter      = 25;
+
+    std::uniform_int_distribution<size_t> src_pick(0, kSpawnSources - 1);
+    std::uniform_int_distribution<int>    jitter(-kJitter, kJitter);
+
+    WorldPosition best{};
+    const size_t n = virus_world ? virus_world->GetNumAgents() : 0;
+    for (int attempt = 0; attempt < kMaxAttempts; ++attempt) {
+        size_t src = src_pick(rng);
+        long x = static_cast<long>(kSpawnX[src]) + jitter(rng);
+        long y = static_cast<long>(kSpawnY[src]) + jitter(rng);
+        if (x < 1) x = 1;
+        if (y < 1) y = 1;
+        if (x > static_cast<long>(kGridW) - 2) x = kGridW - 2;
+        if (y > static_cast<long>(kGridH) - 2) y = kGridH - 2;
+        WorldPosition pos{static_cast<size_t>(x), static_cast<size_t>(y)};
+        best = pos;
+
+        bool too_close = false;
+        for (size_t id = 0; id < n; ++id) {
+            auto p = virus_world->GetAgentState(id).position;
+            long dx = static_cast<long>(pos.CellX()) - static_cast<long>(p.CellX());
+            long dy = static_cast<long>(pos.CellY()) - static_cast<long>(p.CellY());
+            if (dx * dx + dy * dy < kMinDistSq) {
+                too_close = true;
+                break;
+            }
+        }
+        if (!too_close) return pos;
+    }
+    return best;
+}
+
+static TrafficData BuildRandomTrafficData() {
+    static std::mt19937 rng{std::random_device{}()};
+    TrafficData data{.is_active = true};
+    if (!traffic_spawn_cells.empty()) {
+        std::uniform_int_distribution<size_t> pick(
+            0, traffic_spawn_cells.size() - 1);
+        data.position = traffic_spawn_cells[pick(rng)];
+    }
+    if (!traffic_destination_cells.empty()) {
+        std::uniform_int_distribution<size_t> pick(
+            0, traffic_destination_cells.size() - 1);
+        data.destination = traffic_destination_cells[pick(rng)];
+    }
+    return data;
+}
+
 static std::vector<int> last_virus_health;
 static size_t sim_tick = 0;  // incremented each advance step
 
@@ -129,6 +248,21 @@ static int StepsThisFrame() {
         last_step_ms += steps * interval;
     }
     return steps;
+}
+
+// Read an agentlang script from the wasm virtual filesystem. Caches the script.
+static const std::string& LoadAgentScript(const char* vfs_path) {
+    static std::unordered_map<std::string, std::string> cache;
+    auto it = cache.find(vfs_path);
+    if (it != cache.end()) return it->second;
+    std::ifstream file(vfs_path);
+    if (!file) {
+        std::println("Failed to open agent script '{}'", vfs_path);
+        return cache.emplace(vfs_path, std::string{}).first->second;
+    }
+    std::ostringstream ss;
+    ss << file.rdbuf();
+    return cache.emplace(vfs_path, ss.str()).first->second;
 }
 
 // Parse a non-throwing int from a string. Returns true on full successful parse.
@@ -194,13 +328,85 @@ static std::unordered_map<std::string, std::shared_ptr<WebElement>> elements{};
 
 static double t = 0.0;
 static int count = 0;
-// static std::vector<double> bar_data{8, 4, 10, 6, 12};
+
+// Per-agent positions from the previous UpdateGraphs() call. Used to
+// distinguish cars that actually moved this tick from those stalled at a
+// light or wall, since is_active alone counts both as "active".
+static std::vector<WorldPosition> prev_traffic_positions;
 
 void UpdateGraphs() {
-  if (line_graph) {
-    line_graph->AddDataPoint(count, "Counting Test");
-    count++;
+  if (!line_graph) return;
+
+  // Safely read .back().sum from a DataLog field, 0 if missing/empty.
+  auto latest_sum =
+      [](const std::unordered_map<std::string, std::vector<TickStats>>& s,
+         const std::string& field) -> double {
+    auto it = s.find(field);
+    if (it == s.end() || it->second.empty()) return 0.0;
+    return it->second.back().sum;
+  };
+
+  if (active_sim == ActiveSim::TRAFFIC && traffic_world && traffic_log) {
+    // active_count comes from DataLog. "Moving" is
+    // computed locally from position deltas since DataLog doesn't expose
+    // position-change.
+    line_graph->SetChartType(InfoGraph::ChartType::Line);
+    traffic_log->AggregateData(traffic_world->GetAgents());
+    const auto& series = traffic_log->GetAggregationData();
+    const double active = latest_sum(series, "active_count");
+
+    size_t n = traffic_world->GetNumAgents();
+    if (prev_traffic_positions.size() < n) prev_traffic_positions.resize(n);
+    size_t moving = 0;
+    for (size_t id = 0; id < n; ++id) {
+      TrafficData state = traffic_world->GetAgentState(id);
+      if (state.is_active && state.position != prev_traffic_positions[id]) {
+        ++moving;
+      }
+      prev_traffic_positions[id] = state.position;
+    }
+    const double moving_d = static_cast<double>(moving);
+    const double idle = std::max(0.0, active - moving_d);
+    line_graph->AddDataPoints(
+        {moving_d, idle},
+        {InfoGraph::Color{80, 200, 120}, InfoGraph::Color{220, 90, 90}},
+        {"Moving", "Idle"},
+        "Cars / tick");
+  } else if (active_sim == ActiveSim::VIRUS && virus_world && virus_log) {
+    line_graph->SetChartType(InfoGraph::ChartType::Bar);
+    virus_log->AggregateData(virus_world->GetAgents());
+    const auto& series = virus_log->GetAggregationData();
+    InfoGraph::DataSeries snapshot = {
+        latest_sum(series, "susceptible_count"),
+        latest_sum(series, "infection_count"),
+        latest_sum(series, "cured_count"),
+    };
+    std::vector<InfoGraph::Color> bar_colors = {
+        {60, 220, 90},    // SUSCEPTIBLE - green
+        {230, 60, 60},    // INFECTED    - red
+        {90, 130, 240},   // RECOVERED   - blue
+    };
+    std::vector<std::string> bar_labels = {"S", "I", "R"};
+    line_graph->DrawBarChart(snapshot, bar_colors, bar_labels, "S / I / R");
   }
+  count++;
+}
+
+// Trigger a browser download of JSON as a file.
+static void DownloadJson(const std::string& filename, const std::string& json) {
+    EM_ASM({
+        var name = UTF8ToString($0);
+        var text = UTF8ToString($1);
+        var blob = new Blob([text], {type: 'application/json'});
+        var url = URL.createObjectURL(blob);
+        var a = document.createElement('a');
+        a.href = url;
+        a.download = name;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    }, filename.c_str(), json.c_str());
 }
 
 std::shared_ptr<WebElement> GameInfoCanvas(WebOptions options) {
@@ -211,12 +417,19 @@ std::shared_ptr<WebElement> GameInfoCanvas(WebOptions options) {
 }
 
 void SetupVirusWorld();
+static void ResetActiveWorld();
+static void BuildTrafficStaticLayer();
+static void BuildVirusStaticLayer();
+
+// Offscreen canvases that hold the world's static geometry.
+static std::shared_ptr<WebCanvas> traffic_static_layer;
+static std::shared_ptr<WebCanvas> virus_static_layer;
 
 auto handle_sim_state = [](SimState next) {
     switch (next) {
         case SimState::PLAYING:
+            if (sim_state != SimState::PLAYING) LogSim("World", "Simulation started", "start");
             sim_state = SimState::PLAYING;
-            LogSim("World", "Simulation started", "start");
             break;
         case SimState::PAUSED:
             if (sim_state == SimState::PLAYING) {
@@ -226,71 +439,436 @@ auto handle_sim_state = [](SimState next) {
             break;
         case SimState::STOPPED:
             sim_state = SimState::STOPPED;
-            sim_tick  = 0;
-            // Reset the active world to its initial state
-            if (active_sim == ActiveSim::TRAFFIC) {
-                traffic_world = std::make_unique<WebTrafficWorld>("assets/grids/TrafficWorld_Web.grid");
-                last_traffic_agent_count = 0;
-                traffic_reached_log.clear();
-            } else if (active_sim == ActiveSim::VIRUS) {
-                SetupVirusWorld();
-                last_virus_health.clear();
-            }
-            count = 0;
-            line_graph->ClearData();
-            line_graph->DrawLineChart(std::vector<double> {}, "Cleared");
+            ResetActiveWorld();
+            if (logger) logger->Clear();
             LogSim("World", "Simulation stopped and reset", "stop");
             break;
     }
 };
 
+// Log the current script status
+static void LogScriptStatus() {
+    LogSim("Script",
+           "In use: " + uploaded_script_name +
+               ". Upload a .al script at the start of a sim (before pressing start).",
+           "info");
+}
+
+// Rebuild the currently active world so changes take effect
+static void ResetActiveWorld() {
+    sim_tick = 0;
+    if (active_sim == ActiveSim::TRAFFIC) {
+        traffic_world = std::make_unique<WebTrafficWorld>("assets/grids/TrafficWorld_Web.grid");
+        traffic_log = std::make_unique<DataLog<TrafficData>>(WorldType::Traffic);
+        scripted_traffic_ids.clear();
+        ScanTrafficCells();
+        prev_traffic_positions.clear();
+        last_traffic_agent_count = 0;
+        traffic_reached_log.clear();
+        BuildTrafficStaticLayer();
+    } else if (active_sim == ActiveSim::VIRUS) {
+        SetupVirusWorld();
+        last_virus_health.clear();
+    }
+    count = 0;
+    if (line_graph) {
+        line_graph->ClearData();
+        line_graph->DrawLineChart(std::vector<double>{}, "Cleared");
+    }
+}
+
+// Render the traffic world's grid into an offscreen canvas matching the
+// visible canvas's pixel size.
+static void BuildTrafficStaticLayer() {
+    if (!GameCanvas || !traffic_world) return;
+    const int W = GameCanvas->GetWidth();
+    const int H = GameCanvas->GetHeight();
+    traffic_static_layer = std::make_shared<WebCanvas>(W, H, WebOptions{
+        .style = {{"display", "none"}},
+    });
+
+    const WorldGrid& grid = traffic_world->GetGrid();
+    const size_t gw = grid.GetWidth();
+    const size_t gh = grid.GetHeight();
+    const double cell_w = static_cast<double>(W) / gw;
+    const double cell_h = static_cast<double>(H) / gh;
+
+    for (size_t y = 0; y < gh; ++y) {
+        for (size_t x = 0; x < gw; ++x) {
+            double cx = x * cell_w;
+            double cy = y * cell_h;
+            char sym = grid.GetSymbol(WorldPosition{x, y});
+            switch (sym) {
+                case '.':
+                    traffic_static_layer->SetFillColor({40, 40, 40})
+                        .DrawRect(cx, cy, cell_w, cell_h, true);
+                    break;
+                case '|':
+                case '-':
+                    // Traffic lights flip each phase -- drawn dynamically.
+                    break;
+                case 'S':
+                case 'F':
+                case 'N':
+                case 'D': {
+                    const double box_w = 10 * cell_w;
+                    const double box_h = 10 * cell_h;
+                    traffic_static_layer->SetFillColor({40, 40, 40})
+                        .DrawRect(cx - box_w / 2, cy - box_h / 2, box_w, box_h, true);
+                    const double mk_w = 6 * cell_w;
+                    const double mk_h = 6 * cell_h;
+                    WebCanvas::RGB color =
+                        sym == 'D' ? WebCanvas::RGB{60, 220, 100}    // green
+                      : sym == 'S' ? WebCanvas::RGB{180, 100, 220}   // purple
+                      : sym == 'N' ? WebCanvas::RGB{80, 220, 220}    // cyan
+                      :              WebCanvas::RGB{240, 100, 200};  // F = magenta
+                    traffic_static_layer->SetFillColor(color)
+                        .DrawRect(cx - mk_w / 2, cy - mk_h / 2, mk_w, mk_h, true);
+                    break;
+                }
+                default:
+                    break;
+            }
+        }
+    }
+}
+
+// Render the virus world's static geometry
+static void BuildVirusStaticLayer() {
+    if (!GameCanvas || !virus_world) return;
+    const int W = GameCanvas->GetWidth();
+    const int H = GameCanvas->GetHeight();
+    virus_static_layer = std::make_shared<WebCanvas>(W, H, WebOptions{
+        .style = {{"display", "none"}},
+    });
+
+    const WorldGrid& grid = virus_world->GetGrid();
+    const size_t gw = grid.GetWidth();
+    const size_t gh = grid.GetHeight();
+    const double cell_w = static_cast<double>(W) / gw;
+    const double cell_h = static_cast<double>(H) / gh;
+
+    // Quarantine overlay
+    virus_static_layer->SetFillColor({240, 200, 60})
+        .DrawRect(850, 540, 990 - 850, 900 - 540, true);
+
+    // Red Cedar River with bridges
+    virus_static_layer->SetFillColor({60, 110, 200});
+    const double river_x0 = 0.0;
+    const double river_x1 = 1000.0;
+    const double river_y = static_cast<double>(kRiverY1);
+    const double river_h_px = static_cast<double>(kRiverY2 - kRiverY1);
+    struct BridgeSpan { double x_lo, x_hi; };
+    constexpr BridgeSpan kBridges[] = {{80, 130}, {470, 520}, {770, 820}};
+    double cursor = river_x0;
+    for (auto& br : kBridges) {
+        if (br.x_lo > cursor) {
+            virus_static_layer->DrawRect(cursor, river_y, br.x_lo - cursor,
+                                         river_h_px, true);
+        }
+        cursor = br.x_hi;
+    }
+    if (cursor < river_x1) {
+        virus_static_layer->DrawRect(cursor, river_y, river_x1 - cursor,
+                                     river_h_px, true);
+    }
+
+    // Building outlines
+    virus_static_layer->SetPenColor({80, 80, 80});
+    constexpr double kDoorHalf = 4.0;
+    for (auto& b : infectious_buildings::kBuildings) {
+        double x1 = b.x1, y1 = b.y1, x2 = b.x2, y2 = b.y2;
+        double cxd = (x1 + x2) * 0.5, cyd = (y1 + y2) * 0.5;
+        virus_static_layer->DrawLine({x1, y1}, {cxd - kDoorHalf, y1});
+        virus_static_layer->DrawLine({cxd + kDoorHalf, y1}, {x2, y1});
+        virus_static_layer->DrawLine({x1, y2}, {cxd - kDoorHalf, y2});
+        virus_static_layer->DrawLine({cxd + kDoorHalf, y2}, {x2, y2});
+        virus_static_layer->DrawLine({x1, y1}, {x1, cyd - kDoorHalf});
+        virus_static_layer->DrawLine({x1, cyd + kDoorHalf}, {x1, y2});
+        virus_static_layer->DrawLine({x2, y1}, {x2, cyd - kDoorHalf});
+        virus_static_layer->DrawLine({x2, cyd + kDoorHalf}, {x2, y2});
+    }
+
+    // Per-building labels
+    constexpr double kBuildingLabelPx = 9.0;
+    virus_static_layer
+        ->SetFont(std::to_string(static_cast<int>(kBuildingLabelPx)) +
+                  "px monospace")
+        .SetFillColor({230, 230, 230});
+    for (size_t i = 0; i < infectious_buildings::kBuildings.size(); ++i) {
+        auto& b = infectious_buildings::kBuildings[i];
+        double cxd = (b.x1 + b.x2) * 0.5;
+        double cyd = (b.y1 + b.y2) * 0.5;
+        std::string txt = std::to_string(i);
+        virus_static_layer->DrawText(txt, cxd - txt.size() * 2.5,
+                                     cyd + kBuildingLabelPx * 0.35);
+    }
+
+    // River label
+    constexpr double kLabelFontPx = 18.0;
+    virus_static_layer
+        ->SetFont(std::to_string(static_cast<int>(kLabelFontPx)) +
+                  "px monospace")
+        .SetFillColor({0, 220, 220});
+    for (auto& lbl : kLabels) {
+        double lx = lbl.x * cell_w;
+        double ly = lbl.y * cell_h + kLabelFontPx * 0.85;
+        virus_static_layer->DrawText(lbl.text, lx, ly);
+    }
+}
+
+// Number of spawn buttons rendered into the navbar at sim load
+constexpr size_t kSpawnButtonCount = 8;
+
+// Push the current script name into the nav-bar display, if it exists, and
+// show/hide the Clear button + spawn buttons based on the loaded script.
+static void UpdateScriptDisplay() {
+    emscripten::val doc = emscripten::val::global("document");
+    emscripten::val name_el = doc.call<emscripten::val>(
+        "getElementById", std::string("active-script-name"));
+    if (!name_el.isNull() && !name_el.isUndefined()) {
+        name_el.set("innerText", uploaded_script_name);
+    }
+    emscripten::val clear_btn = doc.call<emscripten::val>(
+        "getElementById", std::string("clear-script-btn"));
+    if (!clear_btn.isNull() && !clear_btn.isUndefined()) {
+        clear_btn["style"].set("display",
+                               uploaded_script.empty() ? std::string("none")
+                                                       : std::string("block"));
+    }
+
+    emscripten::val spawn_ctrl = doc.call<emscripten::val>(
+        "getElementById", std::string("spawn-agent-control"));
+    if (!spawn_ctrl.isNull() && !spawn_ctrl.isUndefined()) {
+        spawn_ctrl["style"].set(
+            "display",
+            uploaded_script_def_count == 0 ? std::string("none")
+                                           : std::string("flex"));
+    }
+    for (size_t i = 0; i < kSpawnButtonCount; ++i) {
+        std::string btn_id = "spawn-btn-" + std::to_string(i + 1);
+        emscripten::val btn = doc.call<emscripten::val>("getElementById", btn_id);
+        if (btn.isNull() || btn.isUndefined()) continue;
+        bool show = i < uploaded_script_def_count;
+        btn["style"].set("display",
+                         show ? std::string("inline-block") : std::string("none"));
+    }
+}
+
+// Reset the uploaded script back to "none".
+static void ResetScript() {
+    uploaded_script.clear();
+    uploaded_script_name = "none";
+    uploaded_script_def_count = 0;
+    UpdateScriptDisplay();
+}
+
+// Handle a user-selected file from the upload button. Per-state behavior:
+// PLAYING: pause and tell the user to stop the sim before uploading.
+// PAUSED:  tell the user to stop the sim before uploading.
+// STOPPED: validate ".al" extension, parse with the agentlang Parser, and
+//            install the script on success. Any failure resets to "none".
+auto handle_upload = [](const std::string& filename, const std::string& content) {
+    if (sim_state == SimState::PLAYING) {
+        sim_state = SimState::PAUSED;
+        LogSim("Script",
+               "Simulation paused. End the simulation (press stop) to upload a script.",
+               "warn");
+        return;
+    }
+    if (sim_state == SimState::PAUSED) {
+        LogSim("Script",
+               "End the simulation (press stop) to upload a script.",
+               "warn");
+        return;
+    }
+    // STOPPED: accept upload attempt.
+    auto ends_with_al = [](const std::string& s) {
+        return s.size() >= 3 && s.compare(s.size() - 3, 3, ".al") == 0;
+    };
+    if (!ends_with_al(filename)) {
+        ResetScript();
+        LogSim("Script",
+               "Upload rejected (must end in .al). Script in use: none.",
+               "error");
+        return;
+    }
+    Parser parser;
+    std::stringstream ss{content};
+    auto result = parser.parse(ss);
+    if (!result.has_value()) {
+        ResetScript();
+        LogSim("Script",
+               "Failed to parse '" + filename + "': " + result.error().ToStr() +
+                   ". Script in use: none.",
+               "error");
+        return;
+    }
+    uploaded_script = content;
+    uploaded_script_name = filename;
+    uploaded_script_def_count = result.value().size();
+    UpdateScriptDisplay();
+    ResetActiveWorld();
+    LogSim("Script",
+           "Script uploaded: " + filename + " (" +
+               std::to_string(uploaded_script_def_count) + " agent type" +
+               (uploaded_script_def_count == 1 ? "" : "s") + ")",
+           "info");
+};
+
+// Clear the uploaded script
+auto handle_clear_script = []() {
+    if (sim_state == SimState::PLAYING) {
+        sim_state = SimState::PAUSED;
+        LogSim("Script",
+               "Simulation paused. End the simulation (press stop) to clear the script.",
+               "warn");
+        return;
+    }
+    if (sim_state == SimState::PAUSED) {
+        LogSim("Script",
+               "End the simulation (press stop) to clear the script.",
+               "warn");
+        return;
+    }
+    if (uploaded_script.empty()) {
+        LogSim("Script", "No script to clear.", "info");
+        return;
+    }
+    ResetScript();
+    ResetActiveWorld();
+    LogSim("Script", "Script cleared. Script in use: none.", "info");
+};
+
+// Spawn one scripted agent of the given def_idx in the active sim.
+auto handle_spawn = [](size_t def_idx) {
+    if (uploaded_script.empty()) {
+        LogSim("Spawn", "No script uploaded. Upload a .al script first.", "warn");
+        return;
+    }
+    if (active_sim == ActiveSim::TRAFFIC && traffic_world) {
+        size_t new_id = traffic_world->GetNumAgents();
+        auto* agent = traffic_world->AddScriptedAgent(BuildRandomTrafficData(),
+                                                      uploaded_script, def_idx);
+        if (!agent) {
+            LogSim("Spawn",
+                   "Type " + std::to_string(def_idx + 1) +
+                       " not found in script (def_idx " + std::to_string(def_idx) +
+                       " out of range).",
+                   "error");
+            return;
+        }
+        scripted_traffic_ids.insert(new_id);
+    } else if (active_sim == ActiveSim::VIRUS && virus_world) {
+        DiseaseData data{PickSafeVirusSpawn()};
+        size_t new_id = virus_world->GetNumAgents();
+        auto* agent = virus_world->AddScriptedAgent(data, uploaded_script, def_idx);
+        if (!agent) {
+            LogSim("Spawn",
+                   "Type " + std::to_string(def_idx + 1) +
+                       " not found in script (def_idx " + std::to_string(def_idx) +
+                       " out of range).",
+                   "error");
+            return;
+        }
+        scripted_virus_ids.insert(new_id);
+    } else {
+        LogSim("Spawn", "No active simulation to spawn into.", "warn");
+        return;
+    }
+    LogSim("Spawn",
+           "Spawned scripted agent type " + std::to_string(def_idx + 1),
+           "info");
+};
+
+// Save the current simulation log to a downloaded JSON file.
+auto handle_save = []() {
+    if (!logger) return;
+    bool was_playing = (sim_state == SimState::PLAYING);
+    if (was_playing) {
+        sim_state = SimState::PAUSED;
+        LogSim("World", "Simulation paused for save", "pause");
+    }
+    std::string json = logger->GetBufferedLog().dump(2);
+    std::string prefix = (active_sim == ActiveSim::TRAFFIC) ? "traffic_log_"
+                       : (active_sim == ActiveSim::VIRUS)   ? "virus_log_"
+                                                            : "sim_log_";
+    std::string fname = prefix + std::to_string(sim_tick) + ".json";
+    DownloadJson(fname, json);
+    if (was_playing) {
+        LogSim("World", "Log downloaded. Press start to resume.", "info");
+    } else {
+        LogSim("World", "Log downloaded.", "info");
+    }
+};
+
 void DrawTrafficSim() {
     GameCanvas->Clear();
-    const WorldGrid& grid = traffic_world->GetGrid();
+    if (traffic_static_layer) GameCanvas->DrawCanvas(*traffic_static_layer);
 
+    const WorldGrid& grid = traffic_world->GetGrid();
     const size_t W = grid.GetWidth();
     const size_t H = grid.GetHeight();
-
     const double cell_w = static_cast<double>(GameCanvas->GetWidth())  / W;
     const double cell_h = static_cast<double>(GameCanvas->GetHeight()) / H;
 
-    for (size_t y = 0; y < H; ++y) {
-      for (size_t x = 0; x < W; ++x) {
-          double cx = x * cell_w;
-          double cy = y * cell_h;
-          int line_space = 10;
-          char sym = grid.GetSymbol(WorldPosition{x, y});
-          switch(sym) {
-              case '.':
-                  GameCanvas->SetFillColor({40, 40, 40}).DrawRect(cx, cy, cell_w, cell_h, true);
-                  break;
-              case '|':
-                  GameCanvas->SetPenColor({0, 0, 0}).DrawLine({cx - line_space, cy - line_space}, {cx - line_space, cy + line_space}).DrawLine({cx + line_space, cy - line_space}, {cx + line_space, cy + line_space});
-                  break;
-              case '-':
-                  GameCanvas->SetPenColor({0, 0, 0}).DrawLine({cx - line_space, cy - line_space}, {cx + line_space, cy - line_space}).DrawLine({cx - line_space, cy + line_space}, {cx + line_space, cy + line_space});
-                  break;
-              case 'S':
-                  GameCanvas->SetFillColor({100, 100, 100}).DrawRect(cx - (10*cell_w / 2), cy - (10*cell_h / 2), 10*cell_w, 10*cell_h, true);
-                  break;
-              case 'D':
-                  GameCanvas->SetFillColor({200, 200, 200}).DrawRect(cx - (10*cell_w / 2), cy - (10*cell_h / 2), 10*cell_w, 10*cell_h, true);
-                  break;
-              default:
-                  break;
-          }
-      }
+    // Redraw traffic lights every frame against current grid symbols
+    constexpr double kArrowHalf = 10.0;
+    constexpr double kArrowHead = 5.0;
+    GameCanvas->SetPenColor({50, 100, 255}).SetLineWidth(2.0).BeginPath();
+    for (const auto& pos : traffic_light_cells) {
+        char sym = grid.GetSymbol(pos);
+        double cx = pos.CellX() * cell_w;
+        double cy = pos.CellY() * cell_h;
+        if (sym == '|') {
+            GameCanvas->AddLine({cx, cy - kArrowHalf}, {cx, cy + kArrowHalf})
+                       .AddLine({cx, cy - kArrowHalf},
+                                {cx - kArrowHead, cy - kArrowHalf + kArrowHead})
+                       .AddLine({cx, cy - kArrowHalf},
+                                {cx + kArrowHead, cy - kArrowHalf + kArrowHead})
+                       .AddLine({cx, cy + kArrowHalf},
+                                {cx - kArrowHead, cy + kArrowHalf - kArrowHead})
+                       .AddLine({cx, cy + kArrowHalf},
+                                {cx + kArrowHead, cy + kArrowHalf - kArrowHead});
+        } else if (sym == '-') {
+            GameCanvas->AddLine({cx - kArrowHalf, cy}, {cx + kArrowHalf, cy})
+                       .AddLine({cx - kArrowHalf, cy},
+                                {cx - kArrowHalf + kArrowHead, cy - kArrowHead})
+                       .AddLine({cx - kArrowHalf, cy},
+                                {cx - kArrowHalf + kArrowHead, cy + kArrowHead})
+                       .AddLine({cx + kArrowHalf, cy},
+                                {cx + kArrowHalf - kArrowHead, cy - kArrowHead})
+                       .AddLine({cx + kArrowHalf, cy},
+                                {cx + kArrowHalf - kArrowHead, cy + kArrowHead});
+        }
     }
+    GameCanvas->Stroke();
 
     const double radius = std::max(std::min(cell_w, cell_h) * 0.4, 8.0);
-    for (size_t id = 0; id < traffic_world->GetNumAgents(); ++id) {
+    const double agent_r = radius * 0.75;
+    const size_t na = traffic_world->GetNumAgents();
+
+    GameCanvas->BeginPath();
+    for (size_t id = 0; id < na; ++id) {
+        if (scripted_traffic_ids.count(id)) continue;
         TrafficData state = traffic_world->GetAgentState(id);
-        if (!state.is_active) continue;  // skip despawned agents
-        WorldPosition pos = state.position;
-        double cx = pos.CellX() * cell_w + cell_w / 2.0;
-        double cy = pos.CellY() * cell_h + cell_h / 2.0;
-        GameCanvas->SetFillColor({255, 80, 80}).DrawCircle(cx, cy, radius * 0.75, true);
+        if (!state.is_active) continue;
+        double cx = state.position.CellX() * cell_w + cell_w / 2.0;
+        double cy = state.position.CellY() * cell_h + cell_h / 2.0;
+        GameCanvas->AddCircle(cx, cy, agent_r);
     }
+    GameCanvas->SetFillColor({255, 80, 80}).Fill();
+
+    GameCanvas->BeginPath();
+    for (size_t id : scripted_traffic_ids) {
+        if (id >= na) continue;
+        TrafficData state = traffic_world->GetAgentState(id);
+        if (!state.is_active) continue;
+        double cx = state.position.CellX() * cell_w + cell_w / 2.0;
+        double cy = state.position.CellY() * cell_h + cell_h / 2.0;
+        GameCanvas->AddCircle(cx, cy, agent_r);
+    }
+    GameCanvas->SetFillColor({80, 120, 255}).Fill();
 
     if (sim_state == SimState::PLAYING) {
         int steps = StepsThisFrame();
@@ -298,7 +876,6 @@ void DrawTrafficSim() {
             traffic_world->RunAgents();
             traffic_world->UpdateWorld();
             sim_tick++;
-            UpdateGraphs();
 
             size_t n = traffic_world->GetNumAgents();
             if (traffic_reached_log.size() < n) {
@@ -323,101 +900,54 @@ void DrawTrafficSim() {
                 traffic_reached_log[id] = active;
             }
         }
+        if (steps > 0) UpdateGraphs();
     }
 }
 
 void DrawVirusSim() {
     GameCanvas->Clear();
-    const WorldGrid& grid = virus_world->GetGrid();
+    if (virus_static_layer) GameCanvas->DrawCanvas(*virus_static_layer);
 
+    const WorldGrid& grid = virus_world->GetGrid();
     const size_t W = grid.GetWidth();
     const size_t H = grid.GetHeight();
     const double cell_w = static_cast<double>(GameCanvas->GetWidth())  / W;
     const double cell_h = static_cast<double>(GameCanvas->GetHeight()) / H;
 
-    // Quarantine overlay
-    GameCanvas->SetFillColor({240, 200, 60})
-        .DrawRect(850, 540, 990 - 850, 900 - 540, true);
-
-    // Red Cedar River with bridges
-    GameCanvas->SetFillColor({60, 110, 200});
-    const double river_x0 = 0.0;
-    const double river_x1 = 1000.0;
-    const double river_y = static_cast<double>(kRiverY1);
-    const double river_h = static_cast<double>(kRiverY2 - kRiverY1);
-    struct BridgeSpan { double x_lo, x_hi; };
-    constexpr BridgeSpan kBridges[] = {{80, 130}, {470, 520}, {770, 820}};
-    double cursor = river_x0;
-    for (auto& br : kBridges) {
-        if (br.x_lo > cursor) {
-            GameCanvas->DrawRect(cursor, river_y, br.x_lo - cursor, river_h, true);
-        }
-        cursor = br.x_hi;
-    }
-    if (cursor < river_x1) {
-        GameCanvas->DrawRect(cursor, river_y, river_x1 - cursor, river_h, true);
-    }
-
-    // Building outlines
-    GameCanvas->SetPenColor({80, 80, 80});
-    constexpr double kDoorHalf = 4.0;  // half-width of door gap, in canvas px
-    for (auto& b : infectious_buildings::kBuildings) {
-        double x1 = b.x1, y1 = b.y1, x2 = b.x2, y2 = b.y2;
-        double cxd = (x1 + x2) * 0.5, cyd = (y1 + y2) * 0.5;
-        // Top edge
-        GameCanvas->DrawLine({x1, y1}, {cxd - kDoorHalf, y1});
-        GameCanvas->DrawLine({cxd + kDoorHalf, y1}, {x2, y1});
-        // Bottom edge
-        GameCanvas->DrawLine({x1, y2}, {cxd - kDoorHalf, y2});
-        GameCanvas->DrawLine({cxd + kDoorHalf, y2}, {x2, y2});
-        // Left edge
-        GameCanvas->DrawLine({x1, y1}, {x1, cyd - kDoorHalf});
-        GameCanvas->DrawLine({x1, cyd + kDoorHalf}, {x1, y2});
-        // Right edge
-        GameCanvas->DrawLine({x2, y1}, {x2, cyd - kDoorHalf});
-        GameCanvas->DrawLine({x2, cyd + kDoorHalf}, {x2, y2});
-    }
-
-    // Per building labels at the center of each box. Using the building index
-    constexpr double kBuildingLabelPx = 9.0;
-    GameCanvas->SetFont(std::to_string(static_cast<int>(kBuildingLabelPx)) + "px monospace")
-              .SetFillColor({230, 230, 230});
-    for (size_t i = 0; i < infectious_buildings::kBuildings.size(); ++i) {
-        auto& b = infectious_buildings::kBuildings[i];
-        double cxd = (b.x1 + b.x2) * 0.5;
-        double cyd = (b.y1 + b.y2) * 0.5;
-        std::string txt = std::to_string(i);
-        // Horizontal centering
-        GameCanvas->DrawText(txt, cxd - txt.size() * 2.5, cyd + kBuildingLabelPx * 0.35);
-    }
-
-    // Special location labels, river
-    constexpr double kLabelFontPx = 18.0;
-    GameCanvas->SetFont(std::to_string(static_cast<int>(kLabelFontPx)) + "px monospace")
-              .SetFillColor({0, 220, 220});
-    for (auto& lbl : kLabels) {
-        double lx = lbl.x * cell_w;
-        double ly = lbl.y * cell_h + kLabelFontPx * 0.85;
-        GameCanvas->DrawText(lbl.text, lx, ly);
-    }
-
     // Agents with a small fixed radius so 1-cell movement is visible.
     constexpr double kResidentR = 5.0;
     constexpr double kVisitorR  = 4.0;
     size_t n = virus_world->GetNumAgents();
-    for (size_t id = 0; id < n; ++id) {
-        DiseaseData state = virus_world->GetAgentState(id);
-        WorldPosition pos = state.position;
-        double cx = pos.CellX() * cell_w + cell_w / 2.0;
-        double cy = pos.CellY() * cell_h + cell_h / 2.0;
-        bool is_resident = id < kNumPacers;
-        double r = is_resident ? kResidentR : kVisitorR;
-        switch (state.health) {
-            case HealthState::SUSCEPTIBLE: GameCanvas->SetFillColor({60, 220, 90});  break;
-            case HealthState::INFECTED:    GameCanvas->SetFillColor({230, 60, 60});  break;
-            case HealthState::RECOVERED:   GameCanvas->SetFillColor({90, 130, 240}); break;
+
+    // Batch by health color
+    auto batch_fill = [&](HealthState target, WebCanvas::RGB color) {
+        GameCanvas->BeginPath();
+        for (size_t id = 0; id < n; ++id) {
+            DiseaseData state = virus_world->GetAgentState(id);
+            if (state.health != target) continue;
+            bool is_scripted = scripted_virus_ids.count(id) != 0;
+            double r = is_scripted ? kResidentR : kVisitorR;
+            double cx = state.position.CellX() * cell_w + cell_w / 2.0;
+            double cy = state.position.CellY() * cell_h + cell_h / 2.0;
+            GameCanvas->AddCircle(cx, cy, r);
         }
-        GameCanvas->DrawCircle(cx, cy, r, true);
+        GameCanvas->SetFillColor(color).Fill();
+    };
+    batch_fill(HealthState::SUSCEPTIBLE, {60, 220, 90});
+    batch_fill(HealthState::INFECTED,    {230, 60, 60});
+    batch_fill(HealthState::RECOVERED,   {90, 130, 240});
+
+    // Orange outline for scripted agents
+    if (!scripted_virus_ids.empty()) {
+        GameCanvas->BeginPath();
+        for (size_t id : scripted_virus_ids) {
+            if (id >= n) continue;
+            DiseaseData state = virus_world->GetAgentState(id);
+            double cx = state.position.CellX() * cell_w + cell_w / 2.0;
+            double cy = state.position.CellY() * cell_h + cell_h / 2.0;
+            GameCanvas->AddCircle(cx, cy, kResidentR + 1.5);
+        }
+        GameCanvas->SetPenColor({255, 140, 0}).SetLineWidth(2.0).Stroke();
     }
 
     if (sim_state == SimState::PLAYING) {
@@ -443,7 +973,6 @@ void DrawVirusSim() {
                 virus_world->UpdateWorld();
             }
             sim_tick++;
-            UpdateGraphs();
 
             size_t cur_n = virus_world->GetNumAgents();
             if (last_virus_health.size() < cur_n) last_virus_health.resize(cur_n, -1);
@@ -473,11 +1002,13 @@ void DrawVirusSim() {
                        "info");
             }
         }
+        if (steps > 0) UpdateGraphs();
     }
 }
 
 void SetupVirusWorld() {
     virus_world = std::make_unique<InfectiousWorld>(kGridW, kGridH);
+    virus_log = std::make_unique<DataLog<DiseaseData>>(WorldType::Infection);
     WorldGrid& grid = virus_world->GetGrid();
     size_t wall  = virus_world->GetWallID();
     size_t floor = virus_world->GetFloorID();
@@ -523,14 +1054,24 @@ void SetupVirusWorld() {
     virus_world->SetClinicEntrance(WorldPosition{900, 700});
     virus_world->SetRecoveryExit(WorldPosition{780, 470});
 
-    // Resident pacers
-    using Pacer = ScriptedAgent<DiseaseData>;
-    virus_world->AddAgent<Pacer>(DiseaseData{WorldPosition{ 80, 200}});
-    virus_world->AddAgent<Pacer>(DiseaseData{WorldPosition{220, 200}});
-    virus_world->AddAgent<Pacer>(DiseaseData{WorldPosition{420, 200}});
-    virus_world->AddAgent<Pacer>(DiseaseData{WorldPosition{ 60, 700}});
-    virus_world->AddAgent<Pacer>(DiseaseData{WorldPosition{260, 700}});
-    virus_world->AddAgent<Pacer>(DiseaseData{WorldPosition{600, 200}});
+    scripted_virus_ids.clear();
+    if (!uploaded_script.empty()) {
+        struct PacerSpec { WorldPosition pos; size_t def_idx; };
+        const PacerSpec kPacers[] = {
+            {{ 80, 200}, 0},   // h_pacer
+            {{220, 200}, 0},   // h_pacer
+            {{420, 200}, 1},   // v_pacer
+            {{ 60, 700}, 1},   // v_pacer
+            {{260, 700}, 2},   // square_walker
+            {{600, 200}, 3},   // stander
+        };
+        for (const auto& p : kPacers) {
+          size_t new_id = virus_world->GetNumAgents();
+          if (virus_world->AddScriptedAgent(DiseaseData{p.pos}, uploaded_script, p.def_idx)) {
+              scripted_virus_ids.insert(new_id);
+          }
+        }
+    }
 
     // Initial swarming visitors
     using Swarm = SwarmingAgent<DiseaseData>;
@@ -544,6 +1085,8 @@ void SetupVirusWorld() {
 
     // Patient zero: first swarming agent.
     virus_world->InfectAgent(kNumPacers);
+
+    BuildVirusStaticLayer();
 }
 
 // We switch screens by holding a shared pointer to the active screen's
@@ -582,13 +1125,55 @@ std::shared_ptr<WebElement> TickRateControl() {
     return layout->SetDirection("row").SetAlignItems("center").SetGap("6px");
 }
 
+// Builds a nav-bar element showing the active script name and a clear button.
+std::shared_ptr<WebElement> ScriptStatusControl() {
+    auto layout = UIItem<WebLayout>(WebOptions{
+        .id = "script-status-control",
+    });
+
+    emscripten::val document = emscripten::val::global("document");
+    emscripten::val label = document.call<emscripten::val>("createElement", std::string("span"));
+    label.set("innerText", std::string("Script: "));
+
+    emscripten::val name = document.call<emscripten::val>("createElement", std::string("span"));
+    name.set("id", "active-script-name");
+    name.set("innerText", uploaded_script_name);
+
+    layout->GetDOMElement().call<void>("appendChild", label);
+    layout->GetDOMElement().call<void>("appendChild", name);
+
+    return layout->SetDirection("row").SetAlignItems("center").SetGap("6px");
+}
+
+std::shared_ptr<WebElement> SpawnAgentControl() {
+    std::vector<std::shared_ptr<WebElement>> buttons;
+    for (size_t i = 0; i < kSpawnButtonCount; ++i) {
+        size_t def_idx = i;
+        buttons.push_back(
+            UIItem<WebButton>(std::to_string(i + 1), WebOptions{
+                .id = "spawn-btn-" + std::to_string(i + 1),
+                .classes = {"spawn-btn"},
+            })->SetOnClick([def_idx]() { handle_spawn(def_idx); }));
+    }
+    auto layout = UIItem<WebLayout>(WebOptions{
+        .id = "spawn-agent-control",
+        .children = buttons,
+    });
+
+    emscripten::val document = emscripten::val::global("document");
+    emscripten::val label = document.call<emscripten::val>("createElement", std::string("span"));
+    label.set("innerText", std::string("Spawn Agent Type"));
+    layout->GetDOMElement().call<void>("prepend", label);
+
+    return layout->SetDirection("row").SetAlignItems("center").SetGap("4px");
+}
+
 // Here we create a function that creates the layout for the simulation screen
 // It takes a lambda as a parameter
 // This is a function we want to run when a button is clicked
 // We could take more lambdas if we want more types of button handlers
-// btn_lambda: generic handler for start/pause/stop/upload/save which can be updated later
 // exit_lambda: always goes back to the main menu for reselection of world or exit
-std::shared_ptr<WebElement> SimulationLayout(ActiveSim sim, std::function<void()> btn_lambda, std::function<void()> exit_lambda) {
+std::shared_ptr<WebElement> SimulationLayout(ActiveSim sim, std::function<void()> exit_lambda) {
     // Here we initialize our game info canvas with id, classes, and style properties.
     auto gameInfo = GameInfoCanvas(WebOptions{
         .id = "game-info",
@@ -600,7 +1185,7 @@ std::shared_ptr<WebElement> SimulationLayout(ActiveSim sim, std::function<void()
 
     if (sim == ActiveSim::TRAFFIC) {
         game_children.push_back(
-            UIItem<WebImage>("assets/images/full_map.svg", "Game map", WebOptions{
+            UIItem<WebImage>("assets/images/full_map_no_road.svg", "Game map", WebOptions{
                 .id = "map-image",
             })
         );
@@ -638,13 +1223,12 @@ std::shared_ptr<WebElement> SimulationLayout(ActiveSim sim, std::function<void()
                     UIItem<WebButton>("", WebOptions{ .id = "start-btn", .classes={"button"} })->SetOnClick([]{ handle_sim_state(SimState::PLAYING); }),
                     UIItem<WebButton>("", WebOptions{ .id = "pause-btn", .classes={"button"} })->SetOnClick([]{ handle_sim_state(SimState::PAUSED); }),
                     UIItem<WebButton>("", WebOptions{ .id = "stop-btn",  .classes={"button"} })->SetOnClick([]{ handle_sim_state(SimState::STOPPED); }),
-                    // Using SetOnFileUpload with a custom lambda
-                    UIItem<WebButton>("", WebOptions{ .id = "upload-btn", .classes={"button"} })->SetOnFileUpload([](const std::string& file_content) {
-                        std::println("SUCCESS! File uploaded to C++ backend. Length: {} characters.", file_content.length());
-                        // TODO: When the World object is available, do: world_ptr->LoadScript(file_content);
-                    }),
-                    UIItem<WebButton>("", WebOptions{ .id = "save-btn", .classes={"button"} })->SetOnClick(btn_lambda),
+                    UIItem<WebButton>("", WebOptions{ .id = "upload-btn", .classes={"button"} })->SetOnFileUploadWithName(handle_upload),
+                    UIItem<WebButton>("", WebOptions{ .id = "save-btn", .classes={"button"} })->SetOnClick(handle_save),
                     TickRateControl(),
+                    SpawnAgentControl(),
+                    ScriptStatusControl(),
+                    UIItem<WebButton>("", WebOptions{ .id = "clear-script-btn", .classes={"button"} })->SetOnClick(handle_clear_script),
                     UIItem<WebButton>("", WebOptions{ .id = "exit-btn", .classes={"button"} })->SetOnClick(exit_lambda)
                 }
             })->SetHeight("80px").SetDirection("row").SetAlignItems("center").SetGap("10px"),
@@ -718,6 +1302,8 @@ void load_menu_layout() {
     std::println("Loading menu layout");
     active_sim = ActiveSim::NONE;
     GameCanvas.reset();
+    traffic_static_layer.reset();
+    virus_static_layer.reset();
     logger.reset();
     log_textbox.reset();
     set_active_layout(MenuLayout());
@@ -725,27 +1311,42 @@ void load_menu_layout() {
 
 void load_traffic_layout() {
     std::println("Loading traffic simulation");
+    if (last_loaded_sim == ActiveSim::VIRUS) ResetScript();
+    last_loaded_sim = ActiveSim::TRAFFIC;
     active_sim = ActiveSim::TRAFFIC;
     sim_state  = SimState::STOPPED;
     sim_tick   = 0;
     traffic_world = std::make_unique<WebTrafficWorld>("assets/grids/TrafficWorld_Web.grid");
+    traffic_log = std::make_unique<DataLog<TrafficData>>(WorldType::Traffic);
+    scripted_traffic_ids.clear();
+    ScanTrafficCells();
+    prev_traffic_positions.clear();
+
     last_traffic_agent_count = 0;
     traffic_reached_log.clear();
-    set_active_layout(SimulationLayout(ActiveSim::TRAFFIC, load_traffic_layout, load_menu_layout));
+    set_active_layout(SimulationLayout(ActiveSim::TRAFFIC, load_menu_layout));
+    BuildTrafficStaticLayer();
     logger = std::make_unique<WebTextboxOutputManager>(log_textbox);
     LogSim("World", "Traffic simulation loaded. Press start to begin.", "info");
+    LogScriptStatus();
+    UpdateScriptDisplay();
 }
 
 void load_virus_layout() {
     std::println("Loading virus simulation");
+    if (last_loaded_sim == ActiveSim::TRAFFIC) ResetScript();
+    last_loaded_sim = ActiveSim::VIRUS;
     active_sim = ActiveSim::VIRUS;
     sim_state  = SimState::STOPPED;
     sim_tick   = 0;
     SetupVirusWorld();
     last_virus_health.clear();
-    set_active_layout(SimulationLayout(ActiveSim::VIRUS, load_virus_layout, load_menu_layout));
+    set_active_layout(SimulationLayout(ActiveSim::VIRUS, load_menu_layout));
+    BuildVirusStaticLayer();
     logger = std::make_unique<WebTextboxOutputManager>(log_textbox);
     LogSim("World", "Virus simulation loaded. Press start to begin.", "info");
+    LogScriptStatus();
+    UpdateScriptDisplay();
 }
 
 void MainLoop() {

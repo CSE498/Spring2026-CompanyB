@@ -12,8 +12,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # TODO: This section might need work. I am not sure what to anticpate just yet.
 # Source files
 file(GLOB_RECURSE SOURCES
-        "${CMAKE_CURRENT_SOURCE_DIR}/*.cpp"
-        "${CMAKE_CURRENT_SOURCE_DIR}/*.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/*.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/*.c"
 )
 
 # Header directories
@@ -156,8 +156,6 @@ elseif(BUILD_TESTS)
   add_executable(tests ${TEST_SOURCES})
   target_link_libraries(tests PRIVATE project_lib Catch2::Catch2WithMain)
   target_link_libraries(project_lib PUBLIC range-v3 nlohmann_json::nlohmann_json)
-  target_compile_definitions(tests PRIVATE
-    TEST_IMAGE_DIR="{CMAKE_SOURCE_DIR}/../images")
 
 elseif(DEFINED EMSCRIPTEN)
   # Exclude Qt GUI files (Qt can't be compiled by emcc)
@@ -201,6 +199,8 @@ elseif(DEFINED EMSCRIPTEN)
         # Embed grid files into the WASM virtual filesystem so C++ ifstream can open them.
         # SHELL: prefix prevents CMake from splitting the @ separator into two arguments.
         "SHELL:--preload-file /app/assets/grids/TrafficWorld_Web.grid@assets/grids/TrafficWorld_Web.grid"
+        "SHELL:--preload-file /app/scripts/agentlang/infection_script.al@scripts/infection_script.al"
+        "SHELL:--preload-file /app/scripts/agentlang/traffic_script.al@scripts/traffic_script.al"
     )
 
   # Copy custom HTML into build output
@@ -250,7 +250,7 @@ else()
     # Skip Qt entirely and exclude GUI sources
     list(FILTER SOURCES EXCLUDE REGEX ".*/Interfaces/gui/.*")
   else()
-    find_package(Qt6 REQUIRED COMPONENTS Core Gui Widgets Charts)
+    find_package(Qt6 REQUIRED COMPONENTS Core Gui Widgets)
     set(CMAKE_AUTOMOC ON)
   endif()
 
@@ -258,7 +258,7 @@ else()
   target_link_libraries(app PRIVATE range-v3 nlohmann_json::nlohmann_json)
   target_include_directories(app PRIVATE ${HEADER_DIRS})
   if(NOT NO_QT)
-    target_link_libraries(app PRIVATE Qt6::Core Qt6::Gui Qt6::Widgets Qt6::Charts)
+    target_link_libraries(app PRIVATE Qt6::Core Qt6::Gui Qt6::Widgets)
   endif()
 
 endif()

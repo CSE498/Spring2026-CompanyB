@@ -84,6 +84,11 @@ class WebTextboxOutputManager : public IOutputManager {
     mPendingActionEvents.insert(mPendingActionEvents.end(), events.begin(),
                                 events.end());
   }
+
+  void Clear() noexcept {
+    mBufferedLog = nlohmann::json::object();
+    mPendingActionEvents.clear();
+  }
 };
 
 }  // namespace cse498

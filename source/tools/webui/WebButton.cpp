@@ -97,6 +97,16 @@ WebButton& WebButton::SetOnClick(std::function<void()> callback) {
 
 // --- FILE UPLOAD IMPLEMENTATION ---
 
+WebButton& WebButton::SetOnFileUploadWithName(
+    std::function<void(const std::string&, const std::string&)> callback) {
+  on_file_upload_with_name_ = std::move(callback);
+
+  if (!on_file_upload_) {
+    SetOnFileUpload([](const std::string&) {});
+  }
+  return *this;
+}
+
 WebButton& WebButton::SetOnFileUpload(
     std::function<void(const std::string&)> callback) {
   on_file_upload_ = std::move(callback);
@@ -164,6 +174,7 @@ void WebButton::OnFileChange(emscripten::val event) {
   if (globalFR.isUndefined()) return;
 
   val file = files[0];
+  last_uploaded_filename_ = file["name"].as<std::string>();
   val reader = globalFR.new_();
 
   // Bind the async file reader complete event to our internal callback
@@ -186,7 +197,9 @@ void WebButton::OnFileReadCompleteInternal(emscripten::val event) {
   }
 
   // Hand the raw text over to the C++ backend!
-  if (on_file_upload_) {
+  if (on_file_upload_with_name_) {
+    on_file_upload_with_name_(last_uploaded_filename_, file_content);
+  } else if (on_file_upload_) {
     on_file_upload_(file_content);
   }
 }

@@ -82,6 +82,12 @@ class StepWorldBase {
   StepWorldBase() = default;
   virtual ~StepWorldBase() = default;
 
+  /// @brief Read-only view of the live agent set, for inspection by data logs
+  /// or visualization layers.
+  [[nodiscard]] const std::vector<AgentPtr>& GetAgents() const {
+    return agent_set;
+  }
+
   ///@ brief Add an agent to the world
   ///@param data DataClass to add to agent
   ///@note This signature or logic is may not final, since other logic may need
@@ -93,6 +99,35 @@ class StepWorldBase {
     ConfigAgent(agent_ref);
     agent_set.emplace_back(std::move(agent_ptr));
     return agent_ref;
+  }
+
+  /// @brief Parse script and instantiate one ScriptedAgent from the
+  /// definition at index def_idx. Reparses on every call, so calling this N
+  /// times with the same script yields N agents sharing one definition.
+  /// @param data Initial DataClass; the init block may overwrite fields like
+  /// position via __spawn__.
+  /// @param script Source code
+  /// @param def_idx 0 based index of the agent definition in source order.
+  /// @return Pointer to the new agent, or nullptr if the script failed to parse
+  /// or def_idx is out of range.
+  ScriptedAgent<DataClass>* AddScriptedAgent(DataClass data,
+                                             std::string const& script,
+                                             size_t def_idx = 0) {
+    Parser local_parser;
+    std::stringstream ss{script};
+    auto parse_res = local_parser.parse(ss);
+    if (!parse_res.has_value()) {
+      std::cout << "AddScriptedAgent parse error: " << parse_res.error().ToStr()
+                << "\n";
+      return nullptr;
+    }
+    auto& defs = parse_res.value();
+    if (def_idx >= defs.size()) return nullptr;
+
+    auto& agent = this->template AddAgent<ScriptedAgent<DataClass>>(data);
+    agent.SetInit(std::move(defs[def_idx]->m_Init))
+        .SetTurn(std::move(defs[def_idx]->m_Turn));
+    return &agent;
   }
 
   /// @brief Central function for an agent to take any action

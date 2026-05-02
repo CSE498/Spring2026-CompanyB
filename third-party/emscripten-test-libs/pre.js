@@ -3,7 +3,7 @@
  * Author: Udbhav Saxena
  */
 
-const jsdom = require('jsdom');
-const canvas = require('canvas');
+const jsdom = require("jsdom");
+const canvas = require("canvas");
 globalThis.jsdom = jsdom;
 globalThis.canvas = canvas;
