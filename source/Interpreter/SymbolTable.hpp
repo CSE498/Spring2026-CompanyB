@@ -41,28 +41,28 @@ class SymbolTable {
   void PopSymbolScope();
 
   // Need the actual string because we use it to index into map
-  std::expected<SymInfoPtr, InterpErr> GetSym(const std::string &name) const;
+  std::expected<SymInfoPtr, InterpErr> GetSym(const std::string& name) const;
   std::expected<SymInfoPtr, InterpErr> GetSym(size_t id) const;
 
-  std::expected<size_t, InterpErr> AddSym(const Token &id_tok,
-                                          const Token &type_tok);
+  std::expected<size_t, InterpErr> AddSym(const Token& id_tok,
+                                          const Token& type_tok);
 
   std::expected<std::pair<std::string, size_t>, InterpErr> PrepAdd(
-      const Token &);
+      const Token&);
   std::expected<std::pair<std::string, size_t>, InterpErr> PrepAdd(
-      std::string const &);
+      std::string const&);
 
   // Magic
   std::expected<size_t, InterpErr> AddSym(std::string, MagicSym);
 
   // Variable
-  std::expected<size_t, InterpErr> AddSym(const Token &, VarSym);
-  std::expected<size_t, InterpErr> AddSym(const Token &, Type);
+  std::expected<size_t, InterpErr> AddSym(const Token&, VarSym);
+  std::expected<size_t, InterpErr> AddSym(const Token&, Type);
 
   // Function
-  std::expected<size_t, InterpErr> AddSym(std::string const &, FuncSym &&);
-  std::expected<size_t, InterpErr> AddSym(const Token &, FuncSym &&);
-  std::expected<size_t, InterpErr> AddFunc(std::unique_ptr<AST::Node> &&);
+  std::expected<size_t, InterpErr> AddSym(std::string const&, FuncSym&&);
+  std::expected<size_t, InterpErr> AddSym(const Token&, FuncSym&&);
+  std::expected<size_t, InterpErr> AddFunc(std::unique_ptr<AST::Node>&&);
   std::expected<std::shared_ptr<AST::Node>, InterpErr> GetFunc(size_t);
 };
 

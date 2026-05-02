@@ -75,8 +75,9 @@ class ReplayDriver : public IReplayDriver<AgentT> {
       }
       return agentMap;
     } catch (const nlohmann::json::parse_error& e) {
-      (void)e;  // Suppress unused variable warning
-      return std::unexpected("Failed to parse JSON");
+      return std::unexpected("Failed to parse JSON" + std::string(e.what()));
+    } catch (const std::exception& e) {
+      return std::unexpected("Error processing JSON: " + std::string(e.what()));
     }
   }
 
@@ -96,8 +97,9 @@ class ReplayDriver : public IReplayDriver<AgentT> {
     try {
       inFile >> eventData;
     } catch (const nlohmann::json::parse_error& e) {
-      (void)e;  // Suppress unused variable warning
-      return std::unexpected("Failed to parse JSON");
+      return std::unexpected("Failed to parse JSON" + std::string(e.what()));
+    } catch (const std::exception& e) {
+      return std::unexpected("Error processing JSON: " + std::string(e.what()));
     }
 
     // Accept either a top-level array of events or the OutputManager shape:

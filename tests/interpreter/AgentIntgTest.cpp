@@ -22,14 +22,14 @@ using namespace cse498::AST;
 static std::pair<
     Parser,
     std::expected<std::vector<std::unique_ptr<StmtAgentDef>>, InterpErr>>
-parse(std::string const &stmts) {
+parse(std::string const& stmts) {
   Parser p;
   std::istringstream ss(stmts);
   auto result = p.parse(ss);
   return {std::move(p), std::move(result)};
 }
 
-const char *AGENT_CAR = R"V0G0N(
+const char* AGENT_CAR = R"V0G0N(
 
 world traffic;
 
@@ -52,7 +52,7 @@ let square_walker : car {
 
 )V0G0N";
 
-const char *TARGET_FOLLOWER = R"V0G0N(
+const char* TARGET_FOLLOWER = R"V0G0N(
 
 world traffic;
 
@@ -76,7 +76,7 @@ let target_follower : car {
 
 )V0G0N";
 
-const char *INFECTION_MAGIC_VALUES = R"V0G0N(
+const char* INFECTION_MAGIC_VALUES = R"V0G0N(
 
 world infection;
 
@@ -97,14 +97,14 @@ TEST_CASE("Basic Agent Test", "[traffic][intg]") {
   // Init and Turn Exist (like AgentDefParserTest)
   CAPTURE(result);
   REQUIRE(result.has_value());
-  auto &defs = result.value();
+  auto& defs = result.value();
   REQUIRE(defs.size() == 1);
 
-  auto *root = dynamic_cast<StmtAgentDef *>(defs[0].get());
+  auto* root = dynamic_cast<StmtAgentDef*>(defs[0].get());
   REQUIRE(root);
-  auto *init = dynamic_cast<StmtBlock *>(root->m_Init.get());
+  auto* init = dynamic_cast<StmtBlock*>(root->m_Init.get());
   REQUIRE(init);
-  auto *turn = dynamic_cast<StmtBlock *>(root->m_Turn.get());
+  auto* turn = dynamic_cast<StmtBlock*>(root->m_Turn.get());
   REQUIRE(turn);
 
   TrafficData data = {};
@@ -143,14 +143,14 @@ TEST_CASE("Traffic built-ins drive a target-following move",
 
   CAPTURE(result);
   REQUIRE(result.has_value());
-  auto &defs = result.value();
+  auto& defs = result.value();
   REQUIRE(defs.size() == 1);
 
-  auto *root = dynamic_cast<StmtAgentDef *>(defs[0].get());
+  auto* root = dynamic_cast<StmtAgentDef*>(defs[0].get());
   REQUIRE(root);
-  auto *init = dynamic_cast<StmtBlock *>(root->m_Init.get());
+  auto* init = dynamic_cast<StmtBlock*>(root->m_Init.get());
   REQUIRE(init);
-  auto *turn = dynamic_cast<StmtBlock *>(root->m_Turn.get());
+  auto* turn = dynamic_cast<StmtBlock*>(root->m_Turn.get());
   REQUIRE(turn);
 
   TrafficData data = {};
@@ -177,7 +177,7 @@ TEST_CASE("Infection built-ins reflect the current health state",
     HealthState health;
     WorldPosition start;
     WorldPosition expected;
-    char const *name;
+    char const* name;
   };
 
   std::array<Case, 3> cases{{
@@ -186,20 +186,20 @@ TEST_CASE("Infection built-ins reflect the current health state",
       {HealthState::RECOVERED, {5, 5}, {4, 5}, "recovered moves left"},
   }};
 
-  for (auto const &tc : cases) {
+  for (auto const& tc : cases) {
     DYNAMIC_SECTION(tc.name) {
       auto [p, result] = parse(std::string{INFECTION_MAGIC_VALUES});
 
       CAPTURE(result);
       REQUIRE(result.has_value());
-      auto &defs = result.value();
+      auto& defs = result.value();
       REQUIRE(defs.size() == 1);
 
-      auto *root = dynamic_cast<StmtAgentDef *>(defs[0].get());
+      auto* root = dynamic_cast<StmtAgentDef*>(defs[0].get());
       REQUIRE(root);
-      auto *init = dynamic_cast<StmtBlock *>(root->m_Init.get());
+      auto* init = dynamic_cast<StmtBlock*>(root->m_Init.get());
       REQUIRE(init);
-      auto *turn = dynamic_cast<StmtBlock *>(root->m_Turn.get());
+      auto* turn = dynamic_cast<StmtBlock*>(root->m_Turn.get());
       REQUIRE(turn);
 
       DiseaseData data = {};
@@ -229,14 +229,14 @@ TEST_CASE("Infection built-ins reflect the current health state",
 // Helper: parse a full agent script, set init+turn, run one turn.
 // Returns the StepContainer produced (empty on any error).
 // ---------------------------------------------------------------------------
-static StepContainer run_traffic_turn(std::string const &script) {
+static StepContainer run_traffic_turn(std::string const& script) {
   auto [p, result] = parse(script);
   if (!result.has_value() || result.value().empty()) return StepContainer{};
 
-  auto *root = dynamic_cast<StmtAgentDef *>(result.value()[0].get());
+  auto* root = dynamic_cast<StmtAgentDef*>(result.value()[0].get());
   if (!root) return StepContainer{};
-  auto *init = dynamic_cast<StmtBlock *>(root->m_Init.get());
-  auto *turn = dynamic_cast<StmtBlock *>(root->m_Turn.get());
+  auto* init = dynamic_cast<StmtBlock*>(root->m_Init.get());
+  auto* turn = dynamic_cast<StmtBlock*>(root->m_Turn.get());
   if (!init || !turn) return StepContainer{};
 
   TrafficData data = {};

@@ -22,7 +22,7 @@ using namespace cse498::AST;
 static std::pair<
     Parser,
     std::expected<std::vector<std::unique_ptr<StmtAgentDef>>, InterpErr>>
-parse(std::string const &stmts) {
+parse(std::string const& stmts) {
   Parser p;
   std::istringstream ss(stmts);
   auto result = p.parse(ss);
@@ -31,7 +31,7 @@ parse(std::string const &stmts) {
 
 // If, Else If, and Else Statements
 
-const char *TEST_1 = R"V0G0N(
+const char* TEST_1 = R"V0G0N(
 
 // Ctrl-Flow: Basic Empty Stmt-Block (Int)
 world traffic;
@@ -48,13 +48,13 @@ TEST_CASE("Ctrl-Flow: Basic Empty Stmt-Block (Int)",
   REQUIRE(result.has_value());
   REQUIRE(p.m_Nodes.size() == 2);
 
-  auto *stmt_if = dynamic_cast<StmtIf *>(p.m_Nodes[1].get());
+  auto* stmt_if = dynamic_cast<StmtIf*>(p.m_Nodes[1].get());
   REQUIRE(stmt_if != nullptr);
-  CHECK(dynamic_cast<ExprBinary *>(stmt_if->m_Condition.get()) != nullptr);
-  CHECK(dynamic_cast<StmtBlock *>(stmt_if->m_TBody.get()) != nullptr);
+  CHECK(dynamic_cast<ExprBinary*>(stmt_if->m_Condition.get()) != nullptr);
+  CHECK(dynamic_cast<StmtBlock*>(stmt_if->m_TBody.get()) != nullptr);
 }
 
-const char *TEST_2 = R"V0G0N(
+const char* TEST_2 = R"V0G0N(
 
 // Ctrl-Flow: Basic Empty Stmt (Int)
 world traffic;
@@ -72,7 +72,7 @@ TEST_CASE("Ctrl-Flow: Basic Empty Stmt (Int)", "[ctrl-flow][int][parser]") {
   REQUIRE(result.error().Is<ParseErr>(ParseErr::EXPECTED_STMT));
 }
 
-const char *TEST_3 = R"V0G0N(
+const char* TEST_3 = R"V0G0N(
 
 // Ctrl-Flow: Basic Stmt-Block (Int)
 world traffic;
@@ -91,13 +91,13 @@ TEST_CASE("Ctrl-Flow: Basic Stmt-Block (Int)", "[ctrl-flow][int][parser]") {
   CAPTURE(AST::IDNodeForTest(p.m_Nodes[0].get()));
   REQUIRE(p.m_Nodes.size() == 2);
 
-  auto *stmt_if = dynamic_cast<StmtIf *>(p.m_Nodes[1].get());
+  auto* stmt_if = dynamic_cast<StmtIf*>(p.m_Nodes[1].get());
   REQUIRE(stmt_if != nullptr);
-  CHECK(dynamic_cast<ExprBinary *>(stmt_if->m_Condition.get()) != nullptr);
-  CHECK(dynamic_cast<StmtBlock *>(stmt_if->m_TBody.get()) != nullptr);
+  CHECK(dynamic_cast<ExprBinary*>(stmt_if->m_Condition.get()) != nullptr);
+  CHECK(dynamic_cast<StmtBlock*>(stmt_if->m_TBody.get()) != nullptr);
 }
 
-const char *TEST_4 = R"V0G0N(
+const char* TEST_4 = R"V0G0N(
 
 // Ctrl-Flow: Basic Stmt (Int)
 world traffic;
@@ -115,13 +115,13 @@ TEST_CASE("Ctrl-Flow: Basic Stmt (Int)", "[ctrl-flow][int][parser]") {
 
   REQUIRE(p.m_Nodes.size() == 2);
 
-  auto *stmt_if = dynamic_cast<StmtIf *>(p.m_Nodes[1].get());
+  auto* stmt_if = dynamic_cast<StmtIf*>(p.m_Nodes[1].get());
   REQUIRE(stmt_if != nullptr);
-  CHECK(dynamic_cast<ExprBinary *>(stmt_if->m_Condition.get()) != nullptr);
-  CHECK(dynamic_cast<Assign *>(stmt_if->m_TBody.get()) != nullptr);
+  CHECK(dynamic_cast<ExprBinary*>(stmt_if->m_Condition.get()) != nullptr);
+  CHECK(dynamic_cast<Assign*>(stmt_if->m_TBody.get()) != nullptr);
 }
 
-const char *TEST_5 = R"V0G0N(
+const char* TEST_5 = R"V0G0N(
 
 // Ctrl-Flow: Else-if WITHOUT Else (Direction)
 world traffic;
@@ -144,20 +144,20 @@ TEST_CASE("Ctrl-Flow: Else-if WITHOUT Else (Direction)",
   REQUIRE(result.has_value());
   REQUIRE(p.m_Nodes.size() == 3);
 
-  auto *first = dynamic_cast<Assign *>(p.m_Nodes[0].get());
+  auto* first = dynamic_cast<Assign*>(p.m_Nodes[0].get());
   REQUIRE(first);
-  auto *second = dynamic_cast<Assign *>(p.m_Nodes[1].get());
+  auto* second = dynamic_cast<Assign*>(p.m_Nodes[1].get());
   REQUIRE(second);
 
-  auto *stmt_if = dynamic_cast<StmtIf *>(p.m_Nodes[2].get());
+  auto* stmt_if = dynamic_cast<StmtIf*>(p.m_Nodes[2].get());
   REQUIRE(stmt_if);
   REQUIRE(stmt_if->m_FBody.has_value());
-  auto *stmt_else_if = dynamic_cast<StmtIf *>(stmt_if->m_FBody.value().get());
+  auto* stmt_else_if = dynamic_cast<StmtIf*>(stmt_if->m_FBody.value().get());
   REQUIRE(stmt_else_if);
   CHECK_FALSE(stmt_else_if->m_FBody.has_value());
 }
 
-const char *TEST_6 = R"V0G0N(
+const char* TEST_6 = R"V0G0N(
 
 // Ctrl-Flow: Else-if WITH Else (Direction)
 world traffic;
@@ -181,21 +181,21 @@ TEST_CASE("Ctrl-Flow: Else-if WITH Else (Direction)",
   REQUIRE(result.has_value());
   REQUIRE(p.m_Nodes.size() == 3);
 
-  auto *stmt_if = dynamic_cast<StmtIf *>(p.m_Nodes[2].get());
+  auto* stmt_if = dynamic_cast<StmtIf*>(p.m_Nodes[2].get());
   REQUIRE(stmt_if);
   REQUIRE(stmt_if->m_FBody.has_value());
-  auto *stmt_if_t = dynamic_cast<Assign *>(stmt_if->m_TBody.get());
+  auto* stmt_if_t = dynamic_cast<Assign*>(stmt_if->m_TBody.get());
   REQUIRE(stmt_if_t);
-  auto *stmt_if_f = dynamic_cast<StmtIf *>(stmt_if->m_FBody.value().get());
+  auto* stmt_if_f = dynamic_cast<StmtIf*>(stmt_if->m_FBody.value().get());
   REQUIRE(stmt_if_f);
   REQUIRE(stmt_if_f->m_FBody.has_value());
-  auto *stmt_if_f_t = dynamic_cast<Assign *>(stmt_if_f->m_TBody.get());
+  auto* stmt_if_f_t = dynamic_cast<Assign*>(stmt_if_f->m_TBody.get());
   REQUIRE(stmt_if_f_t);
-  auto *stmt_if_f_f = dynamic_cast<Assign *>(stmt_if_f->m_FBody.value().get());
+  auto* stmt_if_f_f = dynamic_cast<Assign*>(stmt_if_f->m_FBody.value().get());
   REQUIRE(stmt_if_f_f);
 }
 
-const char *TEST_7 = R"V0G0N(
+const char* TEST_7 = R"V0G0N(
 
 // Ctrl-Flow: Condition without Paren Error (double)
 world traffic;
@@ -215,7 +215,7 @@ TEST_CASE("Ctrl-Flow: Condition without Paren Error (double)",
 
 // While Statements
 
-const char *TEST_8 = R"V0G0N(
+const char* TEST_8 = R"V0G0N(
 
 // Ctrl-Flow (While): Basic Empty Stmt-Block (Double)
 world traffic;
@@ -231,15 +231,15 @@ TEST_CASE("Ctrl-Flow (While): Basic Empty Stmt-Block (Double)",
   REQUIRE(result.has_value());
   REQUIRE(p.m_Nodes.size() == 2);
 
-  auto *first = dynamic_cast<AST::Assign *>(p.m_Nodes[0].get());
+  auto* first = dynamic_cast<AST::Assign*>(p.m_Nodes[0].get());
   REQUIRE(first);
-  auto *second = dynamic_cast<AST::StmtWhile *>(p.m_Nodes[1].get());
+  auto* second = dynamic_cast<AST::StmtWhile*>(p.m_Nodes[1].get());
   REQUIRE(second);
 
   // TODO - further test nodes
 }
 
-const char *TEST_9 = R"V0G0N(
+const char* TEST_9 = R"V0G0N(
 
 // Ctrl-Flow (While): Basic Empty Stmt (Error) (Double)
 world traffic;
@@ -258,7 +258,7 @@ TEST_CASE("Ctrl-Flow (While): Basic Empty Stmt (Error) (Double)",
   CHECK(result.error().Is<ParseErr>(ParseErr::EXPECTED_STMT));
 }
 
-const char *TEST_10 = R"V0G0N(
+const char* TEST_10 = R"V0G0N(
 
 // Ctrl-Flow (While): Basic Stmt-Block (Double)
 world traffic;
@@ -276,13 +276,13 @@ TEST_CASE("Ctrl-Flow (While): Basic Stmt-Block (Double)",
   REQUIRE(result.has_value());
   REQUIRE(p.m_Nodes.size() == 2);
 
-  auto *stmt_while = dynamic_cast<StmtWhile *>(p.m_Nodes[1].get());
+  auto* stmt_while = dynamic_cast<StmtWhile*>(p.m_Nodes[1].get());
   REQUIRE(stmt_while != nullptr);
-  CHECK(dynamic_cast<ExprBinary *>(stmt_while->m_Condition.get()) != nullptr);
-  CHECK(dynamic_cast<StmtBlock *>(stmt_while->m_Body.get()) != nullptr);
+  CHECK(dynamic_cast<ExprBinary*>(stmt_while->m_Condition.get()) != nullptr);
+  CHECK(dynamic_cast<StmtBlock*>(stmt_while->m_Body.get()) != nullptr);
 }
 
-const char *TEST_11 = R"V0G0N(
+const char* TEST_11 = R"V0G0N(
 
 // Ctrl-Flow (While): Basic Stmt (Double)
 world traffic;
@@ -299,13 +299,13 @@ TEST_CASE("Ctrl-Flow (While): Basic Stmt (Double)",
   REQUIRE(result.has_value());
   REQUIRE(p.m_Nodes.size() == 2);
 
-  auto *stmt_while = dynamic_cast<StmtWhile *>(p.m_Nodes[1].get());
+  auto* stmt_while = dynamic_cast<StmtWhile*>(p.m_Nodes[1].get());
   REQUIRE(stmt_while != nullptr);
-  CHECK(dynamic_cast<ExprBinary *>(stmt_while->m_Condition.get()) != nullptr);
-  CHECK(dynamic_cast<Assign *>(stmt_while->m_Body.get()) != nullptr);
+  CHECK(dynamic_cast<ExprBinary*>(stmt_while->m_Condition.get()) != nullptr);
+  CHECK(dynamic_cast<Assign*>(stmt_while->m_Body.get()) != nullptr);
 }
 
-const char *TEST_12 = R"V0G0N(
+const char* TEST_12 = R"V0G0N(
 
 // Ctrl-Flow (Loop-Ctrl): Basic Break Statement (Double)
 world traffic;
@@ -325,17 +325,17 @@ TEST_CASE("Ctrl-Flow (Loop-Ctrl): Basic Break Statement (Double)",
   REQUIRE(result.has_value());
   REQUIRE(p.m_Nodes.size() == 2);
 
-  auto *stmt_while = dynamic_cast<StmtWhile *>(p.m_Nodes[1].get());
+  auto* stmt_while = dynamic_cast<StmtWhile*>(p.m_Nodes[1].get());
   REQUIRE(stmt_while != nullptr);
-  CHECK(dynamic_cast<ExprBinary *>(stmt_while->m_Condition.get()) != nullptr);
+  CHECK(dynamic_cast<ExprBinary*>(stmt_while->m_Condition.get()) != nullptr);
 
-  auto *stmt_block = dynamic_cast<StmtBlock *>(stmt_while->m_Body.get());
+  auto* stmt_block = dynamic_cast<StmtBlock*>(stmt_while->m_Body.get());
   CHECK(stmt_block != nullptr);
 
-  CHECK(dynamic_cast<StmtLoopCtl *>(stmt_block->m_Body[1].get()));
+  CHECK(dynamic_cast<StmtLoopCtl*>(stmt_block->m_Body[1].get()));
 }
 
-const char *TEST_13 = R"V0G0N(
+const char* TEST_13 = R"V0G0N(
 
 // Ctrl-Flow (Loop-Ctrl): Basic Continue Statement (Double)
 world traffic;
@@ -355,12 +355,12 @@ TEST_CASE("Ctrl-Flow (Loop-Ctrl): Basic Continue Statement (Double)",
   REQUIRE(result.has_value());
   REQUIRE(p.m_Nodes.size() == 2);
 
-  auto *stmt_while = dynamic_cast<StmtWhile *>(p.m_Nodes[1].get());
+  auto* stmt_while = dynamic_cast<StmtWhile*>(p.m_Nodes[1].get());
   REQUIRE(stmt_while != nullptr);
-  CHECK(dynamic_cast<ExprBinary *>(stmt_while->m_Condition.get()) != nullptr);
+  CHECK(dynamic_cast<ExprBinary*>(stmt_while->m_Condition.get()) != nullptr);
 
-  auto *stmt_block = dynamic_cast<StmtBlock *>(stmt_while->m_Body.get());
+  auto* stmt_block = dynamic_cast<StmtBlock*>(stmt_while->m_Body.get());
   CHECK(stmt_block != nullptr);
 
-  CHECK(dynamic_cast<StmtLoopCtl *>(stmt_block->m_Body[1].get()));
+  CHECK(dynamic_cast<StmtLoopCtl*>(stmt_block->m_Body[1].get()));
 }

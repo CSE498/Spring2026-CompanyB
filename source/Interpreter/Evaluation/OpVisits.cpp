@@ -15,11 +15,11 @@ std::expected<Type, InterpErr> evaluate_unary(int id, Type left) {
 std::expected<Type, InterpErr> evaluate_binary(int id, Type left, Type right) {
   return std::visit(OpVisitor{id}, left, right);
 }
-std::expected<Type, InterpErr> evaluate_unary(AgentLexer::Token const &token,
+std::expected<Type, InterpErr> evaluate_unary(AgentLexer::Token const& token,
                                               Type left) {
   return std::visit(OpVisitor{token.id}, left);
 }
-std::expected<Type, InterpErr> evaluate_binary(AgentLexer::Token const &token,
+std::expected<Type, InterpErr> evaluate_binary(AgentLexer::Token const& token,
                                                Type left, Type right) {
   return std::visit(OpVisitor{token.id}, left, right);
 }

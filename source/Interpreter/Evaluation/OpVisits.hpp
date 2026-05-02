@@ -18,8 +18,8 @@ using namespace cse498::agentlang::Types;
 
 namespace cse498 {
 
-std::expected<Type, InterpErr> evaluate_unary(AgentLexer::Token const &, Type);
-std::expected<Type, InterpErr> evaluate_binary(AgentLexer::Token const &, Type,
+std::expected<Type, InterpErr> evaluate_unary(AgentLexer::Token const&, Type);
+std::expected<Type, InterpErr> evaluate_binary(AgentLexer::Token const&, Type,
                                                Type);
 std::expected<Type, InterpErr> evaluate_unary(int id, Type);
 std::expected<Type, InterpErr> evaluate_binary(int id, Type, Type);

@@ -19,6 +19,17 @@ class ActionLogMockAgent {
   std::vector<nlohmann::json> actions;
 };
 
+TEST_CASE("LogEventByNoagent", "[ActionLog]") {
+  ActionLog<ActionLogMockAgent> actionLog;
+  ActionLogMockAgent agent;
+
+  std::vector<ActionLogMockAgent> agents = {};
+  auto [events, failures] = actionLog.LogAgentStates(agents);
+
+  REQUIRE(events.size() == 0);
+  REQUIRE(failures.empty());
+}
+
 TEST_CASE("LogEventByOneAgent", "[ActionLog]") {
   ActionLog<ActionLogMockAgent> actionLog;
   ActionLogMockAgent agent;
