@@ -167,7 +167,7 @@ struct RuntimeErr : BaseErr {
     VALUE_ERR = 14,
     SPAWN_OUTSIDE_INIT = 15,
   };
-  static constexpr std::array<std::string_view, 15> m_KindNames = {
+  static constexpr std::array<std::string_view, 16> m_KindNames = {
       "TYPE_MISMATCH",
       "EMPTY_INTERP_WRAPPER",
       "UNSUPPORTED_OP",
@@ -182,7 +182,8 @@ struct RuntimeErr : BaseErr {
       "MISSING_RETURN",
       "IMPOSSIBLE_STATE",
       "UNRESOLVED_FUNCTION",
-      "VALUE_ERR"};
+      "VALUE_ERR",
+      "SPAWN_OUTSIDE_INIT"};
 
   Kind m_Kind;
   RuntimeErr(Kind kind)
