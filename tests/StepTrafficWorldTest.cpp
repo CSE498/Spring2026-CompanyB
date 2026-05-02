@@ -327,7 +327,7 @@ TEST_CASE("UpdateWorld — traffic lights", "[StepTrafficWorld][update]") {
     };
     TestWorld tw{kHorizOnly};
     CHECK(tw.VerticalBlockedAt(WorldPosition{1, 1}));
-    for (int i = 0; i < 3; ++i) tw.UpdateWorld();
+    for (int i = 0; i < 150; ++i) tw.UpdateWorld();
     // After flip, it should be ALLOW_HORIZONTAL
     CHECK_FALSE(tw.VerticalBlockedAt(WorldPosition{1, 1}));
     CHECK(tw.HorizontalBlockedAt(WorldPosition{1, 1}));
