@@ -193,7 +193,6 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
   /// @brief Queue of IDs of despawned agents available for recycling.
   /// Written by Claude.
   std::queue<size_t> despawned_agent_ids{};
-  DataLog<TrafficData> traffic_data_log{WorldType::Traffic};
 
  private:
   DataLog<TrafficData> traffic_data_log{WorldType::Traffic};
@@ -259,9 +258,9 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
   }
 
  public:
-  [[nodiscard]] const DataLog<TrafficData>& GetTrafficDataLog() const {
-    return traffic_data_log;
-  }
+  // [[nodiscard]] const DataLog<TrafficData>& GetTrafficDataLog() const {
+  //   return traffic_data_log;
+  // }
 
   /// @brief Construct a TrafficWorld from a vector of strings representing
   /// the grid layout.
@@ -495,7 +494,6 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
   void UpdateWorld() override {
     UpdateTrafficLights();
     UpdateSpawners();
-    traffic_data_log.AggregateData(agent_set);
     traffic_data_log.AggregateData(agent_set);
   }
 

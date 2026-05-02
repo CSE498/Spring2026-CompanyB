@@ -38,7 +38,6 @@ class SimWorldBase : public StepWorldBase<DataClass> {
   // -- Accessors --
 
   [[nodiscard]] size_t GetTickCount() const { return tick_count; }
-  [[nodiscard]] const auto& GetAgents() const { return agent_set; }
   [[nodiscard]] size_t GetFloorID() const { return floor_id; }
   [[nodiscard]] size_t GetWallID() const { return wall_id; }
   [[nodiscard]] size_t GetNumAgents() const { return agent_set.size(); }
