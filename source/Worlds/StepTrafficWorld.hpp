@@ -193,11 +193,12 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
   /// @brief Queue of IDs of despawned agents available for recycling.
   /// Written by Claude.
   std::queue<size_t> despawned_agent_ids{};
-  DataLog<TrafficData> traffic_data_log{WorldType::Traffic};
 
  private:
-  //  Pulled by Claude out of the preexisting constructor — registers cell types
-  //  and scans the loaded grid for traffic lights, spawners, and destinations.
+  DataLog<TrafficData> traffic_data_log{WorldType::Traffic};
+
+  // Pulled by Claude out of the preexisting constructor — registers cell types
+  // and scans the loaded grid for traffic lights, spawners, and destinations.
   void RegisterCellTypes() {
     road_id = main_grid.AddCellType("road", "Road to drive in", '.');
     grass_id =
@@ -257,6 +258,10 @@ class StepTrafficWorld : public StepWorldBase<TrafficData> {
   }
 
  public:
+  // [[nodiscard]] const DataLog<TrafficData>& GetTrafficDataLog() const {
+  //   return traffic_data_log;
+  // }
+
   /// @brief Construct a TrafficWorld from a vector of strings representing
   /// the grid layout.
   /// Written by Claude.

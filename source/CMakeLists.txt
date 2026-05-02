@@ -116,7 +116,7 @@ elseif(BUILD_TESTS)
     list(FILTER SOURCES EXCLUDE REGEX ".*/Interfaces/gui/.*")
   else()
     # Find Qt6 for native build
-    find_package(Qt6 REQUIRED COMPONENTS Core Gui Widgets)
+    find_package(Qt6 REQUIRED COMPONENTS Core Gui Widgets Charts)
     set(CMAKE_AUTOMOC ON) # Necessary for QT macro searches
   endif()
 
@@ -138,7 +138,7 @@ elseif(BUILD_TESTS)
     add_library(project_lib ${SOURCES})
     target_include_directories(project_lib PUBLIC ${HEADER_DIRS})
     if(NOT NO_QT)
-      target_link_libraries(project_lib PUBLIC Qt6::Core Qt6::Gui Qt6::Widgets)
+      target_link_libraries(project_lib PUBLIC Qt6::Core Qt6::Gui Qt6::Widgets Qt6::Charts)
     endif()
   endif()
 
@@ -250,7 +250,7 @@ else()
     # Skip Qt entirely and exclude GUI sources
     list(FILTER SOURCES EXCLUDE REGEX ".*/Interfaces/gui/.*")
   else()
-    find_package(Qt6 REQUIRED COMPONENTS Core Gui Widgets)
+    find_package(Qt6 REQUIRED COMPONENTS Core Gui Widgets Charts)
     set(CMAKE_AUTOMOC ON)
   endif()
 
@@ -258,7 +258,7 @@ else()
   target_link_libraries(app PRIVATE range-v3 nlohmann_json::nlohmann_json)
   target_include_directories(app PRIVATE ${HEADER_DIRS})
   if(NOT NO_QT)
-    target_link_libraries(app PRIVATE Qt6::Core Qt6::Gui Qt6::Widgets)
+    target_link_libraries(app PRIVATE Qt6::Core Qt6::Gui Qt6::Widgets Qt6::Charts)
   endif()
 
 endif()

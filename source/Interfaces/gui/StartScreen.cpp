@@ -258,8 +258,12 @@ void StartScreen::launchMainWindow(int mode) {
     // patient zero
     mDiseaseWorld->InfectAgent(6);
 
-    auto* win = new InfectiousWindow(*mDiseaseWorld, mImagePaths, mTileSize,
+    /*
+    auto *win = new InfectiousWindow(*mDiseaseWorld, mImagePaths, mTileSize,
                                      mAgentImagePath);
+                                     */
+    auto* win = new MainWindow(*mDiseaseWorld, mImagePaths, mTileSize,
+                               mAgentImagePath, nullptr, 2);
     win->mOwnedWorld = std::move(mDiseaseWorld);
     win->setWindowTitle("Group 21 Demo - Virus");
     win->setAttribute(Qt::WA_DeleteOnClose);
