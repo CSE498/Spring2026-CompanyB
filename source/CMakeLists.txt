@@ -116,7 +116,7 @@ elseif(BUILD_TESTS)
     list(FILTER SOURCES EXCLUDE REGEX ".*/Interfaces/gui/.*")
   else()
     # Find Qt6 for native build
-    find_package(Qt6 REQUIRED COMPONENTS Core Gui Widgets)
+    find_package(Qt6 REQUIRED COMPONENTS Core Gui Widgets Charts)
     set(CMAKE_AUTOMOC ON) # Necessary for QT macro searches
   endif()
 
