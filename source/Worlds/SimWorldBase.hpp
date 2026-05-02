@@ -48,8 +48,14 @@ class SimWorldBase : public StepWorldBase<DataClass> {
 
   /// Get the current DataClass state of agent at index \p id.
   [[nodiscard]] DataClass GetAgentState(size_t id) const {
-    assert(id < agent_set.size());
+    assert(id < agent_set.size() && "GetAgentState: Agent id out of range");
     return agent_set[id]->GetState();
+  }
+
+  /// Const view of all agents
+  [[nodiscard]] const std::vector<std::shared_ptr<StepAgentBase<DataClass>>>&
+  GetAgents() const {
+    return agent_set;
   }
 
   // -- Spatial queries (require DataClass to have a WorldPosition `position`)

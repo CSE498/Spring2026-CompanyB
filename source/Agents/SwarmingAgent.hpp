@@ -4,14 +4,19 @@
 #include <array>
 #include <cmath>
 #include <concepts>
+#include <cstddef>
+#include <cstdint>
 #include <deque>
-#include <optional>
 #include <random>
+#include <unordered_map>
+#include <unordered_set>
+#include <vector>
 
 #include "../core/AgentData.hpp"
 #include "../core/Step.hpp"
 #include "../core/StepAgentBase.hpp"
 #include "../core/StepWorldBase.hpp"
+#include "../core/core.hpp"
 #include "../tools/StateGridPosition.hpp"
 
 namespace cse498 {
@@ -22,45 +27,154 @@ namespace cse498 {
  * SwarmingAgent currently supports traffic and infectious-disease data because
  * those state objects provide the fields its movement logic reads and updates.
  */
-template <typename T>
-concept IsSwarmData = Concepts::IsOneOf<T, TrafficData, DiseaseData>;
 
 /**
- * @brief Step-based agent that greedily moves toward goals or wanders locally.
+ * @brief Agent that moves toward a destination while avoiding recently visited
+ * cells.
  *
- * For TrafficData, the agent approaches its optional destination while avoiding
- * immediate backtracking through a short position history. For DiseaseData, it
- * emits random neighboring movement steps and leaves infection state
- * transitions to InfectiousWorld.
- *
- * @tparam SwarmData Either TrafficData or DiseaseData.
+ * This agent implements a simple swarming behavior where it prefers to move
+ * toward a target destination but also keeps track of recently visited cells to
+ * avoid getting stuck in loops or congested areas. The agent scores neighboring
+ * cells based on their distance to the target and how frequently they have been
+ * visited, and then chooses the best option with some random tie-breaking.
  */
-template <IsSwarmData SwarmData>
+template <Concepts::IsDataClass SwarmData>
 class SwarmingAgent : public StepAgentBase<SwarmData> {
+  const double visit_penalty =
+      1.75;  // Tunable parameter to adjust how strongly the agent avoids
+             // revisiting cells
  private:
   /// Random generator used to choose among candidate neighboring cells.
   std::mt19937 rng{std::random_device{}()};
 
-  /// Number of recent cells retained for loop-avoidance.
-  static constexpr std::size_t kHistorySize = 6;
-
   /// Recent positions used to avoid short movement loops.
   std::deque<WorldPosition> recent_positions;
 
+  /// Set mirror of recent_positions for O(1) lookup in in_recent.
+  std::unordered_set<WorldPosition> recent_positions_set;
+
+  /// Tracks how many times each position has been visited
+  /// Higher counts will discourage revisiting the same cell
+  std::unordered_map<WorldPosition, std::size_t> visit_counts;
+
+  /// Number of recent cells retained for loop-avoidance.
+  static constexpr std::size_t history_size = 6;
+
+  /// Small random value added to movement scores to prevent ties and encourage
+  /// exploration.
+  static constexpr double tie_breaker = 0.001;
+
   /**
-   * @brief Add a position to the rolling movement history.
-   * @param pos Position to record.
+   * @brief Record a visit to a cell by incrementing its count and adding it to
+   * recent_positions.
+   * This method should be called at the end of each turn to update the agent's
+   * knowledge of its movement history. It updates visit_counts to reflect the
+   * new visit and adds the position to recent_positions, which is used to avoid
+   * short-term loops. recent_positions is maintained as a fixed-size queue that
+   * only keeps the most recent 6 positions, so it effectively tracks the last 6
+   * cells the agent has been in. This allows the agent to prefer moves that
+   * lead to less recently visited cells, encouraging exploration and reducing
+   * the chance of getting stuck in loops.
+   * @param pos The position that the agent has just moved to and should be
+   * recorded as visited.
    */
-  void record_position(WorldPosition const& pos) {
-    // skip duplicates so a stationary agent doesn't flush the history with
-    // copies of the same cell
-    if (!recent_positions.empty() && recent_positions.back() == pos) return;
+  void record_visit(WorldPosition const& pos) {
+    visit_counts[pos]++;
 
     recent_positions.push_back(pos);
-
-    while (recent_positions.size() > kHistorySize) {
+    recent_positions_set.insert(pos);
+    while (recent_positions.size() > history_size) {
+      WorldPosition const evicted = recent_positions.front();
       recent_positions.pop_front();
+      if (std::count(recent_positions.begin(), recent_positions.end(),
+                     evicted) == 0) {
+        recent_positions_set.erase(evicted);
+      }
     }
+  }
+
+  /**
+   * @brief Get the visit count for a cell from the visit_counts map.
+   * @param pos The position of the cell to query.
+   * @return The number of times the agent has visited the cell at the given
+   * position. If the cell has not been visited before, this returns 0. This
+   * method is used in the movement scoring function to penalize cells that have
+   * been visited frequently, encouraging the agent to explore less-visited
+   * areas of the world and avoid congestion.
+   */
+  [[nodiscard]] std::size_t get_visit_count(WorldPosition const& pos) const {
+    auto it = visit_counts.find(pos);
+    return (it == visit_counts.end()) ? 0 : it->second;
+  }
+
+  /**
+   * @brief Score a neighboring cell for movement desirability based on distance
+   * to target, visit history, and recent movement outcomes.
+   * @param candidate The neighboring cell to score.
+   * @param target The target position.
+   * @return The score for the candidate cell.
+   * Lower scores indicate more desirable movement options.
+   */
+  [[nodiscard]] double neighbor_score(WorldPosition const& candidate,
+                                      WorldPosition const& target) const {
+    auto manhattan = [&](WorldPosition const& p) {
+      return std::abs(target.X() - p.X()) + std::abs(target.Y() - p.Y());
+    };
+
+    // Base goal seeking
+    double score = static_cast<double>(manhattan(candidate));
+
+    // Penalize revisiting overused cells
+    score += visit_penalty * static_cast<double>(get_visit_count(candidate));
+
+    return score;
+  }
+
+  /**
+   * @brief Get the four cardinal neighboring positions of a given position.
+   * @param pos The position to get neighbors for.
+   * @return An array of the four neighboring positions in the order: up, down,
+   * left, right.
+   */
+  static std::array<WorldPosition, 4> get_neighbors(WorldPosition const& pos) {
+    return {pos.Up(), pos.Down(), pos.Left(), pos.Right()};
+  }
+
+  /**
+   * @brief Choose neighboring positions to move to, preferring those that are
+   * closer to the target and less recently visited.
+   * @param pos The current position of the agent.
+   * @param target The target destination the agent is trying to reach.
+   * @return An array of the four neighboring positions sorted by desirability,
+   * with the most desirable option first. The agent will attempt to move to the
+   * first position, and if that move is blocked or unavailable, it can fall
+   * back to the next options in order.
+   */
+  std::array<WorldPosition, 4> choose_move_options(
+      WorldPosition const& pos, WorldPosition const& target) {
+    auto neighbors = get_neighbors(pos);
+
+    struct Candidate {
+      WorldPosition pos;
+      double score;
+      double tie_breaker;
+    };
+
+    std::vector<Candidate> scored;
+    scored.reserve(4);
+
+    std::uniform_real_distribution<double> jitter(0.0, tie_breaker);
+
+    for (auto const& n : neighbors) {
+      scored.push_back(Candidate{n, neighbor_score(n, target), jitter(rng)});
+    }
+
+    std::sort(scored.begin(), scored.end(),
+              [](Candidate const& a, Candidate const& b) {
+                return a.score + a.tie_breaker < b.score + b.tie_breaker;
+              });
+
+    return {scored[0].pos, scored[1].pos, scored[2].pos, scored[3].pos};
   }
 
   /**
@@ -69,8 +183,7 @@ class SwarmingAgent : public StepAgentBase<SwarmData> {
    * @return true if p appears in recent_positions.
    */
   [[nodiscard]] bool in_recent(WorldPosition const& p) const {
-    return std::find(recent_positions.begin(), recent_positions.end(), p) !=
-           recent_positions.end();
+    return recent_positions_set.count(p) > 0;
   }
 
   /**
@@ -78,79 +191,28 @@ class SwarmingAgent : public StepAgentBase<SwarmData> {
    * @param pos Current position.
    * @return Neighboring position selected from up, down, left, or right.
    */
-  WorldPosition get_random_neighbor(WorldPosition& pos) {
+  WorldPosition get_random_neighbor(WorldPosition const& pos) {
     std::array<WorldPosition, 4> neighbors{pos.Up(), pos.Down(), pos.Left(),
                                            pos.Right()};
 
     std::vector<WorldPosition> candidates{};
 
-    for (auto const& n : neighbors) {  // check if all possible neighbors are in
-                                       // recent positions
+    // check if all possible neighbors are in
+    // recent positions
+    for (auto const& n : neighbors) {
       if (!in_recent(n)) {
         candidates.push_back(n);
       }
     }
 
-    if (candidates.empty()) {  // if all in recent then any option works
+    // if all in recent then any option works
+    if (candidates.empty()) {
       candidates.assign(neighbors.begin(), neighbors.end());
     }
 
-    std::uniform_int_distribution<size_t> dist(
-        0, candidates.size() - 1);  // pick random movement of avaliable
+    // pick random movement of avaliable
+    std::uniform_int_distribution<size_t> dist(0, candidates.size() - 1);
     return candidates[dist(rng)];
-  }
-
-  /**
-   * @brief Pick the cardinal neighbor closest to a target.
-   *
-   * The search prefers cells that are not in recent_positions so the agent can
-   * route around walls and dead ends instead of repeatedly choosing the same
-   * blocked cell. If exclude is set, that cell is skipped so callers can choose
-   * a distinct backup after picking a primary movement.
-   *
-   * @param pos Current position.
-   * @param target Desired destination.
-   * @param exclude Optional neighbor to ignore.
-   * @return Best neighboring cell by Manhattan distance.
-   */
-  // Picks the neighbor with the smallest Manhattan distance to `target`,
-  // preferring cells not in `recent_positions` so the agent naturally
-  // routes around walls and dead ends rather than pounding the same cell.
-  // If `exclude` is set, that cell is skipped (used to find a distinct
-  // "second choice" after already picking a primary). If every neighbor is
-  // in recent history, we fall back to the closest cell overall so the
-  // agent keeps swarming instead of freezing.
-  WorldPosition best_neighbor(WorldPosition const& pos,
-                              WorldPosition const& target,
-                              std::optional<WorldPosition> exclude) {
-    std::array<WorldPosition, 4> neighbors{pos.Up(), pos.Down(), pos.Left(),
-                                           pos.Right()};
-
-    auto manhattan = [&](WorldPosition const& p) {
-      return std::abs(target.X() - p.X()) + std::abs(target.Y() - p.Y());
-    };
-
-    WorldPosition const* best_fresh = nullptr;
-    double best_fresh_d = 0.0;
-    WorldPosition const* best_any = nullptr;
-    double best_any_d = 0.0;
-
-    for (auto const& n : neighbors) {
-      if (exclude.has_value() && n == *exclude) continue;
-      double d = manhattan(n);
-      if (best_any == nullptr || d < best_any_d) {
-        best_any = &n;
-        best_any_d = d;
-      }
-      if (!in_recent(n) && (best_fresh == nullptr || d < best_fresh_d)) {
-        best_fresh = &n;
-        best_fresh_d = d;
-      }
-    }
-
-    if (best_fresh != nullptr) return *best_fresh;
-    if (best_any != nullptr) return *best_any;
-    return pos;  // only reached if `exclude` somehow matches all neighbors
   }
 
  public:
@@ -175,13 +237,14 @@ class SwarmingAgent : public StepAgentBase<SwarmData> {
   }
 
   /**
-   * @brief Build a traffic movement turn.
-   *
-   * Inactive agents emit no steps. Agents without a destination wander
-   * randomly. Agents with a destination request an availability check for a
-   * primary movement and provide a backup movement if the primary is blocked.
-   *
-   * @return StepContainer for the traffic world.
+   * @brief Build a traffic-world movement turn.
+   * The agent attempts to move toward its destination while avoiding recently
+   * visited cells and recently failed movement attempts. If no destination is
+   * set, it moves randomly with a bias toward unvisited neighbors.
+   * @return StepContainer with one or two MovementSteps, depending on whether
+   * the backup move is needed. The first step is always the primary move. The
+   * second step is a backup move that is only executed if the primary move is
+   * blocked or unavailable.
    */
   [[nodiscard]] StepContainer TrafficGetTurn()
     requires(std::is_same_v<SwarmData, TrafficData>)
@@ -189,54 +252,34 @@ class SwarmingAgent : public StepAgentBase<SwarmData> {
     StepContainer container{};
 
     if (!this->mData.is_active) {
-      return container;  // empty container means no steps remain still
-    }
-
-    // Remember where we are this turn so future detours can avoid looping
-    // back onto cells we've just visited.
-    record_position(this->mData.position);
-
-    // make a random turn and skip the world query entirely
-    if (!this->mData.destination.has_value()) {
-      WorldPosition random_pos = get_random_neighbor(this->mData.position);
-      cse498::steps::MovementStep random_move{random_pos};
-      container.add_step(std::move(random_move));
       return container;
     }
 
-    // wander randomly instead of approaching (maybe not have a swarm away) (I
-    // REMOVED SWARM AWAY)
-
-    // if we are already at the destination stay there
     WorldPosition const& pos = this->mData.position;
-    WorldPosition const& dest = this->mData.destination.value();
-    if (pos == dest) {
-      return container;  // empty to stay in place
+
+    // First, learn from what happened last turn
+    record_visit(pos);
+
+    if (!this->mData.destination.has_value()) {
+      WorldPosition random_pos = get_random_neighbor(pos);
+
+      container.add_step(cse498::steps::MovementStep{random_pos});
+      return container;
     }
 
-    // Pick the best neighbor toward the destination preferring cells we
-    // haven't been to recently. `backup` is the next best choice, used if
-    // the world tells us `primary` is a wall
-    WorldPosition primary = best_neighbor(pos, dest, std::nullopt);
-    WorldPosition backup = best_neighbor(pos, dest, primary);
+    WorldPosition const& dest = this->mData.destination.value();
 
-    // Eagerly mark both as attempted in our history iff both turn out to
-    // be walls and the agent stays put and next turn we'll try different
-    // cells instead of repicking these two forever
-    record_position(primary);
-    record_position(backup);
+    if (pos == dest) {
+      return container;
+    }
 
-    cse498::steps::InfoStep query{cse498::steps::InfoStep::Aspect::LOC_AVAIL,
-                                  primary};
+    auto options = choose_move_options(pos, dest);
 
-    cse498::steps::ConditionalStep is_open{cse498::steps::InfoHandler(
-        [](bool is_available) -> std::expected<bool, cse498::steps::StepErr> {
-          return is_available;
-        })};
+    container.add_step(cse498::steps::MovementStep{options[0]});
+    container.add_step(cse498::steps::MovementStep{options[1]});
+    container.add_step(cse498::steps::MovementStep{options[2]});
+    container.add_step(cse498::steps::MovementStep{options[3]});
 
-    container.add_step(std::move(query), std::move(is_open),
-                       cse498::steps::MovementStep{primary},
-                       cse498::steps::MovementStep{backup});
     return container;
   }
 
@@ -306,4 +349,5 @@ class SwarmingAgent : public StepAgentBase<SwarmData> {
   }
 };
 
-}  // namespace cse498
+// clang-format on
+}  // End of namespace cse498

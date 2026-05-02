@@ -232,7 +232,7 @@ class Point {
    * @param other Other point.
    * @return Squared distance between the points.
    */
-  [[nodiscard]] double distanceSqTo(const Point& other) const {
+  [[nodiscard]] constexpr double distanceSqTo(const Point& other) const {
     double dx = x - other.x;
     double dy = y - other.y;
     return dx * dx + dy * dy;

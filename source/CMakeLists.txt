@@ -23,6 +23,7 @@ set(HEADER_DIRS
         ${CMAKE_CURRENT_SOURCE_DIR}/core
         ${CMAKE_CURRENT_SOURCE_DIR}/Interfaces
         ${CMAKE_CURRENT_SOURCE_DIR}/tools
+        ${CMAKE_CURRENT_SOURCE_DIR}/tools/webui
         ${CMAKE_CURRENT_SOURCE_DIR}/worlds
 )
 
@@ -155,6 +156,8 @@ elseif(BUILD_TESTS)
   add_executable(tests ${TEST_SOURCES})
   target_link_libraries(tests PRIVATE project_lib Catch2::Catch2WithMain)
   target_link_libraries(project_lib PUBLIC range-v3 nlohmann_json::nlohmann_json)
+  target_compile_definitions(tests PRIVATE
+    TEST_IMAGE_DIR="{CMAKE_SOURCE_DIR}/../images")
 
 elseif(DEFINED EMSCRIPTEN)
   # Exclude Qt GUI files (Qt can't be compiled by emcc)

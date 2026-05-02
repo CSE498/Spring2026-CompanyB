@@ -3,17 +3,17 @@ world traffic;
 let square_walker : car {
     init : {
         let a : int = 0;
-        __spawn__ = make_point(3,7);
+        __spawn__ = make_point(30,10);
     };
     turn : {
         if ((a % 4) == 0) {
             move(down);
         } else if ((a%4) == 1) {
-            move(right);
+            move(left);
         } else if ((a%4) == 2) {
             move(up);
         } else {
-            move(left);
+            move(right);
         }
         a = a + 1;
     };

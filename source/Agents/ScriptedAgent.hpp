@@ -40,34 +40,34 @@ struct AgentWrapper {
   Env m_Env;
   std::any m_AgentPtr;
 
-  std::expected<Type, InterpErr> Visit(AST::StmtBlock &);
-  std::expected<Type, InterpErr> Visit(AST::ExprUnary &);
-  std::expected<Type, InterpErr> Visit(AST::ExprBinary &);
-  std::expected<Type, InterpErr> Visit(AST::Assign &);
-  std::expected<Type, InterpErr> Visit(AST::StmtAgentDef &);
-  std::expected<Type, InterpErr> Visit(AST::StmtAction &);
-  std::expected<Type, InterpErr> Visit(AST::StmtWhile &);
-  std::expected<Type, InterpErr> Visit(AST::StmtLoopCtl &);
-  std::expected<Type, InterpErr> Visit(AST::StmtIf &);
-  std::expected<Type, InterpErr> Visit(AST::StmtReturn &);
-  std::expected<Type, InterpErr> Visit(AST::StmtFuncCall &);
-  std::expected<Type, InterpErr> Visit(AST::StmtFunc &);
-  std::expected<Type, InterpErr> Visit(AST::ValLiteral &);
-  std::expected<Type, InterpErr> Visit(AST::ValVariable &);
+  std::expected<Type, InterpErr> Visit(AST::StmtBlock&);
+  std::expected<Type, InterpErr> Visit(AST::ExprUnary&);
+  std::expected<Type, InterpErr> Visit(AST::ExprBinary&);
+  std::expected<Type, InterpErr> Visit(AST::Assign&);
+  std::expected<Type, InterpErr> Visit(AST::StmtAgentDef&);
+  std::expected<Type, InterpErr> Visit(AST::StmtAction&);
+  std::expected<Type, InterpErr> Visit(AST::StmtWhile&);
+  std::expected<Type, InterpErr> Visit(AST::StmtLoopCtl&);
+  std::expected<Type, InterpErr> Visit(AST::StmtIf&);
+  std::expected<Type, InterpErr> Visit(AST::StmtReturn&);
+  std::expected<Type, InterpErr> Visit(AST::StmtFuncCall&);
+  std::expected<Type, InterpErr> Visit(AST::StmtFunc&);
+  std::expected<Type, InterpErr> Visit(AST::ValLiteral&);
+  std::expected<Type, InterpErr> Visit(AST::ValVariable&);
 
-  std::expected<Type, InterpErr> Evaluate(AST::Node &node) {
+  std::expected<Type, InterpErr> Evaluate(AST::Node& node) {
     return node.Accept(*this);
   }
 
   template <IsDataClass DataClass>
-  AgentWrapper(ScriptedAgent<DataClass> *i) {
+  AgentWrapper(ScriptedAgent<DataClass>* i) {
     if constexpr (std::is_same_v<DataClass, TrafficData>) {
       m_Env = Env::TRAFFIC;
     } else {
       m_Env = Env::INFECTION;
     }
 
-    m_AgentPtr = std::make_any<ScriptedAgent<DataClass> *>(i);
+    m_AgentPtr = std::make_any<ScriptedAgent<DataClass>*>(i);
   }
 };
 
@@ -95,7 +95,7 @@ class ScriptedAgent : public StepAgentBase<DataClass> {
 
   ~ScriptedAgent() = default;
 
-  ScriptedAgent &SetInit(std::unique_ptr<Node> init) {
+  ScriptedAgent& SetInit(std::unique_ptr<Node> init) {
     mInit = std::move(init);
     mCurrentTurn = StepContainer{};
     mCurrentlyInInit = true;
@@ -105,7 +105,7 @@ class ScriptedAgent : public StepAgentBase<DataClass> {
     return *this;
   }
 
-  ScriptedAgent &SetTurn(std::unique_ptr<Node> turn) {
+  ScriptedAgent& SetTurn(std::unique_ptr<Node> turn) {
     mTurn = std::move(turn);
     return *this;
   }
@@ -135,15 +135,15 @@ class ScriptedAgent : public StepAgentBase<DataClass> {
 
   /* --------------- Visits for symbol types ---------------- */
   struct SymAssignVisitor {
-    std::unique_ptr<AgentWrapper> &mAgentWrapper;
-    std::unique_ptr<Node> &mVal;
-    std::shared_ptr<SymInfo> &mSymPtr;
-    ScriptedAgent<DataClass> &mAgentBase;
+    std::unique_ptr<AgentWrapper>& mAgentWrapper;
+    std::unique_ptr<Node>& mVal;
+    std::shared_ptr<SymInfo>& mSymPtr;
+    ScriptedAgent<DataClass>& mAgentBase;
 
-    SymAssignVisitor(std::unique_ptr<AgentWrapper> &_AgentWrapper,
-                     std::unique_ptr<Node> &_Val,
-                     std::shared_ptr<SymInfo> &_SymPtr,
-                     ScriptedAgent<DataClass> &_AgentBase)
+    SymAssignVisitor(std::unique_ptr<AgentWrapper>& _AgentWrapper,
+                     std::unique_ptr<Node>& _Val,
+                     std::shared_ptr<SymInfo>& _SymPtr,
+                     ScriptedAgent<DataClass>& _AgentBase)
         : mAgentWrapper(_AgentWrapper),
           mVal(_Val),
           mSymPtr(_SymPtr),
@@ -154,12 +154,12 @@ class ScriptedAgent : public StepAgentBase<DataClass> {
 
       // Handle for type mismatch
       if (v.m_Type.index() != val_result.index())
-        return RuntimeErr(
-            RuntimeErr::TYPE_MISMATCH,
-            std::format("Attempted to assign expression of type {} "
-                        "to variable of type {}",
-                        TypeVariantToName(val_result),
-                        TypeVariantToName(v.m_Type)));
+        return InterpErr{
+            RuntimeErr(RuntimeErr::TYPE_MISMATCH,
+                       std::format("Attempted to assign expression of type {} "
+                                   "to variable of type {}",
+                                   TypeVariantToName(val_result),
+                                   TypeVariantToName(v.m_Type)))};
 
       mSymPtr->sym = VarSym(val_result);
       return val_result;
@@ -175,11 +175,11 @@ class ScriptedAgent : public StepAgentBase<DataClass> {
         case Value::DESTINATION: {
           // Ensure val_result is a point
           if (!std::holds_alternative<PointTy>(val_result))
-            return RuntimeErr(
+            return InterpErr{RuntimeErr(
                 RuntimeErr::TYPE_MISMATCH,
                 std::format("Attempted to set magic value "
-                            "__destination__ to non-point type '{}'",
-                            TypeVariantToName(val_result)));
+                            "__destination__ to non-point type '{}')",
+                            TypeVariantToName(val_result)))};
 
           auto data = mAgentBase.GetState();
 
@@ -190,40 +190,43 @@ class ScriptedAgent : public StepAgentBase<DataClass> {
         }
         case Value::SPAWN: {
           if (!std::holds_alternative<PointTy>(val_result))
-            return RuntimeErr(RuntimeErr::TYPE_MISMATCH,
-                              std::format("Attempted to set magic value "
-                                          "__spawn__ to non-point type '{}'",
-                                          TypeVariantToName(val_result)));
+            return InterpErr{
+                RuntimeErr(RuntimeErr::TYPE_MISMATCH,
+                           std::format("Attempted to set magic value "
+                                       "__spawn__ to non-point type '{}')",
+                                       TypeVariantToName(val_result)))};
           if (!mAgentBase.mCurrentlyInInit)
-            return RuntimeErr(RuntimeErr::SPAWN_OUTSIDE_INIT,
-                              std::format("Attempted to set magic value "
-                                          "__spawn__ outside of init"));
+            return InterpErr{
+                RuntimeErr(RuntimeErr::SPAWN_OUTSIDE_INIT,
+                           std::format("Attempted to set magic value "
+                                       "__spawn__ outside of init"))};
           auto data = mAgentBase.GetState();
           data.position = std::get<PointTy>(val_result);
           mAgentBase.SetState(data);
           break;
         }
         default:
-          return RuntimeErr(RuntimeErr::MAGIC_ERR,
-                            "Attempted to set non-mutable magic value");
+          return InterpErr{
+              RuntimeErr(RuntimeErr::MAGIC_ERR,
+                         "Attempted to set non-mutable magic value")};
       };
 
       return val_result;
     }
 
     std::expected<Type, InterpErr> operator()([[maybe_unused]] FuncSym f) {
-      return RuntimeErr(RuntimeErr::IMMUTABLE_ERR,
-                        "Attempted to assign to function");
+      return InterpErr{RuntimeErr(RuntimeErr::IMMUTABLE_ERR,
+                                  "Attempted to assign to function")};
     }
   };
 
   struct SymGetVisitor {
-    std::unique_ptr<AgentWrapper> &mAgentWrapper;
-    StepAgentBase<DataClass> &mAgentBase;
+    std::unique_ptr<AgentWrapper>& mAgentWrapper;
+    StepAgentBase<DataClass>& mAgentBase;
     std::vector<Type> mParams{};
 
-    SymGetVisitor(std::unique_ptr<AgentWrapper> &_AgentWrapper,
-                  StepAgentBase<DataClass> &_AgentBase,
+    SymGetVisitor(std::unique_ptr<AgentWrapper>& _AgentWrapper,
+                  StepAgentBase<DataClass>& _AgentBase,
                   std::vector<Type> _Params)
         : mAgentWrapper(_AgentWrapper),
           mAgentBase(_AgentBase),
@@ -236,14 +239,16 @@ class ScriptedAgent : public StepAgentBase<DataClass> {
 
       switch (m.m_Value) {
         case MagicSym::Value::SPAWN:
-          return RuntimeErr(RuntimeErr::MAGIC_ERR,
-                            "__spawn__ is only writable, not readable");
+          return InterpErr{
+              RuntimeErr(RuntimeErr::MAGIC_ERR,
+                         "__spawn__ is only writable, not readable")};
         case MagicSym::Value::POSITION:
           return Type{data.position};
         case MagicSym::Value::DESTINATION: {
           auto ret = data.destination;
           if (!ret.has_value())
-            return RuntimeErr(RuntimeErr::MAGIC_ERR, "Destination unset!");
+            return InterpErr{
+                RuntimeErr(RuntimeErr::MAGIC_ERR, "Destination unset!")};
           // return NullType{};
           else
             return Type{ret.value()};
@@ -278,24 +283,25 @@ class ScriptedAgent : public StepAgentBase<DataClass> {
               case Direction::West:
                 return Type{Dir::LEFT};
               default:
-                return RuntimeErr(
+                return InterpErr{RuntimeErr(
                     RuntimeErr::VALUE_ERR,
-                    std::format("Invalid facing state encountered"));
+                    std::format("Invalid facing state encountered"))};
             };
           }
           break;
       }
       // If we're here, the value requested is not valid in this dataclass
-      return RuntimeErr(RuntimeErr::MAGIC_ERR,
-                        std::format("Could not match requested magic value "
-                                    "'__{}__' to dataclass for getting",
-                                    MagicSym::ToStr(m.m_Value)));
+      return InterpErr{
+          RuntimeErr(RuntimeErr::MAGIC_ERR,
+                     std::format("Could not match requested magic value "
+                                 "'__{}__' to dataclass for getting",
+                                 MagicSym::ToStr(m.m_Value)))};
     }
 
     std::expected<Type, InterpErr> operator()(FuncSym f) {
       // Sequentially set each param symbol
       for (size_t index = 0; index < mParams.size(); index++) {
-        auto &val = mParams[index];
+        auto& val = mParams[index];
         f.m_Params[index]->sym = val;
       }
       return NullType{};
@@ -303,26 +309,26 @@ class ScriptedAgent : public StepAgentBase<DataClass> {
   };
   /* -------------------------------------------------------- */
 
-  std::expected<Type, InterpErr> Visit(AST::StmtBlock &node) {
+  std::expected<Type, InterpErr> Visit(AST::StmtBlock& node) {
     std::expected<Type, InterpErr> res;
-    for (auto &cur_node : node.m_Body) {
+    for (auto& cur_node : node.m_Body) {
       TRY(cur_node->Accept(*mAgentWrapper))
     }
 
     return NullType{};
   }
-  std::expected<Type, InterpErr> Visit(AST::ExprUnary &node) {
+  std::expected<Type, InterpErr> Visit(AST::ExprUnary& node) {
     TRY_DECL(res, node.m_Left->Accept(*mAgentWrapper))
 
     return evaluate_unary(node.m_Token, res);
   }
-  std::expected<Type, InterpErr> Visit(AST::ExprBinary &node) {
+  std::expected<Type, InterpErr> Visit(AST::ExprBinary& node) {
     TRY_DECL(lhs, node.m_Left->Accept(*mAgentWrapper))
     TRY_DECL(rhs, node.m_Right->Accept(*mAgentWrapper))
 
     return evaluate_binary(node.m_Token, lhs, rhs);
   }
-  std::expected<Type, InterpErr> Visit(AST::Assign &node) {
+  std::expected<Type, InterpErr> Visit(AST::Assign& node) {
     // Assignee is a symbol
     TRY_DECL(expr, node.m_Value->Accept(*mAgentWrapper));
 
@@ -337,15 +343,15 @@ class ScriptedAgent : public StepAgentBase<DataClass> {
         node.m_Sym->sym);
   }
   std::expected<Type, InterpErr> Visit(
-      [[maybe_unused]] AST::StmtAgentDef &node) {
+      [[maybe_unused]] AST::StmtAgentDef& node) {
     return RuntimeErr{
         RuntimeErr::ENCOUNTERED_AGENT_DEF,
         "Encountered an agent definition when evaluation agent turn"};
   }
 
-  std::expected<Type, InterpErr> Visit(AST::StmtAction &node) {
+  std::expected<Type, InterpErr> Visit(AST::StmtAction& node) {
     TRY_DECL(type, node.m_Direction->Accept(*mAgentWrapper))
-    if (Dir *direction = std::get_if<Dir>(&type)) {
+    if (Dir* direction = std::get_if<Dir>(&type)) {
       auto pos = this->GetState().position;
       switch (*direction) {
         case Dir::LEFT:
@@ -376,7 +382,7 @@ class ScriptedAgent : public StepAgentBase<DataClass> {
     return NullType{};
   }
 
-  std::expected<Type, InterpErr> Visit(AST::StmtLoopCtl &node) {
+  std::expected<Type, InterpErr> Visit(AST::StmtLoopCtl& node) {
     if (node.m_Action == AST::StmtLoopCtl::BREAK) {
       return LoopControlErr(LoopControlErr::BREAK,
                             "'break' statement encountered outside of loop");
@@ -385,14 +391,14 @@ class ScriptedAgent : public StepAgentBase<DataClass> {
     return LoopControlErr(LoopControlErr::CONTINUE,
                           "'continue' statement encountered outside of loop");
   }
-  std::expected<Type, InterpErr> Visit(AST::StmtWhile &node) {
+  std::expected<Type, InterpErr> Visit(AST::StmtWhile& node) {
     TRY_DECL(cond, node.m_Condition->Accept(*mAgentWrapper))
     TRY_DECL(cond_truthy, evaluate_bool(cond))
 
     while (cond_truthy) {
       auto body_res = node.m_Body->Accept(*mAgentWrapper);
       if (!body_res.has_value()) {
-        if (auto *err = std::get_if<LoopControlErr>(&body_res.error())) {
+        if (auto* err = std::get_if<LoopControlErr>(&body_res.error())) {
           if (err->m_Kind == LoopControlErr::BREAK) {
             break;
           } else {
@@ -409,7 +415,7 @@ class ScriptedAgent : public StepAgentBase<DataClass> {
     }
     return NullType{};
   }
-  std::expected<Type, InterpErr> Visit(AST::StmtIf &node) {
+  std::expected<Type, InterpErr> Visit(AST::StmtIf& node) {
     TRY_DECL(cond, node.m_Condition->Accept(*mAgentWrapper))
     TRY_DECL(cond_truthy, evaluate_bool(cond))
 
@@ -421,16 +427,16 @@ class ScriptedAgent : public StepAgentBase<DataClass> {
 
     return NullType{};
   }
-  std::expected<Type, InterpErr> Visit([[maybe_unused]] AST::StmtFunc &node) {
+  std::expected<Type, InterpErr> Visit([[maybe_unused]] AST::StmtFunc& node) {
     return RuntimeErr(RuntimeErr::IMPOSSIBLE_STATE,
                       "Function definition node was visited");
   }
-  std::expected<Type, InterpErr> Visit(AST::StmtReturn &node) {
+  std::expected<Type, InterpErr> Visit(AST::StmtReturn& node) {
     TRY_DECL(retval, node.m_Value->Accept(*mAgentWrapper));
     mCurrentRetval = retval;
     return LoopControlErr(LoopControlErr::RETURN);
   }
-  std::expected<Type, InterpErr> Visit(AST::StmtFuncCall &node) {
+  std::expected<Type, InterpErr> Visit(AST::StmtFuncCall& node) {
     if (!node.m_Body.has_value())
       return RuntimeErr(RuntimeErr::UNRESOLVED_FUNCTION,
                         "Function has lingering unresolved call");
@@ -448,7 +454,7 @@ class ScriptedAgent : public StepAgentBase<DataClass> {
       std::vector<Type> args{};
 
       for (size_t index = 0; index < node.m_Args.size(); index++) {
-        auto &arg = node.m_Args[index];
+        auto& arg = node.m_Args[index];
         TRY_DECL(arg_res, arg->Accept(*mAgentWrapper));
         args.emplace_back(arg_res);
       }
@@ -464,8 +470,8 @@ class ScriptedAgent : public StepAgentBase<DataClass> {
 
     // Set args
     for (size_t index = 0; index < node.m_Args.size(); index++) {
-      auto &arg = node.m_Args[index];
-      auto &param = f.m_Params.at(index);
+      auto& arg = node.m_Args[index];
+      auto& param = f.m_Params.at(index);
       if (!std::holds_alternative<VarSym>(param->sym))
         return RuntimeErr(RuntimeErr::IMPOSSIBLE_STATE,
                           "Function parameter has non-variable symbol type");
@@ -489,10 +495,10 @@ class ScriptedAgent : public StepAgentBase<DataClass> {
       return RuntimeErr(RuntimeErr::MISSING_RETURN);
     }
   }
-  std::expected<Type, InterpErr> Visit(AST::ValLiteral &node) {
+  std::expected<Type, InterpErr> Visit(AST::ValLiteral& node) {
     return node.m_Val;
   }
-  std::expected<Type, InterpErr> Visit(AST::ValVariable &node) {
+  std::expected<Type, InterpErr> Visit(AST::ValVariable& node) {
     return std::visit(SymGetVisitor(mAgentWrapper, *this, {}),
                       node.m_Symbol->sym);
   }
