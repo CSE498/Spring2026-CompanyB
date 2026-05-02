@@ -30,7 +30,7 @@ namespace cse498 {
  *   7. Return vector of parsed agent definitions
  */
 std::expected<std::vector<std::unique_ptr<AST::StmtAgentDef>>, InterpErr>
-Parser::parse(std::istream &in) {
+Parser::parse(std::istream& in) {
   using AgentLexer::IDs;
   m_AgentDefs.clear();
 
@@ -90,11 +90,11 @@ Parser::parse(std::istream &in) {
   m_Syms.PopSymbolScope();
 
   // Now we'll finalize all nodes
-  for (auto &node : m_Nodes) {
+  for (auto& node : m_Nodes) {
     TRY(node->Finalize(m_Syms));
   }
 
-  for (auto &node : m_AgentDefs) {
+  for (auto& node : m_AgentDefs) {
     TRY(node->Finalize(m_Syms));
   }
 

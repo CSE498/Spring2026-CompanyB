@@ -12,7 +12,7 @@
 namespace Catch {
 template <typename T>
 struct StringMaker<std::expected<T, cse498::InterpErr>> {
-  static std::string convert(std::expected<T, cse498::InterpErr> const &v) {
+  static std::string convert(std::expected<T, cse498::InterpErr> const& v) {
     std::string val_str{"[V:Unprintable]"};
     if constexpr (Concepts::Printable<T>) {
       val_str = (std::stringstream() << "[" << v.value_or("") << "]").to_str();

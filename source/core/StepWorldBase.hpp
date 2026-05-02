@@ -8,7 +8,7 @@
 #include <thread>
 #include <vector>
 
-#include "Agents/ScriptedAgent.hpp"
+#include "../Agents/ScriptedAgent.hpp"
 #include "Interpreter/Parser.hpp"
 #include "Step.hpp"
 #include "StepAgentBase.hpp"

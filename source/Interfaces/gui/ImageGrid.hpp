@@ -23,24 +23,24 @@ namespace cse498 {
 
 class ImageGrid {
  private:
-  SimWorldBase<DiseaseData> &mWorld;
-  QGraphicsScene &mScene = *(new QGraphicsScene());
+  SimWorldBase<DiseaseData>& mWorld;
+  QGraphicsScene& mScene = *(new QGraphicsScene());
   int mTileSize{32};
   ImageManager mImageManager;
-  std::vector<QGraphicsItem *> mAgentItems;
-  std::vector<QGraphicsItem *> mGridItems;
+  std::vector<QGraphicsItem*> mAgentItems;
+  std::vector<QGraphicsItem*> mGridItems;
 
  public:
   ImageGrid() = delete;
   virtual ~ImageGrid() = default;
 
-  ImageGrid(SimWorldBase<DiseaseData> &world, QGraphicsScene &scene,
+  ImageGrid(SimWorldBase<DiseaseData>& world, QGraphicsScene& scene,
             int tileSize);
-  void MapImages(const std::vector<QString> &imagePaths);
+  void MapImages(const std::vector<QString>& imagePaths);
   void RenderGrid();
   void RenderAgents();
   void ClearAgents();
-  void LoadAgentImage(const QString &imagePath);
-  void SetSceneAndView(QGraphicsView &view);
+  void LoadAgentImage(const QString& imagePath);
+  void SetSceneAndView(QGraphicsView& view);
 };
 }  // namespace cse498

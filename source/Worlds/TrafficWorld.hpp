@@ -77,7 +77,7 @@ class TrafficWorld : public WorldBase {
   std::queue<size_t> despawned_agent_ids;
 
   /// Provide the agent with movement actions.
-  void ConfigAgent(AgentBase &agent) override {
+  void ConfigAgent(AgentBase& agent) override {
     agent.AddAction("stay", REMAIN_STILL);
     agent.AddAction("up", MOVE_UP);
     agent.AddAction("down", MOVE_DOWN);
@@ -171,8 +171,8 @@ class TrafficWorld : public WorldBase {
 
   /// @brief Return the ANSI colour code pre-assigned to a destination tile,
   ///        or an empty string if the position is not a destination.
-  [[nodiscard]] const std::string &GetDestinationColour(
-      const WorldPosition &pos) const {
+  [[nodiscard]] const std::string& GetDestinationColour(
+      const WorldPosition& pos) const {
     auto it = destination_colours.find(pos);
     if (it != destination_colours.end()) {
       return it->second;
@@ -183,7 +183,7 @@ class TrafficWorld : public WorldBase {
   ~TrafficWorld() = default;
 
   /// Allow the agents to move around the maze.
-  int DoAction(AgentBase &agent, size_t action_id) override {
+  int DoAction(AgentBase& agent, size_t action_id) override {
     // Determine where the agent is trying to move.
     WorldPosition cur_position = agent.GetLocation().AsWorldPosition();
     assert(main_grid.IsValid(cur_position));
@@ -267,13 +267,13 @@ class TrafficWorld : public WorldBase {
   /// despawned. Otherwise, returns nullopt.
   std::optional<Direction> DirectionOfDrivingAgentAt(WorldPosition pos) const {
     auto it = std::find_if(
-        agent_set.begin(), agent_set.end(), [&pos](agent_ptr_t const &agent) {
+        agent_set.begin(), agent_set.end(), [&pos](agent_ptr_t const& agent) {
           return agent->GetLocation().AsWorldPosition() == pos;
         });
     if (it == agent_set.end()) {
       return std::nullopt;
     }
-    if (auto agentAt = dynamic_cast<DrivingAgent *>(it->get())) {
+    if (auto agentAt = dynamic_cast<DrivingAgent*>(it->get())) {
       // effectively this turns off collision detection for agents that have
       // reached their destination
       if (agentAt->GetReachedDestination()) {
@@ -286,7 +286,7 @@ class TrafficWorld : public WorldBase {
 
   bool AgentExistsAt(WorldPosition pos) const {
     auto it = std::find_if(
-        agent_set.begin(), agent_set.end(), [&pos](agent_ptr_t const &agent) {
+        agent_set.begin(), agent_set.end(), [&pos](agent_ptr_t const& agent) {
           return agent->GetLocation().AsWorldPosition() == pos;
         });
     return it != agent_set.end();
@@ -299,8 +299,8 @@ class TrafficWorld : public WorldBase {
   }
 
   void RunAgents() override {
-    for (const auto &agent_ptr : agent_set) {
-      auto *driver = dynamic_cast<DrivingAgent *>(agent_ptr.get());
+    for (const auto& agent_ptr : agent_set) {
+      auto* driver = dynamic_cast<DrivingAgent*>(agent_ptr.get());
       if (driver && driver->GetReachedDestination()) continue;
       size_t action_id = agent_ptr->SelectAction(main_grid);
       int result = DoAction(*agent_ptr, action_id);
@@ -324,7 +324,7 @@ class TrafficWorld : public WorldBase {
           (traffic_light_phase == TrafficLightPhase::ALLOW_VERTICAL)
               ? traffic_light_vertical_id
               : traffic_light_horizontal_id;
-      for (const auto &pos : traffic_light_positions) {
+      for (const auto& pos : traffic_light_positions) {
         main_grid[pos] = new_type;
       }
     }
@@ -335,7 +335,7 @@ class TrafficWorld : public WorldBase {
   void UpdateSpawners() {
     if (++spawn_clock >= spawn_period) {
       spawn_clock = 0;
-      for (const WorldPosition &pos : spawner_positions) {
+      for (const WorldPosition& pos : spawner_positions) {
         // Don't spawn on top of an existing agent
         if (main_grid[pos] == spawn_id && !AgentExistsAt(pos) &&
             num_spawned_agents < max_spawned_agents) {
@@ -346,7 +346,7 @@ class TrafficWorld : public WorldBase {
             if (!despawned_agent_ids.empty()) {
               RecycleDespawnedAgent(pos, dest_pos);
             } else {
-              auto &agent = AddAgent<DrivingAgent>("Car");
+              auto& agent = AddAgent<DrivingAgent>("Car");
               agent.SetLocation(pos);
               agent.SetGridDestination(dest_pos.CellX(), dest_pos.CellY());
               agent.SetColour(GetDestinationColour(dest_pos));
@@ -362,12 +362,12 @@ class TrafficWorld : public WorldBase {
   // Pulls, from despawned_agent_ids, the ID of an agent that previously
   // despawned and is now inactive, then respawns that agent at the given
   // spawner with the given destination.
-  void RecycleDespawnedAgent(const WorldPosition &spawner_pos,
-                             const WorldPosition &dest_pos) {
+  void RecycleDespawnedAgent(const WorldPosition& spawner_pos,
+                             const WorldPosition& dest_pos) {
     assert(!despawned_agent_ids.empty());
     size_t reuse_id = despawned_agent_ids.front();
     despawned_agent_ids.pop();
-    auto *driver = dynamic_cast<DrivingAgent *>(&GetAgent(reuse_id));
+    auto* driver = dynamic_cast<DrivingAgent*>(&GetAgent(reuse_id));
     // Note for future use. Currently a non-DrivingAgent id should never make it
     // into despawned_agent_ids since those are the only agents that support
     // spawning, despawning, and destinations. In the future, with multiple
@@ -382,8 +382,8 @@ class TrafficWorld : public WorldBase {
   }
   /// @brief Despawn any agents that have reached their destination.
   void HandleDestinations() {
-    for (auto &agent_ptr : agent_set) {
-      auto *driver = dynamic_cast<DrivingAgent *>(agent_ptr.get());
+    for (auto& agent_ptr : agent_set) {
+      auto* driver = dynamic_cast<DrivingAgent*>(agent_ptr.get());
       if (!driver || driver->GetReachedDestination()) continue;
 
       WorldPosition pos = agent_ptr->GetLocation().AsWorldPosition();

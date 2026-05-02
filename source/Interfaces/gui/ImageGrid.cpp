@@ -5,20 +5,20 @@
 
 namespace cse498 {
 
-ImageGrid::ImageGrid(SimWorldBase<DiseaseData> &world, QGraphicsScene &scene,
+ImageGrid::ImageGrid(SimWorldBase<DiseaseData>& world, QGraphicsScene& scene,
                      int tileSize)
     : mWorld(world), mScene(scene), mTileSize(tileSize) {}
 
-void ImageGrid::MapImages(const std::vector<QString> &imagePaths) {
-  const WorldGrid &grid = mWorld.GetGrid();
-  const std::vector<CellType> &cellTypes = grid.GetCellTypes();
+void ImageGrid::MapImages(const std::vector<QString>& imagePaths) {
+  const WorldGrid& grid = mWorld.GetGrid();
+  const std::vector<CellType>& cellTypes = grid.GetCellTypes();
 
   if (imagePaths.size() != cellTypes.size() - 1) {
     qWarning() << "Number of images and number of cell types must be "
                   "the same!";
     qWarning() << "Number of images: " << imagePaths.size()
                << " Number of cell types: " << cellTypes.size();
-    for (const auto &cellType : cellTypes) {
+    for (const auto& cellType : cellTypes) {
       qWarning() << QString::fromStdString(cellType.name);
     }
     return;
@@ -36,13 +36,13 @@ void ImageGrid::MapImages(const std::vector<QString> &imagePaths) {
 }
 
 void ImageGrid::RenderGrid() {
-  for (auto *item : mGridItems) {
+  for (auto* item : mGridItems) {
     mScene.removeItem(item);
     delete item;
   }
   mGridItems.clear();
 
-  const WorldGrid &grid = mWorld.GetGrid();
+  const WorldGrid& grid = mWorld.GetGrid();
 
   for (size_t y = 0; y < grid.GetHeight(); ++y) {
     for (size_t x = 0; x < grid.GetWidth(); ++x) {
@@ -53,7 +53,7 @@ void ImageGrid::RenderGrid() {
         QPixmap scaled = mImageManager.GetImage(imageID).value().scaled(
             mTileSize, mTileSize, Qt::KeepAspectRatio,
             Qt::SmoothTransformation);
-        QGraphicsPixmapItem *item = mScene.addPixmap(scaled);
+        QGraphicsPixmapItem* item = mScene.addPixmap(scaled);
         item->setPos(x * mTileSize, y * mTileSize);
         mGridItems.push_back(item);
       }
@@ -61,8 +61,8 @@ void ImageGrid::RenderGrid() {
   }
 }
 
-void ImageGrid::SetSceneAndView(QGraphicsView &view) {
-  const WorldGrid &grid = mWorld.GetGrid();
+void ImageGrid::SetSceneAndView(QGraphicsView& view) {
+  const WorldGrid& grid = mWorld.GetGrid();
   mScene.setSceneRect(0, 0, grid.GetWidth() * mTileSize,
                       grid.GetHeight() * mTileSize);
 
@@ -71,14 +71,14 @@ void ImageGrid::SetSceneAndView(QGraphicsView &view) {
 }
 
 void ImageGrid::ClearAgents() {
-  for (auto *item : mAgentItems) {
+  for (auto* item : mAgentItems) {
     mScene.removeItem(item);
     delete item;
   }
   mAgentItems.clear();
 }
 
-void ImageGrid::LoadAgentImage(const QString &imagePath) {
+void ImageGrid::LoadAgentImage(const QString& imagePath) {
   if (!mImageManager.Load("agent", imagePath))
     qWarning() << "Failed to load agent image: " << imagePath;
 }
@@ -97,7 +97,7 @@ void ImageGrid::RenderAgents() {
   for (size_t i = 0; i < mWorld.GetNumAgents(); i++) {
     WorldPosition pos = mWorld.GetAgentState(i).position;
 
-    QGraphicsPixmapItem *item = mScene.addPixmap(agentPixmap);
+    QGraphicsPixmapItem* item = mScene.addPixmap(agentPixmap);
     item->setPos(pos.CellX() * mTileSize, pos.CellY() * mTileSize);
     mAgentItems.push_back(item);
   }

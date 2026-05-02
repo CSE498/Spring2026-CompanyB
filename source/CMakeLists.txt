@@ -23,6 +23,7 @@ set(HEADER_DIRS
         ${CMAKE_CURRENT_SOURCE_DIR}/core
         ${CMAKE_CURRENT_SOURCE_DIR}/Interfaces
         ${CMAKE_CURRENT_SOURCE_DIR}/tools
+        ${CMAKE_CURRENT_SOURCE_DIR}/tools/webui
         ${CMAKE_CURRENT_SOURCE_DIR}/worlds
 )
 

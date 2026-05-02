@@ -64,7 +64,7 @@ class ActionLog : public IActionLog<AgentType> {
   /// checks
   [[nodiscard]] std::pair<std::vector<nlohmann::json>,
                           std::vector<LogEventFailure>>
-  LogAgentStates(const std::vector<AgentType>& agents) override {
+  LogAgentStates(const std::vector<AgentType>& agents) {
     std::vector<nlohmann::json> events;
     std::vector<LogEventFailure> eventFailures;
     for (const auto& agent : agents) {
